@@ -41,6 +41,96 @@ interface ArchiveRecord {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sanitizeGeneratedResume = (data: any): GeneratedResume => {
+  if (!data || typeof data !== "object") {
+    return {
+      professional_summary: "",
+      skills_section: [],
+      experience: [],
+      education: [],
+      certifications: [],
+      awards: [],
+      products: [],
+      projects: [],
+      leadership: []
+    };
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ensureArray = (arr: any): any[] => Array.isArray(arr) ? arr : [];
+
+  let summary = "";
+  if (typeof data.professional_summary === "string") {
+    summary = data.professional_summary;
+  } else if (data.professional_summary) {
+    summary = String(data.professional_summary);
+  }
+
+  let skills: string[] = [];
+  if (Array.isArray(data.skills_section)) {
+    skills = data.skills_section.map(s => typeof s === "string" ? s : String(s || ""));
+  } else if (data.skills_section && typeof data.skills_section === "object") {
+    skills = Object.entries(data.skills_section).map(([key, val]) => {
+      const valStr = Array.isArray(val) ? val.join(", ") : String(val || "");
+      return `${key}: ${valStr}`;
+    });
+  } else if (typeof data.skills_section === "string") {
+    skills = [data.skills_section];
+  }
+
+  let education: string[] = [];
+  if (Array.isArray(data.education)) {
+    education = data.education.map(edu => {
+      if (typeof edu === "string") return edu;
+      if (edu && typeof edu === "object") {
+        const deg = edu.degree || edu.title || "Degree";
+        const sch = edu.school || edu.organization || edu.institution || "University";
+        const loc = edu.location || "";
+        const dt = edu.date || edu.period || edu.expected || "Expected 2027";
+        const gpaVal = edu.gpa || "";
+        const parts = [];
+        if (loc) parts.push(loc);
+        if (dt) parts.push(dt);
+        if (gpaVal) parts.push(`GPA: ${gpaVal}`);
+        return `${deg} @ ${sch}${parts.length > 0 ? ` - ${parts.join(" | ")}` : ""}`;
+      }
+      return String(edu || "");
+    });
+  } else if (typeof data.education === "string") {
+    education = [data.education];
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cleanSections = (sectionsArr: any): GeneratedResumeSection[] => {
+    return ensureArray(sectionsArr).map(item => {
+      if (!item || typeof item !== "object") {
+        return { heading: String(item || ""), content: "", bullets: [] };
+      }
+      return {
+        heading: typeof item.heading === "string" ? item.heading : String(item.heading || item.title || ""),
+        content: typeof item.content === "string" ? item.content : String(item.content || item.period || item.date || ""),
+        bullets: Array.isArray(item.bullets) 
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ? item.bullets.map((b: any) => typeof b === "string" ? b : String(b || ""))
+          : (typeof item.bullets === "string" ? [item.bullets] : [])
+      };
+    });
+  };
+
+  return {
+    professional_summary: summary,
+    skills_section: skills,
+    experience: cleanSections(data.experience),
+    education: education,
+    products: cleanSections(data.products),
+    projects: cleanSections(data.projects),
+    leadership: cleanSections(data.leadership),
+    certifications: ensureArray(data.certifications).map(c => typeof c === "string" ? c : String(c || "")),
+    awards: ensureArray(data.awards).map(a => typeof a === "string" ? a : String(a || ""))
+  };
+};
+
 export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: ResumeGeneratorProps) => {
   console.log("ResumeGenerator: Rendering with props", { jdTitle, jdSkills: jdSkills?.length, companyName });
   
@@ -180,14 +270,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
   const handleLoadArchive = (record: ArchiveRecord) => {
     setDraftId(record.id);
     
-    // Hardening: Ensure projects and certifications exist in the loaded record
-    const hydratedContent = {
-      ...record.content,
-      projects: record.content.projects || [],
-      leadership: record.content.leadership || [],
-      certifications: record.content.certifications || [],
-      awards: record.content.awards || []
-    };
+    const hydratedContent = sanitizeGeneratedResume(record.content);
     
     setResume(hydratedContent);
     setEditableResume(hydratedContent);
@@ -487,15 +570,7 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
         throw new Error("AI returned malformed candidacy data. Please try again.");
       }
 
-      const hydratedData = {
-        ...structData,
-        experience: structData.experience || [],
-        products: structData.products || [],
-        projects: structData.projects || [],
-        leadership: structData.leadership || [],
-        certifications: structData.certifications || [],
-        awards: structData.awards || []
-      } as GeneratedResume;
+      const hydratedData = sanitizeGeneratedResume(structData);
 
       setResume(hydratedData);
       setEditableResume(hydratedData);
@@ -1931,6 +2006,7 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               onRegenerate={executeTacticalSynthesis}
               onDownloadPDF={handleDownloadPDF}
               onDownloadDOC={handleDownloadDOC}
+              onSave={handleSaveDraft}
               coverLetter={coverLetter}
               isGeneratingCL={isGeneratingCL}
               onGenerateCL={generateCoverLetter}

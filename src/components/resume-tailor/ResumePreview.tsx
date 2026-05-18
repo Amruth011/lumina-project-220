@@ -59,6 +59,7 @@ interface ResumePreviewProps {
   isGeneratingCL: boolean;
   onGenerateCL: () => void;
   onDownloadCL: (format: 'pdf' | 'doc') => void;
+  onSave?: () => void;
   summaryLines?: number;
   experienceBullets?: number;
   projectLines?: number;
@@ -95,6 +96,7 @@ export const ResumePreview = ({
   isGeneratingCL,
   onGenerateCL,
   onDownloadCL,
+  onSave,
   initialTab,
   nameFontSize,
   headlineFontSize,
@@ -268,7 +270,7 @@ export const ResumePreview = ({
               <button onClick={onRegenerate} disabled={isGenerating} className="p-3 rounded-2xl bg-white border border-slate-200 text-[#1E2A3A]/40 hover:text-lumina-teal hover:border-lumina-teal/20 transition-all shadow-sm group">
                 <RotateCcw size={18} className={isGenerating ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-700'} />
               </button>
-              <button onClick={handleSave} className="p-3 rounded-2xl bg-lumina-teal text-white shadow-lg shadow-lumina-teal/20 transition-all hover:scale-105">
+              <button onClick={onSave} className="p-3 rounded-2xl bg-lumina-teal text-white shadow-lg shadow-lumina-teal/20 transition-all hover:scale-105">
                 <Save size={18} />
               </button>
               <div className="h-8 w-px bg-slate-200 mx-2" />
@@ -671,8 +673,8 @@ export const ResumePreview = ({
                         </div>
                         <div className="flex flex-col" style={{ gap: '0.5px' }}>
                           {(localResume.education || []).map((edu, i) => {
-                            const parts = edu.split('|');
-                            const mainInfo = parts[0].split('@');
+                            const parts = (edu || "").split('|');
+                            const mainInfo = (parts[0] || "").split('@');
                             const school = mainInfo[1]?.trim() || "University";
                             const degree = mainInfo[0]?.trim() || "Degree";
                             const metadata = parts.slice(1).join(' | ');
@@ -703,10 +705,11 @@ export const ResumePreview = ({
                         </div>
                         <div className="flex flex-col" style={{ gap: '1px' }}>
                           {(localResume.experience || []).map((exp, expIdx) => {
-                            const parts = exp.heading.split('@');
+                            const parts = (exp.heading || "").split('@');
                             const role = parts[0]?.trim() || "Role";
-                            const org = parts[1]?.split('-')[0]?.trim() || "Organization";
-                            const location = parts[1]?.split('-')[1]?.trim() || localHeader.location;
+                            const orgParts = (parts[1] || "").split('-');
+                            const org = orgParts[0]?.trim() || "Organization";
+                            const location = orgParts[1]?.trim() || localHeader.location || "";
                             
                             return (
                               <div key={expIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
@@ -721,7 +724,7 @@ export const ResumePreview = ({
                                 <ul className="list-disc ml-5 space-y-0.5 pt-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                   {(exp.bullets || []).map((bullet, bullIdx) => (
                                     <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
-                                      {bullet.replace(/^[•\s*-]+/, '').trim()}
+                                      {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                     </li>
                                   ))}
                                 </ul>
@@ -739,8 +742,8 @@ export const ResumePreview = ({
                           </div>
                           <div className="flex flex-col" style={{ gap: '1px' }}>
                             {localResume.products?.map((prod, prodIdx) => {
-                              const headingParts = prod.heading.split(/\s*[-–—]\s*/);
-                              const title = headingParts[0];
+                              const headingParts = (prod.heading || "").split(/\s*[-–—]\s*/);
+                              const title = headingParts[0] || "Product";
                               const status = headingParts.slice(1).join(" | ");
                               return (
                                 <div key={prodIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
@@ -750,8 +753,8 @@ export const ResumePreview = ({
                                   </div>
                                   <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                     {(prod.bullets || []).map((bullet, bullIdx) => (
-                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
-                                        {bullet.replace(/^[•\s*-]+/, '').trim()}
+                                      <li key={bulletIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
+                                        {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                       </li>
                                     ))}
                                   </ul>
@@ -770,8 +773,8 @@ export const ResumePreview = ({
                           </div>
                           <div className="flex flex-col" style={{ gap: '1px' }}>
                             {localResume.projects?.map((proj, projIdx) => {
-                              const headingParts = proj.heading.split(/\s*[-–—]\s*/);
-                              const title = headingParts[0];
+                              const headingParts = (proj.heading || "").split(/\s*[-–—]\s*/);
+                              const title = headingParts[0] || "Project";
                               const stack = headingParts.slice(1).join(" | ");
                               return (
                                 <div key={projIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
@@ -798,7 +801,7 @@ export const ResumePreview = ({
                                   <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                     {(proj.bullets || []).map((bullet, bullIdx) => (
                                       <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
-                                        {bullet.replace(/^[•\s*-]+/, '').trim()}
+                                        {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                       </li>
                                     ))}
                                   </ul>
@@ -819,13 +822,13 @@ export const ResumePreview = ({
                             {localResume.leadership?.map((lead, idx) => (
                               <div key={idx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                 <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
-                                  <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{lead.heading}</span>
+                                  <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{lead.heading || "Role"}</span>
                                   <span className="flex-shrink-0 text-right ml-4 text-[11px] font-normal !font-inherit" style={{ fontFamily: 'inherit' }}>{lead.content || "Date – Present"}</span>
                                 </div>
                                 <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                   {(lead.bullets || []).map((bullet, bullIdx) => (
                                     <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
-                                      {bullet.replace(/^[•\s*-]+/, '').trim()}
+                                      {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                     </li>
                                   ))}
                                 </ul>
@@ -842,10 +845,10 @@ export const ResumePreview = ({
                         </div>
                         <div className="flex flex-col !font-inherit" style={{ fontFamily: 'inherit', gap: '0.5px' }}>
                           {(localResume.skills_section || []).map((skillLine, i) => {
-                            const [category, skills] = skillLine.split(':');
+                            const [category, skills] = (skillLine || "").split(':');
                             return (
                               <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
-                                <span className="font-bold !font-inherit" style={{ fontFamily: 'inherit' }}>{category?.trim()}:</span> {skills?.trim()}
+                                <span className="font-bold !font-inherit" style={{ fontFamily: 'inherit' }}>{(category || "").trim()}:</span> {(skills || "").trim()}
                               </p>
                             );
                           })}
