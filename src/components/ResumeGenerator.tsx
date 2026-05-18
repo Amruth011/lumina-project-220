@@ -890,12 +890,9 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
             const summaryHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
             checkPageBreak(summaryHeight);
             pdf.text(limitedSummary, margin, y, {
-              align: "justify",
+              align: "left",
               maxWidth: contentWidth
             });
-            if (pdf.internal && typeof pdf.internal.write === 'function') {
-              pdf.internal.write(0, "Tw");
-            }
             y += summaryHeight;
             y += 0.5;
           }
@@ -989,12 +986,9 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                 checkPageBreak(bulletHeight);
                 pdf.text("•", margin + 1.5, y);
                 pdf.text(cleanBullet, margin + 4.5, y, {
-                  align: "justify",
+                  align: "left",
                   maxWidth: contentWidth - 4.5
                 });
-                if (pdf.internal && typeof pdf.internal.write === 'function') {
-                  pdf.internal.write(0, "Tw");
-                }
                 y += bulletHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
@@ -1050,12 +1044,9 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                 checkPageBreak(bulletHeight);
                 pdf.text("•", margin + 1.5, y);
                 pdf.text(cleanBullet, margin + 4.5, y, {
-                  align: "justify",
+                  align: "left",
                   maxWidth: contentWidth - 4.5
                 });
-                if (pdf.internal && typeof pdf.internal.write === 'function') {
-                  pdf.internal.write(0, "Tw");
-                }
                 y += bulletHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
@@ -1121,12 +1112,9 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                 checkPageBreak(bulletHeight);
                 pdf.text("•", margin + 1.5, y);
                 pdf.text(cleanBullet, margin + 4.5, y, {
-                  align: "justify",
+                  align: "left",
                   maxWidth: contentWidth - 4.5
                 });
-                if (pdf.internal && typeof pdf.internal.write === 'function') {
-                  pdf.internal.write(0, "Tw");
-                }
                 y += bulletHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
@@ -1166,12 +1154,9 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                 checkPageBreak(bulletHeight);
                 pdf.text("•", margin + 1.5, y);
                 pdf.text(cleanBullet, margin + 4.5, y, {
-                  align: "justify",
+                  align: "left",
                   maxWidth: contentWidth - 4.5
                 });
-                if (pdf.internal && typeof pdf.internal.write === 'function') {
-                  pdf.internal.write(0, "Tw");
-                }
                 y += bulletHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);

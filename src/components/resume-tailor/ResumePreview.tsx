@@ -731,7 +731,7 @@ export const ResumePreview = ({
                                 </div>
                                 <ul className="list-disc ml-5 space-y-0.5 pt-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                   {(exp.bullets || []).map((bullet, bullIdx) => (
-                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
+                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
                                       {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                     </li>
                                   ))}
@@ -761,7 +761,7 @@ export const ResumePreview = ({
                                   </div>
                                   <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                     {(prod.bullets || []).map((bullet, bullIdx) => (
-                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
+                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
                                         {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                       </li>
                                     ))}
@@ -808,7 +808,7 @@ export const ResumePreview = ({
                                   </div>
                                   <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                     {(proj.bullets || []).map((bullet, bullIdx) => (
-                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
+                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
                                         {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                       </li>
                                     ))}
@@ -835,7 +835,7 @@ export const ResumePreview = ({
                                 </div>
                                 <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                   {(lead.bullets || []).map((bullet, bullIdx) => (
-                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
+                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
                                       {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                     </li>
                                   ))}
