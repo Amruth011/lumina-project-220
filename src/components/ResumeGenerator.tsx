@@ -8,6 +8,19 @@ import type { Skill, VaultItem, UserProfileWithVault, GeneratedResume } from "@/
 import jsPDF from "jspdf";
 import { ResumePreview } from "./resume-tailor/ResumePreview";
 
+const sanitizePdfText = (text: string): string => {
+  if (!text) return "";
+  return text
+    .replace(/[\u201C\u201D]/g, '"') // smart double quotes
+    .replace(/[\u2018\u2019]/g, "'") // smart single quotes
+    .replace(/[\u2013\u2014]/g, "-") // en-dash and em-dash
+    .replace(/\u20B9/g, "Rs. ")     // rupee symbol
+    .replace(/\u00B9/g, "1")        // superscript 1
+    .replace(/\u00B2/g, "2")        // superscript 2
+    .replace(/\u00B3/g, "3")        // superscript 3
+    .replace(/\u00A0/g, " ");        // non-breaking space
+};
+
 interface ResumeGeneratorProps {
   jdTitle: string;
   jdSkills: Skill[];
@@ -376,11 +389,11 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.
 - Quantify EVERYTHING. Use metrics (%, $, time, scale) in every bullet.
 - Use strong action verbs (Spearheaded, Orchestrated, Engineered).
 - DATE FORMAT: Use 3-letter month abbreviations ONLY (e.g., "Jan 2024", "May 2027", "Aug 2023 – Present"- SECTION DENSITY & DYNAMIC EXPANSION MANDATES (CRITICAL):
-    - PROFESSIONAL SUMMARY: You MUST synthesize a high-impact professional summary of EXACTLY ${summaryLines} sentences. Keep each sentence extremely concise (under 18-20 words) so that the entire summary fits beautifully within ${summaryLines} lines without excessive wrapping. Do NOT use the placeholder text "High-density strategic overview" under any circumstances. You must compose it dynamically based on the Candidate Profile's experience and target skills.
+    - PROFESSIONAL SUMMARY: You MUST synthesize a high-impact professional summary of EXACTLY ${summaryLines} sentences. Do NOT output a single sentence or bullet list under any circumstances. You must write exactly ${summaryLines} distinct, complete sentences separated by a period and a single space (e.g. "Sentence one. Sentence two. Sentence three."). Keep each sentence extremely concise (under 15-18 words) so that the entire summary fits beautifully within ${summaryLines} lines without excessive wrapping. You must compose it dynamically based on the Candidate Profile's experience and target skills.
     - EXPERIENCE BULLETS: Every single role in EXPERIENCE must have EXACTLY ${experienceBullets} bullet points. If the Candidate Profile's entry has fewer than ${experienceBullets} bullets, you MUST expand, elaborate, or split them to generate exactly ${experienceBullets} quantified, metric-driven bullet points.
     - PROJECT BULLETS: Every single project in PROJECTS must have EXACTLY ${projectLines} bullet points. Expand or elaborate to generate exactly ${projectLines} metric-driven bullet points.
     - PRODUCT/STARTUP BULLETS: Every single product in PRODUCTS must have EXACTLY ${productLines} bullet points. Expand or elaborate to generate exactly ${productLines} metric-driven bullet points.
-    - SUMMARY LENGTH: Ensure the professional summary is EXACTLY ${summaryLines} sentences long.
+    - SUMMARY LENGTH: Ensure the professional summary is EXACTLY ${summaryLines} sentences long. Never return fewer than ${summaryLines} sentences.
 - SECTION INTEGRITY & CLASSIFICATION (CRITICAL): 
     - EXPERIENCE: Only for formal employment, internships, and fellowships. (e.g., 'Data Science Intern').
     - PROJECTS: Technical builds, open-source contributions, or academic projects. (e.g., 'Kannada Book AI Agent').
@@ -407,7 +420,7 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.
  
 Return ONLY a JSON object with this exact structure (note the bracketed dynamic instructions):
 {
-  "professional_summary": "[Synthesize a highly tailored professional summary of EXACTLY ${summaryLines} sentences based on target skills and top profile highlights. Do NOT output this instruction text.]",
+  "professional_summary": "[Synthesize a highly tailored professional summary of EXACTLY ${summaryLines} sentences based on target skills and top profile highlights. Ensure there are exactly ${summaryLines} sentences separated by periods and spaces. Do NOT output this instruction text.]",
   "skills_section": ["Languages: ...", "Frameworks: ..."],
   "experience": [
     {
@@ -780,11 +793,12 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
 
       // Truncate text to fit a specific width in jsPDF
       const truncateText = (text: string, maxWidth: number, fontSize: number, isBold = false): string => {
+        const cleanText = sanitizePdfText(text);
         pdf.setFont(currentFont, isBold ? "bold" : "normal");
         pdf.setFontSize(fontSize);
-        if (pdf.getTextWidth(text) <= maxWidth) return text;
+        if (pdf.getTextWidth(cleanText) <= maxWidth) return cleanText;
         
-        let truncated = text;
+        let truncated = cleanText;
         while (truncated.length > 0 && pdf.getTextWidth(truncated + "...") > maxWidth) {
           truncated = truncated.slice(0, -1);
         }
@@ -792,10 +806,11 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
       };
 
       const addText = (text: string, size: number, isBold = false, color: number[] = [0, 0, 0], align: "left" | "center" = "left") => {
+        const cleanText = sanitizePdfText(text);
         pdf.setFont(currentFont, isBold ? "bold" : "normal");
         pdf.setFontSize(size);
         pdf.setTextColor(color[0], color[1], color[2]);
-        const lines = pdf.splitTextToSize(text, contentWidth);
+        const lines = pdf.splitTextToSize(cleanText, contentWidth);
         lines.forEach((line: string) => {
           if (y > 287) { pdf.addPage(); y = margin; }
           const xPos = align === "center" ? (pageWidth - pdf.getTextWidth(line)) / 2 : margin;
@@ -885,15 +900,13 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
             pdf.setTextColor(0, 0, 0);
             pdf.setFont(currentFont, "normal");
             pdf.setFontSize(bodyFontSize);
-            const limitedSummary = limitSummarySentences(editableResume.professional_summary, summaryLines);
+            const limitedSummary = sanitizePdfText(limitSummarySentences(editableResume.professional_summary, summaryLines));
             const lines = pdf.splitTextToSize(limitedSummary, contentWidth);
-            const summaryHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
-            checkPageBreak(summaryHeight);
-            pdf.text(limitedSummary, margin, y, {
-              align: "left",
-              maxWidth: contentWidth
+            lines.forEach((line: string) => {
+              checkPageBreak(getLineHeight(bodyFontSize, 1.2));
+              pdf.text(line, margin, y);
+              y += getLineHeight(bodyFontSize, 1.2);
             });
-            y += summaryHeight;
             y += 0.5;
           }
 
@@ -919,7 +932,7 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               pdf.text(cleanSchool, margin, y);
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(dateText, pageWidth - margin, y, { align: "right" });
+              pdf.text(sanitizePdfText(dateText), pageWidth - margin, y, { align: "right" });
               y += getLineHeight(subHeadlineFontSize, 1.25);
 
               const locText = editableHeader.location || "Gainesville, FL";
@@ -933,7 +946,7 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               pdf.text(cleanDegree, margin, y);
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(locText, pageWidth - margin, y, { align: "right" });
+              pdf.text(sanitizePdfText(locText), pageWidth - margin, y, { align: "right" });
               y += getLineHeight(bodyFontSize, 1.3);
             });
           }
@@ -960,7 +973,7 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               pdf.text(cleanRole, margin, y);
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(dateText, pageWidth - margin, y, { align: "right" });
+              pdf.text(sanitizePdfText(dateText), pageWidth - margin, y, { align: "right" });
               y += getLineHeight(subHeadlineFontSize, 1.25);
 
               const locText = loc || "";
@@ -973,23 +986,23 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               pdf.text(cleanOrg, margin, y);
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(locText, pageWidth - margin, y, { align: "right" });
+              pdf.text(sanitizePdfText(locText), pageWidth - margin, y, { align: "right" });
               y += getLineHeight(bodyFontSize, 1.25);
 
               (exp.bullets || []).forEach(bullet => {
                 pdf.setFont(currentFont, "normal");
                 pdf.setFontSize(bodyFontSize);
-                const cleanBullet = bullet.replace(/^[•\s*-]+/, '').trim();
+                const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
                 const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
-                const bulletHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
                 
-                checkPageBreak(bulletHeight);
-                pdf.text("•", margin + 1.5, y);
-                pdf.text(cleanBullet, margin + 4.5, y, {
-                  align: "left",
-                  maxWidth: contentWidth - 4.5
+                lines.forEach((line: string, lineIdx: number) => {
+                  checkPageBreak(getLineHeight(bodyFontSize, 1.2));
+                  if (lineIdx === 0) {
+                    pdf.text("•", margin + 1.5, y);
+                  }
+                  pdf.text(line, margin + 4.5, y);
+                  y += getLineHeight(bodyFontSize, 1.2);
                 });
-                y += bulletHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
             });
@@ -1019,7 +1032,7 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                 const cleanTitle = truncateText(title, maxTitleStackWidth, subHeadlineFontSize, true);
                 pdf.text(cleanTitle, margin, y);
               } else {
-                pdf.text(title, margin, y);
+                pdf.text(sanitizePdfText(title), margin, y);
                 if (status) {
                   const maxStatusWidth = maxTitleStackWidth - titleWidth - 2;
                   const cleanStatus = truncateText(` | ${status}`, maxStatusWidth, bodyFontSize, false);
@@ -1031,23 +1044,23 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
 
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(contentText, pageWidth - margin, y, { align: "right" });
+              pdf.text(sanitizePdfText(contentText), pageWidth - margin, y, { align: "right" });
               y += getLineHeight(subHeadlineFontSize, 1.25);
 
               (prod.bullets || []).forEach(bullet => {
                 pdf.setFont(currentFont, "normal");
                 pdf.setFontSize(bodyFontSize);
-                const cleanBullet = bullet.replace(/^[•\s*-]+/, '').trim();
+                const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
                 const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
-                const bulletHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
                 
-                checkPageBreak(bulletHeight);
-                pdf.text("•", margin + 1.5, y);
-                pdf.text(cleanBullet, margin + 4.5, y, {
-                  align: "left",
-                  maxWidth: contentWidth - 4.5
+                lines.forEach((line: string, lineIdx: number) => {
+                  checkPageBreak(getLineHeight(bodyFontSize, 1.2));
+                  if (lineIdx === 0) {
+                    pdf.text("•", margin + 1.5, y);
+                  }
+                  pdf.text(line, margin + 4.5, y);
+                  y += getLineHeight(bodyFontSize, 1.2);
                 });
-                y += bulletHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
             });
@@ -1077,7 +1090,7 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                 const cleanTitle = truncateText(title, maxTitleStackWidth, subHeadlineFontSize, true);
                 pdf.text(cleanTitle, margin, y);
               } else {
-                pdf.text(title, margin, y);
+                pdf.text(sanitizePdfText(title), margin, y);
                 if (stack) {
                   const maxStackWidth = maxTitleStackWidth - titleWidth - 2;
                   const cleanStack = truncateText(` | ${stack}`, maxStackWidth, bodyFontSize, false);
@@ -1090,7 +1103,7 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize - 1);
               if (dateText) {
-                pdf.text(dateText, pageWidth - margin, y, { align: "right" });
+                pdf.text(sanitizePdfText(dateText), pageWidth - margin, y, { align: "right" });
                 if (dateText.includes("github.com") || dateText.includes(".com") || dateText.includes(".io") || dateText.includes(".live") || dateText.includes(".dev") || dateText.startsWith("http")) {
                   let linkUrl = dateText.trim();
                   if (!linkUrl.startsWith("http")) {
@@ -1105,17 +1118,17 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               (proj.bullets || []).forEach(bullet => {
                 pdf.setFont(currentFont, "normal");
                 pdf.setFontSize(bodyFontSize);
-                const cleanBullet = bullet.replace(/^[•\s*-]+/, '').trim();
+                const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
                 const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
-                const bulletHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
                 
-                checkPageBreak(bulletHeight);
-                pdf.text("•", margin + 1.5, y);
-                pdf.text(cleanBullet, margin + 4.5, y, {
-                  align: "left",
-                  maxWidth: contentWidth - 4.5
+                lines.forEach((line: string, lineIdx: number) => {
+                  checkPageBreak(getLineHeight(bodyFontSize, 1.2));
+                  if (lineIdx === 0) {
+                    pdf.text("•", margin + 1.5, y);
+                  }
+                  pdf.text(line, margin + 4.5, y);
+                  y += getLineHeight(bodyFontSize, 1.2);
                 });
-                y += bulletHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
             });
@@ -1140,24 +1153,24 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize - 1);
               if (dateText) {
-                pdf.text(dateText, pageWidth - margin, y, { align: "right" });
+                pdf.text(sanitizePdfText(dateText), pageWidth - margin, y, { align: "right" });
               }
               y += getLineHeight(subHeadlineFontSize, 1.25);
 
               (lead.bullets || []).forEach(bullet => {
                 pdf.setFont(currentFont, "normal");
                 pdf.setFontSize(bodyFontSize);
-                const cleanBullet = bullet.replace(/^[•\s*-]+/, '').trim();
+                const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
                 const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
-                const bulletHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
                 
-                checkPageBreak(bulletHeight);
-                pdf.text("•", margin + 1.5, y);
-                pdf.text(cleanBullet, margin + 4.5, y, {
-                  align: "left",
-                  maxWidth: contentWidth - 4.5
+                lines.forEach((line: string, lineIdx: number) => {
+                  checkPageBreak(getLineHeight(bodyFontSize, 1.2));
+                  if (lineIdx === 0) {
+                    pdf.text("•", margin + 1.5, y);
+                  }
+                  pdf.text(line, margin + 4.5, y);
+                  y += getLineHeight(bodyFontSize, 1.2);
                 });
-                y += bulletHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
             });
