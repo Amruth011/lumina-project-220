@@ -51,11 +51,15 @@ interface ArchiveRecord {
     subHeadlineFontSize: number;
     bodyFontSize: number;
     tone: string;
+    summaryLines?: number;
+    experienceBullets?: number;
+    projectLines?: number;
+    productLines?: number;
   };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sanitizeGeneratedResume = (data: any): GeneratedResume => {
+const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3): GeneratedResume => {
   if (!data || typeof data !== "object") {
     return {
       professional_summary: "",
@@ -78,6 +82,74 @@ const sanitizeGeneratedResume = (data: any): GeneratedResume => {
     summary = data.professional_summary;
   } else if (data.professional_summary) {
     summary = String(data.professional_summary);
+  }
+
+  if (summary) {
+    // Normalise smart punctuation and missing spacing
+    const normalized = summary
+      .replace(/([\w])\.([A-Z\w])/g, '$1. $2')
+      .replace(/([\w])!([A-Z\w])/g, '$1! $2')
+      .replace(/([\w])\?([A-Z\w])/g, '$1? $2')
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u2013\u2014]/g, "-")
+      .replace(/\u20B9/g, "Rs. ")
+      .replace(/\u00B9/g, "1")
+      .replace(/\u00B2/g, "2")
+      .replace(/\u00B3/g, "3")
+      .replace(/\u00A0/g, " ");
+
+    const sentences = normalized.match(/[^.!?]+[.!?]+(\s|$)/g) || [normalized];
+    const cleanedSentences = sentences.map(s => s.trim()).filter(Boolean);
+
+    if (cleanedSentences.length < targetSummaryLines) {
+      if (cleanedSentences.length === 0) {
+        cleanedSentences.push("Results-driven technology professional specializing in designing and deploying high-impact modern systems.");
+        cleanedSentences.push("Spearheaded cross-functional architectures to drive scalability, efficiency, and engineering excellence.");
+        cleanedSentences.push("Proven track record of optimizing performance metrics and leading technical execution under tight deadlines.");
+      } else {
+        const currentText = cleanedSentences.join(" ");
+        const clauses = currentText
+          .split(/,|\band\b|;|\bwith\b|\bby\b|\bfor\b/i)
+          .map(c => c.trim())
+          .filter(c => c.length > 5);
+
+        if (clauses.length >= targetSummaryLines) {
+          cleanedSentences.length = 0;
+          for (let i = 0; i < targetSummaryLines; i++) {
+            let sentence = clauses[i];
+            if (i === 0) {
+              sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+            } else {
+              if (!/^[A-Z]/.test(sentence)) {
+                sentence = "Focusing on " + sentence.charAt(0).toLowerCase() + sentence.slice(1);
+              }
+            }
+            if (!sentence.endsWith(".")) sentence += ".";
+            cleanedSentences.push(sentence);
+          }
+        } else {
+          const genericPads = [
+            "Spearheaded scalable system design to accelerate product delivery and engineering velocity.",
+            "Leveraged advanced frameworks and methodologies to solve complex, high-concurrency challenges.",
+            "Dedicated to continuous integration and robust system architectures."
+          ];
+          while (cleanedSentences.length < targetSummaryLines) {
+            cleanedSentences.push(genericPads[(cleanedSentences.length - 1) % genericPads.length]);
+          }
+        }
+      }
+    }
+
+    const finalSentences = cleanedSentences.slice(0, targetSummaryLines).map(s => {
+      let clean = s.trim();
+      if (!clean.endsWith(".") && !clean.endsWith("!") && !clean.endsWith("?")) {
+        clean += ".";
+      }
+      return clean.charAt(0).toUpperCase() + clean.slice(1);
+    });
+
+    summary = finalSentences.join(" ");
   }
 
   let skills: string[] = [];
@@ -283,7 +355,8 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
   const handleLoadArchive = (record: ArchiveRecord) => {
     setDraftId(record.id);
     
-    const hydratedContent = sanitizeGeneratedResume(record.content);
+    const savedSummaryLines = record.settings?.summaryLines || summaryLines || 3;
+    const hydratedContent = sanitizeGeneratedResume(record.content, savedSummaryLines);
     
     setResume(hydratedContent);
     setEditableResume(hydratedContent);
@@ -304,6 +377,10 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
       setSubHeadlineFontSize(record.settings.subHeadlineFontSize);
       setBodyFontSize(record.settings.bodyFontSize);
       setTone(record.settings.tone as "Professional" | "Modern" | "Aggressive");
+      if (record.settings.summaryLines) setSummaryLines(Number(record.settings.summaryLines));
+      if (record.settings.experienceBullets) setExperienceBullets(Number(record.settings.experienceBullets));
+      if (record.settings.projectLines) setProjectLines(Number(record.settings.projectLines));
+      if (record.settings.productLines) setProductLines(Number(record.settings.productLines));
     }
     
     setIsOpen(true);
@@ -591,7 +668,7 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
         throw new Error("AI returned malformed candidacy data. Please try again.");
       }
 
-      const hydratedData = sanitizeGeneratedResume(structData);
+      const hydratedData = sanitizeGeneratedResume(structData, summaryLines);
 
       setResume(hydratedData);
       setEditableResume(hydratedData);
@@ -745,7 +822,11 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
           headlineFontSize,
           subHeadlineFontSize,
           bodyFontSize,
-          tone
+          tone,
+          summaryLines,
+          experienceBullets,
+          projectLines,
+          productLines
         }
       } as any, { onConflict: 'user_id,job_title' }).select("id"); // eslint-disable-line @typescript-eslint/no-explicit-any
 
