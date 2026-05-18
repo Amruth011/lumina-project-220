@@ -125,12 +125,6 @@ export const ResumePreview = ({
   }, [resume, header]);
 
   useEffect(() => {
-    if (localResume !== resume || localHeader !== header) {
-      onUpdate(localResume, localHeader);
-    }
-  }, [localResume, localHeader, resume, header, onUpdate]);
-
-  useEffect(() => {
     if (resumeRef.current) {
       const height = resumeRef.current.scrollHeight;
       const a4HeightPx = (resumeRef.current.offsetWidth * 297) / 210;
@@ -138,23 +132,24 @@ export const ResumePreview = ({
     }
   }, [localResume, localHeader, bodyFontSize, nameFontSize]);
 
-  const handleSave = () => {
-    onUpdate(localResume, localHeader);
-    toast.success("Blueprint locked in!");
-  };
-
   const updateHeader = (field: keyof ResumeHeader, value: string) => {
-    setLocalHeader(prev => ({ ...prev, [field]: value }));
+    const updated = { ...localHeader, [field]: value };
+    setLocalHeader(updated);
+    onUpdate(localResume, updated);
   };
 
   const updateSummary = (value: string) => {
-    setLocalResume(prev => ({ ...prev, professional_summary: value }));
+    const updated = { ...localResume, professional_summary: value };
+    setLocalResume(updated);
+    onUpdate(updated, localHeader);
   };
 
   const updateExperience = (index: number, field: 'heading' | 'content', value: string) => {
     const newExp = [...(localResume.experience || [])];
     newExp[index] = { ...newExp[index], [field]: value };
-    setLocalResume(prev => ({ ...prev, experience: newExp }));
+    const updated = { ...localResume, experience: newExp };
+    setLocalResume(updated);
+    onUpdate(updated, localHeader);
   };
 
   const updateBullet = (section: 'experience' | 'projects' | 'products', sectionIndex: number, bulletIndex: number, value: string) => {
@@ -162,31 +157,38 @@ export const ResumePreview = ({
     const newBullets = [...(newSections[sectionIndex].bullets || [])];
     newBullets[bulletIndex] = value;
     newSections[sectionIndex] = { ...newSections[sectionIndex], bullets: newBullets };
-    setLocalResume(prev => ({ ...prev, [section]: newSections }));
+    const updated = { ...localResume, [section]: newSections };
+    setLocalResume(updated);
+    onUpdate(updated, localHeader);
   };
 
   const addBullet = (section: 'experience' | 'projects' | 'products', sectionIndex: number) => {
     const newSections = [...(localResume[section] || [])];
     const newBullets = [...(newSections[sectionIndex].bullets || []), "New strategic impact metric..."];
     newSections[sectionIndex] = { ...newSections[sectionIndex], bullets: newBullets };
-    setLocalResume(prev => ({ ...prev, [section]: newSections }));
+    const updated = { ...localResume, [section]: newSections };
+    setLocalResume(updated);
+    onUpdate(updated, localHeader);
   };
 
   const removeBullet = (section: 'experience' | 'projects' | 'products', sectionIndex: number, bulletIndex: number) => {
     const newSections = [...(localResume[section] || [])];
     const newBullets = (newSections[sectionIndex].bullets || []).filter((_, i) => i !== bulletIndex);
     newSections[sectionIndex] = { ...newSections[sectionIndex], bullets: newBullets };
-    setLocalResume(prev => ({ ...prev, [section]: newSections }));
+    const updated = { ...localResume, [section]: newSections };
+    setLocalResume(updated);
+    onUpdate(updated, localHeader);
   };
 
   const addFromVault = (item: VaultItem) => {
+    let updatedResume = { ...localResume };
     if (showVaultPicker?.section === 'experience') {
       const newItems = [...(localResume.experience || []), { 
         heading: item.organization ? `${item.title} @ ${item.organization}` : item.title, 
         content: item.description, 
         bullets: item.bullets && item.bullets.length > 0 ? item.bullets : ["• Quantifying tactical impact..."] 
       }];
-      setLocalResume({ ...localResume, experience: newItems });
+      updatedResume = { ...localResume, experience: newItems };
     } else if (showVaultPicker?.section === 'projects') {
       const projects = localResume.projects || [];
       const newItems = [...projects, { 
@@ -194,7 +196,7 @@ export const ResumePreview = ({
         content: item.description, 
         bullets: item.bullets && item.bullets.length > 0 ? item.bullets : ["• Quantifying project outcomes..."] 
       }];
-      setLocalResume({ ...localResume, projects: newItems });
+      updatedResume = { ...localResume, projects: newItems };
     } else if (showVaultPicker?.section === 'products') {
       const products = localResume.products || [];
       const newItems = [...products, { 
@@ -202,16 +204,18 @@ export const ResumePreview = ({
         content: item.description, 
         bullets: item.bullets && item.bullets.length > 0 ? item.bullets : ["• Quantifying startup growth..."] 
       }];
-      setLocalResume({ ...localResume, products: newItems });
+      updatedResume = { ...localResume, products: newItems };
     } else if (showVaultPicker?.section === 'education') {
       const education = localResume.education || [];
       const eduEntry = item.organization ? `${item.title} - ${item.organization}` : item.title;
-      setLocalResume({ ...localResume, education: [...education, eduEntry] });
+      updatedResume = { ...localResume, education: [...education, eduEntry] };
     } else if (showVaultPicker?.section === 'certifications') {
       const certifications = localResume.certifications || [];
       const certEntry = item.organization ? `${item.title} (${item.organization})` : item.title;
-      setLocalResume({ ...localResume, certifications: [...certifications, certEntry] });
+      updatedResume = { ...localResume, certifications: [...certifications, certEntry] };
     }
+    setLocalResume(updatedResume);
+    onUpdate(updatedResume, localHeader);
     setShowVaultPicker(null);
     toast.success(`Imported ${item.title} from vault!`);
   };
@@ -654,8 +658,8 @@ export const ResumePreview = ({
                           <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
                             <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Professional Summary</h4>
                           </div>
-                          <p className="text-[#1E2A3A]/90 leading-relaxed !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
-                            {localResume.professional_summary}
+                          <p className="text-[#1E2A3A]/90 leading-relaxed !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
+                            {limitSummarySentences(localResume.professional_summary, summaryLines)}
                           </p>
                         </section>
                       )}
@@ -716,7 +720,7 @@ export const ResumePreview = ({
                                 </div>
                                 <ul className="list-disc ml-5 space-y-0.5 pt-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                   {(exp.bullets || []).map((bullet, bullIdx) => (
-                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
+                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
                                       {bullet.replace(/^[•\s*-]+/, '').trim()}
                                     </li>
                                   ))}
@@ -746,7 +750,7 @@ export const ResumePreview = ({
                                   </div>
                                   <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                     {(prod.bullets || []).map((bullet, bullIdx) => (
-                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
+                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
                                         {bullet.replace(/^[•\s*-]+/, '').trim()}
                                       </li>
                                     ))}
@@ -793,7 +797,7 @@ export const ResumePreview = ({
                                   </div>
                                   <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                     {(proj.bullets || []).map((bullet, bullIdx) => (
-                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
+                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
                                         {bullet.replace(/^[•\s*-]+/, '').trim()}
                                       </li>
                                     ))}
@@ -820,7 +824,7 @@ export const ResumePreview = ({
                                 </div>
                                 <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                   {(lead.bullets || []).map((bullet, bullIdx) => (
-                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
+                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
                                       {bullet.replace(/^[•\s*-]+/, '').trim()}
                                     </li>
                                   ))}

@@ -285,7 +285,7 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.
 - Quantify EVERYTHING. Use metrics (%, $, time, scale) in every bullet.
 - Use strong action verbs (Spearheaded, Orchestrated, Engineered).
 - DATE FORMAT: Use 3-letter month abbreviations ONLY (e.g., "Jan 2024", "May 2027", "Aug 2023 – Present"- SECTION DENSITY & DYNAMIC EXPANSION MANDATES (CRITICAL):
-    - PROFESSIONAL SUMMARY: You MUST synthesize a high-impact professional summary of EXACTLY ${summaryLines} sentences. Do NOT use the placeholder text "High-density strategic overview" under any circumstances. You must compose it dynamically based on the Candidate Profile's experience and target skills.
+    - PROFESSIONAL SUMMARY: You MUST synthesize a high-impact professional summary of EXACTLY ${summaryLines} sentences. Keep each sentence extremely concise (under 18-20 words) so that the entire summary fits beautifully within ${summaryLines} lines without excessive wrapping. Do NOT use the placeholder text "High-density strategic overview" under any circumstances. You must compose it dynamically based on the Candidate Profile's experience and target skills.
     - EXPERIENCE BULLETS: Every single role in EXPERIENCE must have EXACTLY ${experienceBullets} bullet points. If the Candidate Profile's entry has fewer than ${experienceBullets} bullets, you MUST expand, elaborate, or split them to generate exactly ${experienceBullets} quantified, metric-driven bullet points.
     - PROJECT BULLETS: Every single project in PROJECTS must have EXACTLY ${projectLines} bullet points. Expand or elaborate to generate exactly ${projectLines} metric-driven bullet points.
     - PRODUCT/STARTUP BULLETS: Every single product in PRODUCTS must have EXACTLY ${productLines} bullet points. Expand or elaborate to generate exactly ${productLines} metric-driven bullet points.
@@ -802,12 +802,18 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
             pdf.setTextColor(0, 0, 0);
             pdf.setFont(currentFont, "normal");
             pdf.setFontSize(bodyFontSize);
-            const lines = pdf.splitTextToSize(editableResume.professional_summary, contentWidth);
-            lines.forEach((line: string) => {
-              checkPageBreak(getLineHeight(bodyFontSize, 1.25));
-              pdf.text(line, margin, y);
-              y += getLineHeight(bodyFontSize, 1.2);
+            const limitedSummary = limitSummarySentences(editableResume.professional_summary, summaryLines);
+            const lines = pdf.splitTextToSize(limitedSummary, contentWidth);
+            const summaryHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+            checkPageBreak(summaryHeight);
+            pdf.text(limitedSummary, margin, y, {
+              align: "justify",
+              maxWidth: contentWidth
             });
+            if (pdf.internal && typeof pdf.internal.write === 'function') {
+              pdf.internal.write(0, "Tw");
+            }
+            y += summaryHeight;
             y += 0.5;
           }
 
@@ -895,17 +901,18 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                 pdf.setFontSize(bodyFontSize);
                 const cleanBullet = bullet.replace(/^[•\s*-]+/, '').trim();
                 const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
+                const bulletHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
                 
-                // Draw the bullet point symbol
-                checkPageBreak(getLineHeight(bodyFontSize, 1.25));
+                checkPageBreak(bulletHeight);
                 pdf.text("•", margin + 1.5, y);
-                
-                // Draw each line of the wrapped bullet text
-                lines.forEach((line: string) => {
-                  checkPageBreak(getLineHeight(bodyFontSize, 1.25));
-                  pdf.text(line, margin + 4.5, y);
-                  y += getLineHeight(bodyFontSize, 1.2);
+                pdf.text(cleanBullet, margin + 4.5, y, {
+                  align: "justify",
+                  maxWidth: contentWidth - 4.5
                 });
+                if (pdf.internal && typeof pdf.internal.write === 'function') {
+                  pdf.internal.write(0, "Tw");
+                }
+                y += bulletHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
             });
@@ -955,17 +962,18 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                 pdf.setFontSize(bodyFontSize);
                 const cleanBullet = bullet.replace(/^[•\s*-]+/, '').trim();
                 const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
+                const bulletHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
                 
-                // Draw the bullet point symbol
-                checkPageBreak(getLineHeight(bodyFontSize, 1.25));
+                checkPageBreak(bulletHeight);
                 pdf.text("•", margin + 1.5, y);
-                
-                // Draw each line of the wrapped bullet text
-                lines.forEach((line: string) => {
-                  checkPageBreak(getLineHeight(bodyFontSize, 1.25));
-                  pdf.text(line, margin + 4.5, y);
-                  y += getLineHeight(bodyFontSize, 1.2);
+                pdf.text(cleanBullet, margin + 4.5, y, {
+                  align: "justify",
+                  maxWidth: contentWidth - 4.5
                 });
+                if (pdf.internal && typeof pdf.internal.write === 'function') {
+                  pdf.internal.write(0, "Tw");
+                }
+                y += bulletHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
             });
@@ -1025,17 +1033,18 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                 pdf.setFontSize(bodyFontSize);
                 const cleanBullet = bullet.replace(/^[•\s*-]+/, '').trim();
                 const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
+                const bulletHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
                 
-                // Draw the bullet point symbol
-                checkPageBreak(getLineHeight(bodyFontSize, 1.25));
+                checkPageBreak(bulletHeight);
                 pdf.text("•", margin + 1.5, y);
-                
-                // Draw each line of the wrapped bullet text
-                lines.forEach((line: string) => {
-                  checkPageBreak(getLineHeight(bodyFontSize, 1.25));
-                  pdf.text(line, margin + 4.5, y);
-                  y += getLineHeight(bodyFontSize, 1.2);
+                pdf.text(cleanBullet, margin + 4.5, y, {
+                  align: "justify",
+                  maxWidth: contentWidth - 4.5
                 });
+                if (pdf.internal && typeof pdf.internal.write === 'function') {
+                  pdf.internal.write(0, "Tw");
+                }
+                y += bulletHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
             });
@@ -1069,17 +1078,18 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                 pdf.setFontSize(bodyFontSize);
                 const cleanBullet = bullet.replace(/^[•\s*-]+/, '').trim();
                 const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
+                const bulletHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
                 
-                // Draw the bullet point symbol
-                checkPageBreak(getLineHeight(bodyFontSize, 1.25));
+                checkPageBreak(bulletHeight);
                 pdf.text("•", margin + 1.5, y);
-                
-                // Draw each line of the wrapped bullet text
-                lines.forEach((line: string) => {
-                  checkPageBreak(getLineHeight(bodyFontSize, 1.25));
-                  pdf.text(line, margin + 4.5, y);
-                  y += getLineHeight(bodyFontSize, 1.2);
+                pdf.text(cleanBullet, margin + 4.5, y, {
+                  align: "justify",
+                  maxWidth: contentWidth - 4.5
                 });
+                if (pdf.internal && typeof pdf.internal.write === 'function') {
+                  pdf.internal.write(0, "Tw");
+                }
+                y += bulletHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
             });
