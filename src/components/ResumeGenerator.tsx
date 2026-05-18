@@ -860,11 +860,9 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
 
         const limitSummarySentences = (summaryText: string, maxSentences: number): string => {
           if (!summaryText) return "";
-          const sentences = summaryText.split(/\.\s+/).filter(Boolean);
-          return sentences
-            .slice(0, maxSentences)
-            .map(s => s.trim() + (s.trim().endsWith(".") ? "" : "."))
-            .join(" ");
+          const sentences = summaryText.match(/[^.!?]+[.!?]+(\s|$)/g) || [summaryText];
+          const cleaned = sentences.map(s => s.trim()).filter(Boolean);
+          return cleaned.slice(0, maxSentences).join(" ");
         };
 
         const limitBullets = (bullets: string[], maxBullets: number): string[] => {
@@ -902,12 +900,10 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
             pdf.setFontSize(bodyFontSize);
             const limitedSummary = sanitizePdfText(limitSummarySentences(editableResume.professional_summary, summaryLines));
             const lines = pdf.splitTextToSize(limitedSummary, contentWidth);
-            lines.forEach((line: string) => {
-              checkPageBreak(getLineHeight(bodyFontSize, 1.2));
-              pdf.text(line, margin, y);
-              y += getLineHeight(bodyFontSize, 1.2);
-            });
-            y += 0.5;
+            const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+            checkPageBreak(neededHeight);
+            pdf.text(limitedSummary, margin, y, { maxWidth: contentWidth, align: "justify" });
+            y += neededHeight + 0.5;
           }
 
           // --- EDUCATION ---
@@ -917,12 +913,18 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               checkPageBreak(10);
               const parts = edu.split('|');
               const mainInfo = parts[0].split('@');
-              const school = mainInfo[1]?.trim() || "University";
               const degree = mainInfo[0]?.trim() || "Degree";
-              const metadata = parts.slice(1).join(' | ');
+              const schoolAndLoc = mainInfo[1] || "";
+              const schoolParts = schoolAndLoc.split(/\s*[-–—]\s*/);
+              const school = schoolParts[0]?.trim() || "University";
+              const loc = schoolParts[1]?.trim() || editableHeader.location || "";
+              
+              const dateText = parts[1]?.trim() || "May 2027";
+              const metadata = parts.slice(2).map(p => p.trim()).filter(Boolean).join(' | ');
 
-              const dateText = "May 2027";
-              const dateWidth = pdf.getTextWidth(dateText);
+              const maxRightWidth = contentWidth * 0.35;
+              const dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
+              const dateWidth = pdf.getTextWidth(dateTextTruncated);
               const maxSchoolWidth = contentWidth - dateWidth - 6;
               const cleanSchool = truncateText(school, maxSchoolWidth, subHeadlineFontSize, true);
 
@@ -932,11 +934,11 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               pdf.text(cleanSchool, margin, y);
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(sanitizePdfText(dateText), pageWidth - margin, y, { align: "right" });
+              pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
               y += getLineHeight(subHeadlineFontSize, 1.25);
 
-              const locText = editableHeader.location || "Gainesville, FL";
-              const locWidth = pdf.getTextWidth(locText);
+              const locTextTruncated = truncateText(loc, maxRightWidth, bodyFontSize - 1, false);
+              const locWidth = pdf.getTextWidth(locTextTruncated);
               const maxDegreeWidth = contentWidth - locWidth - 6;
               const fullDegree = `${degree}${metadata ? ` | ${metadata}` : ""}`;
               const cleanDegree = truncateText(fullDegree, maxDegreeWidth, bodyFontSize, false);
@@ -946,7 +948,7 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               pdf.text(cleanDegree, margin, y);
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(sanitizePdfText(locText), pageWidth - margin, y, { align: "right" });
+              pdf.text(sanitizePdfText(locTextTruncated), pageWidth - margin, y, { align: "right" });
               y += getLineHeight(bodyFontSize, 1.3);
             });
           }
@@ -962,8 +964,10 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               const org = orgParts[0]?.trim() || "Organization";
               const loc = orgParts[1]?.trim() || editableHeader.location;
 
+              const maxRightWidth = contentWidth * 0.35;
               const dateText = exp.content || "Date – Present";
-              const dateWidth = pdf.getTextWidth(dateText);
+              const dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
+              const dateWidth = pdf.getTextWidth(dateTextTruncated);
               const maxRoleWidth = contentWidth - dateWidth - 6;
               const cleanRole = truncateText(role, maxRoleWidth, subHeadlineFontSize, true);
 
@@ -973,11 +977,12 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               pdf.text(cleanRole, margin, y);
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(sanitizePdfText(dateText), pageWidth - margin, y, { align: "right" });
+              pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
               y += getLineHeight(subHeadlineFontSize, 1.25);
 
               const locText = loc || "";
-              const locWidth = pdf.getTextWidth(locText);
+              const locTextTruncated = truncateText(locText, maxRightWidth, bodyFontSize - 1, false);
+              const locWidth = pdf.getTextWidth(locTextTruncated);
               const maxOrgWidth = contentWidth - locWidth - 6;
               const cleanOrg = truncateText(org, maxOrgWidth, bodyFontSize, false);
 
@@ -986,7 +991,7 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               pdf.text(cleanOrg, margin, y);
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(sanitizePdfText(locText), pageWidth - margin, y, { align: "right" });
+              pdf.text(sanitizePdfText(locTextTruncated), pageWidth - margin, y, { align: "right" });
               y += getLineHeight(bodyFontSize, 1.25);
 
               (exp.bullets || []).forEach(bullet => {
@@ -994,15 +999,11 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                 pdf.setFontSize(bodyFontSize);
                 const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
                 const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
-                
-                lines.forEach((line: string, lineIdx: number) => {
-                  checkPageBreak(getLineHeight(bodyFontSize, 1.2));
-                  if (lineIdx === 0) {
-                    pdf.text("•", margin + 1.5, y);
-                  }
-                  pdf.text(line, margin + 4.5, y);
-                  y += getLineHeight(bodyFontSize, 1.2);
-                });
+                const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+                checkPageBreak(neededHeight);
+                pdf.text("•", margin + 1.5, y);
+                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "justify" });
+                y += neededHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
             });
@@ -1018,8 +1019,10 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               const title = headingParts[0]?.trim() || "Product";
               const status = headingParts.slice(1).join(" | ")?.trim();
 
+              const maxRightWidth = contentWidth * 0.35;
               const contentText = prod.content || "Operational";
-              const contentWidthVal = pdf.getTextWidth(contentText);
+              const contentTextTruncated = truncateText(contentText, maxRightWidth, bodyFontSize - 1, false);
+              const contentWidthVal = pdf.getTextWidth(contentTextTruncated);
               
               pdf.setTextColor(0, 0, 0);
               pdf.setFont(currentFont, "bold");
@@ -1044,7 +1047,7 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
 
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(sanitizePdfText(contentText), pageWidth - margin, y, { align: "right" });
+              pdf.text(sanitizePdfText(contentTextTruncated), pageWidth - margin, y, { align: "right" });
               y += getLineHeight(subHeadlineFontSize, 1.25);
 
               (prod.bullets || []).forEach(bullet => {
@@ -1052,15 +1055,11 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                 pdf.setFontSize(bodyFontSize);
                 const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
                 const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
-                
-                lines.forEach((line: string, lineIdx: number) => {
-                  checkPageBreak(getLineHeight(bodyFontSize, 1.2));
-                  if (lineIdx === 0) {
-                    pdf.text("•", margin + 1.5, y);
-                  }
-                  pdf.text(line, margin + 4.5, y);
-                  y += getLineHeight(bodyFontSize, 1.2);
-                });
+                const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+                checkPageBreak(neededHeight);
+                pdf.text("•", margin + 1.5, y);
+                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "justify" });
+                y += neededHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
             });
@@ -1076,8 +1075,10 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               const title = headingParts[0]?.trim() || "Project";
               const stack = headingParts.slice(1).join(" | ")?.trim();
 
+              const maxRightWidth = contentWidth * 0.35;
               const dateText = proj.content || "";
-              const dateWidth = dateText ? pdf.getTextWidth(dateText) : 0;
+              const dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
+              const dateWidth = dateTextTruncated ? pdf.getTextWidth(dateTextTruncated) : 0;
               
               pdf.setTextColor(0, 0, 0);
               pdf.setFont(currentFont, "bold");
@@ -1102,14 +1103,14 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
 
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize - 1);
-              if (dateText) {
-                pdf.text(sanitizePdfText(dateText), pageWidth - margin, y, { align: "right" });
+              if (dateTextTruncated) {
+                pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
                 if (dateText.includes("github.com") || dateText.includes(".com") || dateText.includes(".io") || dateText.includes(".live") || dateText.includes(".dev") || dateText.startsWith("http")) {
                   let linkUrl = dateText.trim();
                   if (!linkUrl.startsWith("http")) {
                     linkUrl = "https://" + linkUrl;
                   }
-                  const textWidth = pdf.getTextWidth(dateText);
+                  const textWidth = pdf.getTextWidth(dateTextTruncated);
                   pdf.link(pageWidth - margin - textWidth, y - 3, textWidth, 4, { url: linkUrl });
                 }
               }
@@ -1120,15 +1121,11 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                 pdf.setFontSize(bodyFontSize);
                 const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
                 const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
-                
-                lines.forEach((line: string, lineIdx: number) => {
-                  checkPageBreak(getLineHeight(bodyFontSize, 1.2));
-                  if (lineIdx === 0) {
-                    pdf.text("•", margin + 1.5, y);
-                  }
-                  pdf.text(line, margin + 4.5, y);
-                  y += getLineHeight(bodyFontSize, 1.2);
-                });
+                const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+                checkPageBreak(neededHeight);
+                pdf.text("•", margin + 1.5, y);
+                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "justify" });
+                y += neededHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
             });
@@ -1140,8 +1137,10 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
             editableResume.leadership.forEach(lead => {
               checkPageBreak(12);
               
+              const maxRightWidth = contentWidth * 0.35;
               const dateText = lead.content || "";
-              const dateWidth = dateText ? pdf.getTextWidth(dateText) : 0;
+              const dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
+              const dateWidth = dateTextTruncated ? pdf.getTextWidth(dateTextTruncated) : 0;
               const maxHeadingWidth = contentWidth - dateWidth - 6;
               const cleanHeading = truncateText(lead.heading, maxHeadingWidth, subHeadlineFontSize, true);
 
@@ -1152,8 +1151,8 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize - 1);
-              if (dateText) {
-                pdf.text(sanitizePdfText(dateText), pageWidth - margin, y, { align: "right" });
+              if (dateTextTruncated) {
+                pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
               }
               y += getLineHeight(subHeadlineFontSize, 1.25);
 
@@ -1162,15 +1161,11 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                 pdf.setFontSize(bodyFontSize);
                 const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
                 const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
-                
-                lines.forEach((line: string, lineIdx: number) => {
-                  checkPageBreak(getLineHeight(bodyFontSize, 1.2));
-                  if (lineIdx === 0) {
-                    pdf.text("•", margin + 1.5, y);
-                  }
-                  pdf.text(line, margin + 4.5, y);
-                  y += getLineHeight(bodyFontSize, 1.2);
-                });
+                const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+                checkPageBreak(neededHeight);
+                pdf.text("•", margin + 1.5, y);
+                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "justify" });
+                y += neededHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
             });
@@ -1274,19 +1269,30 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
               pdf.setTextColor(0, 0, 0);
               pdf.setFont(currentFont, "normal");
               pdf.setFontSize(bodyFontSize);
-              const cleanCert = cert.replace(/^[•\s*-]+/, '').trim();
+              const cleanCert = sanitizePdfText(cert.replace(/^[•\s*-]+/, '').trim());
               const lines = pdf.splitTextToSize(cleanCert, contentWidth - 4.5);
-              
-              // Draw the bullet point symbol
-              checkPageBreak(getLineHeight(bodyFontSize, 1.25));
+              const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+              checkPageBreak(neededHeight);
               pdf.text("•", margin + 1.5, y);
-              
-              // Draw each line of the wrapped certification text
-              lines.forEach((line: string) => {
-                checkPageBreak(getLineHeight(bodyFontSize, 1.25));
-                pdf.text(line, margin + 4.5, y);
-                y += getLineHeight(bodyFontSize, 1.2);
-              });
+              pdf.text(cleanCert, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "justify" });
+              y += neededHeight;
+            });
+          }
+
+          // --- AWARDS ---
+          if (editableResume.awards?.length) {
+            drawSectionHeader("HONORS & AWARDS");
+            editableResume.awards.forEach(award => {
+              pdf.setTextColor(0, 0, 0);
+              pdf.setFont(currentFont, "normal");
+              pdf.setFontSize(bodyFontSize);
+              const cleanAward = sanitizePdfText(award.replace(/^[•\s*-]+/, '').trim());
+              const lines = pdf.splitTextToSize(cleanAward, contentWidth - 4.5);
+              const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+              checkPageBreak(neededHeight);
+              pdf.text("•", margin + 1.5, y);
+              pdf.text(cleanAward, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "justify" });
+              y += neededHeight;
             });
           }
         }

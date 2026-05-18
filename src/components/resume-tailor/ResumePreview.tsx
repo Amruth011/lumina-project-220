@@ -112,6 +112,11 @@ export const ResumePreview = ({
   // ── Core Data State ──
   const [localResume, setLocalResume] = useState<GeneratedResume>(resume);
   const [localHeader, setLocalHeader] = useState<ResumeHeader>(header);
+
+  const updateResumeState = (updated: GeneratedResume) => {
+    setLocalResume(updated);
+    onUpdate(updated, localHeader);
+  };
   
   // ── UI Logic State ──
   const [openSection, setOpenSection] = useState<string | null>("profile");
@@ -362,7 +367,7 @@ export const ResumePreview = ({
               >
                 <textarea 
                   value={localResume.professional_summary} 
-                  onChange={(e) => setLocalResume({...localResume, professional_summary: e.target.value})}
+                  onChange={(e) => updateSummary(e.target.value)}
                   className="w-full min-h-[120px] bg-slate-50/50 border-none rounded-2xl p-4 text-[11px] font-body leading-relaxed outline-none focus:ring-1 ring-lumina-teal/20"
                 />
               </CollapsibleSection>
@@ -377,7 +382,7 @@ export const ResumePreview = ({
                 <div className="space-y-4">
                   {(localResume.experience || []).map((exp, idx) => (
                     <div key={idx} className="p-4 rounded-xl bg-slate-50/50 border border-border/10 space-y-3 relative group/exp">
-                      <button onClick={() => setLocalResume({...localResume, experience: (localResume.experience || []).filter((_, i) => i !== idx)})} className="absolute top-3 right-3 p-1.5 text-red-500 opacity-0 group-hover/exp:opacity-100 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={12} /></button>
+                      <button onClick={() => updateResumeState({...localResume, experience: (localResume.experience || []).filter((_, i) => i !== idx)})} className="absolute top-3 right-3 p-1.5 text-red-500 opacity-0 group-hover/exp:opacity-100 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={12} /></button>
                       <input value={exp.heading} onChange={(e) => updateExperience(idx, 'heading', e.target.value)} className="w-full bg-transparent font-bold text-sm outline-none border-b border-transparent focus:border-lumina-teal/20" />
                       <div className="space-y-2">
                         {exp.bullets?.map((bullet, bullIdx) => (
@@ -403,18 +408,18 @@ export const ResumePreview = ({
                 <div className="space-y-4">
                   {(localResume.products || []).map((prod, idx) => (
                     <div key={idx} className="p-4 rounded-xl bg-slate-50/50 border border-border/10 space-y-3 relative group/prod">
-                      <button onClick={() => setLocalResume({...localResume, products: (localResume.products || []).filter((_, i) => i !== idx)})} className="absolute top-3 right-3 p-1.5 text-red-500 opacity-0 group-hover/prod:opacity-100 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={12} /></button>
+                      <button onClick={() => updateResumeState({...localResume, products: (localResume.products || []).filter((_, i) => i !== idx)})} className="absolute top-3 right-3 p-1.5 text-red-500 opacity-0 group-hover/prod:opacity-100 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={12} /></button>
                       <input value={prod.heading} onChange={(e) => {
                         const newProducts = [...(localResume.products || [])];
                         newProducts[idx] = { ...newProducts[idx], heading: e.target.value };
-                        setLocalResume({ ...localResume, products: newProducts });
+                        updateResumeState({ ...localResume, products: newProducts });
                       }} className="w-full bg-transparent font-bold text-sm outline-none border-b border-transparent focus:border-lumina-teal/20" />
                       <input 
                         value={prod.content || ""} 
                         onChange={(e) => {
                           const newProducts = [...(localResume.products || [])];
                           newProducts[idx] = { ...newProducts[idx], content: e.target.value };
-                          setLocalResume({ ...localResume, products: newProducts });
+                          updateResumeState({ ...localResume, products: newProducts });
                         }} 
                         className="w-full bg-slate-100/50 rounded-lg px-3 py-1.5 text-[11px] font-body outline-none border border-slate-200/30 focus:border-lumina-teal/20" 
                         placeholder="Dates or Link (e.g., Jan 2023 - Present)" 
@@ -443,11 +448,11 @@ export const ResumePreview = ({
                 <div className="space-y-4">
                   {(localResume.projects || []).map((proj, idx) => (
                     <div key={idx} className="p-4 rounded-xl bg-slate-50/50 border border-border/10 space-y-3 relative group/proj">
-                      <button onClick={() => setLocalResume({...localResume, projects: (localResume.projects || []).filter((_, i) => i !== idx)})} className="absolute top-3 right-3 p-1.5 text-red-500 opacity-0 group-hover/proj:opacity-100 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={12} /></button>
+                      <button onClick={() => updateResumeState({...localResume, projects: (localResume.projects || []).filter((_, i) => i !== idx)})} className="absolute top-3 right-3 p-1.5 text-red-500 opacity-0 group-hover/proj:opacity-100 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={12} /></button>
                       <input value={proj.heading} onChange={(e) => {
                         const newProjects = [...(localResume.projects || [])];
                         newProjects[idx] = { ...newProjects[idx], heading: e.target.value };
-                        setLocalResume({ ...localResume, projects: newProjects });
+                        updateResumeState({ ...localResume, projects: newProjects });
                       }} className="w-full bg-transparent font-bold text-sm outline-none border-b border-transparent focus:border-lumina-teal/20" />
                        <div className="flex gap-2">
                         <select 
@@ -468,7 +473,7 @@ export const ResumePreview = ({
                             } else {
                               newProjects[idx] = { ...newProjects[idx], content: "project.live" };
                             }
-                            setLocalResume({ ...localResume, projects: newProjects });
+                            updateResumeState({ ...localResume, projects: newProjects });
                           }}
                           className="bg-slate-100 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none border border-slate-200/30 focus:ring-1 ring-lumina-teal/20"
                         >
@@ -481,7 +486,7 @@ export const ResumePreview = ({
                           onChange={(e) => {
                             const newProjects = [...(localResume.projects || [])];
                             newProjects[idx] = { ...newProjects[idx], content: e.target.value };
-                            setLocalResume({ ...localResume, projects: newProjects });
+                            updateResumeState({ ...localResume, projects: newProjects });
                           }} 
                           className="flex-1 bg-slate-100/50 rounded-lg px-3 py-1.5 text-[11px] font-body outline-none border border-slate-200/30 focus:border-lumina-teal/20" 
                           placeholder={
@@ -516,11 +521,11 @@ export const ResumePreview = ({
                 <div className="space-y-4">
                   {(localResume.leadership || []).map((lead, idx) => (
                     <div key={idx} className="p-4 rounded-xl bg-slate-50/50 border border-border/10 space-y-3 relative group/lead">
-                      <button onClick={() => setLocalResume({...localResume, leadership: (localResume.leadership || []).filter((_, i) => i !== idx)})} className="absolute top-3 right-3 p-1.5 text-red-500 opacity-0 group-hover/lead:opacity-100 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={12} /></button>
+                      <button onClick={() => updateResumeState({...localResume, leadership: (localResume.leadership || []).filter((_, i) => i !== idx)})} className="absolute top-3 right-3 p-1.5 text-red-500 opacity-0 group-hover/lead:opacity-100 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={12} /></button>
                       <input value={lead.heading} onChange={(e) => {
                         const newLead = [...(localResume.leadership || [])];
                         newLead[idx] = { ...newLead[idx], heading: e.target.value };
-                        setLocalResume({ ...localResume, leadership: newLead });
+                        updateResumeState({ ...localResume, leadership: newLead });
                       }} className="w-full bg-transparent font-bold text-sm outline-none border-b border-transparent focus:border-lumina-teal/20" />
                       <div className="space-y-2">
                         {lead.bullets?.map((bullet, bullIdx) => (
@@ -530,13 +535,13 @@ export const ResumePreview = ({
                               const newBullets = [...(newLead[idx].bullets || [])];
                               newBullets[bullIdx] = e.target.value;
                               newLead[idx] = { ...newLead[idx], bullets: newBullets };
-                              setLocalResume({ ...localResume, leadership: newLead });
+                              updateResumeState({ ...localResume, leadership: newLead });
                             }} className="flex-1 bg-white/50 rounded-xl px-3 py-1.5 text-[11px] font-body outline-none min-h-[36px] border border-transparent focus:border-lumina-teal/20" />
                             <button onClick={() => {
                               const newLead = [...(localResume.leadership || [])];
                               const newBullets = (newLead[idx].bullets || []).filter((_, i) => i !== bullIdx);
                               newLead[idx] = { ...newLead[idx], bullets: newBullets };
-                              setLocalResume({ ...localResume, leadership: newLead });
+                              updateResumeState({ ...localResume, leadership: newLead });
                             }} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
                           </div>
                         ))}
@@ -544,7 +549,7 @@ export const ResumePreview = ({
                           const newLead = [...(localResume.leadership || [])];
                           const newBullets = [...(newLead[idx].bullets || []), "New leadership achievement..."];
                           newLead[idx] = { ...newLead[idx], bullets: newBullets };
-                          setLocalResume({ ...localResume, leadership: newLead });
+                          updateResumeState({ ...localResume, leadership: newLead });
                         }} className="text-[8px] font-bold text-lumina-teal flex items-center gap-1 uppercase tracking-widest"><Plus size={10} /> Add Bullet</button>
                       </div>
                     </div>
@@ -565,9 +570,9 @@ export const ResumePreview = ({
                       <input value={edu} onChange={(e) => {
                         const newEdu = [...(localResume.education || [])];
                         newEdu[i] = e.target.value;
-                        setLocalResume({ ...localResume, education: newEdu });
+                        updateResumeState({ ...localResume, education: newEdu });
                       }} className="flex-1 bg-slate-50 rounded-xl px-4 py-2 text-[11px] font-medium outline-none" />
-                      <button onClick={() => setLocalResume({...localResume, education: (localResume.education || []).filter((_, idx) => idx !== i)})} className="p-2 text-red-400"><Minus size={12}/></button>
+                      <button onClick={() => updateResumeState({...localResume, education: (localResume.education || []).filter((_, idx) => idx !== i)})} className="p-2 text-red-400"><Minus size={12}/></button>
                     </div>
                   ))}
                 </div>
@@ -585,12 +590,12 @@ export const ResumePreview = ({
                       <input value={award} onChange={(e) => {
                         const newAwards = [...(localResume.awards || [])];
                         newAwards[i] = e.target.value;
-                        setLocalResume({ ...localResume, awards: newAwards });
+                        updateResumeState({ ...localResume, awards: newAwards });
                       }} className="flex-1 bg-slate-50 rounded-xl px-4 py-2 text-[11px] font-medium outline-none" />
-                      <button onClick={() => setLocalResume({...localResume, awards: (localResume.awards || []).filter((_, idx) => idx !== i)})} className="p-2 text-red-400"><Minus size={12}/></button>
+                      <button onClick={() => updateResumeState({...localResume, awards: (localResume.awards || []).filter((_, idx) => idx !== i)})} className="p-2 text-red-400"><Minus size={12}/></button>
                     </div>
                   ))}
-                  <button onClick={() => setLocalResume({...localResume, awards: [...(localResume.awards || []), "New Award Name"]})} className="text-[8px] font-bold text-lumina-teal flex items-center gap-1 uppercase tracking-widest pt-2"><Plus size={10} /> Add Award</button>
+                  <button onClick={() => updateResumeState({...localResume, awards: [...(localResume.awards || []), "New Award Name"]})} className="text-[8px] font-bold text-lumina-teal flex items-center gap-1 uppercase tracking-widest pt-2"><Plus size={10} /> Add Award</button>
                 </div>
               </CollapsibleSection>
             </div>
@@ -683,22 +688,23 @@ export const ResumePreview = ({
                           {(localResume.education || []).map((edu, i) => {
                             const parts = (edu || "").split('|');
                             const mainInfo = (parts[0] || "").split('@');
-                            const school = mainInfo[1]?.trim() || "University";
                             const degree = mainInfo[0]?.trim() || "Degree";
-                            const metadata = parts.slice(1).join(' | ');
+                            const schoolAndLoc = mainInfo[1] || "";
+                            const schoolParts = schoolAndLoc.split(/\s*[-–—]\s*/);
+                            const school = schoolParts[0]?.trim() || "University";
+                            const loc = schoolParts[1]?.trim() || localHeader.location || "";
+                            const dateText = parts[1]?.trim() || "May 2027";
+                            const metadata = parts.slice(2).map(p => p.trim()).filter(Boolean).join(' | ');
                             
-                            // Try to extract date and location from metadata or edu string
-                            // Template: University Name [Right: Date]
-                            // B.S. Degree | GPA [Right: Location]
                             return (
                               <div key={i} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                 <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.body, fontFamily: 'inherit' }}>
                                   <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{school}</span>
-                                  <span className="flex-shrink-0 text-right ml-4 text-[11px] !font-inherit" style={{ fontFamily: 'inherit' }}>May 2027</span>
+                                  <span className="flex-shrink-0 text-right ml-4 text-[11px] !font-inherit" style={{ fontFamily: 'inherit' }}>{dateText}</span>
                                 </div>
                                 <div className="flex justify-between items-start italic !font-inherit" style={{ fontSize: `calc(${fontSizes.body} - 1px)`, fontFamily: 'inherit' }}>
                                   <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{degree} {metadata && `| ${metadata}`}</span>
-                                  <span className="flex-shrink-0 text-right ml-4 text-[11px] not-italic !font-inherit" style={{ fontFamily: 'inherit' }}>{localHeader.location || ""}</span>
+                                  <span className="flex-shrink-0 text-right ml-4 text-[11px] not-italic !font-inherit" style={{ fontFamily: 'inherit' }}>{loc}</span>
                                 </div>
                               </div>
                             );
@@ -731,7 +737,7 @@ export const ResumePreview = ({
                                 </div>
                                 <ul className="list-disc ml-5 space-y-0.5 pt-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                   {(exp.bullets || []).map((bullet, bullIdx) => (
-                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
+                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
                                       {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                     </li>
                                   ))}
@@ -761,7 +767,7 @@ export const ResumePreview = ({
                                   </div>
                                   <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                     {(prod.bullets || []).map((bullet, bullIdx) => (
-                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
+                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
                                         {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                       </li>
                                     ))}
@@ -808,7 +814,7 @@ export const ResumePreview = ({
                                   </div>
                                   <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                     {(proj.bullets || []).map((bullet, bullIdx) => (
-                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
+                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
                                         {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                       </li>
                                     ))}
@@ -835,7 +841,7 @@ export const ResumePreview = ({
                                 </div>
                                 <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                   {(lead.bullets || []).map((bullet, bullIdx) => (
-                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
+                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
                                       {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                     </li>
                                   ))}
@@ -871,7 +877,7 @@ export const ResumePreview = ({
                           </div>
                           <div className="flex flex-col !font-inherit" style={{ fontFamily: 'inherit', gap: '0.5px' }}>
                             {localResume.certifications?.map((cert, i) => (
-                              <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
+                              <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
                                 • {cert}
                               </p>
                             ))}
@@ -887,7 +893,7 @@ export const ResumePreview = ({
                           </div>
                           <div className="flex flex-col" style={{ gap: '0.5px' }}>
                             {localResume.awards?.map((award, i) => (
-                              <p key={i} className="text-[#1E2A3A]/90 leading-tight text-left" style={{ fontSize: fontSizes.body, textAlign: 'left', margin: 0, padding: 0 }}>
+                              <p key={i} className="text-[#1E2A3A]/90 leading-tight text-justify" style={{ fontSize: fontSizes.body, textAlign: 'justify', margin: 0, padding: 0 }}>
                                 • {award}
                               </p>
                             ))}
