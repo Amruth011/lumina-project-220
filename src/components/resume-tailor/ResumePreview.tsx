@@ -134,6 +134,14 @@ export const ResumePreview = ({
     }
   }, [localResume, localHeader, bodyFontSize, nameFontSize]);
 
+  if (!localResume || !localHeader) {
+    return (
+      <div className="flex items-center justify-center p-12 bg-white/50 backdrop-blur-md rounded-[2.5rem] border border-slate-200/50 min-h-[300px]">
+        <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em] animate-pulse">Synthesizing Executive Blueprint...</p>
+      </div>
+    );
+  }
+
   const updateHeader = (field: keyof ResumeHeader, value: string) => {
     const updated = { ...localHeader, [field]: value };
     setLocalHeader(updated);

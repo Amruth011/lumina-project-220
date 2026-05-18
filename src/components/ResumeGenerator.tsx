@@ -274,7 +274,15 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     
     setResume(hydratedContent);
     setEditableResume(hydratedContent);
-    setEditableHeader(record.header_data);
+    setEditableHeader(record.header_data || {
+      fullName: user?.user_metadata?.full_name || "Resume Candidate",
+      email: user?.email || "",
+      phone: "",
+      location: "",
+      linkedin: "",
+      portfolio: "",
+      github: ""
+    });
     
     if (record.settings) {
       setFontFamily(record.settings.fontFamily as "Inter" | "Roboto" | "Merriweather" | "Arial");
