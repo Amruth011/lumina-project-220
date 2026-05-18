@@ -1408,74 +1408,336 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
   const handleDownloadDOC = () => {
     if (!resume || !editableResume) return;
     try {
+      const getHtmlFont = (font: string) => {
+        switch(font) {
+          case "Inter": return "Inter, sans-serif";
+          case "Roboto": return "Roboto, sans-serif";
+          case "Merriweather": return "Merriweather, serif";
+          case "Arial": return "Arial, sans-serif";
+          default: return "Inter, sans-serif";
+        }
+      };
+
+      const limitSummarySentences = (summaryText: string, maxSentences: number): string => {
+        if (!summaryText) return "";
+        const sentences = summaryText.split(/\.\s+/).filter(Boolean);
+        return sentences
+          .slice(0, maxSentences)
+          .map(s => s.trim() + (s.trim().endsWith(".") ? "" : "."))
+          .join(" ");
+      };
+
+      const headerMeta = [
+        editableHeader.location,
+        editableHeader.phone,
+        editableHeader.email,
+        editableHeader.linkedin ? `LinkedIn: ${editableHeader.linkedin.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/$/, '')}` : '',
+        editableHeader.github ? `GitHub: ${editableHeader.github.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/$/, '')}` : '',
+        editableHeader.portfolio ? `Portfolio: ${editableHeader.portfolio.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/$/, '')}` : ''
+      ].filter(Boolean).join(" &nbsp;|&nbsp; ");
+
+      // Section templates mirroring ResumePreview structure perfectly
+      const summaryHtml = editableResume.professional_summary ? `
+        <div class="section-title-container">
+          <h2 class="section-title">Professional Summary</h2>
+        </div>
+        <p class="summary-text">${limitSummarySentences(editableResume.professional_summary, summaryLines)}</p>
+      ` : "";
+
+      const educationHtml = (editableResume.education && editableResume.education.length > 0) ? `
+        <div class="section-title-container">
+          <h2 class="section-title">Education</h2>
+        </div>
+        ${editableResume.education.map(edu => {
+          const parts = (edu || "").split('|');
+          const mainInfo = (parts[0] || "").split('@');
+          const degree = mainInfo[0]?.trim() || "Degree";
+          const schoolAndLoc = mainInfo[1] || "";
+          const schoolParts = schoolAndLoc.split(/\s*[-–—]\s*/);
+          const school = schoolParts[0]?.trim() || "University";
+          const loc = schoolParts[1]?.trim() || editableHeader.location || "";
+          const dateText = parts[1]?.trim() || "May 2027";
+          const metadata = parts.slice(2).map(p => p.trim()).filter(Boolean).join(' | ');
+
+          return `
+            <table class="meta-table">
+              <tr>
+                <td style="text-align: left; font-weight: bold; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${school}</td>
+                <td style="text-align: right; font-weight: bold; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
+              </tr>
+              <tr>
+                <td style="text-align: left; font-style: italic; font-size: ${bodyFontSize - 1}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${degree} ${metadata ? `| ${metadata}` : ''}</td>
+                <td style="text-align: right; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${loc}</td>
+              </tr>
+            </table>
+          `;
+        }).join("")}
+      ` : "";
+
+      const experienceHtml = (editableResume.experience && editableResume.experience.length > 0) ? `
+        <div class="section-title-container">
+          <h2 class="section-title">Experience</h2>
+        </div>
+        ${editableResume.experience.map(exp => {
+          const parts = (exp.heading || "").split('@');
+          const role = parts[0]?.trim() || "Role";
+          const orgParts = (parts[1] || "").split('-');
+          const org = orgParts[0]?.trim() || "Organization";
+          const location = orgParts[1]?.trim() || editableHeader.location || "";
+          const bulletsToRender = exp.bullets || [];
+
+          return `
+            <table class="meta-table">
+              <tr>
+                <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${role}</td>
+                <td style="text-align: right; font-weight: bold; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${exp.content || "Date – Present"}</td>
+              </tr>
+              <tr>
+                <td style="text-align: left; font-style: italic; font-size: ${bodyFontSize - 1}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${org}</td>
+                <td style="text-align: right; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${location}</td>
+              </tr>
+            </table>
+            ${bulletsToRender.length > 0 ? `
+              <ul class="bullet-list">
+                ${bulletsToRender.map(bullet => `
+                  <li class="bullet-item">${(bullet || "").replace(/^[•\s*-]+/, '').trim()}</li>
+                `).join("")}
+              </ul>
+            ` : ""}
+          `;
+        }).join("")}
+      ` : "";
+
+      const productsHtml = (editableResume.products && editableResume.products.length > 0) ? `
+        <div class="section-title-container">
+          <h2 class="section-title">Products & Ventures</h2>
+        </div>
+        ${editableResume.products.map(prod => {
+          const headingParts = (prod.heading || "").split(/\s*[-–—]\s*/);
+          const title = headingParts[0] || "Product";
+          const status = headingParts.slice(1).join(" | ");
+          const bulletsToRender = prod.bullets || [];
+
+          return `
+            <table class="meta-table">
+              <tr>
+                <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">
+                  ${title?.trim()} <span style="font-weight: normal; opacity: 0.6; font-family: ${getHtmlFont(fontFamily)};">| ${status?.trim()}</span>
+                </td>
+                <td style="text-align: right; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${prod.content || "Operational"}</td>
+              </tr>
+            </table>
+            ${bulletsToRender.length > 0 ? `
+              <ul class="bullet-list">
+                ${bulletsToRender.map(bullet => `
+                  <li class="bullet-item">${(bullet || "").replace(/^[•\s*-]+/, '').trim()}</li>
+                `).join("")}
+              </ul>
+            ` : ""}
+          `;
+        }).join("")}
+      ` : "";
+
+      const projectsHtml = (editableResume.projects && editableResume.projects.length > 0) ? `
+        <div class="section-title-container">
+          <h2 class="section-title">Projects</h2>
+        </div>
+        ${editableResume.projects.map(proj => {
+          const headingParts = (proj.heading || "").split(/\s*[-–—]\s*/);
+          const title = headingParts[0] || "Project";
+          const stack = headingParts.slice(1).join(" | ");
+          const bulletsToRender = proj.bullets || [];
+
+          const projectLinkHtml = proj.content ? `
+            ${(proj.content.includes("github.com") || proj.content.includes(".com") || proj.content.includes(".io") || proj.content.includes(".live") || proj.content.includes(".dev") || proj.content.startsWith("http")) ? `
+              <a href="${proj.content.startsWith("http") ? proj.content : `https://${proj.content}`}" style="color: #0d9488; text-decoration: underline; font-family: ${getHtmlFont(fontFamily)};">${proj.content}</a>
+            ` : `
+              <span style="font-family: ${getHtmlFont(fontFamily)};">${proj.content}</span>
+            `}
+          ` : `
+            <span style="font-family: ${getHtmlFont(fontFamily)};">Ongoing</span>
+          `;
+
+          return `
+            <table class="meta-table">
+              <tr>
+                <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">
+                  ${title?.trim()} <span style="font-weight: normal; opacity: 0.6; font-family: ${getHtmlFont(fontFamily)};">| ${stack?.trim()}</span>
+                </td>
+                <td style="text-align: right; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${projectLinkHtml}</td>
+              </tr>
+            </table>
+            ${bulletsToRender.length > 0 ? `
+              <ul class="bullet-list">
+                ${bulletsToRender.map(bullet => `
+                  <li class="bullet-item">${(bullet || "").replace(/^[•\s*-]+/, '').trim()}</li>
+                `).join("")}
+              </ul>
+            ` : ""}
+          `;
+        }).join("")}
+      ` : "";
+
+      const leadershipHtml = (editableResume.leadership && editableResume.leadership.length > 0) ? `
+        <div class="section-title-container">
+          <h2 class="section-title">Leadership</h2>
+        </div>
+        ${editableResume.leadership.map(lead => {
+          const bulletsToRender = lead.bullets || [];
+
+          return `
+            <table class="meta-table">
+              <tr>
+                <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${lead.heading || "Role"}</td>
+                <td style="text-align: right; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${lead.content || "Date – Present"}</td>
+              </tr>
+            </table>
+            ${bulletsToRender.length > 0 ? `
+              <ul class="bullet-list">
+                ${bulletsToRender.map(bullet => `
+                  <li class="bullet-item">${(bullet || "").replace(/^[•\s*-]+/, '').trim()}</li>
+                `).join("")}
+              </ul>
+            ` : ""}
+          `;
+        }).join("")}
+      ` : "";
+
+      const skillsHtml = (editableResume.skills_section && editableResume.skills_section.length > 0) ? `
+        <div class="section-title-container">
+          <h2 class="section-title">Skills</h2>
+        </div>
+        ${editableResume.skills_section.map(skillLine => {
+          const [category, skills] = (skillLine || "").split(':');
+          return `
+            <p class="skills-category">
+              <span class="skills-label">${(category || "").trim()}:</span> ${(skills || "").trim()}
+            </p>
+          `;
+        }).join("")}
+      ` : "";
+
+      const certificationsHtml = (editableResume.certifications && editableResume.certifications.length > 0) ? `
+        <div class="section-title-container">
+          <h2 class="section-title">Certifications</h2>
+        </div>
+        <ul class="bullet-list">
+          ${editableResume.certifications.map(cert => `
+            <li class="bullet-item">${cert}</li>
+          `).join("")}
+        </ul>
+      ` : "";
+
+      const awardsHtml = (editableResume.awards && editableResume.awards.length > 0) ? `
+        <div class="section-title-container">
+          <h2 class="section-title">Awards</h2>
+        </div>
+        <ul class="bullet-list">
+          ${editableResume.awards.map(award => `
+            <li class="bullet-item">${award}</li>
+          `).join("")}
+        </ul>
+      ` : "";
+
       const content = `
         <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
         <head>
           <meta charset='utf-8'>
           <title>Resume - ${editableHeader.fullName}</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
           <style>
-            body { font-family: Arial, sans-serif; line-height: 1.4; color: #333; margin: 0.5in; }
-            h1 { font-size: 24pt; text-align: center; margin-bottom: 0; text-transform: uppercase; }
-            .header-meta { text-align: center; font-size: 10pt; color: #666; margin-bottom: 20px; }
-            h2 { font-size: 14pt; border-bottom: 1px solid #ccc; margin-top: 20px; text-transform: uppercase; }
-            h3 { font-size: 12pt; margin-bottom: 5px; }
-            p { font-size: 11pt; margin-bottom: 10px; }
-            ul { margin-bottom: 15px; }
-            li { font-size: 11pt; margin-bottom: 5px; }
+            @page {
+              size: A4;
+              margin: ${marginSize}in;
+            }
+            body {
+              font-family: ${getHtmlFont(fontFamily)};
+              line-height: ${lineSpacing};
+              color: #1E2A3A;
+              margin: 0;
+              padding: 0;
+            }
+            .section-title-container {
+              border-bottom: 1.5px solid #1E2A3A;
+              padding-bottom: 2px;
+              margin-top: 14px;
+              margin-bottom: 6px;
+            }
+            .section-title {
+              font-size: ${headlineFontSize}px;
+              font-weight: bold;
+              text-transform: uppercase;
+              color: #1E2A3A;
+              margin: 0;
+              padding: 0;
+              letter-spacing: 1px;
+            }
+            p.summary-text {
+              font-size: ${bodyFontSize}px;
+              color: #1E2A3A;
+              text-align: justify;
+              margin: 0;
+              padding: 0;
+            }
+            table.meta-table {
+              width: 100%;
+              border: none;
+              border-collapse: collapse;
+              margin-top: 4px;
+              margin-bottom: 2px;
+            }
+            table.meta-table td {
+              padding: 0;
+              vertical-align: top;
+            }
+            ul.bullet-list {
+              margin: 2px 0 6px 0;
+              padding-left: 18px;
+              list-style-type: disc;
+            }
+            li.bullet-item {
+              font-size: ${bodyFontSize}px;
+              color: #1E2A3A;
+              line-height: 1.25;
+              text-align: justify;
+              margin-bottom: 2px;
+            }
+            .skills-category {
+              font-size: ${bodyFontSize}px;
+              color: #1E2A3A;
+              margin: 0 0 2px 0;
+              padding: 0;
+              text-align: left;
+            }
+            .skills-label {
+              font-weight: bold;
+            }
           </style>
         </head>
         <body>
-          <h1>${editableHeader.fullName}</h1>
-          <div class="header-meta">
-            ${editableHeader.location ? `${editableHeader.location} | ` : ""}${editableHeader.phone ? `${editableHeader.phone} | ` : ""}${editableHeader.email}
-            <br/>
-            ${editableHeader.linkedin ? `LinkedIn: ${editableHeader.linkedin} ` : ""}${editableHeader.github ? `| GitHub: ${editableHeader.github} ` : ""}${editableHeader.portfolio ? `| Portfolio: ${editableHeader.portfolio}` : ""}
+          <h1 style="font-size: ${nameFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)}; font-weight: bold; text-align: center; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px;">
+            ${editableHeader.fullName || "Your Name"}
+          </h1>
+          <div style="text-align: center; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)}; margin-bottom: 20px; line-height: 1.4;">
+            ${headerMeta}
           </div>
           
-          <h2>Professional Summary</h2>
-          <p>${editableResume.professional_summary}</p>
-          
-          <h2>Core Competencies</h2>
-          <p>${editableResume.skills_section.join(" • ")}</p>
-          
-          <h2>Experience</h2>
-          ${editableResume.experience?.map(exp => `
-            <div>
-              <h3>${exp.heading}</h3>
-              ${exp.content ? `<p><i>${exp.content}</i></p>` : ""}
-              <ul>
-                ${exp.bullets?.map(bullet => `<li>${bullet}</li>`).join("")}
-              </ul>
-            </div>
-          `).join("")}
-          
-          ${editableResume.projects && editableResume.projects.length > 0 ? `
-            <h2>Key Projects</h2>
-            ${editableResume.projects.map(proj => `
-              <div>
-                <h3>${proj.heading}</h3>
-                ${proj.content ? `<p><i>${proj.content}</i></p>` : ""}
-                <ul>
-                  ${proj.bullets?.map(bullet => `<li>${bullet}</li>`).join("")}
-                </ul>
-              </div>
-            `).join("")}
-          ` : ""}
-          
-          <h2>Education</h2>
-          ${editableResume.education?.map(edu => `<p>${edu}</p>`).join("")}
-          
-          ${editableResume.certifications && editableResume.certifications.length > 0 ? `
-            <h2>Certifications</h2>
-            ${editableResume.certifications.map(cert => `<p>${cert}</p>`).join("")}
-          ` : ""}
+          ${summaryHtml}
+          ${educationHtml}
+          ${experienceHtml}
+          ${productsHtml}
+          ${projectsHtml}
+          ${leadershipHtml}
+          ${skillsHtml}
+          ${certificationsHtml}
+          ${awardsHtml}
         </body>
         </html>
       `;
 
-      const safeName = (editableHeader.fullName || profile?.full_name || "Resume").replace(/[^a-z0-9]/gi, '_');
-      
-      // Use Data URI for maximum browser compatibility with filenames
+      const safeName = (editableHeader.fullName || "Resume").replace(/[^a-z0-9]/gi, '_');
       const encodedContent = encodeURIComponent(content);
       const dataUri = `data:application/vnd.ms-word;charset=utf-8,\ufeff${encodedContent}`;
       
