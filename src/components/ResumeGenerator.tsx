@@ -76,6 +76,86 @@ const parseProductOrProjectContent = (contentStr: string) => {
   };
 };
 
+const measureOrDrawRightSideLinks = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  pdf: any,
+  statusOrYear: string,
+  urls: string[],
+  y: number,
+  margin: number,
+  pageWidth: number,
+  bodyFontSize: number,
+  currentFont: string,
+  draw = true
+): number => {
+  pdf.setFont(currentFont, "normal");
+  pdf.setFontSize(bodyFontSize - 1);
+
+  const segments: Array<{ text: string; isLink: boolean; url?: string }> = [];
+
+  if (statusOrYear) {
+    segments.push({ text: statusOrYear, isLink: false });
+  }
+
+  urls.forEach(url => {
+    const isGithub = url.toLowerCase().includes("github.com");
+    const label = isGithub ? "GitHub" : "Live Link";
+    const href = url.startsWith("http") ? url : `https://${url}`;
+    segments.push({ text: label, isLink: true, url: href });
+  });
+
+  let totalWidth = 0;
+  const spacing = pdf.getTextWidth(" | ");
+  
+  const measuredSegments = segments.map(seg => {
+    const width = pdf.getTextWidth(seg.text);
+    return { ...seg, width };
+  });
+
+  measuredSegments.forEach((seg, idx) => {
+    totalWidth += seg.width;
+    if (idx < measuredSegments.length - 1) {
+      totalWidth += spacing;
+    }
+  });
+
+  if (!draw) {
+    return totalWidth;
+  }
+
+  let currentX = pageWidth - margin - totalWidth;
+
+  measuredSegments.forEach((seg, idx) => {
+    if (seg.isLink && seg.url) {
+      pdf.setFont(currentFont, "bold");
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(seg.text, currentX, y);
+      
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(0.15);
+      pdf.line(currentX, y + 0.5, currentX + seg.width, y + 0.5);
+
+      pdf.link(currentX, y - 3, seg.width, 4, { url: seg.url });
+    } else {
+      pdf.setFont(currentFont, "normal");
+      pdf.setTextColor(80, 80, 80);
+      pdf.text(seg.text, currentX, y);
+    }
+
+    currentX += seg.width;
+
+    if (idx < measuredSegments.length - 1) {
+      pdf.setFont(currentFont, "normal");
+      pdf.setTextColor(180, 180, 180);
+      pdf.text(" | ", currentX, y);
+      currentX += spacing;
+    }
+  });
+
+  pdf.setTextColor(0, 0, 0);
+  return totalWidth;
+};
+
 interface ResumeGeneratorProps {
   jdTitle: string;
   jdSkills: Skill[];
@@ -264,7 +344,15 @@ const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3): GeneratedRe
     experience: cleanSections(data.experience),
     education: education,
     products: cleanSections(data.products),
-    projects: cleanSections(data.projects),
+    projects: cleanSections(data.projects).sort((a, b) => {
+      const getYear = (str: string): number => {
+        const raw = (str || "").toLowerCase();
+        if (raw.includes("ongoing") || raw.includes("present")) return 3000;
+        const match = raw.match(/\b(20\d{2})\b/);
+        return match ? parseInt(match[1], 10) : 0;
+      };
+      return getYear(b.content) - getYear(a.content);
+    }),
     leadership: cleanSections(data.leadership),
     certifications: ensureArray(data.certifications).map(c => typeof c === "string" ? c : String(c || "")),
     awards: ensureArray(data.awards).map(a => typeof a === "string" ? a : String(a || ""))
@@ -535,9 +623,10 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.
 - Quantify EVERYTHING. Use metrics (%, $, time, scale) in every bullet.
 - Use strong action verbs (Spearheaded, Orchestrated, Engineered).
 - DATE FORMAT: Use exact dates or month/year formats cleanly as provided (e.g., "January 2023 to March 2025" or "Jul 2022 – Present").
-- PROJECT RELEVANCE SORTING (CRITICAL): In the PROJECTS section, you MUST sort the projects by their similarity/relevance to the Job Target/Job Description. The project that is most closely aligned with the Job Target (e.g., data science, machine learning, AI, etc.) must be placed 1st (index 0 of the projects array), followed by secondary projects.
+- PROJECT DATE SORTING (CRITICAL): In the PROJECTS section, you MUST sort the projects by their date in reverse chronological order (latest/newest projects with the most recent year like 2026, 2025 or 'Ongoing' status placed at the very top/first, followed by older years like 2024, 2023, etc.).
 - SECTION DENSITY & DYNAMIC EXPANSION MANDATES (CRITICAL):
     - PROFESSIONAL SUMMARY: ${summaryPromptRule} You must compose it dynamically based on the Candidate Profile's experience and target skills. If the candidate's experience is a "Data Science Intern", you MUST refer to them as "Data Science Intern" or "Data Scientist" and NEVER hallucinate titles like "AI Engineer Intern" or "AI Intern".
+    - SUMMARY EXPERIENCE TIMELINE ACCURACY (CRITICAL): Do NOT exaggerate or hallucinate the years of experience of the candidate under any circumstances! Count the exact duration of experience based ONLY on their formal experience items in the Candidate Profile. If the candidate has only one internship of 3 months or less than a year of total experience, you MUST NEVER write "X+ years of experience" or "2+ years of experience". Instead, state "Data Science Intern with hands-on experience" or "Data Science professional with hands-on internship experience". Keep it 100% faithful to the actual duration shown in the profile.
     - EXPERIENCE BULLETS: Every single role in EXPERIENCE must have EXACTLY ${experienceBullets} bullet points. If the Candidate Profile's entry has fewer than ${experienceBullets} bullets, you MUST expand, elaborate, or split them to generate exactly ${experienceBullets} quantified, metric-driven bullet points.
     - PROJECT BULLETS: Every single project in PROJECTS must have EXACTLY ${projectLines} bullet points. Expand or elaborate to generate exactly ${projectLines} metric-driven bullet points.
     - PRODUCT/STARTUP BULLETS: Every single product in PRODUCTS must have EXACTLY ${productLines} bullet points. Expand or elaborate to generate exactly ${productLines} metric-driven bullet points.
@@ -1221,17 +1310,24 @@ Return ONLY a JSON object with this exact structure:
               const title = headingParts[0]?.trim() || "Product";
               const status = headingParts.slice(1).join(" | ")?.trim();
 
-              const maxRightWidth = contentWidth * 0.35;
               const parsedContent = parseProductOrProjectContent(prod.content);
-              const contentText = parsedContent.pdfString || "Operational";
-              const contentTextTruncated = truncateText(contentText, maxRightWidth, bodyFontSize - 1, false);
-              const contentWidthVal = pdf.getTextWidth(contentTextTruncated);
+              const rightWidth = measureOrDrawRightSideLinks(
+                pdf,
+                parsedContent.statusOrYear,
+                parsedContent.urls,
+                y,
+                margin,
+                pageWidth,
+                bodyFontSize,
+                currentFont,
+                false // measure first
+              );
               
               pdf.setTextColor(0, 0, 0);
               pdf.setFont(currentFont, "bold");
               pdf.setFontSize(subHeadlineFontSize);
               
-              const maxTitleStackWidth = contentWidth - contentWidthVal - 6;
+              const maxTitleStackWidth = contentWidth - rightWidth - 6;
               const titleWidth = pdf.getTextWidth(title);
               
               if (titleWidth > maxTitleStackWidth) {
@@ -1248,9 +1344,17 @@ Return ONLY a JSON object with this exact structure:
                 }
               }
 
-              pdf.setFont(currentFont, "normal");
-              pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(sanitizePdfText(contentTextTruncated), pageWidth - margin, y, { align: "right" });
+              measureOrDrawRightSideLinks(
+                pdf,
+                parsedContent.statusOrYear,
+                parsedContent.urls,
+                y,
+                margin,
+                pageWidth,
+                bodyFontSize,
+                currentFont,
+                true // draw
+              );
               y += getLineHeight(subHeadlineFontSize, 1.25);
 
               (prod.bullets || []).forEach(bullet => {
@@ -1278,17 +1382,24 @@ Return ONLY a JSON object with this exact structure:
               const title = headingParts[0]?.trim() || "Project";
               const stack = headingParts.slice(1).join(" | ")?.trim();
 
-              const maxRightWidth = contentWidth * 0.35;
               const parsedProj = parseProductOrProjectContent(proj.content);
-              const dateText = parsedProj.pdfString || "";
-              const dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
-              const dateWidth = dateTextTruncated ? pdf.getTextWidth(dateTextTruncated) : 0;
+              const rightWidth = measureOrDrawRightSideLinks(
+                pdf,
+                parsedProj.statusOrYear,
+                parsedProj.urls,
+                y,
+                margin,
+                pageWidth,
+                bodyFontSize,
+                currentFont,
+                false // measure first
+              );
               
               pdf.setTextColor(0, 0, 0);
               pdf.setFont(currentFont, "bold");
               pdf.setFontSize(subHeadlineFontSize);
               
-              const maxTitleStackWidth = contentWidth - dateWidth - 6;
+              const maxTitleStackWidth = contentWidth - rightWidth - 6;
               const titleWidth = pdf.getTextWidth(title);
               
               if (titleWidth > maxTitleStackWidth) {
@@ -1305,19 +1416,17 @@ Return ONLY a JSON object with this exact structure:
                 }
               }
 
-              pdf.setFont(currentFont, "normal");
-              pdf.setFontSize(bodyFontSize - 1);
-              if (dateTextTruncated) {
-                pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
-                if (parsedProj.urls.length > 0) {
-                  let linkUrl = parsedProj.urls[0].trim();
-                  if (!linkUrl.startsWith("http")) {
-                    linkUrl = "https://" + linkUrl;
-                  }
-                  const textWidth = pdf.getTextWidth(dateTextTruncated);
-                  pdf.link(pageWidth - margin - textWidth, y - 3, textWidth, 4, { url: linkUrl });
-                }
-              }
+              measureOrDrawRightSideLinks(
+                pdf,
+                parsedProj.statusOrYear,
+                parsedProj.urls,
+                y,
+                margin,
+                pageWidth,
+                bodyFontSize,
+                currentFont,
+                true // draw
+              );
               y += getLineHeight(subHeadlineFontSize, 1.25);
 
               (proj.bullets || []).forEach(bullet => {

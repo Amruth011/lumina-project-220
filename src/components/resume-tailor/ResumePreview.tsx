@@ -215,8 +215,18 @@ export const ResumePreview = ({
   const [localHeader, setLocalHeader] = useState<ResumeHeader>(header);
 
   const updateResumeState = (updated: GeneratedResume) => {
-    setLocalResume(updated);
-    onUpdate(updated, localHeader);
+    const sortedProjects = [...(updated.projects || [])].sort((a, b) => {
+      const getYear = (str: string): number => {
+        const raw = (str || "").toLowerCase();
+        if (raw.includes("ongoing") || raw.includes("present")) return 3000;
+        const match = raw.match(/\b(20\d{2})\b/);
+        return match ? parseInt(match[1], 10) : 0;
+      };
+      return getYear(b.content) - getYear(a.content);
+    });
+    const nextResume = { ...updated, projects: sortedProjects };
+    setLocalResume(nextResume);
+    onUpdate(nextResume, localHeader);
   };
   
   // ── UI Logic State ──
