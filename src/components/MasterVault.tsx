@@ -211,18 +211,14 @@ export const MasterVault = () => {
     }
   }, [startMonth, startYear, endMonth, endYear, isCurrent, user, editingItem]);
 
-  // Synchronize duration selector changes to editingItem.period
-  useEffect(() => {
-    if (editingItem && (editingItem.type === 'professional' || editingItem.type === 'education')) {
-      const endPart = isCurrent ? "Present" : `${endMonth} ${endYear}`;
-      const periodStr = `${startMonth} ${startYear} – ${endPart}`;
-      setEditingItem(prev => {
-        if (!prev) return null;
-        if (prev.period === periodStr) return prev;
-        return { ...prev, period: periodStr };
-      });
-    }
-  }, [startMonth, startYear, endMonth, endYear, isCurrent, editingItem?.type]);
+  const updateDurationPeriod = (sm: string, sy: string, em: string, ey: string, curr: boolean) => {
+    const endPart = curr ? "Present" : `${em} ${ey}`;
+    const periodStr = `${sm} ${sy} – ${endPart}`;
+    setEditingItem(prev => {
+      if (!prev) return null;
+      return { ...prev, period: periodStr };
+    });
+  };
 
   const handleStartEdit = (item: Partial<VaultItem>) => {
     if (item.type === 'professional' || item.type === 'education') {
@@ -1700,59 +1696,74 @@ RETURN JSON FORMAT ONLY:
                       <label className="text-[10px] uppercase tracking-widest font-black text-primary">Duration Builder Assistant</label>
                       <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
                         <input
-                          type="checkbox"
-                          checked={isCurrent}
-                          onChange={(e) => setIsCurrent(e.target.checked)}
-                          className="rounded border-white/10 text-primary focus:ring-0 w-4 h-4 bg-muted/20"
-                        />
-                        <span>Currently {editingItem.type === 'education' ? 'Studying' : 'Working'} Here (Present)</span>
-                      </label>
+                        type="checkbox"
+                        checked={isCurrent}
+                        onChange={(e) => {
+                          setIsCurrent(e.target.checked);
+                          updateDurationPeriod(startMonth, startYear, endMonth, endYear, e.target.checked);
+                        }}
+                        className="rounded border-white/10 text-primary focus:ring-0 w-4 h-4 bg-muted/20"
+                      />
+                      <span>Currently {editingItem.type === 'education' ? 'Studying' : 'Working'} Here (Present)</span>
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="space-y-1">
+                      <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Start Month</span>
+                      <select
+                        value={startMonth}
+                        onChange={(e) => {
+                          setStartMonth(e.target.value);
+                          updateDurationPeriod(e.target.value, startYear, endMonth, endYear, isCurrent);
+                        }}
+                        className="w-full bg-muted/20 border border-border/40 rounded-xl px-3 py-2 text-xs text-foreground outline-none cursor-pointer"
+                      >
+                        {MONTHS.map(m => <option key={m} value={m} className="bg-background text-foreground">{m}</option>)}
+                      </select>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <div className="space-y-1">
-                        <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Start Month</span>
-                        <select
-                          value={startMonth}
-                          onChange={(e) => setStartMonth(e.target.value)}
-                          className="w-full bg-muted/20 border border-border/40 rounded-xl px-3 py-2 text-xs text-foreground outline-none cursor-pointer"
-                        >
-                          {MONTHS.map(m => <option key={m} value={m} className="bg-background text-foreground">{m}</option>)}
-                        </select>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Start Year</span>
-                        <select
-                          value={startYear}
-                          onChange={(e) => setStartYear(e.target.value)}
-                          className="w-full bg-muted/20 border border-border/40 rounded-xl px-3 py-2 text-xs text-foreground outline-none cursor-pointer"
-                        >
-                          {YEARS.map(y => <option key={y} value={y} className="bg-background text-foreground">{y}</option>)}
-                        </select>
-                      </div>
-                      {!isCurrent && (
-                        <>
-                          <div className="space-y-1 animate-in fade-in duration-300">
-                            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">End Month</span>
-                            <select
-                              value={endMonth}
-                              onChange={(e) => setEndMonth(e.target.value)}
-                              className="w-full bg-muted/20 border border-border/40 rounded-xl px-3 py-2 text-xs text-foreground outline-none cursor-pointer"
-                            >
-                              {MONTHS.map(m => <option key={m} value={m} className="bg-background text-foreground">{m}</option>)}
-                            </select>
-                          </div>
-                          <div className="space-y-1 animate-in fade-in duration-300">
-                            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">End Year</span>
-                            <select
-                              value={endYear}
-                              onChange={(e) => setEndYear(e.target.value)}
-                              className="w-full bg-muted/20 border border-border/40 rounded-xl px-3 py-2 text-xs text-foreground outline-none cursor-pointer"
-                            >
-                              {YEARS.map(y => <option key={y} value={y} className="bg-background text-foreground">{y}</option>)}
-                            </select>
-                          </div>
-                        </>
-                      )}
+                    <div className="space-y-1">
+                      <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Start Year</span>
+                      <select
+                        value={startYear}
+                        onChange={(e) => {
+                          setStartYear(e.target.value);
+                          updateDurationPeriod(startMonth, e.target.value, endMonth, endYear, isCurrent);
+                        }}
+                        className="w-full bg-muted/20 border border-border/40 rounded-xl px-3 py-2 text-xs text-foreground outline-none cursor-pointer"
+                      >
+                        {YEARS.map(y => <option key={y} value={y} className="bg-background text-foreground">{y}</option>)}
+                      </select>
+                    </div>
+                    {!isCurrent && (
+                      <>
+                        <div className="space-y-1 animate-in fade-in duration-300">
+                          <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">End Month</span>
+                          <select
+                            value={endMonth}
+                            onChange={(e) => {
+                              setEndMonth(e.target.value);
+                              updateDurationPeriod(startMonth, startYear, e.target.value, endYear, isCurrent);
+                            }}
+                            className="w-full bg-muted/20 border border-border/40 rounded-xl px-3 py-2 text-xs text-foreground outline-none cursor-pointer"
+                          >
+                            {MONTHS.map(m => <option key={m} value={m} className="bg-background text-foreground">{m}</option>)}
+                          </select>
+                        </div>
+                        <div className="space-y-1 animate-in fade-in duration-300">
+                          <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">End Year</span>
+                          <select
+                            value={endYear}
+                            onChange={(e) => {
+                              setEndYear(e.target.value);
+                              updateDurationPeriod(startMonth, startYear, endMonth, e.target.value, isCurrent);
+                            }}
+                            className="w-full bg-muted/20 border border-border/40 rounded-xl px-3 py-2 text-xs text-foreground outline-none cursor-pointer"
+                          >
+                            {YEARS.map(y => <option key={y} value={y} className="bg-background text-foreground">{y}</option>)}
+                          </select>
+                        </div>
+                      </>
+                    )}
                     </div>
                   </div>
                 )}

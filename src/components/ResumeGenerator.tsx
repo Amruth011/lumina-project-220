@@ -637,7 +637,7 @@ Your goal is to synthesize a high-impact, ATS-optimized resume in the precise "A
 ### CONTEXT:
 Job Target: ${jdTitle} at ${companyName || "this company"}
 Target Skills: ${jdSkills.map(s => s.skill).join(", ")}
-Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.type, title: v.title, org: v.organization, desc: v.description, bullets: v.bullets, github_link: v.github_link, live_link: v.live_link })), null, 2)}
+Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 25).map(v => ({ type: v.type, title: v.title, org: v.organization, period: v.period, desc: v.description, bullets: v.bullets, skills: v.skills, github_link: v.github_link, live_link: v.live_link })), null, 2)}
 
 ### CORE MANDATE:
 - Quantify EVERYTHING. Use metrics (%, $, time, scale) in every bullet.
