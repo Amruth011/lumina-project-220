@@ -209,7 +209,7 @@ export const ResumePreview = ({
   experienceBullets = 3,
   projectLines = 3,
   productLines = 3,
-  marginSize = 1.0,
+  marginSize = 0.5,
   lineSpacing = 1.15
 }: ResumePreviewProps) => {
   // ── Core Data State ──
@@ -300,36 +300,66 @@ export const ResumePreview = ({
 
   const addFromVault = (item: VaultItem) => {
     let updatedResume = { ...localResume };
+    
+    // Clean string helper
+    const cleanBullets = item.bullets && item.bullets.length > 0 
+      ? item.bullets 
+      : (item.description ? [item.description] : []);
+
     if (showVaultPicker?.section === 'experience') {
       const newItems = [...(localResume.experience || []), { 
-        heading: item.organization ? `${item.title} @ ${item.organization}` : item.title, 
-        content: item.description, 
-        bullets: item.bullets && item.bullets.length > 0 ? item.bullets : ["• Quantifying tactical impact..."] 
+        heading: item.organization ? `${item.title} @ ${item.organization} - Remote` : item.title, 
+        content: item.period || "Jan 2023 – Present", 
+        bullets: cleanBullets.length > 0 ? cleanBullets : ["• Spearheaded tactical execution and delivered high-impact outcomes."] 
       }];
       updatedResume = { ...localResume, experience: newItems };
     } else if (showVaultPicker?.section === 'projects') {
       const projects = localResume.projects || [];
+      const techStack = item.skills && item.skills.length > 0 ? item.skills.join(', ') : 'React, Node.js';
+      const year = item.period || new Date().getFullYear().toString();
+      
+      const contentParts = [year];
+      if (item.github_link) contentParts.push(item.github_link.replace(/^https?:\/\//, ''));
+      if (item.live_link) contentParts.push(item.live_link.replace(/^https?:\/\//, ''));
+      const contentStr = contentParts.join(' | ');
+
       const newItems = [...projects, { 
-        heading: item.organization ? `${item.title} @ ${item.organization}` : item.title, 
-        content: item.description, 
-        bullets: item.bullets && item.bullets.length > 0 ? item.bullets : ["• Quantifying project outcomes..."] 
+        heading: `${item.title} - ${techStack}`, 
+        content: contentStr, 
+        bullets: cleanBullets.length > 0 ? cleanBullets : ["• Engineered high-performance technical modules to optimize system stability."] 
       }];
       updatedResume = { ...localResume, projects: newItems };
     } else if (showVaultPicker?.section === 'products') {
       const products = localResume.products || [];
+      const techStack = item.skills && item.skills.length > 0 ? item.skills.join(', ') : 'Next.js, FastAPI';
+      const status = item.period?.toLowerCase().includes('present') || !item.period ? 'Ongoing' : 'Live';
+
+      const contentParts = [status];
+      if (item.github_link) contentParts.push(item.github_link.replace(/^https?:\/\//, ''));
+      if (item.live_link) contentParts.push(item.live_link.replace(/^https?:\/\//, ''));
+      const contentStr = contentParts.join(' | ');
+
       const newItems = [...products, { 
-        heading: item.organization ? `${item.title} @ ${item.organization}` : item.title, 
-        content: item.description, 
-        bullets: item.bullets && item.bullets.length > 0 ? item.bullets : ["• Quantifying startup growth..."] 
+        heading: `${item.title} - ${techStack}`, 
+        content: contentStr, 
+        bullets: cleanBullets.length > 0 ? cleanBullets : ["• Spearheaded product vision and drove exponential user acquisition."] 
       }];
       updatedResume = { ...localResume, products: newItems };
+    } else if (showVaultPicker?.section === 'leadership') {
+      const leadership = localResume.leadership || [];
+      const newItems = [...leadership, { 
+        heading: item.organization ? `${item.title} @ ${item.organization}` : item.title, 
+        content: item.period || "2023 – Present", 
+        bullets: cleanBullets.length > 0 ? cleanBullets : ["• Directed community initiatives and expanded member outreach."] 
+      }];
+      updatedResume = { ...localResume, leadership: newItems };
     } else if (showVaultPicker?.section === 'education') {
       const education = localResume.education || [];
-      const eduEntry = item.organization ? `${item.title} - ${item.organization}` : item.title;
+      const eduEntry = `${item.title} @ ${item.organization || "University"} - Bengaluru, India | ${item.period || "July 2020 – June 2024"} | GPA: 8.0/10`;
       updatedResume = { ...localResume, education: [...education, eduEntry] };
     } else if (showVaultPicker?.section === 'certifications') {
       const certifications = localResume.certifications || [];
-      const certEntry = item.organization ? `${item.title} (${item.organization})` : item.title;
+      const certEntry = `${item.title} (${item.organization || "Issuer"}) - ${item.period || new Date().getFullYear()}`;
       updatedResume = { ...localResume, certifications: [...certifications, certEntry] };
     }
     setLocalResume(updatedResume);
@@ -504,6 +534,19 @@ export const ResumePreview = ({
                       </div>
                     </div>
                   ))}
+                  <button 
+                    onClick={() => updateResumeState({
+                      ...localResume, 
+                      experience: [...(localResume.experience || []), { 
+                        heading: "New Job Role @ Company - Remote", 
+                        content: "Jan 2024 – Present", 
+                        bullets: ["Quantifying new business outcome or technical metric..."] 
+                      }]
+                    })} 
+                    className="text-[9px] font-bold text-lumina-teal flex items-center gap-1.5 uppercase tracking-widest pt-3 border-t border-slate-100 mt-2 w-full justify-center hover:text-slate-800 transition-colors"
+                  >
+                    <Plus size={12} /> Add Experience
+                  </button>
                 </div>
               </CollapsibleSection>
 
@@ -544,6 +587,19 @@ export const ResumePreview = ({
                       </div>
                     </div>
                   ))}
+                  <button 
+                    onClick={() => updateResumeState({
+                      ...localResume, 
+                      products: [...(localResume.products || []), { 
+                        heading: "New Product - Next.js, FastAPI", 
+                        content: "Live | github.com/username/product | product.live", 
+                        bullets: ["Quantifying product achievements or growth metric..."] 
+                      }]
+                    })} 
+                    className="text-[9px] font-bold text-lumina-teal flex items-center gap-1.5 uppercase tracking-widest pt-3 border-t border-slate-100 mt-2 w-full justify-center hover:text-slate-800 transition-colors"
+                  >
+                    <Plus size={12} /> Add Product / Startup
+                  </button>
                 </div>
               </CollapsibleSection>
 
@@ -563,50 +619,16 @@ export const ResumePreview = ({
                         newProjects[idx] = { ...newProjects[idx], heading: e.target.value };
                         updateResumeState({ ...localResume, projects: newProjects });
                       }} className="w-full bg-transparent font-bold text-sm outline-none border-b border-transparent focus:border-lumina-teal/20" />
-                       <div className="flex gap-2">
-                        <select 
-                          value={
-                            proj.content?.includes("github.com") 
-                              ? "github" 
-                              : (proj.content?.startsWith("http") || proj.content?.includes(".com") || proj.content?.includes(".io") || proj.content?.includes(".live") || proj.content?.includes(".dev") || proj.content?.includes(".me"))
-                                ? "live" 
-                                : "dates"
-                          }
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const newProjects = [...(localResume.projects || [])];
-                            if (val === "dates") {
-                              newProjects[idx] = { ...newProjects[idx], content: "Feb 2023 - May 2023" };
-                            } else if (val === "github") {
-                              newProjects[idx] = { ...newProjects[idx], content: "github.com/username/project" };
-                            } else {
-                              newProjects[idx] = { ...newProjects[idx], content: "project.live" };
-                            }
-                            updateResumeState({ ...localResume, projects: newProjects });
-                          }}
-                          className="bg-slate-100 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none border border-slate-200/30 focus:ring-1 ring-lumina-teal/20"
-                        >
-                          <option value="dates">Dates</option>
-                          <option value="github">GitHub</option>
-                          <option value="live">Live Link</option>
-                        </select>
-                        <input 
-                          value={proj.content || ""} 
-                          onChange={(e) => {
-                            const newProjects = [...(localResume.projects || [])];
-                            newProjects[idx] = { ...newProjects[idx], content: e.target.value };
-                            updateResumeState({ ...localResume, projects: newProjects });
-                          }} 
-                          className="flex-1 bg-slate-100/50 rounded-lg px-3 py-1.5 text-[11px] font-body outline-none border border-slate-200/30 focus:border-lumina-teal/20" 
-                          placeholder={
-                            proj.content?.includes("github.com") 
-                              ? "github.com/username/repo" 
-                              : (proj.content?.startsWith("http") || proj.content?.includes(".com") || proj.content?.includes(".io"))
-                                ? "project.live"
-                                : "e.g., Feb 2023 - May 2023"
-                          }
-                        />
-                      </div>
+                      <input 
+                        value={proj.content || ""} 
+                        onChange={(e) => {
+                          const newProjects = [...(localResume.projects || [])];
+                          newProjects[idx] = { ...newProjects[idx], content: e.target.value };
+                          updateResumeState({ ...localResume, projects: newProjects });
+                        }} 
+                        className="w-full bg-slate-100/50 rounded-lg px-3 py-1.5 text-[11px] font-body outline-none border border-slate-200/30 focus:border-lumina-teal/20" 
+                        placeholder="Dates or Link (e.g., 2024 | github.com/username/project | live-site.com)" 
+                      />
                       <div className="space-y-2">
                         {proj.bullets?.map((bullet, bullIdx) => (
                           <div key={bullIdx} className="flex gap-2 items-start group/bull">
@@ -618,6 +640,19 @@ export const ResumePreview = ({
                       </div>
                     </div>
                   ))}
+                  <button 
+                    onClick={() => updateResumeState({
+                      ...localResume, 
+                      projects: [...(localResume.projects || []), { 
+                        heading: "New Project - React, TailwindCSS", 
+                        content: "2024 | github.com/username/project | demo-site.com", 
+                        bullets: ["Quantifying project achievements or technical metric..."] 
+                      }]
+                    })} 
+                    className="text-[9px] font-bold text-lumina-teal flex items-center gap-1.5 uppercase tracking-widest pt-3 border-t border-slate-100 mt-2 w-full justify-center hover:text-slate-800 transition-colors"
+                  >
+                    <Plus size={12} /> Add Project
+                  </button>
                 </div>
               </CollapsibleSection>
 
@@ -626,6 +661,7 @@ export const ResumePreview = ({
                 icon={User} 
                 isOpen={openSection === "leadership"} 
                 onToggle={() => setOpenSection(openSection === "leadership" ? null : "leadership")}
+                action={<button onClick={() => setShowVaultPicker({ section: 'leadership' })} className="text-[8px] font-black uppercase text-lumina-teal flex items-center gap-1"><Plus size={10}/> Vault</button>}
               >
                 <div className="space-y-4">
                   {(localResume.leadership || []).map((lead, idx) => (
@@ -663,6 +699,19 @@ export const ResumePreview = ({
                       </div>
                     </div>
                   ))}
+                  <button 
+                    onClick={() => updateResumeState({
+                      ...localResume, 
+                      leadership: [...(localResume.leadership || []), { 
+                        heading: "Lead Organizer @ TechFest", 
+                        content: "2024", 
+                        bullets: ["New leadership highlight or impact detail..."] 
+                      }]
+                    })} 
+                    className="text-[9px] font-bold text-lumina-teal flex items-center gap-1.5 uppercase tracking-widest pt-3 border-t border-slate-100 mt-2 w-full justify-center hover:text-slate-800 transition-colors"
+                  >
+                    <Plus size={12} /> Add Leadership
+                  </button>
                 </div>
               </CollapsibleSection>
 
@@ -684,6 +733,29 @@ export const ResumePreview = ({
                       <button onClick={() => updateResumeState({...localResume, education: (localResume.education || []).filter((_, idx) => idx !== i)})} className="p-2 text-red-400"><Minus size={12}/></button>
                     </div>
                   ))}
+                  <button onClick={() => updateResumeState({...localResume, education: [...(localResume.education || []), "Btech in Computer Science @ REVA University - Bengaluru, India | July 2020 – June 2024 | GPA: 8.0/10"]})} className="text-[8px] font-bold text-lumina-teal flex items-center gap-1 uppercase tracking-widest pt-2"><Plus size={10} /> Add Education</button>
+                </div>
+              </CollapsibleSection>
+
+              <CollapsibleSection 
+                title="Certifications" 
+                icon={Award} 
+                isOpen={openSection === "certifications"} 
+                onToggle={() => setOpenSection(openSection === "certifications" ? null : "certifications")}
+                action={<button onClick={() => setShowVaultPicker({ section: 'certifications' })} className="text-[8px] font-black uppercase text-lumina-teal flex items-center gap-1"><Plus size={10}/> Vault</button>}
+              >
+                <div className="space-y-2">
+                  {(localResume.certifications || []).map((cert, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <input value={cert} onChange={(e) => {
+                        const newCerts = [...(localResume.certifications || [])];
+                        newCerts[i] = e.target.value;
+                        updateResumeState({ ...localResume, certifications: newCerts });
+                      }} className="flex-1 bg-slate-50 rounded-xl px-4 py-2 text-[11px] font-medium outline-none" />
+                      <button onClick={() => updateResumeState({...localResume, certifications: (localResume.certifications || []).filter((_, idx) => idx !== i)})} className="p-2 text-red-400"><Minus size={12}/></button>
+                    </div>
+                  ))}
+                  <button onClick={() => updateResumeState({...localResume, certifications: [...(localResume.certifications || []), "AWS Solutions Architect (Amazon Web Services) - 2024"]})} className="text-[8px] font-bold text-lumina-teal flex items-center gap-1 uppercase tracking-widest pt-2"><Plus size={10} /> Add Certification</button>
                 </div>
               </CollapsibleSection>
 
@@ -704,7 +776,7 @@ export const ResumePreview = ({
                       <button onClick={() => updateResumeState({...localResume, awards: (localResume.awards || []).filter((_, idx) => idx !== i)})} className="p-2 text-red-400"><Minus size={12}/></button>
                     </div>
                   ))}
-                  <button onClick={() => updateResumeState({...localResume, awards: [...(localResume.awards || []), "New Award Name"]})} className="text-[8px] font-bold text-lumina-teal flex items-center gap-1 uppercase tracking-widest pt-2"><Plus size={10} /> Add Award</button>
+                  <button onClick={() => updateResumeState({...localResume, awards: [...(localResume.awards || []), "Hackathon Winner (Google Cloud) - 2024"]})} className="text-[8px] font-bold text-lumina-teal flex items-center gap-1 uppercase tracking-widest pt-2"><Plus size={10} /> Add Award</button>
                 </div>
               </CollapsibleSection>
             </div>

@@ -267,7 +267,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
 
   // Layout & Blueprint Typography Settings
   const [lineSpacing, setLineSpacing] = useState<1.0 | 1.15 | 1.4>(1.15);
-  const [marginSize, setMarginSize] = useState<0.5 | 1.0>(1.0);
+  const [marginSize, setMarginSize] = useState<0.5 | 1.0>(0.5);
   const [baseFontSize, setBaseFontSize] = useState(11);
   const [sectionOrder, setSectionOrder] = useState<string[]>(['SUMMARY', 'EDUCATION', 'EXPERIENCE', 'PRODUCTS', 'PROJECTS', 'LEADERSHIP', 'SKILLS', 'AWARDS', 'CERTIFICATIONS']);
   const [visibleSections, setVisibleSections] = useState<Record<string, boolean>>({
@@ -491,8 +491,8 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.
     - PROJECTS: Technical builds, open-source contributions, or academic projects. (e.g., 'Kannada Book AI Agent').
     - PRODUCTS: Startups, SaaS products, or ventures founded by the user. (e.g., 'Lumina').
     - NO HALLUCINATIONS: Do NOT create fake professional experience from certifications or projects. If the user has only 1 job in their profile, show ONLY that 1 job in EXPERIENCE. 
-    - STRICT QUANTITY: You MUST generate exactly the number of items provided in the "Candidate Profile" for each category. For example, if there is 1 experience entry provided, generate EXACTLY 1 in the JSON. If there are 3 projects, generate EXACTLY 3. 
-    - DO NOT invent additional entries to "fill space". 
+    - STRICT QUANTITY: You MUST select, tailor, and generate at least 2 to 3 projects from the Candidate Profile/vault items (and up to 4 if present). Never output only 1 project if multiple are available in the Candidate Profile. For experience entries, generate exactly the number of formal employment entries provided.
+    - DO NOT invent additional entries to "fill space" beyond what is provided in the Candidate Profile.
     - DO NOT mix these categories. If an item is a project, it MUST stay in PROJECTS. If it is a startup, it MUST stay in PRODUCTS.
     - DO NOT include certifications/awards in any other section. Keep them in AWARDS or CERTIFICATIONS. (CRITICAL: 'AI Engineer for Data Scientists Associate' or anything from 'DataCamp' is a CERTIFICATION, NOT experience).
     - SKILLS: Must be ONLY keywords and technical terms. NO sentences or descriptive text. Format as "Category: Skill1, Skill2, Skill3".
