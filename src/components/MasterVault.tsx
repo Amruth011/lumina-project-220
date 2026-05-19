@@ -107,6 +107,8 @@ export const MasterVault = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [editingItem, setEditingItem] = useState<Partial<VaultItem> | null>(null);
+  const [expMode, setExpMode] = useState<string>("On-site");
+  const [expLocation, setExpLocation] = useState<string>("");
   const userId = user?.id;
 
   useEffect(() => {
@@ -171,6 +173,54 @@ export const MasterVault = () => {
     }
   }, [editingItem, user]);
 
+  // Persistence for Mode & Location Drafts
+  useEffect(() => {
+    if (user && editingItem?.type === 'professional') {
+      localStorage.setItem(`draft_exp_mode_${user.id}`, expMode);
+      localStorage.setItem(`draft_exp_location_${user.id}`, expLocation);
+    }
+  }, [expMode, expLocation, user, editingItem]);
+
+  const handleStartEdit = (item: Partial<VaultItem>) => {
+    if (item.type === 'professional') {
+      const desc = item.description || "";
+      const lines = desc.split("\n");
+      let parsedMode = "On-site";
+      let parsedLoc = "";
+      
+      const modeLineIdx = lines.findIndex(l => l.trim().toLowerCase().startsWith("mode:"));
+      if (modeLineIdx !== -1) {
+        const line = lines[modeLineIdx].trim();
+        const match = line.match(/mode:\s*([^\s(]+)(?:\s*\(([^)]+)\))?/i);
+        if (match) {
+          const m = match[1].toLowerCase();
+          if (m === 'remote') parsedMode = 'Remote';
+          else if (m === 'offline') parsedMode = 'Offline';
+          else parsedMode = 'On-site';
+          parsedLoc = match[2] || "";
+        }
+      }
+      
+      let cleanDesc = desc;
+      if (modeLineIdx !== -1) {
+        lines.splice(modeLineIdx, 1);
+        cleanDesc = lines.join("\n").trim();
+        if (cleanDesc.toLowerCase().startsWith("description:")) {
+          cleanDesc = cleanDesc.substring("description:".length).trim();
+        }
+      }
+
+      setExpMode(parsedMode);
+      setExpLocation(parsedLoc);
+      setEditingItem({
+        ...item,
+        description: cleanDesc
+      });
+    } else {
+      setEditingItem(item);
+    }
+  };
+
   // Restore drafting item on focus/mount
   useEffect(() => {
     if (user && !editingItem) {
@@ -184,7 +234,14 @@ export const MasterVault = () => {
               skills: Array.isArray(parsed.skills) ? parsed.skills : [],
               bullets: Array.isArray(parsed.bullets) ? parsed.bullets : []
             };
-            setEditingItem(safeItem);
+            handleStartEdit(safeItem);
+
+            if (parsed.type === 'professional') {
+              const savedMode = localStorage.getItem(`draft_exp_mode_${user.id}`);
+              if (savedMode) setExpMode(savedMode);
+              const savedLoc = localStorage.getItem(`draft_exp_location_${user.id}`);
+              if (savedLoc) setExpLocation(savedLoc);
+            }
           }
         } catch (e) {
           console.error("Failed to parse drafted item", e);
@@ -643,11 +700,23 @@ RETURN JSON FORMAT ONLY:
   const handleSaveItem = async () => {
     if (!editingItem || !user) return;
     try {
+      let finalDesc = (editingItem.description || "").trim();
+      if (editingItem.type === 'professional') {
+        if (expMode === "Remote") {
+          finalDesc = `Mode: Remote\n\n${finalDesc}`;
+        } else if (expLocation) {
+          finalDesc = `Mode: ${expMode} (${expLocation})\n\n${finalDesc}`;
+        } else {
+          finalDesc = `Mode: ${expMode}\n\n${finalDesc}`;
+        }
+      }
+
       // Field Sanitization: Remove system fields & detect quantification
-      const hasNumbers = /[\d%]/.test(editingItem.description || "") || (editingItem.bullets || []).some(b => /[\d%]/.test(b));
+      const hasNumbers = /[\d%]/.test(finalDesc) || (editingItem.bullets || []).some(b => /[\d%]/.test(b));
 
       const itemToSave = {
         ...editingItem,
+        description: finalDesc,
         is_quantified: hasNumbers
       };
 
@@ -676,6 +745,8 @@ RETURN JSON FORMAT ONLY:
         icon: <Save className="w-4 h-4 text-emerald-500" />
       });
       localStorage.removeItem(`draft_vault_item_${user.id}`);
+      localStorage.removeItem(`draft_exp_mode_${user.id}`);
+      localStorage.removeItem(`draft_exp_location_${user.id}`);
       setEditingItem(null);
       fetchData();
     } catch (err) {
@@ -1054,7 +1125,7 @@ RETURN JSON FORMAT ONLY:
                 Clear Experience
               </button>
               <button
-                onClick={() => setEditingItem({ type: 'professional', bullets: [], skills: [], title: '', organization: '', period: '', description: '' })}
+                onClick={() => handleStartEdit({ type: 'professional', bullets: [], skills: [], title: '', organization: '', period: '', description: '' })}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all"
               >
                 <Plus size={14} /> Add Role
@@ -1092,7 +1163,7 @@ RETURN JSON FORMAT ONLY:
                     <p className="text-sm leading-relaxed text-foreground/70 line-clamp-3 italic">"{item.description}"</p>
                   </div>
                   <div className="flex gap-2 pt-4 border-t border-white/5 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
-                    <button onClick={() => setEditingItem(item)} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-muted/40 hover:bg-muted text-[10px] font-bold uppercase tracking-widest transition-all"><Edit3 className="w-3.5 h-3.5" /> Edit</button>
+                    <button onClick={() => handleStartEdit(item)} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-muted/40 hover:bg-muted text-[10px] font-bold uppercase tracking-widest transition-all"><Edit3 className="w-3.5 h-3.5" /> Edit</button>
                     <button onClick={() => handleDeleteItem(item.id)} className="p-2.5 rounded-xl bg-muted/40 hover:bg-red-500/10 hover:text-red-500 text-muted-foreground transition-all"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </motion.div>
@@ -1463,7 +1534,7 @@ RETURN JSON FORMAT ONLY:
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-widest font-black text-muted-foreground ml-1">{getFieldLabels(editingItem.type).periodStr}</label>
                   <input
                     className="w-full bg-muted/20 border border-border/40 rounded-2xl px-5 py-4 text-sm focus:ring-2 ring-primary/20 transition-all outline-none"
@@ -1472,6 +1543,35 @@ RETURN JSON FORMAT ONLY:
                     placeholder={getFieldLabels(editingItem.type).periodEx}
                   />
                 </div>
+
+                {editingItem.type === 'professional' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-widest font-black text-muted-foreground ml-1">Experience Mode</label>
+                      <select
+                        className="w-full bg-muted/20 border border-border/40 rounded-2xl px-5 py-4 text-sm focus:ring-2 ring-primary/20 transition-all outline-none appearance-none cursor-pointer text-foreground"
+                        value={expMode}
+                        onChange={(e) => setExpMode(e.target.value)}
+                      >
+                        <option value="On-site" className="bg-background text-foreground">On-site</option>
+                        <option value="Remote" className="bg-background text-foreground">Remote</option>
+                        <option value="Offline" className="bg-background text-foreground">Offline</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className={`text-[10px] uppercase tracking-widest font-black text-muted-foreground ml-1 transition-opacity ${expMode === 'Remote' ? 'opacity-40' : ''}`}>
+                        Location {expMode === 'Remote' && '(Not required for Remote)'}
+                      </label>
+                      <input
+                        className="w-full bg-muted/20 border border-border/40 rounded-2xl px-5 py-4 text-sm focus:ring-2 ring-primary/20 transition-all outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+                        value={expMode === 'Remote' ? "" : expLocation}
+                        onChange={(e) => setExpLocation(e.target.value)}
+                        placeholder="e.g. Bengaluru, India"
+                        disabled={expMode === 'Remote'}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
@@ -1533,6 +1633,8 @@ RETURN JSON FORMAT ONLY:
                         label: "Discard",
                         onClick: () => {
                           localStorage.removeItem(`draft_vault_item_${user?.id}`);
+                          localStorage.removeItem(`draft_exp_mode_${user?.id}`);
+                          localStorage.removeItem(`draft_exp_location_${user?.id}`);
                           setEditingItem(null);
                         }
                       },
