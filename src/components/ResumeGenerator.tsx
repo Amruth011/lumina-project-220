@@ -453,6 +453,20 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     }
     setIsGenerating(true);
 
+    let summaryPromptRule = "";
+    let summarySchemaRule = "";
+
+    if (summaryLines === 1) {
+      summaryPromptRule = `You MUST synthesize a high-impact professional summary of EXACTLY 1 sentence. Keep the single sentence substantial, detailed, and around 115 characters including spaces in total, so that the professional summary spans exactly 1 line on a standard wide page. Do NOT write short 3-5 word fragments; it must be a fully formed, high-impact statement.`;
+      summarySchemaRule = `Ensure there is exactly 1 substantial, robust sentence (around 115 characters including spaces).`;
+    } else if (summaryLines === 2) {
+      summaryPromptRule = `You MUST synthesize a high-impact professional summary of EXACTLY 2 sentences. Do NOT output a single sentence or bullet list under any circumstances. You must write exactly 2 distinct, complete sentences separated by a period and a single space (e.g. "Sentence one. Sentence two."). Keep the entire professional summary around 200-230 characters including spaces in total, so that it spans exactly 2 lines on a standard wide page. Each sentence must be fully formed and high-impact.`;
+      summarySchemaRule = `Ensure there are exactly 2 substantial, robust sentences (around 200-230 characters in total across both sentences) separated by a period and space.`;
+    } else {
+      summaryPromptRule = `You MUST synthesize a high-impact professional summary of EXACTLY ${summaryLines} sentences. Do NOT output a single sentence or bullet list under any circumstances. You must write exactly ${summaryLines} distinct, complete sentences separated by a period and a single space (e.g. "Sentence one. Sentence two. Sentence three."). Keep each sentence substantial, detailed, and robust (around 22-26 words, averaging 130-170 characters per sentence, with the entire summary being around 340-400 characters including spaces for a 3-line summary) so that the professional summary spans exactly ${summaryLines} lines on a standard wide page. Do NOT write short word fragments; each sentence must be a fully formed, high-impact statement.`;
+      summarySchemaRule = `Ensure there are exactly ${summaryLines} substantial, robust sentences (around 22-26 words each, averaging 130-170 characters per sentence) separated by periods and spaces.`;
+    }
+
     try {
       const prompt = `You are an elite Silicon Valley executive resume architect.
 Your goal is to synthesize a high-impact, ATS-optimized resume in the precise "Andrew Vu" executive style.
@@ -466,7 +480,7 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.
 - Quantify EVERYTHING. Use metrics (%, $, time, scale) in every bullet.
 - Use strong action verbs (Spearheaded, Orchestrated, Engineered).
 - DATE FORMAT: Use 3-letter month abbreviations ONLY (e.g., "Jan 2024", "May 2027", "Aug 2023 – Present"- SECTION DENSITY & DYNAMIC EXPANSION MANDATES (CRITICAL):
-    - PROFESSIONAL SUMMARY: You MUST synthesize a high-impact professional summary of EXACTLY ${summaryLines} sentences. Do NOT output a single sentence or bullet list under any circumstances. You must write exactly ${summaryLines} distinct, complete sentences separated by a period and a single space (e.g. "Sentence one. Sentence two. Sentence three."). Keep each sentence substantial, detailed, and robust (around 22-26 words, adding at least 10 or more characters to each sentence, averaging 130-170 characters per sentence) so that the professional summary spans exactly ${summaryLines} lines on a standard wide page. Do NOT write short 3-5 word fragments or bulleted/keyword points; each sentence must be a fully formed, high-impact, professional statement. You must compose it dynamically based on the Candidate Profile's experience and target skills.
+    - PROFESSIONAL SUMMARY: ${summaryPromptRule} You must compose it dynamically based on the Candidate Profile's experience and target skills.
     - EXPERIENCE BULLETS: Every single role in EXPERIENCE must have EXACTLY ${experienceBullets} bullet points. If the Candidate Profile's entry has fewer than ${experienceBullets} bullets, you MUST expand, elaborate, or split them to generate exactly ${experienceBullets} quantified, metric-driven bullet points.
     - PROJECT BULLETS: Every single project in PROJECTS must have EXACTLY ${projectLines} bullet points. Expand or elaborate to generate exactly ${projectLines} metric-driven bullet points.
     - PRODUCT/STARTUP BULLETS: Every single product in PRODUCTS must have EXACTLY ${productLines} bullet points. Expand or elaborate to generate exactly ${productLines} metric-driven bullet points.
@@ -497,7 +511,7 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.
  
 Return ONLY a JSON object with this exact structure (note the bracketed dynamic instructions):
 {
-  "professional_summary": "[Synthesize a highly tailored professional summary of EXACTLY ${summaryLines} sentences based on target skills and top profile highlights. Ensure there are exactly ${summaryLines} substantial, robust sentences (around 22-26 words each) separated by periods and spaces. Do NOT output this instruction text.]",
+  "professional_summary": "[Synthesize a highly tailored professional summary based on target skills and top profile highlights. ${summarySchemaRule} Do NOT output this instruction text.]",
   "skills_section": ["Languages: ...", "Frameworks: ..."],
   "experience": [
     {
