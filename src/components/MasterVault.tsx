@@ -58,11 +58,12 @@ const getFieldLabels = (type?: VaultItemType) => {
   }
 };
 
-interface ParsedExperience { company: string; role: string; period?: string; bullets: string[]; }
-interface ParsedEducation { institution: string; degree: string; period?: string; details: string[]; }
-interface ParsedProject { name: string; tech_stack: string; period?: string; details: string[]; }
-interface ParsedCert { name: string; issuer: string; period?: string; details: string[]; }
-interface ParsedAward { name: string; organization: string; date?: string; details: string[]; }
+interface ParsedExperience { job_role: string; company_name: string; duration?: string; mode?: string; location?: string; description?: string; bullets?: string[]; }
+interface ParsedEducation { college_name: string; course: string; specialization: string; gpa?: string; start_date?: string; end_date?: string; location?: string; details?: string[]; }
+interface ParsedProject { title: string; tech_stack: string; year?: string; live_link?: string; github_link?: string; description?: string; }
+interface ParsedCert { certificate_name: string; company_name: string; year?: string; }
+interface ParsedAward { name: string; organization: string; date?: string; details?: string[]; }
+interface ParsedProduct { name: string; status: string; live_link?: string; description?: string; }
 
 const calculateCompletion = (profile: UserProfileWithVault | null, items: VaultItem[]) => {
   if (!profile) return 0;
@@ -291,19 +292,59 @@ export const MasterVault = () => {
 
       toast.loading("[Lumina AI v2.7] Analysing & Structuring...", { id: toastId });
 
-      const syncPrompt = `You are an expert resume parser. Extract ALL professional experience, education, projects, certifications, and high-impact achievements/awards from this resume text.
+      const syncPrompt = `You are an expert resume parser. Extract ALL professional experience, education, startup products/ventures, projects, certifications, and high-impact achievements/awards from this resume text.
 Also extract the candidate's personal details.
 
 Resume Text:
 ${cappedText}
 
+IMPORTANT - EXTRACTION SCHEMA MANDATES:
+1. For EDUCATION:
+   - "college_name": Full college or university name (e.g., REVA University).
+   - "course": Degree level, e.g., "BTech", "MTech", "BSc", "MS".
+   - "specialization": Course specialization details, e.g., "BTech in Artificial intelligence and data science" or "Computer Science".
+   - "gpa": GPA score format, e.g., "7.5/10" or "8.2/10".
+   - "start_date": Extraction start date, e.g., "July 2020" or "Jul 2020".
+   - "end_date": Extraction end date, e.g., "June 2024" or "Jun 2024".
+   - "location": College campus location, e.g., "Bengaluru, Karnataka" or "Bengaluru, India".
+2. For EXPERIENCE:
+   - "job_role": Job role or title, e.g., "Software Engineer Intern".
+   - "company_name": Full company or employer name.
+   - "duration": Complete duration timeline, e.g., "January 2023 to March 2025" or "July 2022 to Present".
+   - "mode": Work model, strictly either "remote" or "on site".
+   - "location": City and State/Country location, e.g., "Bengaluru, Karnataka" or "Bengaluru, India" if "on site". Leave blank if "remote".
+   - "description": Summary overview of the duties and accomplishments.
+   - "bullets": High-impact, metric-driven bullet points detailing key accomplishments.
+3. For STARTUP PRODUCTS/VENTURES (if any exist, map to "products"):
+   - "name": Name of the product or startup.
+   - "status": Strictly either "live" or "ongoing".
+   - "live_link": Live demo link/URL if status is "live".
+   - "description": Full startup product/venture description and traction metrics.
+4. For PROJECTS:
+   - "title": Title of the technical project.
+   - "tech_stack": Comma-separated tech stack used, e.g., "React, Node.js, Web3".
+   - "year": Year of the project, e.g., "2024".
+   - "live_link": Live link of the project if available.
+   - "github_link": GitHub repository link if available.
+   - "description": Key descriptions of the project.
+5. For CERTIFICATIONS:
+   - "certificate_name": Certificate or course name.
+   - "company_name": Issuing company or academy where taken (e.g. AWS, Coursera, Udemy).
+   - "year": Year certification was completed/issued.
+6. For AWARDS:
+   - "name": Award/honor name.
+   - "organization": Awarding body or organization.
+   - "date": Year or date received.
+   - "details": Bulleted details of the award context.
+
 RETURN JSON FORMAT ONLY:
 {
   "personal_details": { "full_name": "", "email": "", "phone": "", "location": "", "linkedin": "", "github": "", "portfolio": "", "summary": "" },
-  "experience": [{ "company": "", "role": "", "period": "", "bullets": [] }],
-  "education": [{ "institution": "", "degree": "", "period": "", "details": [] }],
-  "projects": [{ "name": "", "tech_stack": "", "period": "", "details": [] }],
-  "certifications": [{ "name": "", "issuer": "", "period": "", "details": [] }],
+  "experience": [{ "job_role": "", "company_name": "", "duration": "", "mode": "", "location": "", "description": "", "bullets": [] }],
+  "education": [{ "college_name": "", "course": "", "specialization": "", "gpa": "", "start_date": "", "end_date": "", "location": "", "details": [] }],
+  "products": [{ "name": "", "status": "", "live_link": "", "description": "" }],
+  "projects": [{ "title": "", "tech_stack": "", "year": "", "live_link": "", "github_link": "", "description": "" }],
+  "certifications": [{ "certificate_name": "", "company_name": "", "year": "" }],
   "awards": [{ "name": "", "organization": "", "date": "", "details": [] }]
 }`;
 
@@ -401,42 +442,105 @@ RETURN JSON FORMAT ONLY:
       let incomingItems: Omit<VaultItem, 'id' | 'created_at'>[] = [];
 
       if (structData?.experience) {
-        incomingItems = incomingItems.concat(structData.experience.map((exp: ParsedExperience) => ({
-          user_id: user.id, type: 'professional',
-          title: exp.role || exp.company || "Imported Role", organization: exp.company || "Imported Org",
-          period: exp.period || "Not Specified", description: (exp.bullets || []).join("\n"), bullets: exp.bullets || [], skills: [], is_quantified: (exp.bullets || []).some((b: string) => /[\d%]/.test(b))
-        })));
+        incomingItems = incomingItems.concat(structData.experience.map((exp: ParsedExperience) => {
+          const modeStr = exp.mode === 'remote' ? 'Remote' : 'On-site';
+          const locStr = exp.location ? ` (${exp.location})` : '';
+          const fullDesc = `Mode: ${modeStr}${locStr}\n\nDescription: ${exp.description || ""}`.trim();
+          return {
+            user_id: user.id,
+            type: 'professional',
+            title: exp.job_role || "Imported Role",
+            organization: exp.company_name || "Imported Org",
+            period: exp.duration || "Not Specified",
+            description: fullDesc,
+            bullets: exp.bullets || [],
+            skills: [],
+            is_quantified: (exp.bullets || []).some((b: string) => /[\d%]/.test(b))
+          };
+        }));
       }
 
       if (structData?.education) {
-        incomingItems = incomingItems.concat(structData.education.map((edu: ParsedEducation) => ({
-          user_id: user.id, type: 'education',
-          title: edu.degree || "Degree", organization: edu.institution || "Institution",
-          period: edu.period || "Not Specified", description: (edu.details || []).join("\n"), bullets: edu.details || [], skills: [], is_quantified: false
+        incomingItems = incomingItems.concat(structData.education.map((edu: ParsedEducation) => {
+          const specStr = edu.specialization ? ` in ${edu.specialization}` : '';
+          const fullTitle = `${edu.course || "Degree"}${specStr}`;
+          const gpaStr = edu.gpa ? `GPA: ${edu.gpa}` : '';
+          const locStr = edu.location ? `Location: ${edu.location}` : '';
+          const fullDesc = [gpaStr, locStr].filter(Boolean).join(' | ');
+          const startStr = edu.start_date || "";
+          const endStr = edu.end_date || "";
+          const fullPeriod = startStr && endStr ? `${startStr} – ${endStr}` : (startStr || endStr || "Not Specified");
+
+          return {
+            user_id: user.id,
+            type: 'education',
+            title: fullTitle,
+            organization: edu.college_name || "Institution",
+            period: fullPeriod,
+            description: fullDesc,
+            bullets: edu.details || [],
+            skills: [],
+            is_quantified: false
+          };
+        }));
+      }
+
+      if (structData?.products) {
+        incomingItems = incomingItems.concat(structData.products.map((prod: ParsedProduct) => ({
+          user_id: user.id,
+          type: 'product',
+          title: prod.name || "Startup Product/Venture",
+          organization: prod.status === 'live' ? 'Live Product' : 'Ongoing Product',
+          period: prod.status || "ongoing",
+          live_link: prod.live_link || "",
+          description: prod.description || "",
+          bullets: [],
+          skills: [],
+          is_quantified: false
         })));
       }
 
       if (structData?.projects) {
         incomingItems = incomingItems.concat(structData.projects.map((proj: ParsedProject) => ({
-          user_id: user.id, type: 'project',
-          title: proj.name || "Project", organization: proj.tech_stack || "Tech Context",
-          period: proj.period || "Not Specified", description: (proj.details || []).join("\n"), bullets: proj.details || [], skills: [], is_quantified: false
+          user_id: user.id,
+          type: 'project',
+          title: proj.title || "Project",
+          organization: proj.tech_stack || "Tech Context",
+          period: proj.year || "Not Specified",
+          live_link: proj.live_link || "",
+          github_link: proj.github_link || "",
+          description: proj.description || "",
+          bullets: [],
+          skills: [],
+          is_quantified: false
         })));
       }
 
       if (structData?.certifications) {
         incomingItems = incomingItems.concat(structData.certifications.map((cert: ParsedCert) => ({
-          user_id: user.id, type: 'certification',
-          title: cert.name || "Certificate", organization: cert.issuer || "Issuer",
-          period: cert.period || "Not Specified", description: (cert.details || []).join("\n"), bullets: cert.details || [], skills: [], is_quantified: false
+          user_id: user.id,
+          type: 'certification',
+          title: cert.certificate_name || "Certificate",
+          organization: cert.company_name || "Issuer",
+          period: cert.year || "Not Specified",
+          description: `Certificate issued by ${cert.company_name || "Issuer"} in ${cert.year || "Not Specified"}`,
+          bullets: [],
+          skills: [],
+          is_quantified: false
         })));
       }
 
       if (structData?.awards) {
         incomingItems = incomingItems.concat(structData.awards.map((award: ParsedAward) => ({
-          user_id: user.id, type: 'certification', // Using certification type for awards for now as per schema
-          title: award.name || "Award", organization: award.organization || "Recognition",
-          period: award.date || "Not Specified", description: (award.details || []).join("\n"), bullets: award.details || [], skills: [], is_quantified: false
+          user_id: user.id,
+          type: 'award',
+          title: award.name || "Award",
+          organization: award.organization || "Recognition",
+          period: award.date || "Not Specified",
+          description: (award.details || []).join("\n"),
+          bullets: award.details || [],
+          skills: [],
+          is_quantified: false
         })));
       }
 
@@ -1397,7 +1501,7 @@ RETURN JSON FORMAT ONLY:
                   />
                 </div>
 
-                {editingItem.type === 'project' && (
+                {(editingItem.type === 'project' || editingItem.type === 'product') && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase tracking-widest font-black text-muted-foreground ml-1">GitHub Link (Optional)</label>

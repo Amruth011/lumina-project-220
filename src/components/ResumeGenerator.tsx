@@ -474,12 +474,13 @@ Your goal is to synthesize a high-impact, ATS-optimized resume in the precise "A
 ### CONTEXT:
 Job Target: ${jdTitle} at ${companyName || "this company"}
 Target Skills: ${jdSkills.map(s => s.skill).join(", ")}
-Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.type, title: v.title, org: v.organization, desc: v.description, bullets: v.bullets })), null, 2)}
+Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.type, title: v.title, org: v.organization, desc: v.description, bullets: v.bullets, github_link: v.github_link, live_link: v.live_link })), null, 2)}
 
 ### CORE MANDATE:
 - Quantify EVERYTHING. Use metrics (%, $, time, scale) in every bullet.
 - Use strong action verbs (Spearheaded, Orchestrated, Engineered).
-- DATE FORMAT: Use 3-letter month abbreviations ONLY (e.g., "Jan 2024", "May 2027", "Aug 2023 – Present"- SECTION DENSITY & DYNAMIC EXPANSION MANDATES (CRITICAL):
+- DATE FORMAT: Use exact dates or month/year formats cleanly as provided (e.g., "January 2023 to March 2025" or "Jul 2022 – Present").
+- SECTION DENSITY & DYNAMIC EXPANSION MANDATES (CRITICAL):
     - PROFESSIONAL SUMMARY: ${summaryPromptRule} You must compose it dynamically based on the Candidate Profile's experience and target skills.
     - EXPERIENCE BULLETS: Every single role in EXPERIENCE must have EXACTLY ${experienceBullets} bullet points. If the Candidate Profile's entry has fewer than ${experienceBullets} bullets, you MUST expand, elaborate, or split them to generate exactly ${experienceBullets} quantified, metric-driven bullet points.
     - PROJECT BULLETS: Every single project in PROJECTS must have EXACTLY ${projectLines} bullet points. Expand or elaborate to generate exactly ${projectLines} metric-driven bullet points.
@@ -496,54 +497,77 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.
     - DO NOT include certifications/awards in any other section. Keep them in AWARDS or CERTIFICATIONS. (CRITICAL: 'AI Engineer for Data Scientists Associate' or anything from 'DataCamp' is a CERTIFICATION, NOT experience).
     - SKILLS: Must be ONLY keywords and technical terms. NO sentences or descriptive text. Format as "Category: Skill1, Skill2, Skill3".
 - CUSTOM STRUCTURE MANDATE:
-    - You MUST follow this exact section sequence: SUMMARY → EDUCATION → EXPERIENCE → PRODUCTS → PROJECTS → LEADERSHIP → SKILLS → AWARDS → CERTIFICATIONS.
+    - You MUST follow this exact sequence: SUMMARY → EDUCATION → EXPERIENCE → PRODUCTS → PROJECTS → LEADERSHIP → SKILLS → AWARDS → CERTIFICATIONS.
     - ONLY include sections that are TRUE in this list: ${sectionOrder.filter(s => visibleSections[s]).join(', ')}.
     - If a section like 'LEADERSHIP' or 'AWARDS' is NOT in this list, you MUST OMIT IT from the JSON response entirely.
  
-### SCHEMA REQUIREMENTS:
-1. EDUCATION: Must include School, Degree, GPA, Date, and Location.
+### SCHEMA & FORMATTING REQUIREMENTS:
+1. EDUCATION: Each item in the array must strictly match this format:
+   "[Course / Degree Name with Specialization] @ [College/University Name] - [Campus Location] | [Start Date – End Date] | GPA: [GPA_Value]"
+   Example: "Btech in Artificial intelligence and data science @ REVA University - Bengaluru, Karnataka | July 2020 – June 2024 | GPA: 7.5/10"
 2. EXPERIENCE: Professional roles with quantified impact.
+   - "heading": Must strictly match: "[First Job Role] @ [Company Name] - [Mode (Remote or On-site)] ([Location if On-site])"
+     Example: "Software Engineer Intern @ Google - On-site (Bengaluru, Karnataka)" or "Software Engineer Intern @ Google - Remote"
+   - "content": Duration of experience (e.g., "January 2023 to March 2025" or "July 2022 to Present")
+   - "bullets": Array of exactly ${experienceBullets} metric-driven bullets
 3. PRODUCTS: Startups or SaaS products founded by the user.
+   - "heading": Must strictly match: "[Product Name] - [Status (Ongoing or Live)] [| Live Link: URL if Live]"
+     Example: "Lumina Resume Engine - Live | Live Link: https://lumina.io" or "Lumina Resume Engine - Ongoing"
+   - "content": Duration of the product venture (e.g., "January 2023 to Present")
+   - "bullets": Array of exactly ${productLines} metrics or descriptions
 4. PROJECTS: Technical achievements with stack details.
+   - "heading": Must strictly match: "[Project Title] - [Tech Stack (comma-separated)]"
+     Example: "Decentralized File System - React, Node.js, Web3"
+   - "content": Must strictly contain the links if available: "[GitHub Link] [| Live Demo Link]"
+     Example: "github.com/username/project | my-demo.vercel.app"
+   - "bullets": Array of exactly ${projectLines} technical highlights
 5. LEADERSHIP: Non-work impact or community roles.
+   - "heading": "[Role Name] @ [Organization / Community Name]"
+   - "content": Duration (e.g., "Sep 2022 – Dec 2023")
+   - "bullets": Array of impact highlights
 6. SKILLS: Categorized (e.g., "Languages: Python, Go").
-7. AWARDS: Competitive wins or recognition.
+7. CERTIFICATIONS: Each item in the array must strictly match this format:
+   "[Certificate/Course Name] ([Issuing Entity / Company Name]) - [Year Done]"
+   Example: "AWS Solutions Architect (Amazon Web Services) - 2024"
+8. AWARDS: Each item in the array must strictly match this format:
+   "[Award/Honor Name] ([Awarding Body]) - [Year Received]"
+   Example: "Hackathon Winner (Google Cloud) - 2024"
  
-Return ONLY a JSON object with this exact structure (note the bracketed dynamic instructions):
+Return ONLY a JSON object with this exact structure:
 {
-  "professional_summary": "[Synthesize a highly tailored professional summary based on target skills and top profile highlights. ${summarySchemaRule} Do NOT output this instruction text.]",
+  "professional_summary": "[Synthesize a highly tailored professional summary. ${summarySchemaRule}]",
   "skills_section": ["Languages: ...", "Frameworks: ..."],
   "experience": [
     {
-      "heading": "Job Title @ Company - City, State",
-      "content": "Jan 2024 – Present",
-      "bullets": ["[Synthesize quantified, metric-driven Bullet 1]", "[Synthesize quantified, metric-driven Bullet 2]", "...continue up to exactly ${experienceBullets} bullets"]
+      "heading": "Job Title @ Company - Mode (Location)",
+      "content": "Duration",
+      "bullets": ["[Bullet 1]", "[Bullet 2]"]
     }
   ],
   "products": [
     {
-      "heading": "Product/Startup Name @ Venture Status - City, State",
-      "content": "Jan 2023 – Present",
-      "bullets": ["[Synthesize traction metric Bullet 1]", "...continue up to exactly ${productLines} bullets"]
+      "heading": "Product Name - Status | Live Link: URL",
+      "content": "Duration",
+      "bullets": ["[Bullet 1]"]
     }
   ],
   "projects": [
     {
       "heading": "Project Name - Tech Stack",
-      "content": "Feb 2023 – May 2023",
-      "bullets": ["[Synthesize technical achievement Bullet 1]", "...continue up to exactly ${projectLines} bullets"]
+      "content": "github_link | live_link",
+      "bullets": ["[Bullet 1]"]
     }
   ],
   "leadership": [
     {
       "heading": "Role @ Organization",
-      "content": "Sep 2022 – Dec 2023",
-      "bullets": ["[Leadership achievement Bullet 1]", "...continue up to exactly ${experienceBullets} bullets"]
+      "content": "Timeline",
+      "bullets": ["[Bullet 1]"]
     }
   ],
-  "education": ["Degree @ University - City, State | Expected May 2027 | GPA: X.X"],
-  "certifications": ["Cert Name (Issuer) - 2024"],
-  "awards": ["Award Name (Organization) - 2024"]
+  "education": ["Course Name @ College Name - Location | Timeline | GPA: X.X"],
+  "certifications": ["Cert Name (Issuer) - Year"],
+  "awards": ["Award Name (Organization) - Year"]
 }`;
 
       const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
