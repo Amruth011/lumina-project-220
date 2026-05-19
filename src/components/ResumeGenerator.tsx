@@ -214,7 +214,7 @@ interface ArchiveRecord {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3): GeneratedResume => {
+const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3, experienceBullets = 3, projectLines = 3, productLines = 3): GeneratedResume => {
   if (!data || typeof data !== "object") {
     return {
       professional_summary: "",
@@ -256,45 +256,6 @@ const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3): GeneratedRe
 
     const sentences = normalized.match(/[^.!?]+[.!?]+(\s|$)/g) || [normalized];
     const cleanedSentences = sentences.map(s => s.trim()).filter(Boolean);
-
-    if (cleanedSentences.length < targetSummaryLines) {
-      if (cleanedSentences.length === 0) {
-        cleanedSentences.push("Results-driven technology professional specializing in designing and deploying high-impact modern systems.");
-        cleanedSentences.push("Spearheaded cross-functional architectures to drive scalability, efficiency, and engineering excellence.");
-        cleanedSentences.push("Proven track record of optimizing performance metrics and leading technical execution under tight deadlines.");
-      } else {
-        const currentText = cleanedSentences.join(" ");
-        const clauses = currentText
-          .split(/,|\band\b|;|\bwith\b|\bby\b|\bfor\b/i)
-          .map(c => c.trim())
-          .filter(c => c.length > 5);
-
-        if (clauses.length >= targetSummaryLines) {
-          cleanedSentences.length = 0;
-          for (let i = 0; i < targetSummaryLines; i++) {
-            let sentence = clauses[i];
-            if (i === 0) {
-              sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
-            } else {
-              if (!/^[A-Z]/.test(sentence)) {
-                sentence = "Focusing on " + sentence.charAt(0).toLowerCase() + sentence.slice(1);
-              }
-            }
-            if (!sentence.endsWith(".")) sentence += ".";
-            cleanedSentences.push(sentence);
-          }
-        } else {
-          const genericPads = [
-            "Spearheaded scalable system design to accelerate product delivery and engineering velocity.",
-            "Leveraged advanced frameworks and methodologies to solve complex, high-concurrency challenges.",
-            "Dedicated to continuous integration and robust system architectures."
-          ];
-          while (cleanedSentences.length < targetSummaryLines) {
-            cleanedSentences.push(genericPads[(cleanedSentences.length - 1) % genericPads.length]);
-          }
-        }
-      }
-    }
 
     const finalSentences = cleanedSentences.slice(0, targetSummaryLines).map(s => {
       let clean = s.trim();
@@ -342,18 +303,34 @@ const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3): GeneratedRe
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cleanSections = (sectionsArr: any): GeneratedResumeSection[] => {
+  const cleanSections = (sectionsArr: any, limit?: number): GeneratedResumeSection[] => {
     return ensureArray(sectionsArr).map(item => {
       if (!item || typeof item !== "object") {
         return { heading: String(item || ""), content: "", bullets: [] };
       }
+      
+      const rawBullets = Array.isArray(item.bullets) 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? item.bullets.map((b: any) => typeof b === "string" ? b : String(b || ""))
+        : (typeof item.bullets === "string" ? [item.bullets] : []);
+
+      const cleanedBullets = rawBullets
+        .map(b => {
+          let clean = b.trim();
+          // Remove leading bullet/dash if present
+          clean = clean.replace(/^[•\-*\s]+/, "");
+          return clean;
+        })
+        .filter(Boolean);
+
+      const finalBullets = limit && limit > 0 
+        ? cleanedBullets.slice(0, limit)
+        : cleanedBullets;
+
       return {
         heading: typeof item.heading === "string" ? item.heading : String(item.heading || item.title || ""),
         content: typeof item.content === "string" ? item.content : String(item.content || item.period || item.date || ""),
-        bullets: Array.isArray(item.bullets) 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ? item.bullets.map((b: any) => typeof b === "string" ? b : String(b || ""))
-          : (typeof item.bullets === "string" ? [item.bullets] : [])
+        bullets: finalBullets
       };
     });
   };
@@ -361,10 +338,10 @@ const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3): GeneratedRe
   return {
     professional_summary: summary,
     skills_section: skills,
-    experience: cleanSections(data.experience),
+    experience: cleanSections(data.experience, experienceBullets),
     education: education,
-    products: cleanSections(data.products),
-    projects: cleanSections(data.projects).sort((a, b) => {
+    products: cleanSections(data.products, productLines),
+    projects: cleanSections(data.projects, projectLines).sort((a, b) => {
       const getYear = (str: string): number => {
         const raw = (str || "").toLowerCase();
         if (raw.includes("ongoing") || raw.includes("present")) return 3000;
@@ -519,7 +496,17 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     setDraftId(record.id);
     
     const savedSummaryLines = record.settings?.summaryLines || summaryLines || 3;
-    const hydratedContent = sanitizeGeneratedResume(record.content, savedSummaryLines);
+    const savedExperienceBullets = record.settings?.experienceBullets || experienceBullets || 3;
+    const savedProjectLines = record.settings?.projectLines || projectLines || 3;
+    const savedProductLines = record.settings?.productLines || productLines || 3;
+    
+    const hydratedContent = sanitizeGeneratedResume(
+      record.content, 
+      savedSummaryLines,
+      savedExperienceBullets,
+      savedProjectLines,
+      savedProductLines
+    );
     
     setResume(hydratedContent);
     setEditableResume(hydratedContent);
@@ -664,8 +651,28 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     const targetCompany = companyName || "Target Company";
 
     try {
+      const enabledSections = sectionOrder.filter(sec => visibleSections[sec]);
+      const disabledSections = sectionOrder.filter(sec => !visibleSections[sec]);
+
       const prompt = `You are an elite, truth-grounded executive resume architect.
 Your goal is to synthesize a high-impact, ATS-optimized resume in the precise "Andrew Vu" executive style.
+
+### SECTION VISIBILITY & ORDER SEQUENCE:
+The candidate has configured a custom layout architecture. You MUST strictly generate the resume according to these custom settings:
+- Enabled Sections to Generate: ${enabledSections.join(" → ")}
+- Disabled Sections to Omit (Return an empty array \`[]\` or empty string \`""\` for their JSON keys): ${disabledSections.length > 0 ? disabledSections.join(", ") : "None"}
+
+You MUST only populate the JSON fields for enabled sections. For any sections listed as Disabled, you MUST leave their keys as empty arrays \`[]\` or a blank string \`""\` for "professional_summary".
+
+### TAILORING TONE & STRATEGY (${tone.toUpperCase()}):
+You MUST compose all generated narrative (including the professional summary, experience bullets, project descriptions, and leadership items) in a highly specialized ${tone} tone:
+${
+  tone === "Professional" 
+    ? `- Tone Mandate: Write in a balanced, authoritative, and traditional executive voice. Focus on established leadership, industry-standard methodologies, cross-functional collaboration, and robust organizational impact.`
+    : tone === "Modern"
+    ? `- Tone Mandate: Write in a forward-looking, tech-forward, and innovative voice. Emphasize modern tech-stack paradigms (cloud-native architectures, AI/ML integrations, microservices, system scaling), engineering velocity, agility, and state-of-the-art developer tools.`
+    : `- Tone Mandate: Write in an ultra-impact, hyper-performance, results-first voice. Use exceptionally punchy and strong action verbs, highlighting massive efficiency gains, significant cost savings, engineering velocity, and direct bottom-line optimization. Make every single bullet point feel relentless, ambitious, and competitively elite.`
+}
 
 ### CORE OPERATING PRINCIPLES:
 - FIDELITY TO FACTS (CRITICAL): You are an editor of truth. Do NOT inflate, fabricate, or exaggerate achievements. If the Candidate Profile's experience entries lack specific metrics or scale, do NOT hallucinate or guess them. Instead, craft the narrative focusing on the scope of their responsibility, the technologies utilized, and the qualitative impact of their work as explicitly described in the provided Candidate Profile and Master Vault.
@@ -712,12 +719,13 @@ Target Company: ${targetCompany}
 Target Key Skills & Keywords: ${targetJdSkills}
 
 ### SECTION MANDATES:
+- TONE STRATEGY: Adhere strictly to the ${tone} tone guidelines.
 - PROFESSIONAL SUMMARY: ${summaryPromptRule} Focus on the candidate's actual documented expertise and direct alignment with the target JD. Avoid generic puffery.
-- EXPERIENCE/PROJECTS/PRODUCTS: Each item should contain up to a maximum of the requested number of bullets (${experienceBullets} for experience, ${projectLines} for projects, ${productLines} for products). You must distill the essence of the available data into high-impact bullets. If the candidate profile has sparse information, generate only as many authentic bullets as can be strictly supported by the real facts, rather than fabricating generic placeholders.
+- EXPERIENCE/PROJECTS/PRODUCTS: Each item MUST contain EXACTLY the requested number of bullets (${experienceBullets} for experience, ${projectLines} for projects, ${productLines} for products). You must distill and distribute the available data points across exactly this number of bullets, ensuring they are rich, distinct, and completely free of filler or duplication. Focus on technical execution, system context, and scope of responsibility to achieve the exact bullet count without fabricating metrics or inventing facts.
 - NO HALLUCINATIONS: Do NOT invent jobs, skills, or projects. Only map the content provided in the Candidate Profile. If no items exist in a specific Master Vault category, return an empty array for that section in the JSON (e.g., "certifications": [], "awards": [], "products": [], "projects": [], "leadership": []). Do NOT invent default or fake certifications/awards.
 
 ### STRUCTURE:
-Follow this sequence: SUMMARY → EDUCATION → EXPERIENCE → PRODUCTS → PROJECTS → LEADERSHIP → SKILLS → AWARDS → CERTIFICATIONS.
+Synthesize the resume following this sequence of enabled sections: ${enabledSections.join(" → ")}
 
 Return ONLY a JSON object matching this exact schema:
 {
@@ -870,7 +878,13 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
         throw new Error("AI returned malformed candidacy data. Please try again.");
       }
 
-      const hydratedData = sanitizeGeneratedResume(structData, summaryLines);
+      const hydratedData = sanitizeGeneratedResume(
+        structData, 
+        summaryLines,
+        experienceBullets,
+        projectLines,
+        productLines
+      );
 
       setResume(hydratedData);
       setEditableResume(hydratedData);
@@ -1366,7 +1380,7 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
                     pdf.text(sanitizePdfText(locTextTruncated), pageWidth - margin, y, { align: "right" });
                     y += getLineHeight(bodyFontSize, 1.25);
 
-                    (exp.bullets || []).forEach(bullet => {
+                    limitBullets(exp.bullets || [], experienceBullets).forEach(bullet => {
                       pdf.setFont(currentFont, "normal");
                       pdf.setFontSize(bodyFontSize);
                       const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
@@ -1489,7 +1503,7 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
                       });
                     }
 
-                    (prod.bullets || []).forEach(bullet => {
+                    limitBullets(prod.bullets || [], productLines).forEach(bullet => {
                       pdf.setFont(currentFont, "normal");
                       pdf.setFontSize(bodyFontSize);
                       const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
@@ -1612,7 +1626,7 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
                       });
                     }
 
-                    (proj.bullets || []).forEach(bullet => {
+                    limitBullets(proj.bullets || [], projectLines).forEach(bullet => {
                       pdf.setFont(currentFont, "normal");
                       pdf.setFontSize(bodyFontSize);
                       const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
@@ -1882,7 +1896,7 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
           const org = orgParts[0]?.trim() || "Organization";
           const rawLocOrMode = orgParts[1]?.trim() || "";
           const location = getModeOrLocation(rawLocOrMode, editableHeader.location || "");
-          const bulletsToRender = exp.bullets || [];
+          const bulletsToRender = (exp.bullets || []).slice(0, experienceBullets);
           const rawDate = exp.content || "";
           const dateText = (rawDate === "No specific dates provided" || !rawDate.trim()) ? "" : rawDate;
 
@@ -1916,7 +1930,7 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
           const headingParts = (prod.heading || "").split(/\s+[-–—]\s+/);
           const title = headingParts[0] || "Product";
           const status = headingParts.slice(1).join(" | ");
-          const bulletsToRender = prod.bullets || [];
+          const bulletsToRender = (prod.bullets || []).slice(0, productLines);
 
           const parsed = parseProductOrProjectContent(prod.content);
           let productLinkHtml = "";
@@ -1960,7 +1974,7 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
           const headingParts = (proj.heading || "").split(/\s+[-–—]\s+/);
           const title = headingParts[0] || "Project";
           const stack = headingParts.slice(1).join(" | ");
-          const bulletsToRender = proj.bullets || [];
+          const bulletsToRender = (proj.bullets || []).slice(0, projectLines);
 
           const parsedProj = parseProductOrProjectContent(proj.content);
           const prParts = [];

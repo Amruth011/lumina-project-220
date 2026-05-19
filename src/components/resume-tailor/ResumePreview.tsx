@@ -353,7 +353,7 @@ export const ResumePreview = ({
       const newItems = [...(localResume.experience || []), { 
         heading: item.organization ? `${item.title} @ ${item.organization} - Remote` : item.title, 
         content: item.period || "Jan 2023 – Present", 
-        bullets: cleanBullets.length > 0 ? cleanBullets : ["• Spearheaded tactical execution and delivered high-impact outcomes."] 
+        bullets: cleanBullets.length > 0 ? cleanBullets : ["[Enter role responsibilities, key achievements, and technologies used]"] 
       }];
       updatedResume = { ...localResume, experience: newItems };
     } else if (showVaultPicker?.section === 'projects') {
@@ -369,7 +369,7 @@ export const ResumePreview = ({
       const newItems = [...projects, { 
         heading: `${item.title} - ${techStack}`, 
         content: contentStr, 
-        bullets: cleanBullets.length > 0 ? cleanBullets : ["• Engineered high-performance technical modules to optimize system stability."] 
+        bullets: cleanBullets.length > 0 ? cleanBullets : ["[Enter project goals, technical implementation details, and your specific contributions]"] 
       }];
       updatedResume = { ...localResume, projects: newItems };
     } else if (showVaultPicker?.section === 'products') {
@@ -385,7 +385,7 @@ export const ResumePreview = ({
       const newItems = [...products, { 
         heading: `${item.title} - ${techStack}`, 
         content: contentStr, 
-        bullets: cleanBullets.length > 0 ? cleanBullets : ["• Spearheaded product vision and drove exponential user acquisition."] 
+        bullets: cleanBullets.length > 0 ? cleanBullets : ["[Enter venture goals, growth metrics, and technical contributions]"] 
       }];
       updatedResume = { ...localResume, products: newItems };
     } else if (showVaultPicker?.section === 'leadership') {
@@ -393,7 +393,7 @@ export const ResumePreview = ({
       const newItems = [...leadership, { 
         heading: item.organization ? `${item.title} @ ${item.organization}` : item.title, 
         content: item.period || "2023 – Present", 
-        bullets: cleanBullets.length > 0 ? cleanBullets : ["• Directed community initiatives and expanded member outreach."] 
+        bullets: cleanBullets.length > 0 ? cleanBullets : ["[Enter leadership responsibilities, team size, and key initiatives led]"] 
       }];
       updatedResume = { ...localResume, leadership: newItems };
     } else if (showVaultPicker?.section === 'education') {
@@ -546,6 +546,23 @@ export const ResumePreview = ({
                   onChange={(e) => updateSummary(e.target.value)}
                   className="w-full min-h-[120px] bg-slate-50/50 border-none rounded-2xl p-4 text-[11px] font-body leading-relaxed outline-none focus:ring-1 ring-lumina-teal/20"
                 />
+                {(() => {
+                  const normalized = (localResume.professional_summary || "")
+                    .replace(/([a-zA-Z])\.([A-Za-z])/g, '$1. $2')
+                    .replace(/([a-zA-Z])!([A-Za-z])/g, '$1! $2')
+                    .replace(/([a-zA-Z])\?([A-Za-z])/g, '$1? $2');
+                  const sentences = normalized.match(/[^.!?]+[.!?]+(\s|$)/g) || [];
+                  const count = sentences.filter(Boolean).length;
+                  if (count > summaryLines) {
+                    return (
+                      <div className="mt-2 text-[9px] text-amber-600 font-medium px-2 flex flex-col gap-0.5">
+                        <span>⚠️ Currently contains {count} sentences. Settings allow a maximum of {summaryLines} sentences.</span>
+                        <span className="opacity-80">Only the first {summaryLines} sentences will be included in the PDF and exports.</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </CollapsibleSection>
 
               <CollapsibleSection 
@@ -790,12 +807,30 @@ export const ResumePreview = ({
                         );
                       })()}
                       <div className="space-y-2">
-                        {exp.bullets?.map((bullet, bullIdx) => (
-                          <div key={bullIdx} className="flex gap-2 items-start group/bull">
-                            <textarea value={bullet} onChange={(e) => updateBullet('experience', idx, bullIdx, e.target.value)} className="flex-1 bg-white/50 rounded-xl px-3 py-1.5 text-[11px] font-body outline-none min-h-[36px] border border-transparent focus:border-lumina-teal/20" />
-                            <button onClick={() => removeBullet('experience', idx, bullIdx)} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
-                          </div>
-                        ))}
+                        {exp.bullets?.map((bullet, bullIdx) => {
+                          const isOverLimit = bullIdx >= experienceBullets;
+                          return (
+                            <div key={bullIdx} className="flex flex-col gap-1 w-full">
+                              <div className="flex gap-2 items-start group/bull">
+                                <textarea 
+                                  value={bullet} 
+                                  onChange={(e) => updateBullet('experience', idx, bullIdx, e.target.value)} 
+                                  className={`flex-1 bg-white/50 rounded-xl px-3 py-1.5 text-[11px] font-body outline-none min-h-[36px] border ${
+                                    isOverLimit 
+                                      ? 'border-amber-300/60 bg-amber-50/20 text-slate-500 line-through decoration-slate-400/40' 
+                                      : 'border-transparent focus:border-lumina-teal/20'
+                                  }`} 
+                                />
+                                <button onClick={() => removeBullet('experience', idx, bullIdx)} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
+                              </div>
+                              {isOverLimit && (
+                                <span className="text-[9px] text-amber-600 font-medium px-2 self-start flex items-center gap-1">
+                                  ⚠️ Exceeds limit ({experienceBullets} bullets allowed in settings) - will be hidden in PDF
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
                         <button onClick={() => addBullet('experience', idx)} className="text-[8px] font-bold text-lumina-teal flex items-center gap-1 uppercase tracking-widest"><Plus size={10} /> Add Bullet</button>
                       </div>
                     </div>
@@ -843,12 +878,30 @@ export const ResumePreview = ({
                         placeholder="Dates or Link (e.g., Jan 2023 - Present)" 
                       />
                       <div className="space-y-2">
-                        {prod.bullets?.map((bullet, bullIdx) => (
-                          <div key={bullIdx} className="flex gap-2 items-start group/bull">
-                            <textarea value={bullet} onChange={(e) => updateBullet('products', idx, bullIdx, e.target.value)} className="flex-1 bg-white/50 rounded-xl px-3 py-1.5 text-[11px] font-body outline-none min-h-[36px] border border-transparent focus:border-lumina-teal/20" />
-                            <button onClick={() => removeBullet('products', idx, bullIdx)} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
-                          </div>
-                        ))}
+                        {prod.bullets?.map((bullet, bullIdx) => {
+                          const isOverLimit = bullIdx >= productLines;
+                          return (
+                            <div key={bullIdx} className="flex flex-col gap-1 w-full">
+                              <div className="flex gap-2 items-start group/bull">
+                                <textarea 
+                                  value={bullet} 
+                                  onChange={(e) => updateBullet('products', idx, bullIdx, e.target.value)} 
+                                  className={`flex-1 bg-white/50 rounded-xl px-3 py-1.5 text-[11px] font-body outline-none min-h-[36px] border ${
+                                    isOverLimit 
+                                      ? 'border-amber-300/60 bg-amber-50/20 text-slate-500 line-through decoration-slate-400/40' 
+                                      : 'border-transparent focus:border-lumina-teal/20'
+                                  }`} 
+                                />
+                                <button onClick={() => removeBullet('products', idx, bullIdx)} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
+                              </div>
+                              {isOverLimit && (
+                                <span className="text-[9px] text-amber-600 font-medium px-2 self-start flex items-center gap-1">
+                                  ⚠️ Exceeds limit ({productLines} bullets allowed in settings) - will be hidden in PDF
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
                         <button onClick={() => addBullet('products', idx)} className="text-[8px] font-bold text-lumina-teal flex items-center gap-1 uppercase tracking-widest"><Plus size={10} /> Add Bullet</button>
                       </div>
                     </div>
@@ -896,12 +949,30 @@ export const ResumePreview = ({
                         placeholder="Dates or Link (e.g., 2024 | github.com/username/project | live-site.com)" 
                       />
                       <div className="space-y-2">
-                        {proj.bullets?.map((bullet, bullIdx) => (
-                          <div key={bullIdx} className="flex gap-2 items-start group/bull">
-                            <textarea value={bullet} onChange={(e) => updateBullet('projects', idx, bullIdx, e.target.value)} className="flex-1 bg-white/50 rounded-xl px-3 py-1.5 text-[11px] font-body outline-none min-h-[36px] border border-transparent focus:border-lumina-teal/20" />
-                            <button onClick={() => removeBullet('projects', idx, bullIdx)} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
-                          </div>
-                        ))}
+                        {proj.bullets?.map((bullet, bullIdx) => {
+                          const isOverLimit = bullIdx >= projectLines;
+                          return (
+                            <div key={bullIdx} className="flex flex-col gap-1 w-full">
+                              <div className="flex gap-2 items-start group/bull">
+                                <textarea 
+                                  value={bullet} 
+                                  onChange={(e) => updateBullet('projects', idx, bullIdx, e.target.value)} 
+                                  className={`flex-1 bg-white/50 rounded-xl px-3 py-1.5 text-[11px] font-body outline-none min-h-[36px] border ${
+                                    isOverLimit 
+                                      ? 'border-amber-300/60 bg-amber-50/20 text-slate-500 line-through decoration-slate-400/40' 
+                                      : 'border-transparent focus:border-lumina-teal/20'
+                                  }`} 
+                                />
+                                <button onClick={() => removeBullet('projects', idx, bullIdx)} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
+                              </div>
+                              {isOverLimit && (
+                                <span className="text-[9px] text-amber-600 font-medium px-2 self-start flex items-center gap-1">
+                                  ⚠️ Exceeds limit ({projectLines} bullets allowed in settings) - will be hidden in PDF
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
                         <button onClick={() => addBullet('projects', idx)} className="text-[8px] font-bold text-lumina-teal flex items-center gap-1 uppercase tracking-widest"><Plus size={10} /> Add Bullet</button>
                       </div>
                     </div>
@@ -1438,7 +1509,7 @@ export const ResumePreview = ({
                                           <span className="flex-shrink-0 text-right ml-4 text-[11px] not-italic !font-inherit" style={{ fontFamily: 'inherit' }}>{location}</span>
                                         </div>
                                         <ul className="list-disc ml-5 space-y-0.5 pt-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
-                                          {(exp.bullets || []).map((bullet, bullIdx) => (
+                                          {limitBullets(exp.bullets || [], experienceBullets).map((bullet, bullIdx) => (
                                             <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
                                               {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                             </li>
@@ -1465,7 +1536,7 @@ export const ResumePreview = ({
                                           {renderSubHeaderWithLinks(prod.heading || "", prod.content || "", fontSizes)}
                                         </div>
                                         <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
-                                          {(prod.bullets || []).map((bullet, bullIdx) => (
+                                          {limitBullets(prod.bullets || [], productLines).map((bullet, bullIdx) => (
                                             <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
                                               {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                             </li>
@@ -1492,7 +1563,7 @@ export const ResumePreview = ({
                                           {renderSubHeaderWithLinks(proj.heading || "", proj.content || "", fontSizes)}
                                         </div>
                                         <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
-                                          {(proj.bullets || []).map((bullet, bullIdx) => (
+                                          {limitBullets(proj.bullets || [], projectLines).map((bullet, bullIdx) => (
                                             <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
                                               {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                             </li>
