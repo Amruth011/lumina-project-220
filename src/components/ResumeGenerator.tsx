@@ -48,12 +48,16 @@ const parseProductOrProjectContent = (contentStr: string) => {
   
   let statusOrYear = raw;
   urls.forEach(url => {
-    statusOrYear = statusOrYear.replace(url, "").trim();
+    statusOrYear = statusOrYear.replace(url, "");
   });
   
   statusOrYear = statusOrYear.replace(/[|\s-–—]+/g, " ").trim();
     
-  if (statusOrYear.toLowerCase() === "live") {
+  if (statusOrYear.toLowerCase() === "live" || statusOrYear.toLowerCase() === "live |" || statusOrYear.toLowerCase() === "| live") {
+    statusOrYear = "";
+  }
+
+  if (statusOrYear === "|" || statusOrYear === "-" || statusOrYear === "–" || statusOrYear === "—") {
     statusOrYear = "";
   }
   

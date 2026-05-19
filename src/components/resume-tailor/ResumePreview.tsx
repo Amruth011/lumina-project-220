@@ -125,14 +125,18 @@ const renderSubHeaderWithLinks = (
   // Extract non-URL text (e.g. Year or Status like "2024", "Live", "Ongoing")
   let statusOrYear = rawContent;
   urls.forEach(url => {
-    statusOrYear = statusOrYear.replace(url, "").trim();
+    statusOrYear = statusOrYear.replace(url, "");
   });
   
   // Clean separators from statusOrYear
   statusOrYear = statusOrYear.replace(/[|\s-–—]+/g, " ").trim();
 
   // Remove redundant "Live" status, but preserve "Ongoing"
-  if (statusOrYear.toLowerCase() === "live") {
+  if (statusOrYear.toLowerCase() === "live" || statusOrYear.toLowerCase() === "live |" || statusOrYear.toLowerCase() === "| live") {
+    statusOrYear = "";
+  }
+
+  if (statusOrYear === "|" || statusOrYear === "-" || statusOrYear === "–" || statusOrYear === "—") {
     statusOrYear = "";
   }
 
