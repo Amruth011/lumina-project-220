@@ -65,6 +65,9 @@ interface ParsedCert { certificate_name: string; company_name: string; year?: st
 interface ParsedAward { name: string; organization: string; date?: string; details?: string[]; }
 interface ParsedProduct { name: string; status: string; live_link?: string; description?: string; }
 
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const YEARS = Array.from({ length: 21 }, (_, i) => String(2015 + i));
+
 const calculateCompletion = (profile: UserProfileWithVault | null, items: VaultItem[]) => {
   if (!profile) return 0;
   
@@ -109,6 +112,15 @@ export const MasterVault = () => {
   const [editingItem, setEditingItem] = useState<Partial<VaultItem> | null>(null);
   const [expMode, setExpMode] = useState<string>("On-site");
   const [expLocation, setExpLocation] = useState<string>("");
+  const [productStatus, setProductStatus] = useState<string>("Ongoing");
+  
+  // Duration selectors
+  const [startMonth, setStartMonth] = useState<string>("January");
+  const [startYear, setStartYear] = useState<string>("2023");
+  const [endMonth, setEndMonth] = useState<string>("June");
+  const [endYear, setEndYear] = useState<string>("2026");
+  const [isCurrent, setIsCurrent] = useState<boolean>(false);
+
   const userId = user?.id;
 
   useEffect(() => {
@@ -181,37 +193,143 @@ export const MasterVault = () => {
     }
   }, [expMode, expLocation, user, editingItem]);
 
+  // Persistence for Product Status Draft
+  useEffect(() => {
+    if (user && editingItem?.type === 'product') {
+      localStorage.setItem(`draft_product_status_${user.id}`, productStatus);
+    }
+  }, [productStatus, user, editingItem]);
+
+  // Persistence for Duration selectors
+  useEffect(() => {
+    if (user && (editingItem?.type === 'professional' || editingItem?.type === 'education')) {
+      localStorage.setItem(`draft_start_month_${user.id}`, startMonth);
+      localStorage.setItem(`draft_start_year_${user.id}`, startYear);
+      localStorage.setItem(`draft_end_month_${user.id}`, endMonth);
+      localStorage.setItem(`draft_end_year_${user.id}`, endYear);
+      localStorage.setItem(`draft_is_current_${user.id}`, String(isCurrent));
+    }
+  }, [startMonth, startYear, endMonth, endYear, isCurrent, user, editingItem]);
+
+  // Synchronize duration selector changes to editingItem.period
+  useEffect(() => {
+    if (editingItem && (editingItem.type === 'professional' || editingItem.type === 'education')) {
+      const endPart = isCurrent ? "Present" : `${endMonth} ${endYear}`;
+      const periodStr = `${startMonth} ${startYear} – ${endPart}`;
+      setEditingItem(prev => {
+        if (!prev) return null;
+        if (prev.period === periodStr) return prev;
+        return { ...prev, period: periodStr };
+      });
+    }
+  }, [startMonth, startYear, endMonth, endYear, isCurrent, editingItem?.type]);
+
   const handleStartEdit = (item: Partial<VaultItem>) => {
-    if (item.type === 'professional') {
-      const desc = item.description || "";
-      const lines = desc.split("\n");
+    if (item.type === 'professional' || item.type === 'education') {
+      let cleanDesc = item.description || "";
       let parsedMode = "On-site";
       let parsedLoc = "";
       
-      const modeLineIdx = lines.findIndex(l => l.trim().toLowerCase().startsWith("mode:"));
-      if (modeLineIdx !== -1) {
-        const line = lines[modeLineIdx].trim();
-        const match = line.match(/mode:\s*([^\s(]+)(?:\s*\(([^)]+)\))?/i);
-        if (match) {
-          const m = match[1].toLowerCase();
-          if (m === 'remote') parsedMode = 'Remote';
-          else if (m === 'offline') parsedMode = 'Offline';
-          else parsedMode = 'On-site';
-          parsedLoc = match[2] || "";
+      if (item.type === 'professional') {
+        const desc = item.description || "";
+        const lines = desc.split("\n");
+        
+        const modeLineIdx = lines.findIndex(l => l.trim().toLowerCase().startsWith("mode:"));
+        if (modeLineIdx !== -1) {
+          const line = lines[modeLineIdx].trim();
+          const match = line.match(/mode:\s*([^\s(]+)(?:\s*\(([^)]+)\))?/i);
+          if (match) {
+            const m = match[1].toLowerCase();
+            if (m === 'remote') parsedMode = 'Remote';
+            else if (m === 'offline') parsedMode = 'Offline';
+            else parsedMode = 'On-site';
+            parsedLoc = match[2] || "";
+          }
         }
-      }
-      
-      let cleanDesc = desc;
-      if (modeLineIdx !== -1) {
-        lines.splice(modeLineIdx, 1);
-        cleanDesc = lines.join("\n").trim();
-        if (cleanDesc.toLowerCase().startsWith("description:")) {
-          cleanDesc = cleanDesc.substring("description:".length).trim();
+        
+        if (modeLineIdx !== -1) {
+          lines.splice(modeLineIdx, 1);
+          cleanDesc = lines.join("\n").trim();
+          if (cleanDesc.toLowerCase().startsWith("description:")) {
+            cleanDesc = cleanDesc.substring("description:".length).trim();
+          }
         }
       }
 
       setExpMode(parsedMode);
       setExpLocation(parsedLoc);
+
+      // Parse period into selectors
+      const period = item.period || "";
+      const parts = period.split(/\s*[-–—to]\s*/i).filter(Boolean);
+      if (parts.length >= 2) {
+        const start = parts[0].trim();
+        const end = parts[1].trim();
+        
+        const startParts = start.split(/\s+/);
+        if (startParts.length >= 2) {
+          const sm = startParts[0];
+          const sy = startParts[1];
+          const foundMonth = MONTHS.find(m => m.toLowerCase().startsWith(sm.toLowerCase()));
+          if (foundMonth) setStartMonth(foundMonth);
+          if (/^\d{4}$/.test(sy)) setStartYear(sy);
+        }
+        
+        if (end.toLowerCase() === 'present') {
+          setIsCurrent(true);
+        } else {
+          setIsCurrent(false);
+          const endParts = end.split(/\s+/);
+          if (endParts.length >= 2) {
+            const em = endParts[0];
+            const ey = endParts[1];
+            const foundMonth = MONTHS.find(m => m.toLowerCase().startsWith(em.toLowerCase()));
+            if (foundMonth) setEndMonth(foundMonth);
+            if (/^\d{4}$/.test(ey)) setEndYear(ey);
+          }
+        }
+      } else if (period.toLowerCase().includes('present')) {
+        setIsCurrent(true);
+        const startParts = period.split(/\s+/);
+        if (startParts.length >= 2) {
+          const sm = startParts[0];
+          const sy = startParts[1].replace(/[^0-9]/g, '');
+          const foundMonth = MONTHS.find(m => m.toLowerCase().startsWith(sm.toLowerCase()));
+          if (foundMonth) setStartMonth(foundMonth);
+          if (/^\d{4}$/.test(sy)) setStartYear(sy);
+        }
+      }
+
+      setEditingItem({
+        ...item,
+        description: cleanDesc
+      });
+    } else if (item.type === 'product') {
+      const desc = item.description || "";
+      const lines = desc.split("\n");
+      let parsedStatus = "Ongoing";
+      
+      const statusLineIdx = lines.findIndex(l => l.trim().toLowerCase().startsWith("status:"));
+      if (statusLineIdx !== -1) {
+        const line = lines[statusLineIdx].trim();
+        const match = line.match(/status:\s*([^\s]+)/i);
+        if (match) {
+          const s = match[1].toLowerCase();
+          if (s === 'shipped') parsedStatus = 'Shipped';
+          else parsedStatus = 'Ongoing';
+        }
+      }
+      
+      let cleanDesc = desc;
+      if (statusLineIdx !== -1) {
+        lines.splice(statusLineIdx, 1);
+        cleanDesc = lines.join("\n").trim();
+        if (cleanDesc.toLowerCase().startsWith("description:")) {
+          cleanDesc = cleanDesc.substring("description:".length).trim();
+        }
+      }
+      
+      setProductStatus(parsedStatus);
       setEditingItem({
         ...item,
         description: cleanDesc
@@ -241,6 +359,22 @@ export const MasterVault = () => {
               if (savedMode) setExpMode(savedMode);
               const savedLoc = localStorage.getItem(`draft_exp_location_${user.id}`);
               if (savedLoc) setExpLocation(savedLoc);
+            }
+            if (parsed.type === 'product') {
+              const savedStatus = localStorage.getItem(`draft_product_status_${user.id}`);
+              if (savedStatus) setProductStatus(savedStatus);
+            }
+            if (parsed.type === 'professional' || parsed.type === 'education') {
+              const savedStartMonth = localStorage.getItem(`draft_start_month_${user.id}`);
+              if (savedStartMonth) setStartMonth(savedStartMonth);
+              const savedStartYear = localStorage.getItem(`draft_start_year_${user.id}`);
+              if (savedStartYear) setStartYear(savedStartYear);
+              const savedEndMonth = localStorage.getItem(`draft_end_month_${user.id}`);
+              if (savedEndMonth) setEndMonth(savedEndMonth);
+              const savedEndYear = localStorage.getItem(`draft_end_year_${user.id}`);
+              if (savedEndYear) setEndYear(savedEndYear);
+              const savedIsCurrent = localStorage.getItem(`draft_is_current_${user.id}`);
+              if (savedIsCurrent) setIsCurrent(savedIsCurrent === "true");
             }
           }
         } catch (e) {
@@ -711,6 +845,16 @@ RETURN JSON FORMAT ONLY:
         }
       }
 
+      if (editingItem.type === 'product') {
+        if (productStatus === 'Shipped' && !editingItem.live_link?.trim()) {
+          toast.error("Live Demo Link Required", {
+            description: "Shipped products must include a live demo link."
+          });
+          return;
+        }
+        finalDesc = `Status: ${productStatus}\n\n${finalDesc}`;
+      }
+
       // Field Sanitization: Remove system fields & detect quantification
       const hasNumbers = /[\d%]/.test(finalDesc) || (editingItem.bullets || []).some(b => /[\d%]/.test(b));
 
@@ -747,6 +891,12 @@ RETURN JSON FORMAT ONLY:
       localStorage.removeItem(`draft_vault_item_${user.id}`);
       localStorage.removeItem(`draft_exp_mode_${user.id}`);
       localStorage.removeItem(`draft_exp_location_${user.id}`);
+      localStorage.removeItem(`draft_product_status_${user.id}`);
+      localStorage.removeItem(`draft_start_month_${user.id}`);
+      localStorage.removeItem(`draft_start_year_${user.id}`);
+      localStorage.removeItem(`draft_end_month_${user.id}`);
+      localStorage.removeItem(`draft_end_year_${user.id}`);
+      localStorage.removeItem(`draft_is_current_${user.id}`);
       setEditingItem(null);
       fetchData();
     } catch (err) {
@@ -1544,6 +1694,85 @@ RETURN JSON FORMAT ONLY:
                   />
                 </div>
 
+                {(editingItem.type === 'professional' || editingItem.type === 'education') && (
+                  <div className="space-y-3 bg-muted/10 p-5 rounded-2xl border border-white/5 animate-in fade-in duration-300">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] uppercase tracking-widest font-black text-primary">Duration Builder Assistant</label>
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
+                        <input
+                          type="checkbox"
+                          checked={isCurrent}
+                          onChange={(e) => setIsCurrent(e.target.checked)}
+                          className="rounded border-white/10 text-primary focus:ring-0 w-4 h-4 bg-muted/20"
+                        />
+                        <span>Currently {editingItem.type === 'education' ? 'Studying' : 'Working'} Here (Present)</span>
+                      </label>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="space-y-1">
+                        <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Start Month</span>
+                        <select
+                          value={startMonth}
+                          onChange={(e) => setStartMonth(e.target.value)}
+                          className="w-full bg-muted/20 border border-border/40 rounded-xl px-3 py-2 text-xs text-foreground outline-none cursor-pointer"
+                        >
+                          {MONTHS.map(m => <option key={m} value={m} className="bg-background text-foreground">{m}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Start Year</span>
+                        <select
+                          value={startYear}
+                          onChange={(e) => setStartYear(e.target.value)}
+                          className="w-full bg-muted/20 border border-border/40 rounded-xl px-3 py-2 text-xs text-foreground outline-none cursor-pointer"
+                        >
+                          {YEARS.map(y => <option key={y} value={y} className="bg-background text-foreground">{y}</option>)}
+                        </select>
+                      </div>
+                      {!isCurrent && (
+                        <>
+                          <div className="space-y-1 animate-in fade-in duration-300">
+                            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">End Month</span>
+                            <select
+                              value={endMonth}
+                              onChange={(e) => setEndMonth(e.target.value)}
+                              className="w-full bg-muted/20 border border-border/40 rounded-xl px-3 py-2 text-xs text-foreground outline-none cursor-pointer"
+                            >
+                              {MONTHS.map(m => <option key={m} value={m} className="bg-background text-foreground">{m}</option>)}
+                            </select>
+                          </div>
+                          <div className="space-y-1 animate-in fade-in duration-300">
+                            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">End Year</span>
+                            <select
+                              value={endYear}
+                              onChange={(e) => setEndYear(e.target.value)}
+                              className="w-full bg-muted/20 border border-border/40 rounded-xl px-3 py-2 text-xs text-foreground outline-none cursor-pointer"
+                            >
+                              {YEARS.map(y => <option key={y} value={y} className="bg-background text-foreground">{y}</option>)}
+                            </select>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {editingItem.type === 'product' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-widest font-black text-muted-foreground ml-1">Venture Status</label>
+                      <select
+                        className="w-full bg-muted/20 border border-border/40 rounded-2xl px-5 py-4 text-sm focus:ring-2 ring-primary/20 transition-all outline-none appearance-none cursor-pointer text-foreground"
+                        value={productStatus}
+                        onChange={(e) => setProductStatus(e.target.value)}
+                      >
+                        <option value="Ongoing" className="bg-background text-foreground">Ongoing</option>
+                        <option value="Shipped" className="bg-background text-foreground">Shipped</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
                 {editingItem.type === 'professional' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
                     <div className="space-y-2">
@@ -1613,12 +1842,15 @@ RETURN JSON FORMAT ONLY:
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest font-black text-muted-foreground ml-1">Live Demo Link (Optional)</label>
+                      <label className="text-[10px] uppercase tracking-widest font-black text-muted-foreground ml-1">
+                        Live Demo Link {editingItem.type === 'product' && productStatus === 'Shipped' ? '(Required for Shipped)' : '(Optional)'}
+                      </label>
                       <input
                         className="w-full bg-muted/20 border border-border/40 rounded-2xl px-5 py-4 text-sm focus:ring-2 ring-primary/20 transition-all outline-none"
                         value={editingItem.live_link || ""}
                         onChange={(e) => setEditingItem({ ...editingItem, live_link: e.target.value })}
                         placeholder="your-project.vercel.app"
+                        required={editingItem.type === 'product' && productStatus === 'Shipped'}
                       />
                     </div>
                   </div>

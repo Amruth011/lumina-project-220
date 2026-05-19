@@ -43,12 +43,32 @@ const getModeOrLocation = (modeAndLocRaw: string, defaultLoc: string): string =>
 
 const parseProductOrProjectContent = (contentStr: string) => {
   const raw = contentStr || "";
-  const urlRegex = /(https?:\/\/[^\s]+|github\.com\/[^\s]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/[^\s]*|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
-  const urls = raw.match(urlRegex) || [];
   
+  // Robust match for GitHub or absolute URLs or standard project domain patterns
+  const urlRegex = /(https?:\/\/[^\s|]+|github\.com\/[^\s|]+)/gi;
+  const matches = raw.match(urlRegex) || [];
+  
+  const uniqueUrls: string[] = [];
+  const seen = new Set<string>();
+  
+  matches.forEach(u => {
+    // Normalize to avoid protocol/trailing slash mismatches (e.g. git.com vs http://git.com)
+    const norm = u.toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      .replace(/\/$/, "")
+      .trim();
+      
+    if (norm && !seen.has(norm)) {
+      seen.add(norm);
+      uniqueUrls.push(u.trim());
+    }
+  });
+
   let statusOrYear = raw;
-  urls.forEach(url => {
-    statusOrYear = statusOrYear.replace(url, "");
+  // Use unique occurrences to strip from text
+  uniqueUrls.forEach(url => {
+    statusOrYear = statusOrYear.split(url).join("");
   });
   
   statusOrYear = statusOrYear.replace(/[|\s-–—]+/g, " ").trim();
@@ -65,13 +85,13 @@ const parseProductOrProjectContent = (contentStr: string) => {
   if (statusOrYear) {
     parts.push(statusOrYear);
   }
-  urls.forEach(url => {
+  uniqueUrls.forEach(url => {
     parts.push(url);
   });
   
   return {
     statusOrYear,
-    urls,
+    urls: uniqueUrls,
     pdfString: parts.join(" | ")
   };
 };
@@ -624,6 +644,7 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.
 - Use strong action verbs (Spearheaded, Orchestrated, Engineered).
 - DATE FORMAT: Use exact dates or month/year formats cleanly as provided (e.g., "January 2023 to March 2025" or "Jul 2022 – Present").
 - PROJECT DATE SORTING (CRITICAL): In the PROJECTS section, you MUST sort the projects by their date in reverse chronological order (latest/newest projects with the most recent year like 2026, 2025 or 'Ongoing' status placed at the very top/first, followed by older years like 2024, 2023, etc.).
+- ULTRA-CONCISE BULLET BUDGET (CRITICAL): To ensure maximum density and clean layout, keep EVERY single bullet/line across EXPERIENCE, PROJECTS, and PRODUCTS exceptionally concise and short! Each bullet MUST carry up to 10-12 words (strictly keeping the character length under 75 characters including spaces). Never write wordy, long or multi-line descriptions. Each bullet must be extremely crisp, metric-first, and fit beautifully on a single line.
 - SECTION DENSITY & DYNAMIC EXPANSION MANDATES (CRITICAL):
     - PROFESSIONAL SUMMARY: ${summaryPromptRule} You must compose it dynamically based on the Candidate Profile's experience and target skills. If the candidate's experience is a "Data Science Intern", you MUST refer to them as "Data Science Intern" or "Data Scientist" and NEVER hallucinate titles like "AI Engineer Intern" or "AI Intern".
     - SUMMARY EXPERIENCE TIMELINE ACCURACY (CRITICAL): Do NOT exaggerate or hallucinate the years of experience of the candidate under any circumstances! Count the exact duration of experience based ONLY on their formal experience items in the Candidate Profile. If the candidate has only one internship of 3 months or less than a year of total experience, you MUST NEVER write "X+ years of experience" or "2+ years of experience". Instead, state "Data Science Intern with hands-on experience" or "Data Science professional with hands-on internship experience". Keep it 100% faithful to the actual duration shown in the profile.
@@ -2325,7 +2346,7 @@ Write a compelling, ready-to-send cover letter.`;
                         onChange={(e) => setExperienceBullets(Number(e.target.value))}
                         className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 ring-lumina-teal/20 transition-all"
                       >
-                        {[2, 3, 4, 5].map(n => <option key={n} value={n}>{n} Bullets</option>)}
+                        {[2, 3, 4, 5, 6, 7, 8].map(n => <option key={n} value={n}>{n} Bullets</option>)}
                       </select>
                     </div>
                   </div>
@@ -2338,7 +2359,7 @@ Write a compelling, ready-to-send cover letter.`;
                         onChange={(e) => setProjectLines(Number(e.target.value))}
                         className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 ring-lumina-teal/20 transition-all"
                       >
-                        {[2, 3, 4, 5].map(n => <option key={n} value={n}>{n} Bullets</option>)}
+                        {[2, 3, 4, 5, 6, 7, 8].map(n => <option key={n} value={n}>{n} Bullets</option>)}
                       </select>
                     </div>
                     <div className="space-y-2">
@@ -2348,7 +2369,7 @@ Write a compelling, ready-to-send cover letter.`;
                         onChange={(e) => setProductLines(Number(e.target.value))}
                         className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 ring-lumina-teal/20 transition-all"
                       >
-                        {[2, 3, 4, 5].map(n => <option key={n} value={n}>{n} Bullets</option>)}
+                        {[2, 3, 4, 5, 6, 7, 8].map(n => <option key={n} value={n}>{n} Bullets</option>)}
                       </select>
                     </div>
                   </div>

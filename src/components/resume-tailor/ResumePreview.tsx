@@ -30,6 +30,9 @@ import { GeneratedResume, VaultItem } from "@/types/jd";
 import { toast } from "sonner";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
 
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const YEARS = Array.from({ length: 21 }, (_, i) => String(2015 + i));
+
 interface ResumeHeader {
   fullName: string;
   email: string;
@@ -628,12 +631,132 @@ export const ResumePreview = ({
                           </div>
                         );
                       })()}
-                      <input 
-                        value={exp.content || ""} 
-                        onChange={(e) => updateExperience(idx, 'content', e.target.value)} 
-                        className="w-full bg-slate-100/50 rounded-lg px-3 py-1.5 text-[11px] font-body outline-none border border-slate-200/30 focus:border-lumina-teal/20" 
-                        placeholder="Duration & Details (e.g., July 2022 – June 2023)" 
-                      />
+                      {(() => {
+                        const content = exp.content || "";
+                        // Decompose exp.content (e.g. "July 2022 – June 2023" or "Jan 2023 – Present")
+                        let parsedStartMonth = "January";
+                        let parsedStartYear = "2023";
+                        let parsedEndMonth = "June";
+                        let parsedEndYear = "2026";
+                        let parsedIsCurrent = false;
+
+                        const parts = content.split(/\s*[-–—to]\s*/i).filter(Boolean);
+                        if (parts.length >= 2) {
+                          const start = parts[0].trim();
+                          const end = parts[1].trim();
+                          
+                          const startParts = start.split(/\s+/);
+                          if (startParts.length >= 2) {
+                            const sm = startParts[0];
+                            const sy = startParts[1];
+                            const foundMonth = MONTHS.find(m => m.toLowerCase().startsWith(sm.toLowerCase()));
+                            if (foundMonth) parsedStartMonth = foundMonth;
+                            if (/^\d{4}$/.test(sy)) parsedStartYear = sy;
+                          }
+                          
+                          if (end.toLowerCase() === 'present') {
+                            parsedIsCurrent = true;
+                          } else {
+                            parsedIsCurrent = false;
+                            const endParts = end.split(/\s+/);
+                            if (endParts.length >= 2) {
+                              const em = endParts[0];
+                              const ey = endParts[1];
+                              const foundMonth = MONTHS.find(m => m.toLowerCase().startsWith(em.toLowerCase()));
+                              if (foundMonth) parsedEndMonth = foundMonth;
+                              if (/^\d{4}$/.test(ey)) parsedEndYear = ey;
+                            }
+                          }
+                        } else if (content.toLowerCase().includes('present')) {
+                          parsedIsCurrent = true;
+                          const startParts = content.split(/\s+/);
+                          if (startParts.length >= 2) {
+                            const sm = startParts[0];
+                            const sy = startParts[1].replace(/[^0-9]/g, '');
+                            const foundMonth = MONTHS.find(m => m.toLowerCase().startsWith(sm.toLowerCase()));
+                            if (foundMonth) parsedStartMonth = foundMonth;
+                            if (/^\d{4}$/.test(sy)) parsedStartYear = sy;
+                          }
+                        }
+
+                        const updateDurationStr = (sm: string, sy: string, em: string, ey: string, curr: boolean) => {
+                          const endPart = curr ? "Present" : `${em} ${ey}`;
+                          const nextStr = `${sm} ${sy} – ${endPart}`;
+                          updateExperience(idx, 'content', nextStr);
+                        };
+
+                        return (
+                          <div className="space-y-2 bg-slate-100/30 p-3 rounded-lg border border-slate-200/50 text-xs">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[9px] uppercase tracking-widest font-black text-slate-500">Duration Builder</span>
+                              <label className="flex items-center gap-1.5 cursor-pointer font-bold text-[10px] text-slate-600">
+                                <input
+                                  type="checkbox"
+                                  checked={parsedIsCurrent}
+                                  onChange={(e) => updateDurationStr(parsedStartMonth, parsedStartYear, parsedEndMonth, parsedEndYear, e.target.checked)}
+                                  className="rounded border-slate-200 text-lumina-teal focus:ring-0 w-3 h-3"
+                                />
+                                <span>Present</span>
+                              </label>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Start Month</span>
+                                <select
+                                  value={parsedStartMonth}
+                                  onChange={(e) => updateDurationStr(e.target.value, parsedStartYear, parsedEndMonth, parsedEndYear, parsedIsCurrent)}
+                                  className="w-full bg-white rounded-lg px-2 py-1 text-[11px] outline-none border border-slate-200 focus:border-lumina-teal/20 cursor-pointer text-slate-800"
+                                >
+                                  {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                                </select>
+                              </div>
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Start Year</span>
+                                <select
+                                  value={parsedStartYear}
+                                  onChange={(e) => updateDurationStr(parsedStartMonth, e.target.value, parsedEndMonth, parsedEndYear, parsedIsCurrent)}
+                                  className="w-full bg-white rounded-lg px-2 py-1 text-[11px] outline-none border border-slate-200 focus:border-lumina-teal/20 cursor-pointer text-slate-800"
+                                >
+                                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                              </div>
+                              {!parsedIsCurrent && (
+                                <>
+                                  <div className="flex flex-col gap-0.5 animate-in fade-in duration-300">
+                                    <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">End Month</span>
+                                    <select
+                                      value={parsedEndMonth}
+                                      onChange={(e) => updateDurationStr(parsedStartMonth, parsedStartYear, e.target.value, parsedEndYear, parsedIsCurrent)}
+                                      className="w-full bg-white rounded-lg px-2 py-1 text-[11px] outline-none border border-slate-200 focus:border-lumina-teal/20 cursor-pointer text-slate-800"
+                                    >
+                                      {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                                    </select>
+                                  </div>
+                                  <div className="flex flex-col gap-0.5 animate-in fade-in duration-300">
+                                    <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">End Year</span>
+                                    <select
+                                      value={parsedEndYear}
+                                      onChange={(e) => updateDurationStr(parsedStartMonth, parsedStartYear, parsedEndMonth, e.target.value, parsedIsCurrent)}
+                                      className="w-full bg-white rounded-lg px-2 py-1 text-[11px] outline-none border border-slate-200 focus:border-lumina-teal/20 cursor-pointer text-slate-800"
+                                    >
+                                      {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                                    </select>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-0.5 pt-1 border-t border-slate-200/50">
+                              <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Text Preview</span>
+                              <input 
+                                value={content} 
+                                onChange={(e) => updateExperience(idx, 'content', e.target.value)} 
+                                className="w-full bg-slate-50/50 rounded-lg px-2.5 py-1 text-[10px] font-semibold outline-none border border-slate-200 focus:border-lumina-teal/20 text-slate-800"
+                                placeholder="July 2022 – June 2023"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })()}
                       <div className="space-y-2">
                         {exp.bullets?.map((bullet, bullIdx) => (
                           <div key={bullIdx} className="flex gap-2 items-start group/bull">
@@ -833,15 +956,218 @@ export const ResumePreview = ({
                 onToggle={() => setOpenSection(openSection === "education" ? null : "education")}
                 action={<button onClick={() => setShowVaultPicker({ section: 'education' })} className="text-[8px] font-black uppercase text-lumina-teal flex items-center gap-1"><Plus size={10}/> Vault</button>}
               >
-                <div className="space-y-2">
+                <div className="space-y-4">
                   {(localResume.education || []).map((edu, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <input value={edu} onChange={(e) => {
-                        const newEdu = [...(localResume.education || [])];
-                        newEdu[i] = e.target.value;
-                        updateResumeState({ ...localResume, education: newEdu });
-                      }} className="flex-1 bg-slate-50 rounded-xl px-4 py-2 text-[11px] font-medium outline-none" />
-                      <button onClick={() => updateResumeState({...localResume, education: (localResume.education || []).filter((_, idx) => idx !== i)})} className="p-2 text-red-400"><Minus size={12}/></button>
+                    <div key={i} className="w-full">
+                      {(() => {
+                        const rawStr = edu || "";
+                        const sections = rawStr.split('|').map(s => s.trim());
+                        
+                        const mainSection = sections[0] || "";
+                        const timelineSection = sections[1] || "";
+                        const gpaSection = sections[2] || "";
+
+                        const mainParts = mainSection.split('@').map(s => s.trim());
+                        const degree = mainParts[0] || "";
+                        const schoolAndLoc = mainParts[1] || "";
+                        const schoolParts = schoolAndLoc.split('-').map(s => s.trim());
+                        const school = schoolParts[0] || "";
+                        const location = schoolParts[1] || "";
+
+                        let parsedStartMonth = "July";
+                        let parsedStartYear = "2023";
+                        let parsedEndMonth = "June";
+                        let parsedEndYear = "2026";
+                        let parsedIsCurrent = false;
+
+                        const parts = timelineSection.split(/\s*[-–—to]\s*/i).filter(Boolean);
+                        if (parts.length >= 2) {
+                          const start = parts[0].trim();
+                          const end = parts[1].trim();
+                          
+                          const startParts = start.split(/\s+/);
+                          if (startParts.length >= 2) {
+                            const sm = startParts[0];
+                            const sy = startParts[1];
+                            const foundMonth = MONTHS.find(m => m.toLowerCase().startsWith(sm.toLowerCase()));
+                            if (foundMonth) parsedStartMonth = foundMonth;
+                            if (/^\d{4}$/.test(sy)) parsedStartYear = sy;
+                          }
+                          
+                          if (end.toLowerCase() === 'present') {
+                            parsedIsCurrent = true;
+                          } else {
+                            parsedIsCurrent = false;
+                            const endParts = end.split(/\s+/);
+                            if (endParts.length >= 2) {
+                              const em = endParts[0];
+                              const ey = endParts[1];
+                              const foundMonth = MONTHS.find(m => m.toLowerCase().startsWith(em.toLowerCase()));
+                              if (foundMonth) parsedEndMonth = foundMonth;
+                              if (/^\d{4}$/.test(ey)) parsedEndYear = ey;
+                            }
+                          }
+                        } else if (timelineSection.toLowerCase().includes('present')) {
+                          parsedIsCurrent = true;
+                          const startParts = timelineSection.split(/\s+/);
+                          if (startParts.length >= 2) {
+                            const sm = startParts[0];
+                            const sy = startParts[1].replace(/[^0-9]/g, '');
+                            const foundMonth = MONTHS.find(m => m.toLowerCase().startsWith(sm.toLowerCase()));
+                            if (foundMonth) parsedStartMonth = foundMonth;
+                            if (/^\d{4}$/.test(sy)) parsedStartYear = sy;
+                          }
+                        }
+
+                        const updateEducationFields = (fields: { degree?: string; school?: string; location?: string; startMonth?: string; startYear?: string; endMonth?: string; endYear?: string; isCurrent?: boolean; gpa?: string }) => {
+                          const nextDegree = fields.degree !== undefined ? fields.degree : degree;
+                          const nextSchool = fields.school !== undefined ? fields.school : school;
+                          const nextLocation = fields.location !== undefined ? fields.location : location;
+                          
+                          const nextStartMonth = fields.startMonth !== undefined ? fields.startMonth : parsedStartMonth;
+                          const nextStartYear = fields.startYear !== undefined ? fields.startYear : parsedStartYear;
+                          const nextEndMonth = fields.endMonth !== undefined ? fields.endMonth : parsedEndMonth;
+                          const nextEndYear = fields.endYear !== undefined ? fields.endYear : parsedEndYear;
+                          const nextIsCurrent = fields.isCurrent !== undefined ? fields.isCurrent : parsedIsCurrent;
+                          const nextGpa = fields.gpa !== undefined ? fields.gpa : gpaSection;
+
+                          const endPart = nextIsCurrent ? "Present" : `${nextEndMonth} ${nextEndYear}`;
+                          const timelineStr = `${nextStartMonth} ${nextStartYear} – ${endPart}`;
+                          
+                          const schoolPart = nextSchool ? ` @ ${nextSchool}` : "";
+                          const locPart = (nextSchool && nextLocation) ? ` - ${nextLocation}` : (nextLocation ? ` @ ${nextLocation}` : "");
+                          const gpaPart = nextGpa ? ` | ${nextGpa}` : "";
+
+                          const nextStr = `${nextDegree}${schoolPart}${locPart} | ${timelineStr}${gpaPart}`;
+
+                          const newEdu = [...(localResume.education || [])];
+                          newEdu[i] = nextStr;
+                          updateResumeState({ ...localResume, education: newEdu });
+                        };
+
+                        return (
+                          <div className="p-4 rounded-xl bg-slate-50/50 border border-border/10 space-y-3 relative group/edu w-full">
+                            <button 
+                              onClick={() => updateResumeState({...localResume, education: (localResume.education || []).filter((_, idx) => idx !== i)})} 
+                              className="absolute top-2 right-2 p-1 text-red-500 opacity-0 group-hover/edu:opacity-100 hover:bg-red-50 rounded-lg transition-all"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Degree / Course</span>
+                                <input
+                                  value={degree}
+                                  onChange={(e) => updateEducationFields({ degree: e.target.value })}
+                                  className="w-full bg-white/70 rounded-lg px-2.5 py-1 text-[11px] font-bold outline-none border border-slate-200/50 focus:border-lumina-teal/20 text-slate-800"
+                                  placeholder="e.g. BTech in Computer Science"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">School / Uni</span>
+                                <input
+                                  value={school}
+                                  onChange={(e) => updateEducationFields({ school: e.target.value })}
+                                  className="w-full bg-white/70 rounded-lg px-2.5 py-1 text-[11px] font-bold outline-none border border-slate-200/50 focus:border-lumina-teal/20 text-slate-800"
+                                  placeholder="e.g. REVA University"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Location</span>
+                                <input
+                                  value={location}
+                                  onChange={(e) => updateEducationFields({ location: e.target.value })}
+                                  className="w-full bg-white/70 rounded-lg px-2.5 py-1 text-[11px] outline-none border border-slate-200/50 focus:border-lumina-teal/20 text-slate-800"
+                                  placeholder="e.g. Bengaluru, India"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">GPA / Grade</span>
+                                <input
+                                  value={gpaSection}
+                                  onChange={(e) => updateEducationFields({ gpa: e.target.value })}
+                                  className="w-full bg-white/70 rounded-lg px-2.5 py-1 text-[11px] outline-none border border-slate-200/50 focus:border-lumina-teal/20 text-slate-800"
+                                  placeholder="e.g. GPA: 8.0/10"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-2 bg-slate-100/30 p-2.5 rounded-lg border border-slate-200/50 text-[10px]">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[8px] uppercase tracking-widest font-black text-slate-500">Duration Builder</span>
+                                <label className="flex items-center gap-1 cursor-pointer font-bold text-[9px] text-slate-600">
+                                  <input
+                                    type="checkbox"
+                                    checked={parsedIsCurrent}
+                                    onChange={(e) => updateEducationFields({ isCurrent: e.target.checked })}
+                                    className="rounded border-slate-200 text-lumina-teal focus:ring-0 w-2.5 h-2.5"
+                                  />
+                                  <span>Present</span>
+                                </label>
+                              </div>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="text-[7px] uppercase tracking-wider text-slate-400 font-bold">Start Month</span>
+                                  <select
+                                    value={parsedStartMonth}
+                                    onChange={(e) => updateEducationFields({ startMonth: e.target.value })}
+                                    className="w-full bg-white rounded px-1.5 py-0.5 text-[10px] outline-none border border-slate-200 cursor-pointer text-slate-800"
+                                  >
+                                    {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                                  </select>
+                                </div>
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="text-[7px] uppercase tracking-wider text-slate-400 font-bold">Start Year</span>
+                                  <select
+                                    value={parsedStartYear}
+                                    onChange={(e) => updateEducationFields({ startYear: e.target.value })}
+                                    className="w-full bg-white rounded px-1.5 py-0.5 text-[10px] outline-none border border-slate-200 cursor-pointer text-slate-800"
+                                  >
+                                    {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                                  </select>
+                                </div>
+                                {!parsedIsCurrent && (
+                                  <>
+                                    <div className="flex flex-col gap-0.5 animate-in fade-in duration-300">
+                                      <span className="text-[7px] uppercase tracking-wider text-slate-400 font-bold">End Month</span>
+                                      <select
+                                        value={parsedEndMonth}
+                                        onChange={(e) => updateEducationFields({ endMonth: e.target.value })}
+                                        className="w-full bg-white rounded px-1.5 py-0.5 text-[10px] outline-none border border-slate-200 cursor-pointer text-slate-800"
+                                      >
+                                        {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                                      </select>
+                                    </div>
+                                    <div className="flex flex-col gap-0.5 animate-in fade-in duration-300">
+                                      <span className="text-[7px] uppercase tracking-wider text-slate-400 font-bold">End Year</span>
+                                      <select
+                                        value={parsedEndYear}
+                                        onChange={(e) => updateEducationFields({ endYear: e.target.value })}
+                                        className="w-full bg-white rounded px-1.5 py-0.5 text-[10px] outline-none border border-slate-200 cursor-pointer text-slate-800"
+                                      >
+                                        {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                                      </select>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-0.5 pt-1 border-t border-slate-200/50">
+                              <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Text Preview</span>
+                              <input 
+                                value={rawStr} 
+                                onChange={(e) => {
+                                  const newEdu = [...(localResume.education || [])];
+                                  newEdu[i] = e.target.value;
+                                  updateResumeState({ ...localResume, education: newEdu });
+                                }} 
+                                className="w-full bg-slate-100/50 rounded px-2 py-0.5 text-[9px] font-semibold outline-none border border-slate-200 focus:border-lumina-teal/20 text-slate-800"
+                                placeholder="Btech in CS @ REVA University - BLR | Jan 2023 – Dec 2026 | GPA: 8.0/10"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   ))}
                   <button onClick={() => updateResumeState({...localResume, education: [...(localResume.education || []), "Btech in Computer Science @ REVA University - Bengaluru, India | July 2020 – June 2024 | GPA: 8.0/10"]})} className="text-[8px] font-bold text-lumina-teal flex items-center gap-1 uppercase tracking-widest pt-2"><Plus size={10} /> Add Education</button>
