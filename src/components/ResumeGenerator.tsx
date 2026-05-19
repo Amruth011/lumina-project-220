@@ -1989,7 +1989,7 @@ Return ONLY a JSON object with this exact structure (note the bracketed dynamic 
                         onChange={(e) => setSummaryLines(Number(e.target.value))}
                         className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 ring-lumina-teal/20 transition-all"
                       >
-                        {[2, 3, 4, 5].map(n => <option key={n} value={n}>{n} Lines</option>)}
+                        {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n} {n === 1 ? 'Line' : 'Lines'}</option>)}
                       </select>
                     </div>
                     <div className="space-y-2">
