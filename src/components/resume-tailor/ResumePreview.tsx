@@ -487,6 +487,12 @@ export const ResumePreview = ({
                     <div key={idx} className="p-4 rounded-xl bg-slate-50/50 border border-border/10 space-y-3 relative group/exp">
                       <button onClick={() => updateResumeState({...localResume, experience: (localResume.experience || []).filter((_, i) => i !== idx)})} className="absolute top-3 right-3 p-1.5 text-red-500 opacity-0 group-hover/exp:opacity-100 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={12} /></button>
                       <input value={exp.heading} onChange={(e) => updateExperience(idx, 'heading', e.target.value)} className="w-full bg-transparent font-bold text-sm outline-none border-b border-transparent focus:border-lumina-teal/20" />
+                      <input 
+                        value={exp.content || ""} 
+                        onChange={(e) => updateExperience(idx, 'content', e.target.value)} 
+                        className="w-full bg-slate-100/50 rounded-lg px-3 py-1.5 text-[11px] font-body outline-none border border-slate-200/30 focus:border-lumina-teal/20" 
+                        placeholder="Duration & Details (e.g., July 2022 – June 2023)" 
+                      />
                       <div className="space-y-2">
                         {exp.bullets?.map((bullet, bullIdx) => (
                           <div key={bullIdx} className="flex gap-2 items-start group/bull">

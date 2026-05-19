@@ -151,7 +151,7 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
   }, [handleTabSwitch]);
 
   return (
-    <div className={`w-full ${activeTab === 'generator' ? 'max-w-screen-2xl' : 'max-w-7xl'} mx-auto px-4 md:px-8 pb-24`}>
+    <div className={`w-full ${(activeTab === 'generator' || activeTab === 'cover-letter') ? 'max-w-[98%] xl:px-12' : 'max-w-7xl'} mx-auto px-4 md:px-8 pb-24`}>
       <AnimatePresence mode="wait">
         {activeTab === "decode" ? (
           <motion.div
