@@ -497,8 +497,8 @@ export const ResumePreview = ({
             transition={{ duration: 0.5 }}
             className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start h-auto w-full"
           >
-            {/* ── LEFT PANEL: EDITORS (MAX WIDE) ── */}
-            <div className="lg:col-span-6 xl:col-span-6 2xl:col-span-6 space-y-6 h-auto">
+            {/* ── LEFT PANEL: EDITORS ── */}
+            <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-4 space-y-6 h-auto">
               <CollapsibleSection 
                 title="Profile Identity" 
                 icon={User} 
@@ -1234,8 +1234,8 @@ export const ResumePreview = ({
             </div>
 
             {/* ── RIGHT PANEL: PREVIEW ── */}
-            <div className="lg:col-span-6 xl:col-span-6 2xl:col-span-6 flex justify-center w-full">
-              <div className="w-full flex-1 perspective-2000 rounded-[2.5rem] shadow-inner bg-slate-100/50 p-6 sm:p-10 border border-white/40">
+            <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-8 flex justify-center w-full">
+              <div className="w-full flex-1 perspective-2000 rounded-[2.5rem] shadow-inner bg-slate-100/50 p-4 sm:p-6 md:p-8 border border-white/40">
                 <motion.div 
                   ref={resumeRef}
                   initial={{ opacity: 0 }}
