@@ -87,9 +87,9 @@ const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3): GeneratedRe
   if (summary) {
     // Normalise smart punctuation and missing spacing
     const normalized = summary
-      .replace(/([\w])\.([A-Z\w])/g, '$1. $2')
-      .replace(/([\w])!([A-Z\w])/g, '$1! $2')
-      .replace(/([\w])\?([A-Z\w])/g, '$1? $2')
+      .replace(/([a-zA-Z])\.([A-Za-z])/g, '$1. $2')
+      .replace(/([a-zA-Z])!([A-Za-z])/g, '$1! $2')
+      .replace(/([a-zA-Z])\?([A-Za-z])/g, '$1? $2')
       .replace(/[\u201C\u201D]/g, '"')
       .replace(/[\u2018\u2019]/g, "'")
       .replace(/[\u2013\u2014]/g, "-")
