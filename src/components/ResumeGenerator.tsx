@@ -21,6 +21,67 @@ const sanitizePdfText = (text: string): string => {
     .replace(/\u00A0/g, " ");        // non-breaking space
 };
 
+const getModeOrLocation = (modeAndLocRaw: string, defaultLoc: string): string => {
+  const raw = (modeAndLocRaw || "").trim();
+  if (!raw) return defaultLoc;
+  
+  if (raw.toLowerCase().includes("remote")) {
+    return "Remote";
+  }
+  
+  const match = raw.match(/\(([^)]+)\)/);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  
+  if (raw.toLowerCase().includes("on-site") || raw.toLowerCase().includes("on site")) {
+    return defaultLoc || "On-site";
+  }
+  
+  return raw;
+};
+
+const parseProductOrProjectContent = (contentStr: string) => {
+  const raw = contentStr || "";
+  const urlRegex = /(https?:\/\/[^\s]+|github\.com\/[^\s]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/[^\s]*|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+  const urls = raw.match(urlRegex) || [];
+  
+  let statusOrYear = raw;
+  urls.forEach(url => {
+    statusOrYear = statusOrYear.replace(url, "").trim();
+  });
+  
+  statusOrYear = statusOrYear
+    .replace(/\|\s*$/g, "")
+    .replace(/^\s*\|/g, "")
+    .replace(/\s*\|\s*\|\s*/g, " | ")
+    .replace(/\s*-\s*$/g, "")
+    .replace(/^\s*-/g, "")
+    .trim();
+    
+  if (statusOrYear === "|" || statusOrYear === "-") {
+    statusOrYear = "";
+  }
+  
+  if (statusOrYear.toLowerCase() === "live") {
+    statusOrYear = "";
+  }
+  
+  const parts = [];
+  if (statusOrYear) {
+    parts.push(statusOrYear);
+  }
+  urls.forEach(url => {
+    parts.push(url);
+  });
+  
+  return {
+    statusOrYear,
+    urls,
+    pdfString: parts.join(" | ")
+  };
+};
+
 interface ResumeGeneratorProps {
   jdTitle: string;
   jdSkills: Skill[];
@@ -1105,9 +1166,10 @@ Return ONLY a JSON object with this exact structure:
               checkPageBreak(12);
               const parts = exp.heading.split('@');
               const role = parts[0]?.trim() || "Role";
-              const orgParts = parts[1]?.split('-') || [];
+              const orgParts = parts[1] ? parts[1].split(/\s+[-–—]\s+/) : [];
               const org = orgParts[0]?.trim() || "Organization";
-              const loc = orgParts[1]?.trim() || editableHeader.location;
+              const rawLocOrMode = orgParts[1]?.trim() || "";
+              const loc = getModeOrLocation(rawLocOrMode, editableHeader.location);
 
               const maxRightWidth = contentWidth * 0.35;
               const dateText = exp.content || "Date – Present";
@@ -1160,12 +1222,13 @@ Return ONLY a JSON object with this exact structure:
             editableResume.products.forEach(prod => {
               checkPageBreak(12);
               
-              const headingParts = prod.heading.split(/\s*[-–—]\s*/);
+              const headingParts = prod.heading.split(/\s+[-–—]\s+/);
               const title = headingParts[0]?.trim() || "Product";
               const status = headingParts.slice(1).join(" | ")?.trim();
 
               const maxRightWidth = contentWidth * 0.35;
-              const contentText = prod.content || "Operational";
+              const parsedContent = parseProductOrProjectContent(prod.content);
+              const contentText = parsedContent.pdfString || "Operational";
               const contentTextTruncated = truncateText(contentText, maxRightWidth, bodyFontSize - 1, false);
               const contentWidthVal = pdf.getTextWidth(contentTextTruncated);
               
@@ -1216,12 +1279,13 @@ Return ONLY a JSON object with this exact structure:
             editableResume.projects.forEach(proj => {
               checkPageBreak(12);
               
-              const headingParts = proj.heading.split(/\s*[-–—]\s*/);
+              const headingParts = proj.heading.split(/\s+[-–—]\s+/);
               const title = headingParts[0]?.trim() || "Project";
               const stack = headingParts.slice(1).join(" | ")?.trim();
 
               const maxRightWidth = contentWidth * 0.35;
-              const dateText = proj.content || "";
+              const parsedProj = parseProductOrProjectContent(proj.content);
+              const dateText = parsedProj.pdfString || "";
               const dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
               const dateWidth = dateTextTruncated ? pdf.getTextWidth(dateTextTruncated) : 0;
               
@@ -1250,8 +1314,8 @@ Return ONLY a JSON object with this exact structure:
               pdf.setFontSize(bodyFontSize - 1);
               if (dateTextTruncated) {
                 pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
-                if (dateText.includes("github.com") || dateText.includes(".com") || dateText.includes(".io") || dateText.includes(".live") || dateText.includes(".dev") || dateText.startsWith("http")) {
-                  let linkUrl = dateText.trim();
+                if (parsedProj.urls.length > 0) {
+                  let linkUrl = parsedProj.urls[0].trim();
                   if (!linkUrl.startsWith("http")) {
                     linkUrl = "https://" + linkUrl;
                   }
@@ -1568,9 +1632,10 @@ Return ONLY a JSON object with this exact structure:
         ${editableResume.experience.map(exp => {
           const parts = (exp.heading || "").split('@');
           const role = parts[0]?.trim() || "Role";
-          const orgParts = (parts[1] || "").split('-');
+          const orgParts = parts[1] ? parts[1].split(/\s+[-–—]\s+/) : [];
           const org = orgParts[0]?.trim() || "Organization";
-          const location = orgParts[1]?.trim() || editableHeader.location || "";
+          const rawLocOrMode = orgParts[1]?.trim() || "";
+          const location = getModeOrLocation(rawLocOrMode, editableHeader.location || "");
           const bulletsToRender = exp.bullets || [];
 
           return `
@@ -1600,10 +1665,24 @@ Return ONLY a JSON object with this exact structure:
           <h2 class="section-title">Products & Ventures</h2>
         </div>
         ${editableResume.products.map(prod => {
-          const headingParts = (prod.heading || "").split(/\s*[-–—]\s*/);
+          const headingParts = (prod.heading || "").split(/\s+[-–—]\s+/);
           const title = headingParts[0] || "Product";
           const status = headingParts.slice(1).join(" | ");
           const bulletsToRender = prod.bullets || [];
+
+          const parsed = parseProductOrProjectContent(prod.content);
+          let productLinkHtml = "";
+          const pParts = [];
+          if (parsed.statusOrYear) {
+            pParts.push(`<span style="font-family: ${getHtmlFont(fontFamily)};">${parsed.statusOrYear}</span>`);
+          }
+          parsed.urls.forEach(url => {
+            const href = url.startsWith("http") ? url : `https://${url}`;
+            const isGithub = url.includes("github.com");
+            const label = isGithub ? "GitHub" : "Live Link";
+            pParts.push(`<a href="${href}" style="color: #0d9488; text-decoration: underline; font-family: ${getHtmlFont(fontFamily)};">${label}</a>`);
+          });
+          productLinkHtml = pParts.length > 0 ? pParts.join(" | ") : `<span style="font-family: ${getHtmlFont(fontFamily)};">Operational</span>`;
 
           return `
             <table class="meta-table">
@@ -1611,7 +1690,7 @@ Return ONLY a JSON object with this exact structure:
                 <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">
                   ${title?.trim()} <span style="font-weight: normal; opacity: 0.6; font-family: ${getHtmlFont(fontFamily)};">| ${status?.trim()}</span>
                 </td>
-                <td style="text-align: right; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${prod.content || "Operational"}</td>
+                <td style="text-align: right; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${productLinkHtml}</td>
               </tr>
             </table>
             ${bulletsToRender.length > 0 ? `
@@ -1630,20 +1709,23 @@ Return ONLY a JSON object with this exact structure:
           <h2 class="section-title">Projects</h2>
         </div>
         ${editableResume.projects.map(proj => {
-          const headingParts = (proj.heading || "").split(/\s*[-–—]\s*/);
+          const headingParts = (proj.heading || "").split(/\s+[-–—]\s+/);
           const title = headingParts[0] || "Project";
           const stack = headingParts.slice(1).join(" | ");
           const bulletsToRender = proj.bullets || [];
 
-          const projectLinkHtml = proj.content ? `
-            ${(proj.content.includes("github.com") || proj.content.includes(".com") || proj.content.includes(".io") || proj.content.includes(".live") || proj.content.includes(".dev") || proj.content.startsWith("http")) ? `
-              <a href="${proj.content.startsWith("http") ? proj.content : `https://${proj.content}`}" style="color: #0d9488; text-decoration: underline; font-family: ${getHtmlFont(fontFamily)};">${proj.content}</a>
-            ` : `
-              <span style="font-family: ${getHtmlFont(fontFamily)};">${proj.content}</span>
-            `}
-          ` : `
-            <span style="font-family: ${getHtmlFont(fontFamily)};">Ongoing</span>
-          `;
+          const parsedProj = parseProductOrProjectContent(proj.content);
+          const prParts = [];
+          if (parsedProj.statusOrYear) {
+            prParts.push(`<span style="font-family: ${getHtmlFont(fontFamily)};">${parsedProj.statusOrYear}</span>`);
+          }
+          parsedProj.urls.forEach(url => {
+            const href = url.startsWith("http") ? url : `https://${url}`;
+            const isGithub = url.includes("github.com");
+            const label = isGithub ? "GitHub" : "Live Link";
+            prParts.push(`<a href="${href}" style="color: #0d9488; text-decoration: underline; font-family: ${getHtmlFont(fontFamily)};">${label}</a>`);
+          });
+          const projectLinkHtml = prParts.length > 0 ? prParts.join(" | ") : `<span style="font-family: ${getHtmlFont(fontFamily)};">Ongoing</span>`;
 
           return `
             <table class="meta-table">
@@ -1856,20 +1938,78 @@ Return ONLY a JSON object with this exact structure:
     setIsGeneratingCL(true);
     toast.loading("Synthesizing Cover Letter...", { id: "cl-gen" });
 
-    try {
-      const { data, error } = await supabase.functions.invoke("cover-letter", {
-        body: {
-          jd: jdTitle + (jdSkills?.length ? ` with skills: ${jdSkills.map(s => s.skill).join(", ")}` : ""),
-          resume: contextData,
-          tone: tone,
-          focus: clFocus,
-          length: clLength
-        }
-      });
+    // Build static system & user prompts matching Deno
+    const clSystemPrompt = `You are an elite Silicon Valley Career Strategist specializing in "Human-First" candidacy narratives.
+Your goal is to write a high-impact, ready-to-send cover letter that is 100% ATS-optimized while sounding completely human and original.
 
-      if (error) throw error;
+Tone: ${tone || 'Professional'}
+Narrative Focus: ${clFocus || 'Technical Excellence'}
+Length Mode: ${clLength || 'Concise'}
+
+STRICT HUMANIZATION GUIDELINES:
+1. NO AI-isms: Avoid words like "delve", "testament", "vibrant", "holistic", "meticulous", "passionate about", "unwavering", "synergy", "realm", "bespoke".
+2. NO ROBOTIC STRUCTURES: Avoid the typical "I am writing to express my interest..." or "In conclusion, I am confident...". Start with a punchy, unique hook.
+3. VARY SENTENCE DYNAMICS: Mix short, impactful sentences with longer, complex ones. Use active voice.
+4. BE SPECIFIC: Never use generic praise for the company. Reference specific technical challenges or industry shifts.
+
+ATS ALIGNMENT STRATEGY:
+1. SEMANTIC MIRRORING: Identify the 5 most critical keywords/phrases from the Job Description and weave them naturally into the narrative.
+2. METRIC-DRIVEN IMPACT: Quantify achievements using the resume data (e.g., "Increased pipeline efficiency by 40%").
+3. PROBLEM-SOLUTION FIT: Frame the candidate's skills as a direct solution to the JD's specific pain points.
+4. ${clFocus === 'Leadership' ? 'Prioritize leadership metrics and strategic oversight.' : clFocus === 'Cultural' ? 'Highlight mission alignment and team-first philosophy.' : 'Prioritize technical stack proficiency and architectural impact.'}
+
+FORMAT:
+- Length: ${clLength === 'Concise' ? 'Under 250 words, extremely punchy.' : 'Under 450 words, providing more narrative depth and specific examples.'}
+- Structure: Salutation, Hook/Problem-Solution, Evidence/Metrics, Call to Action, Professional Sign-off.`;
+
+    const clUserPrompt = `Job Description:
+${jdTitle + (jdSkills?.length ? ` with skills: ${jdSkills.map(s => s.skill).join(", ")}` : "")}
+
+Candidate's Tailored Resume Data:
+${JSON.stringify(contextData)}
+
+Write a compelling, ready-to-send cover letter.`;
+
+    try {
+      let content = "";
       
-      const content = data.choices?.[0]?.message?.content;
+      try {
+        console.log("Cover Letter: Invoking Supabase edge function...");
+        const { data, error } = await supabase.functions.invoke("cover-letter", {
+          body: {
+            jd: jdTitle + (jdSkills?.length ? ` with skills: ${jdSkills.map(s => s.skill).join(", ")}` : ""),
+            resume: contextData,
+            tone: tone,
+            focus: clFocus,
+            length: clLength
+          }
+        });
+
+        if (error) throw error;
+        content = data?.choices?.[0]?.message?.content || "";
+      } catch (invokeError) {
+        console.warn("Cover Letter Edge Function failed. Falling back to secure Local API Proxy...", invokeError);
+        const apiResponse = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+              { role: "system", content: clSystemPrompt },
+              { role: "user", content: clUserPrompt }
+            ],
+            temperature: 0.7
+          })
+        });
+
+        if (apiResponse.ok) {
+          const rawData = await apiResponse.json();
+          content = rawData?.choices?.[0]?.message?.content || "";
+        } else {
+          throw new Error("Both Supabase edge function and Local API Proxy failed.");
+        }
+      }
+
       if (!content) throw new Error("AI returned empty content");
 
       setCoverLetter(content);
@@ -1916,6 +2056,8 @@ Return ONLY a JSON object with this exact structure:
       let y = 20;
       const margin = 20;
       const pageWidth = pdf.internal.pageSize.width;
+      const pageHeight = pdf.internal.pageSize.height;
+      const lineHeight = 6.0;
       
       // Header
       pdf.setFontSize(16);
@@ -1930,9 +2072,16 @@ Return ONLY a JSON object with this exact structure:
       pdf.text(new Date().toLocaleDateString(), margin, y);
       y += 10;
       
-      // Body
+      // Body (Wrap-aware and multi-page proof)
       const lines = pdf.splitTextToSize(coverLetter, pageWidth - (margin * 2));
-      pdf.text(lines, margin, y);
+      for (let i = 0; i < lines.length; i++) {
+        if (y + lineHeight > pageHeight - margin) {
+          pdf.addPage();
+          y = 20;
+        }
+        pdf.text(lines[i], margin, y);
+        y += lineHeight;
+      }
       
       pdf.save(`Lumina-Cover-Letter-${safeName}.pdf`);
     }

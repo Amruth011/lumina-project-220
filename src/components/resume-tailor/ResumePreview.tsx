@@ -110,8 +110,8 @@ const renderSubHeaderWithLinks = (
   content: string, 
   fontSizes: { subHeader: string; body: string }
 ) => {
-  // 1. Split heading to get Title and Tech Stack
-  const headingParts = (heading || "").split(/\s*[-–—]\s*/);
+  // 1. Split heading to get Title and Tech Stack (split on dash with spaces to protect inline hyphens like Scikit-learn)
+  const headingParts = (heading || "").split(/\s+[-–—]\s+/);
   const title = headingParts[0] || "Title";
   const techStack = headingParts.slice(1).join(" | ");
 
@@ -139,6 +139,11 @@ const renderSubHeaderWithLinks = (
 
   // If statusOrYear contains just dashes or pipes, clear it
   if (statusOrYear === "|" || statusOrYear === "-") {
+    statusOrYear = "";
+  }
+
+  // Remove redundant "Live" status, but preserve "Ongoing"
+  if (statusOrYear.trim().toLowerCase() === "live") {
     statusOrYear = "";
   }
 
@@ -902,9 +907,25 @@ export const ResumePreview = ({
                           {(localResume.experience || []).map((exp, expIdx) => {
                             const parts = (exp.heading || "").split('@');
                             const role = parts[0]?.trim() || "Role";
-                            const orgParts = (parts[1] || "").split('-');
+                            
+                            // Split organization and mode/location by space-dash-space to preserve hyphens like "On-site"
+                            const orgParts = parts[1] ? parts[1].split(/\s+[-–—]\s+/) : [];
                             const org = orgParts[0]?.trim() || "Organization";
-                            const location = orgParts[1]?.trim() || localHeader.location || "";
+                            const rawLocOrMode = orgParts[1]?.trim() || "";
+                            
+                            let location = "";
+                            if (rawLocOrMode.toLowerCase().includes("remote")) {
+                              location = "Remote";
+                            } else {
+                              const match = rawLocOrMode.match(/\(([^)]+)\)/);
+                              if (match && match[1]) {
+                                location = match[1].trim();
+                              } else if (rawLocOrMode.toLowerCase().includes("on-site") || rawLocOrMode.toLowerCase().includes("on site")) {
+                                location = localHeader.location || "On-site";
+                              } else {
+                                location = rawLocOrMode || localHeader.location || "";
+                              }
+                            }
                             
                             return (
                               <div key={expIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
