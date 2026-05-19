@@ -466,11 +466,11 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.
 - Quantify EVERYTHING. Use metrics (%, $, time, scale) in every bullet.
 - Use strong action verbs (Spearheaded, Orchestrated, Engineered).
 - DATE FORMAT: Use 3-letter month abbreviations ONLY (e.g., "Jan 2024", "May 2027", "Aug 2023 – Present"- SECTION DENSITY & DYNAMIC EXPANSION MANDATES (CRITICAL):
-    - PROFESSIONAL SUMMARY: You MUST synthesize a high-impact professional summary of EXACTLY ${summaryLines} sentences. Do NOT output a single sentence or bullet list under any circumstances. You must write exactly ${summaryLines} distinct, complete sentences separated by a period and a single space (e.g. "Sentence one. Sentence two. Sentence three."). Keep each sentence extremely concise (under 15-18 words) so that the entire summary fits beautifully within ${summaryLines} lines without excessive wrapping. You must compose it dynamically based on the Candidate Profile's experience and target skills.
+    - PROFESSIONAL SUMMARY: You MUST synthesize a high-impact professional summary of EXACTLY ${summaryLines} sentences. Do NOT output a single sentence or bullet list under any circumstances. You must write exactly ${summaryLines} distinct, complete sentences separated by a period and a single space (e.g. "Sentence one. Sentence two. Sentence three."). Keep each sentence substantial, detailed, and robust (around 22-26 words, adding at least 10 or more characters to each sentence, averaging 130-170 characters per sentence) so that the professional summary spans exactly ${summaryLines} lines on a standard wide page. Do NOT write short 3-5 word fragments or bulleted/keyword points; each sentence must be a fully formed, high-impact, professional statement. You must compose it dynamically based on the Candidate Profile's experience and target skills.
     - EXPERIENCE BULLETS: Every single role in EXPERIENCE must have EXACTLY ${experienceBullets} bullet points. If the Candidate Profile's entry has fewer than ${experienceBullets} bullets, you MUST expand, elaborate, or split them to generate exactly ${experienceBullets} quantified, metric-driven bullet points.
     - PROJECT BULLETS: Every single project in PROJECTS must have EXACTLY ${projectLines} bullet points. Expand or elaborate to generate exactly ${projectLines} metric-driven bullet points.
     - PRODUCT/STARTUP BULLETS: Every single product in PRODUCTS must have EXACTLY ${productLines} bullet points. Expand or elaborate to generate exactly ${productLines} metric-driven bullet points.
-    - SUMMARY LENGTH: Ensure the professional summary is EXACTLY ${summaryLines} sentences long. Never return fewer than ${summaryLines} sentences.
+    - SUMMARY LENGTH: Ensure the professional summary is EXACTLY ${summaryLines} sentences long. Never return fewer than ${summaryLines} sentences. Each sentence must be substantial and detailed to span a full line.
 - SECTION INTEGRITY & CLASSIFICATION (CRITICAL): 
     - EXPERIENCE: Only for formal employment, internships, and fellowships. (e.g., 'Data Science Intern').
     - PROJECTS: Technical builds, open-source contributions, or academic projects. (e.g., 'Kannada Book AI Agent').
@@ -497,7 +497,7 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.
  
 Return ONLY a JSON object with this exact structure (note the bracketed dynamic instructions):
 {
-  "professional_summary": "[Synthesize a highly tailored professional summary of EXACTLY ${summaryLines} sentences based on target skills and top profile highlights. Ensure there are exactly ${summaryLines} sentences separated by periods and spaces. Do NOT output this instruction text.]",
+  "professional_summary": "[Synthesize a highly tailored professional summary of EXACTLY ${summaryLines} sentences based on target skills and top profile highlights. Ensure there are exactly ${summaryLines} substantial, robust sentences (around 22-26 words each) separated by periods and spaces. Do NOT output this instruction text.]",
   "skills_section": ["Languages: ...", "Frameworks: ..."],
   "experience": [
     {
