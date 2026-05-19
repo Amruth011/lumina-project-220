@@ -82,6 +82,84 @@ const limitBullets = (bullets: string[], maxBullets: number): string[] => {
   return bullets.slice(0, maxBullets);
 };
 
+const renderStartupTitleAndLinks = (heading: string, fontSizes: { subHeader: string; body: string }) => {
+  const headingParts = (heading || "").split(/\s*[-–—]\s*/);
+  const title = headingParts[0] || "Product";
+  const rest = headingParts.slice(1).join(" - ");
+  
+  // Regex to match URLs (including protocols, domains, subdomains)
+  const urlRegex = /(https?:\/\/[^\s]+|github\.com\/[^\s]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/[^\s]*|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+  const urls = rest.match(urlRegex) || [];
+  
+  // Clean the raw URL strings from the description text
+  let cleanRest = rest;
+  urls.forEach(url => {
+    cleanRest = cleanRest.replace(url, "").replace(/Live Link:\s*/i, "").trim();
+  });
+  
+  // Remove trailing or leading pipe/dash separators left after URL removal
+  cleanRest = cleanRest.replace(/\s*\|\s*$/, "").replace(/^\s*\|\s*/, "").replace(/\s*-\s*$/, "").replace(/^\s*-\s*/, "").trim();
+  
+  return (
+    <span className="flex-1 min-w-0 !font-inherit flex items-center gap-2 flex-wrap" style={{ fontFamily: 'inherit' }}>
+      {title?.trim()}
+      {cleanRest && <span className="font-normal opacity-60 !font-inherit" style={{ fontFamily: 'inherit' }}>| {cleanRest}</span>}
+      {urls.map((url, idx) => {
+        const href = url.startsWith("http") ? url : `https://${url}`;
+        const label = url.includes("github.com") ? "GitHub" : "Live Link";
+        return (
+          <a
+            key={idx}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-lumina-teal hover:underline transition-all font-bold ml-2 flex items-center gap-0.5"
+            style={{ fontSize: '11px', fontFamily: 'inherit' }}
+          >
+            [{label}]
+          </a>
+        );
+      })}
+    </span>
+  );
+};
+
+const parseAndRenderProjectLinks = (content: string) => {
+  if (!content) return null;
+  
+  const urlRegex = /(https?:\/\/[^\s]+|github\.com\/[^\s]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/[^\s]*|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+  const matches = content.match(urlRegex);
+  
+  if (matches && matches.length > 0) {
+    return (
+      <span className="flex-shrink-0 text-right ml-4 text-[11px] font-bold !font-inherit flex gap-2" style={{ fontFamily: 'inherit' }}>
+        {matches.map((url, idx) => {
+          const href = url.startsWith("http") ? url : `https://${url}`;
+          const label = url.includes("github.com") ? "GitHub" : "Live Link";
+          return (
+            <a
+              key={idx}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-lumina-teal hover:underline transition-all"
+              style={{ fontFamily: 'inherit' }}
+            >
+              {label}
+            </a>
+          );
+        })}
+      </span>
+    );
+  }
+  
+  return (
+    <span className="flex-shrink-0 text-right ml-4 text-[11px] font-normal !font-inherit" style={{ fontFamily: 'inherit' }}>
+      {content}
+    </span>
+  );
+};
+
 export const ResumePreview = ({ 
   resume, 
   header, 
@@ -756,13 +834,10 @@ export const ResumePreview = ({
                           </div>
                           <div className="flex flex-col" style={{ gap: '1px' }}>
                             {localResume.products?.map((prod, prodIdx) => {
-                              const headingParts = (prod.heading || "").split(/\s*[-–—]\s*/);
-                              const title = headingParts[0] || "Product";
-                              const status = headingParts.slice(1).join(" | ");
                               return (
                                 <div key={prodIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                   <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
-                                    <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{title?.trim()} <span className="font-normal opacity-60 !font-inherit" style={{ fontFamily: 'inherit' }}>| {status?.trim()}</span></span>
+                                    {renderStartupTitleAndLinks(prod.heading || "", fontSizes)}
                                     <span className="flex-shrink-0 text-right ml-4 text-[11px] font-normal !font-inherit" style={{ fontFamily: 'inherit' }}>{prod.content || "Operational"}</span>
                                   </div>
                                   <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
@@ -793,24 +868,8 @@ export const ResumePreview = ({
                               return (
                                 <div key={projIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                   <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
-                                    <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{title?.trim()} <span className="font-normal opacity-60 !font-inherit" style={{ fontFamily: 'inherit' }}>| {stack?.trim()}</span></span>
-                                    {proj.content ? (
-                                      (proj.content.includes("github.com") || proj.content.includes(".com") || proj.content.includes(".io") || proj.content.includes(".live") || proj.content.includes(".dev") || proj.content.startsWith("http")) ? (
-                                        <a 
-                                          href={proj.content.startsWith("http") ? proj.content : `https://${proj.content}`}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="flex-shrink-0 text-right ml-4 text-[11px] font-normal !font-inherit text-lumina-teal hover:underline transition-all"
-                                          style={{ fontFamily: 'inherit' }}
-                                        >
-                                          {proj.content}
-                                        </a>
-                                      ) : (
-                                        <span className="flex-shrink-0 text-right ml-4 text-[11px] font-normal !font-inherit" style={{ fontFamily: 'inherit' }}>{proj.content}</span>
-                                      )
-                                    ) : (
-                                      <span className="flex-shrink-0 text-right ml-4 text-[11px] font-normal !font-inherit" style={{ fontFamily: 'inherit' }}>Ongoing</span>
-                                    )}
+                                    <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{title?.trim()} {stack && <span className="font-normal opacity-60 !font-inherit" style={{ fontFamily: 'inherit' }}>| {stack?.trim()}</span>}</span>
+                                    {parseAndRenderProjectLinks(proj.content || "")}
                                   </div>
                                   <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                     {(proj.bullets || []).map((bullet, bullIdx) => (
