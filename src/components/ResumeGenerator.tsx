@@ -1110,40 +1110,80 @@ Return ONLY a JSON object with this exact structure:
         y += getLineHeight(size, 0.15);
       };
 
-      // Header: Ultra-clean center aligned
+      // Header: Ultra-clean center aligned (Single Line matching MS Word)
       addText(editableHeader.fullName.toUpperCase(), nameFontSize, true, [0, 0, 0], "center");
-      y += getLineHeight(nameFontSize, 0.15); // Increased spacing after name
+      y += getLineHeight(nameFontSize, 0.15); // Spacing after name
       
-      const contactLines = [
-        editableHeader.location,
-        editableHeader.phone,
-        editableHeader.email.toLowerCase()
-      ].filter(Boolean).join("  |  ");
-      addText(contactLines, bodyFontSize * 0.9, false, [0, 0, 0], "center");
+      const contactParts: Array<{ text: string; isLink?: boolean; url?: string }> = [];
       
-      const linkItems = [
-        { label: editableHeader.linkedin ? "LINKEDIN" : "", url: formatUrl(editableHeader.linkedin) },
-        { label: editableHeader.github ? "GITHUB" : "", url: formatUrl(editableHeader.github) },
-        { label: editableHeader.portfolio ? "PORTFOLIO" : "", url: formatUrl(editableHeader.portfolio) }
-      ].filter(item => item.label && item.url);
-
-      if (linkItems.length > 0) {
-        y += getLineHeight(bodyFontSize, 0.45); // Increased spacing for links
-        const totalWidth = linkItems.reduce((acc, item) => acc + pdf.getTextWidth(item.label) + 15, 0) - 15;
-        let currentX = (pageWidth - totalWidth) / 2;
-        
-        linkItems.forEach((item, idx) => {
-          pdf.setFont(currentFont, "normal");
-          pdf.setFontSize(bodyFontSize * 0.85);
-          pdf.setTextColor(0, 0, 0); // Strictly black links
-          pdf.text(item.label, currentX, y);
-          // Add invisible link
-          pdf.link(currentX, y - 3, pdf.getTextWidth(item.label), 5, { url: item.url });
-          currentX += pdf.getTextWidth(item.label) + 15;
-        });
-        y += getLineHeight(bodyFontSize, 0.5); // Clear gap after header links
+      if (editableHeader.location) {
+        contactParts.push({ text: editableHeader.location });
       }
-      y += getLineHeight(bodyFontSize, 0.2);
+      if (editableHeader.phone) {
+        contactParts.push({ text: editableHeader.phone });
+      }
+      if (editableHeader.email) {
+        contactParts.push({ text: editableHeader.email.toLowerCase() });
+      }
+      if (editableHeader.linkedin) {
+        contactParts.push({ text: "Linkedin", isLink: true, url: formatUrl(editableHeader.linkedin) });
+      }
+      if (editableHeader.github) {
+        contactParts.push({ text: "GitHub", isLink: true, url: formatUrl(editableHeader.github) });
+      }
+      if (editableHeader.portfolio) {
+        contactParts.push({ text: "Portfolio", isLink: true, url: formatUrl(editableHeader.portfolio) });
+      }
+
+      if (contactParts.length > 0) {
+        pdf.setFont(currentFont, "normal");
+        pdf.setFontSize(bodyFontSize * 0.9);
+        
+        let totalHeaderWidth = 0;
+        const separator = " | ";
+        const sepWidth = pdf.getTextWidth(separator);
+        
+        const measuredParts = contactParts.map(part => {
+          const width = pdf.getTextWidth(part.text);
+          return { ...part, width };
+        });
+        
+        measuredParts.forEach((part, idx) => {
+          totalHeaderWidth += part.width;
+          if (idx < measuredParts.length - 1) {
+            totalHeaderWidth += sepWidth;
+          }
+        });
+        
+        let currentX = (pageWidth - totalHeaderWidth) / 2;
+        y += getLineHeight(bodyFontSize * 0.9, 0.4);
+        
+        measuredParts.forEach((part, idx) => {
+          if (part.isLink && part.url) {
+            pdf.setTextColor(0, 51, 153); // Blue color like MS Word link
+            pdf.text(part.text, currentX, y);
+            
+            // Add blue underline
+            pdf.setDrawColor(0, 51, 153);
+            pdf.setLineWidth(0.15);
+            pdf.line(currentX, y + 0.3, currentX + part.width, y + 0.3);
+            
+            pdf.link(currentX, y - 3, part.width, 4, { url: part.url });
+          } else {
+            pdf.setTextColor(0, 0, 0);
+            pdf.text(part.text, currentX, y);
+          }
+          
+          currentX += part.width;
+          
+          if (idx < measuredParts.length - 1) {
+            pdf.setTextColor(0, 0, 0);
+            pdf.text(separator, currentX, y);
+            currentX += sepWidth;
+          }
+        });
+        y += getLineHeight(bodyFontSize, 0.65); // Clear gap after header line
+      }
 
         // --- HEADER ---
         const deepBlack: [number, number, number] = [0, 0, 0];
@@ -1512,91 +1552,42 @@ Return ONLY a JSON object with this exact structure:
           // --- SKILLS ---
           if (editableResume.skills_section?.length) {
             drawSectionHeader("SKILLS");
-            
-            // Group skills side-by-side to reduce vertical space footprint
-            const skillLinesToProcess = [...editableResume.skills_section];
-            let currentLineText = "";
-            const processedLines: string[] = [];
-            
-            for (let i = 0; i < skillLinesToProcess.length; i++) {
-              const skillLine = skillLinesToProcess[i];
+            editableResume.skills_section.forEach(skillLine => {
+              if (!skillLine) return;
               const parts = skillLine.split(':');
               const category = parts[0]?.trim() || "";
               const skills = parts[1]?.trim() || "";
+              if (!category) return;
               
-              if (!category) continue;
-              const formattedItem = `${category}: ${skills}`;
+              const categoryText = `${category}: `;
               
-              if (!currentLineText) {
-                currentLineText = formattedItem;
-              } else {
-                const testLine = `${currentLineText}   |   ${formattedItem}`;
-                if (pdf.getTextWidth(testLine) < contentWidth) {
-                  currentLineText = testLine;
-                } else {
-                  processedLines.push(currentLineText);
-                  currentLineText = formattedItem;
-                }
-              }
-            }
-            if (currentLineText) {
-              processedLines.push(currentLineText);
-            }
-
-            processedLines.forEach(lineText => {
-              checkPageBreak(6);
-              const parts = lineText.split('   |   ');
-              let currentX = margin;
+              pdf.setTextColor(0, 0, 0);
+              pdf.setFont(currentFont, "bold");
+              pdf.setFontSize(bodyFontSize);
               
-              if (parts.length === 1) {
-                const part = parts[0];
-                const [category, skills] = part.split(':');
-                const categoryText = `${category?.trim() || ""}: `;
-                
-                pdf.setTextColor(0, 0, 0);
-                pdf.setFont(currentFont, "bold");
-                pdf.setFontSize(bodyFontSize);
-                pdf.text(categoryText, margin, y);
-                
-                const categoryWidth = pdf.getTextWidth(categoryText);
-                pdf.setFont(currentFont, "normal");
-                pdf.setFontSize(bodyFontSize);
-                const skillsText = skills?.trim() || "";
-                const lines = pdf.splitTextToSize(skillsText, contentWidth - categoryWidth);
-                lines.forEach((line: string, lineIdx: number) => {
-                  checkPageBreak(getLineHeight(bodyFontSize, 1.25));
-                  const xPos = lineIdx === 0 ? margin + categoryWidth : margin;
-                  pdf.text(line, xPos, y);
+              const catWidth = pdf.getTextWidth(categoryText);
+              
+              pdf.setFont(currentFont, "normal");
+              const skillsText = skills;
+              const lines = pdf.splitTextToSize(skillsText, contentWidth - catWidth);
+              
+              const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.25);
+              checkPageBreak(neededHeight);
+              
+              // Draw category in bold
+              pdf.setFont(currentFont, "bold");
+              pdf.text(categoryText, margin, y);
+              
+              // Draw skills in normal font weight
+              pdf.setFont(currentFont, "normal");
+              lines.forEach((line: string, lineIdx: number) => {
+                const xPos = lineIdx === 0 ? margin + catWidth : margin;
+                pdf.text(line, xPos, y);
+                if (lineIdx < lines.length - 1) {
                   y += getLineHeight(bodyFontSize, 1.2);
-                });
-                y += 0.4;
-              } else {
-                parts.forEach((part, idx) => {
-                  if (idx > 0) {
-                    pdf.setFont(currentFont, "normal");
-                    pdf.setFontSize(bodyFontSize);
-                    pdf.setTextColor(120, 120, 120);
-                    pdf.text("   |   ", currentX, y);
-                    currentX += pdf.getTextWidth("   |   ");
-                  }
-                  
-                  const [category, skills] = part.split(':');
-                  const categoryText = `${category?.trim() || ""}: `;
-                  
-                  pdf.setTextColor(0, 0, 0);
-                  pdf.setFont(currentFont, "bold");
-                  pdf.setFontSize(bodyFontSize);
-                  pdf.text(categoryText, currentX, y);
-                  currentX += pdf.getTextWidth(categoryText);
-                  
-                  pdf.setFont(currentFont, "normal");
-                  pdf.setFontSize(bodyFontSize);
-                  const skillsText = skills?.trim() || "";
-                  pdf.text(skillsText, currentX, y);
-                  currentX += pdf.getTextWidth(skillsText);
-                });
-                y += getLineHeight(bodyFontSize, 1.2) + 0.4;
-              }
+                }
+              });
+              y += getLineHeight(bodyFontSize, 1.3); // space to next skill category
             });
           }
 

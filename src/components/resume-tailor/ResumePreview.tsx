@@ -1261,39 +1261,60 @@ export const ResumePreview = ({
                       </h1>
                       <div className="flex flex-wrap justify-center items-center gap-x-2 text-[#1E2A3A] font-medium !font-inherit" style={{ fontSize: fontSizes.meta }}>
                         {localHeader.location && (
-                          <div className="flex items-center gap-2">
+                          <>
                             <span>{localHeader.location}</span>
-                            <span className="opacity-20">|</span>
-                          </div>
-                        )}
-                        {localHeader.email && (
-                          <div className="flex items-center gap-2">
-                            <span>{localHeader.email.toLowerCase()}</span>
-                            <span className="opacity-20">|</span>
-                          </div>
-                        )}
-                        {localHeader.linkedin && (
-                          <div className="flex items-center gap-2">
-                            <span>{localHeader.linkedin.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/$/, '')}</span>
-                            <span className="opacity-20">|</span>
-                          </div>
+                            <span className="opacity-30">|</span>
+                          </>
                         )}
                         {localHeader.phone && (
-                          <div className="flex items-center gap-2">
+                          <>
                             <span>{localHeader.phone}</span>
-                            <span className="opacity-20">|</span>
-                          </div>
+                            <span className="opacity-30">|</span>
+                          </>
+                        )}
+                        {localHeader.email && (
+                          <>
+                            <a href={`mailto:${localHeader.email.toLowerCase()}`} className="hover:underline text-[#1E2A3A]">
+                              {localHeader.email.toLowerCase()}
+                            </a>
+                            {(localHeader.linkedin || localHeader.github || localHeader.portfolio) && <span className="opacity-30">|</span>}
+                          </>
+                        )}
+                        {localHeader.linkedin && (
+                          <>
+                            <a 
+                              href={localHeader.linkedin.startsWith('http') ? localHeader.linkedin : `https://${localHeader.linkedin}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                            >
+                              Linkedin
+                            </a>
+                            {(localHeader.github || localHeader.portfolio) && <span className="opacity-30">|</span>}
+                          </>
                         )}
                         {localHeader.github && (
-                          <div className="flex items-center gap-2">
-                            <span>{localHeader.github.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/$/, '')}</span>
-                            {localHeader.portfolio && <span className="opacity-20">|</span>}
-                          </div>
+                          <>
+                            <a 
+                              href={localHeader.github.startsWith('http') ? localHeader.github : `https://${localHeader.github}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                            >
+                              GitHub
+                            </a>
+                            {localHeader.portfolio && <span className="opacity-30">|</span>}
+                          </>
                         )}
                         {localHeader.portfolio && (
-                          <div className="flex items-center gap-2">
-                            <span>{localHeader.portfolio.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/$/, '')}</span>
-                          </div>
+                          <a 
+                            href={localHeader.portfolio.startsWith('http') ? localHeader.portfolio : `https://${localHeader.portfolio}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                          >
+                            Portfolio
+                          </a>
                         )}
                       </div>
                     </div>
