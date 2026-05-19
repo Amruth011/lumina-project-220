@@ -70,11 +70,34 @@ interface ResumePreviewProps {
 
 const limitSummarySentences = (summaryText: string, maxSentences: number): string => {
   if (!summaryText) return "";
+  // Split by sentence boundaries, handling abbreviations safely
   const sentences = summaryText.split(/\.\s+/).filter(Boolean);
-  return sentences
+  const sliced = sentences
     .slice(0, maxSentences)
     .map(s => s.trim() + (s.trim().endsWith(".") ? "" : "."))
     .join(" ");
+    
+  // Enforce a strict visual line budget of approximately 115 characters per line
+  const budget = maxSentences === 1 ? 115 : maxSentences === 2 ? 230 : maxSentences * 115;
+  if (sliced.length > budget + 15) {
+    let current = "";
+    for (const sent of sentences.slice(0, maxSentences)) {
+      const candidate = current ? current + " " + sent : sent;
+      if (candidate.length > budget + 10) {
+        if (current.length > 50) {
+          break; // Stop adding more sentences to protect the line count
+        }
+        let truncated = candidate.slice(0, budget - 3).trim();
+        const lastSpace = truncated.lastIndexOf(" ");
+        if (lastSpace > 0) truncated = truncated.slice(0, lastSpace);
+        current = truncated + "...";
+        break;
+      }
+      current = candidate;
+    }
+    return current;
+  }
+  return sliced;
 };
 
 const limitBullets = (bullets: string[], maxBullets: number): string[] => {
@@ -82,81 +105,83 @@ const limitBullets = (bullets: string[], maxBullets: number): string[] => {
   return bullets.slice(0, maxBullets);
 };
 
-const renderStartupTitleAndLinks = (heading: string, fontSizes: { subHeader: string; body: string }) => {
+const renderSubHeaderWithLinks = (
+  heading: string, 
+  content: string, 
+  fontSizes: { subHeader: string; body: string }
+) => {
+  // 1. Split heading to get Title and Tech Stack
   const headingParts = (heading || "").split(/\s*[-–—]\s*/);
-  const title = headingParts[0] || "Product";
-  const rest = headingParts.slice(1).join(" - ");
+  const title = headingParts[0] || "Title";
+  const techStack = headingParts.slice(1).join(" | ");
+
+  // 2. Parse content for Status/Year and Links
+  const rawContent = content || "";
   
-  // Regex to match URLs (including protocols, domains, subdomains)
+  // Find any URLs inside rawContent
   const urlRegex = /(https?:\/\/[^\s]+|github\.com\/[^\s]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/[^\s]*|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
-  const urls = rest.match(urlRegex) || [];
+  const urls = rawContent.match(urlRegex) || [];
   
-  // Clean the raw URL strings from the description text
-  let cleanRest = rest;
+  // Extract non-URL text (e.g. Year or Status like "2024", "Live", "Ongoing")
+  let statusOrYear = rawContent;
   urls.forEach(url => {
-    cleanRest = cleanRest.replace(url, "").replace(/Live Link:\s*/i, "").trim();
+    statusOrYear = statusOrYear.replace(url, "").trim();
   });
   
-  // Remove trailing or leading pipe/dash separators left after URL removal
-  cleanRest = cleanRest.replace(/\s*\|\s*$/, "").replace(/^\s*\|\s*/, "").replace(/\s*-\s*$/, "").replace(/^\s*-\s*/, "").trim();
-  
-  return (
-    <span className="flex-1 min-w-0 !font-inherit flex items-center gap-2 flex-wrap" style={{ fontFamily: 'inherit' }}>
-      {title?.trim()}
-      {cleanRest && <span className="font-normal opacity-60 !font-inherit" style={{ fontFamily: 'inherit' }}>| {cleanRest}</span>}
-      {urls.map((url, idx) => {
-        const href = url.startsWith("http") ? url : `https://${url}`;
-        const label = url.includes("github.com") ? "GitHub" : "Live Link";
-        return (
-          <a
-            key={idx}
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-lumina-teal hover:underline transition-all font-bold ml-2 flex items-center gap-0.5"
-            style={{ fontSize: '11px', fontFamily: 'inherit' }}
-          >
-            [{label}]
-          </a>
-        );
-      })}
-    </span>
-  );
-};
+  // Clean separators from statusOrYear
+  statusOrYear = statusOrYear
+    .replace(/\|\s*$/g, "")
+    .replace(/^\s*\|/g, "")
+    .replace(/\s*\|\s*\|\s*/g, " | ")
+    .replace(/\s*-\s*$/g, "")
+    .replace(/^\s*-/g, "")
+    .trim();
 
-const parseAndRenderProjectLinks = (content: string) => {
-  if (!content) return null;
-  
-  const urlRegex = /(https?:\/\/[^\s]+|github\.com\/[^\s]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/[^\s]*|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
-  const matches = content.match(urlRegex);
-  
-  if (matches && matches.length > 0) {
-    return (
-      <span className="flex-shrink-0 text-right ml-4 text-[11px] font-bold !font-inherit flex gap-2" style={{ fontFamily: 'inherit' }}>
-        {matches.map((url, idx) => {
+  // If statusOrYear contains just dashes or pipes, clear it
+  if (statusOrYear === "|" || statusOrYear === "-") {
+    statusOrYear = "";
+  }
+
+  return (
+    <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit', width: '100%' }}>
+      {/* Left side: Title | Tech Stack */}
+      <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>
+        {title?.trim()}
+        {techStack && (
+          <span className="font-normal opacity-60 !font-inherit" style={{ fontFamily: 'inherit' }}>
+            {" "}| {techStack.replace(/^\s*\|\s*/, "").trim()}
+          </span>
+        )}
+      </span>
+
+      {/* Right side: Year/Status | GitHub | Live Link */}
+      <span className="flex-shrink-0 text-right ml-4 text-[11px] font-normal !font-inherit flex items-center gap-1.5" style={{ fontFamily: 'inherit' }}>
+        {statusOrYear && (
+          <span className="opacity-70 font-semibold mr-1">{statusOrYear}</span>
+        )}
+        
+        {urls.map((url, idx) => {
           const href = url.startsWith("http") ? url : `https://${url}`;
-          const label = url.includes("github.com") ? "GitHub" : "Live Link";
+          const isGithub = url.includes("github.com");
+          const label = isGithub ? "GitHub" : "Live Link";
+          
           return (
-            <a
-              key={idx}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-lumina-teal hover:underline transition-all"
-              style={{ fontFamily: 'inherit' }}
-            >
-              {label}
-            </a>
+            <React.Fragment key={idx}>
+              {(statusOrYear || idx > 0) && <span className="opacity-30">|</span>}
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#1E2A3A] font-bold hover:underline hover:text-lumina-teal transition-all"
+                style={{ fontFamily: 'inherit' }}
+              >
+                {label}
+              </a>
+            </React.Fragment>
           );
         })}
       </span>
-    );
-  }
-  
-  return (
-    <span className="flex-shrink-0 text-right ml-4 text-[11px] font-normal !font-inherit" style={{ fontFamily: 'inherit' }}>
-      {content}
-    </span>
+    </div>
   );
 };
 
@@ -414,10 +439,10 @@ export const ResumePreview = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start h-auto"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start h-auto w-full"
           >
             {/* ── LEFT PANEL: EDITORS (MAX WIDE) ── */}
-            <div className="lg:col-span-6 xl:col-span-5 2xl:col-span-4 space-y-8 h-auto pr-4">
+            <div className="lg:col-span-6 xl:col-span-6 2xl:col-span-6 space-y-6 h-auto">
               <CollapsibleSection 
                 title="Profile Identity" 
                 icon={User} 
@@ -678,8 +703,8 @@ export const ResumePreview = ({
               </CollapsibleSection>
             </div>
 
-            {/* ── RIGHT PANEL: PREVIEW (MOVED RIGHT) ── */}
-            <div className="lg:col-span-6 xl:col-span-7 2xl:col-span-8 flex justify-center pl-8 sm:pl-16">
+            {/* ── RIGHT PANEL: PREVIEW ── */}
+            <div className="lg:col-span-6 xl:col-span-6 2xl:col-span-6 flex justify-center w-full">
               <div className="w-full flex-1 perspective-2000 rounded-[2.5rem] shadow-inner bg-slate-100/50 p-6 sm:p-10 border border-white/40">
                 <motion.div 
                   ref={resumeRef}
@@ -837,8 +862,7 @@ export const ResumePreview = ({
                               return (
                                 <div key={prodIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                   <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
-                                    {renderStartupTitleAndLinks(prod.heading || "", fontSizes)}
-                                    <span className="flex-shrink-0 text-right ml-4 text-[11px] font-normal !font-inherit" style={{ fontFamily: 'inherit' }}>{prod.content || "Operational"}</span>
+                                    {renderSubHeaderWithLinks(prod.heading || "", prod.content || "", fontSizes)}
                                   </div>
                                   <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                     {(prod.bullets || []).map((bullet, bullIdx) => (
@@ -853,7 +877,7 @@ export const ResumePreview = ({
                           </div>
                         </section>
                       )}
-
+ 
                       {/* Projects */}
                       {(localResume.projects && localResume.projects.length > 0) && (
                         <section className="space-y-1">
@@ -862,14 +886,10 @@ export const ResumePreview = ({
                           </div>
                           <div className="flex flex-col" style={{ gap: '1px' }}>
                             {localResume.projects?.map((proj, projIdx) => {
-                              const headingParts = (proj.heading || "").split(/\s*[-–—]\s*/);
-                              const title = headingParts[0] || "Project";
-                              const stack = headingParts.slice(1).join(" | ");
                               return (
                                 <div key={projIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                   <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
-                                    <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{title?.trim()} {stack && <span className="font-normal opacity-60 !font-inherit" style={{ fontFamily: 'inherit' }}>| {stack?.trim()}</span>}</span>
-                                    {parseAndRenderProjectLinks(proj.content || "")}
+                                    {renderSubHeaderWithLinks(proj.heading || "", proj.content || "", fontSizes)}
                                   </div>
                                   <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                     {(proj.bullets || []).map((bullet, bullIdx) => (

@@ -457,14 +457,14 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     let summarySchemaRule = "";
 
     if (summaryLines === 1) {
-      summaryPromptRule = `You MUST synthesize a high-impact professional summary of EXACTLY 1 sentence. Keep the single sentence substantial, detailed, and around 115 characters including spaces in total, so that the professional summary spans exactly 1 line on a standard wide page. Do NOT write short 3-5 word fragments; it must be a fully formed, high-impact statement.`;
-      summarySchemaRule = `Ensure there is exactly 1 substantial, robust sentence (around 115 characters including spaces).`;
+      summaryPromptRule = `You MUST synthesize a high-impact professional summary of EXACTLY 1 sentence. Keep the single sentence strictly around 100-115 characters including spaces in total, so that the professional summary spans exactly 1 line on a standard wide page. Do NOT write short 3-5 word fragments; it must be a fully formed, high-impact statement.`;
+      summarySchemaRule = `Ensure there is exactly 1 substantial sentence (around 100-115 characters including spaces).`;
     } else if (summaryLines === 2) {
-      summaryPromptRule = `You MUST synthesize a high-impact professional summary of EXACTLY 2 sentences. Do NOT output a single sentence or bullet list under any circumstances. You must write exactly 2 distinct, complete sentences separated by a period and a single space (e.g. "Sentence one. Sentence two."). Keep the entire professional summary around 200-230 characters including spaces in total, so that it spans exactly 2 lines on a standard wide page. Each sentence must be fully formed and high-impact.`;
-      summarySchemaRule = `Ensure there are exactly 2 substantial, robust sentences (around 200-230 characters in total across both sentences) separated by a period and space.`;
+      summaryPromptRule = `You MUST synthesize a high-impact professional summary of EXACTLY 2 sentences. Do NOT output a single sentence or bullet list under any circumstances. You must write exactly 2 distinct, complete sentences separated by a period and a single space (e.g. "Sentence one. Sentence two."). Keep the entire professional summary strictly around 200-230 characters including spaces in total, so that it spans exactly 2 lines on a standard wide page. Each sentence must be fully formed and high-impact.`;
+      summarySchemaRule = `Ensure there are exactly 2 sentences (strictly 200-230 characters in total across both sentences) separated by a period and space.`;
     } else {
-      summaryPromptRule = `You MUST synthesize a high-impact professional summary of EXACTLY ${summaryLines} sentences. Do NOT output a single sentence or bullet list under any circumstances. You must write exactly ${summaryLines} distinct, complete sentences separated by a period and a single space (e.g. "Sentence one. Sentence two. Sentence three."). Keep each sentence substantial, detailed, and robust (around 22-26 words, averaging 130-170 characters per sentence, with the entire summary being around 340-400 characters including spaces for a 3-line summary) so that the professional summary spans exactly ${summaryLines} lines on a standard wide page. Do NOT write short word fragments; each sentence must be a fully formed, high-impact statement.`;
-      summarySchemaRule = `Ensure there are exactly ${summaryLines} substantial, robust sentences (around 22-26 words each, averaging 130-170 characters per sentence) separated by periods and spaces.`;
+      summaryPromptRule = `You MUST synthesize a high-impact professional summary of EXACTLY ${summaryLines} sentences. Do NOT output a single sentence or bullet list under any circumstances. You must write exactly ${summaryLines} distinct, complete sentences separated by a period and a single space (e.g. "Sentence one. Sentence two. Sentence three."). Keep the entire summary strictly around 300-340 characters including spaces in total (averaging around 100-110 characters per sentence) so that the professional summary spans exactly ${summaryLines} lines (default 3 lines) on a standard wide page. Each sentence must be a fully formed, high-impact statement.`;
+      summarySchemaRule = `Ensure there are exactly ${summaryLines} sentences (strictly 300-340 characters in total across all sentences) separated by periods and spaces.`;
     }
 
     try {
@@ -511,15 +511,16 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.
    - "content": Duration of experience (e.g., "January 2023 to March 2025" or "July 2022 to Present")
    - "bullets": Array of exactly ${experienceBullets} metric-driven bullets
 3. PRODUCTS: Startups or SaaS products founded by the user.
-   - "heading": Must strictly match: "[Product Name] - [Status (Ongoing or Live)] [| Live Link: URL if Live]"
-     Example: "Lumina Resume Engine - Live | Live Link: https://lumina.io" or "Lumina Resume Engine - Ongoing"
-   - "content": Duration of the product venture (e.g., "January 2023 to Present")
+   - "heading": Must strictly match: "[Product Name] - [One line of Tech Stack (comma-separated)]"
+     Example: "Lumina Resume Engine - React, Node.js, Groq"
+   - "content": Must strictly contain the status (Ongoing or Live) and optional GitHub/Live links. Do NOT add duration dates (e.g. "January 2023 to Present"). Just add: "[Status (Ongoing or Live)] [| github.com/username/project] [| live_link_url]"
+      Example: "Live | github.com/username/lumina | lumina.io" or "Ongoing | github.com/username/lumina" or "Live | lumina.io"
    - "bullets": Array of exactly ${productLines} metrics or descriptions
 4. PROJECTS: Technical achievements with stack details.
    - "heading": Must strictly match: "[Project Title] - [Tech Stack (comma-separated)]"
      Example: "Decentralized File System - React, Node.js, Web3"
-   - "content": Must strictly contain the links if available: "[GitHub Link] [| Live Demo Link]"
-     Example: "github.com/username/project | my-demo.vercel.app"
+   - "content": Must strictly contain the year/status and optional links: "[Year (e.g. 2024) or Status (e.g. Ongoing)] [| github.com/username/project] [| live_link_url]"
+     Example: "2024 | github.com/username/project | my-demo.vercel.app" or "Ongoing | github.com/username/project" or "2024 | my-demo.vercel.app"
    - "bullets": Array of exactly ${projectLines} technical highlights
 5. LEADERSHIP: Non-work impact or community roles.
    - "heading": "[Role Name] @ [Organization / Community Name]"
@@ -546,15 +547,15 @@ Return ONLY a JSON object with this exact structure:
   ],
   "products": [
     {
-      "heading": "Product Name - Status | Live Link: URL",
-      "content": "Duration",
+      "heading": "Product Name - Tech Stack",
+      "content": "Live | github.com/username/product | live_link_url",
       "bullets": ["[Bullet 1]"]
     }
   ],
   "projects": [
     {
       "heading": "Project Name - Tech Stack",
-      "content": "github_link | live_link",
+      "content": "2024 | github.com/username/project | live_link_url",
       "bullets": ["[Bullet 1]"]
     }
   ],
@@ -979,9 +980,34 @@ Return ONLY a JSON object with this exact structure:
 
         const limitSummarySentences = (summaryText: string, maxSentences: number): string => {
           if (!summaryText) return "";
-          const sentences = summaryText.match(/[^.!?]+[.!?]+(\s|$)/g) || [summaryText];
-          const cleaned = sentences.map(s => s.trim()).filter(Boolean);
-          return cleaned.slice(0, maxSentences).join(" ");
+          // Split by sentence boundaries, handling abbreviations safely
+          const sentences = summaryText.split(/\.\s+/).filter(Boolean);
+          const sliced = sentences
+            .slice(0, maxSentences)
+            .map(s => s.trim() + (s.trim().endsWith(".") ? "" : "."))
+            .join(" ");
+            
+          // Enforce strict character budget matching lines
+          const budget = maxSentences === 1 ? 115 : maxSentences === 2 ? 230 : maxSentences * 115;
+          if (sliced.length > budget + 15) {
+            let current = "";
+            for (const sent of sentences.slice(0, maxSentences)) {
+              const candidate = current ? current + " " + sent : sent;
+              if (candidate.length > budget + 10) {
+                if (current.length > 50) {
+                  break;
+                }
+                let truncated = candidate.slice(0, budget - 3).trim();
+                const lastSpace = truncated.lastIndexOf(" ");
+                if (lastSpace > 0) truncated = truncated.slice(0, lastSpace);
+                current = truncated + "...";
+                break;
+              }
+              current = candidate;
+            }
+            return current;
+          }
+          return sliced;
         };
 
         const limitBullets = (bullets: string[], maxBullets: number): string[] => {
@@ -1458,11 +1484,34 @@ Return ONLY a JSON object with this exact structure:
 
       const limitSummarySentences = (summaryText: string, maxSentences: number): string => {
         if (!summaryText) return "";
+        // Split by sentence boundaries, handling abbreviations safely
         const sentences = summaryText.split(/\.\s+/).filter(Boolean);
-        return sentences
+        const sliced = sentences
           .slice(0, maxSentences)
           .map(s => s.trim() + (s.trim().endsWith(".") ? "" : "."))
           .join(" ");
+          
+        // Enforce strict character budget matching lines
+        const budget = maxSentences === 1 ? 115 : maxSentences === 2 ? 230 : maxSentences * 115;
+        if (sliced.length > budget + 15) {
+          let current = "";
+          for (const sent of sentences.slice(0, maxSentences)) {
+            const candidate = current ? current + " " + sent : sent;
+            if (candidate.length > budget + 10) {
+              if (current.length > 50) {
+                break;
+              }
+              let truncated = candidate.slice(0, budget - 3).trim();
+              const lastSpace = truncated.lastIndexOf(" ");
+              if (lastSpace > 0) truncated = truncated.slice(0, lastSpace);
+              current = truncated + "...";
+              break;
+            }
+            current = candidate;
+          }
+          return current;
+        }
+        return sliced;
       };
 
       const headerMeta = [
