@@ -45,7 +45,7 @@ const parseProductOrProjectContent = (contentStr: string) => {
   const raw = contentStr || "";
   
   // Robust match for GitHub or absolute URLs or standard project domain patterns
-  const urlRegex = /(https?:\/\/[^\s|]+|github\.com\/[^\s|]+)/gi;
+  const urlRegex = /(https?:\/\/[^\s|]+|github\.com\/[^\s|]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/[^\s|]*|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
   const matches = raw.match(urlRegex) || [];
   
   const uniqueUrls: string[] = [];
@@ -644,7 +644,11 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 25).map(v => ({ type: v.
 - Use strong action verbs (Spearheaded, Orchestrated, Engineered).
 - DATE FORMAT: Use exact dates or month/year formats cleanly as provided (e.g., "January 2023 to March 2025" or "Jul 2022 – Present").
 - PROJECT DATE SORTING (CRITICAL): In the PROJECTS section, you MUST sort the projects by their date in reverse chronological order (latest/newest projects with the most recent year like 2026, 2025 or 'Ongoing' status placed at the very top/first, followed by older years like 2024, 2023, etc.).
-- ULTRA-CONCISE BULLET BUDGET (CRITICAL): To ensure maximum density and clean layout, keep EVERY single bullet/line across EXPERIENCE, PROJECTS, and PRODUCTS exceptionally concise and short! Each bullet MUST carry up to 10-12 words (strictly keeping the character length under 75 characters including spaces). Never write wordy, long or multi-line descriptions. Each bullet must be extremely crisp, metric-first, and fit beautifully on a single line.
+- BULLET LENGTH & STRUCTURE MANDATE (CRITICAL): To ensure maximum density and pristine layout:
+    - If a bullet is designed to fit on a SINGLE line, keep it concise but substantial (at least 60-90 characters, and at least 10 characters minimum. Never write tiny 2-3 word bullets that look like half a line).
+    - If a bullet wraps to a SECOND line, make sure it is rich and detailed (at least 200 characters) so that the second line is fully utilized and never has only 1-2 trailing words or trailing fragments.
+    - NEVER let a bullet wrap to a third line under any circumstances.
+    - Make sure every bullet is extremely crisp, metric-first, and highly professional.
 - SECTION DENSITY & DYNAMIC EXPANSION MANDATES (CRITICAL):
     - PROFESSIONAL SUMMARY: ${summaryPromptRule} You must compose it dynamically based on the Candidate Profile's experience and target skills. If the candidate's experience is a "Data Science Intern", you MUST refer to them as "Data Science Intern" or "Data Scientist" and NEVER hallucinate titles like "AI Engineer Intern" or "AI Intern".
     - SUMMARY EXPERIENCE TIMELINE ACCURACY (CRITICAL): Do NOT exaggerate or hallucinate the years of experience of the candidate under any circumstances! Count the exact duration of experience based ONLY on their formal experience items in the Candidate Profile. If the candidate has only one internship of 3 months or less than a year of total experience, you MUST NEVER write "X+ years of experience" or "2+ years of experience". Instead, state "Data Science Intern with hands-on experience" or "Data Science professional with hands-on internship experience". Keep it 100% faithful to the actual duration shown in the profile.
@@ -1213,7 +1217,7 @@ Return ONLY a JSON object with this exact structure:
             const lines = pdf.splitTextToSize(limitedSummary, contentWidth);
             const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
             checkPageBreak(neededHeight);
-            pdf.text(limitedSummary, margin, y, { maxWidth: contentWidth, align: "justify" });
+            pdf.text(limitedSummary, margin, y, { maxWidth: contentWidth, align: "left" });
             y += neededHeight + 0.5;
           }
 
@@ -1314,7 +1318,7 @@ Return ONLY a JSON object with this exact structure:
                 const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
                 checkPageBreak(neededHeight);
                 pdf.text("•", margin + 1.5, y);
-                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "justify" });
+                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
                 y += neededHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
@@ -1386,7 +1390,7 @@ Return ONLY a JSON object with this exact structure:
                 const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
                 checkPageBreak(neededHeight);
                 pdf.text("•", margin + 1.5, y);
-                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "justify" });
+                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
                 y += neededHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
@@ -1458,7 +1462,7 @@ Return ONLY a JSON object with this exact structure:
                 const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
                 checkPageBreak(neededHeight);
                 pdf.text("•", margin + 1.5, y);
-                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "justify" });
+                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
                 y += neededHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
@@ -1498,7 +1502,7 @@ Return ONLY a JSON object with this exact structure:
                 const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
                 checkPageBreak(neededHeight);
                 pdf.text("•", margin + 1.5, y);
-                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "justify" });
+                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
                 y += neededHeight;
               });
               y += getLineHeight(bodyFontSize, 0.4);
@@ -1608,7 +1612,7 @@ Return ONLY a JSON object with this exact structure:
               const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
               checkPageBreak(neededHeight);
               pdf.text("•", margin + 1.5, y);
-              pdf.text(cleanCert, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "justify" });
+              pdf.text(cleanCert, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
               y += neededHeight;
             });
           }
@@ -1625,7 +1629,7 @@ Return ONLY a JSON object with this exact structure:
               const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
               checkPageBreak(neededHeight);
               pdf.text("•", margin + 1.5, y);
-              pdf.text(cleanAward, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "justify" });
+              pdf.text(cleanAward, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
               y += neededHeight;
             });
           }

@@ -121,14 +121,29 @@ const renderSubHeaderWithLinks = (
   // 2. Parse content for Status/Year and Links
   const rawContent = content || "";
   
-  // Find any URLs inside rawContent
-  const urlRegex = /(https?:\/\/[^\s]+|github\.com\/[^\s]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/[^\s]*|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
-  const urls = rawContent.match(urlRegex) || [];
+  // Find any URLs inside rawContent using robust regex
+  const urlRegex = /(https?:\/\/[^\s|]+|github\.com\/[^\s|]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/[^\s|]*|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
+  const rawUrls = rawContent.match(urlRegex) || [];
+  
+  // Deduplicate URLs
+  const urls: string[] = [];
+  const seen = new Set<string>();
+  rawUrls.forEach(u => {
+    const norm = u.toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      .replace(/\/$/, "")
+      .trim();
+    if (norm && !seen.has(norm)) {
+      seen.add(norm);
+      urls.push(u.trim());
+    }
+  });
   
   // Extract non-URL text (e.g. Year or Status like "2024", "Live", "Ongoing")
   let statusOrYear = rawContent;
   urls.forEach(url => {
-    statusOrYear = statusOrYear.replace(url, "");
+    statusOrYear = statusOrYear.split(url).join("");
   });
   
   // Clean separators from statusOrYear
@@ -163,7 +178,7 @@ const renderSubHeaderWithLinks = (
         
         {urls.map((url, idx) => {
           const href = url.startsWith("http") ? url : `https://${url}`;
-          const isGithub = url.includes("github.com");
+          const isGithub = url.toLowerCase().includes("github.com");
           const label = isGithub ? "GitHub" : "Live Link";
           
           return (
@@ -1291,7 +1306,7 @@ export const ResumePreview = ({
                           <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
                             <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Professional Summary</h4>
                           </div>
-                          <p className="text-[#1E2A3A]/90 leading-relaxed !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
+                          <p className="text-[#1E2A3A]/90 leading-relaxed !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
                             {limitSummarySentences(localResume.professional_summary, summaryLines)}
                           </p>
                         </section>
@@ -1371,7 +1386,7 @@ export const ResumePreview = ({
                                 </div>
                                 <ul className="list-disc ml-5 space-y-0.5 pt-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                   {(exp.bullets || []).map((bullet, bullIdx) => (
-                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
+                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
                                       {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                     </li>
                                   ))}
@@ -1397,7 +1412,7 @@ export const ResumePreview = ({
                                   </div>
                                   <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                     {(prod.bullets || []).map((bullet, bullIdx) => (
-                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
+                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
                                         {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                       </li>
                                     ))}
@@ -1424,7 +1439,7 @@ export const ResumePreview = ({
                                   </div>
                                   <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                     {(proj.bullets || []).map((bullet, bullIdx) => (
-                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
+                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
                                         {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                       </li>
                                     ))}
@@ -1451,7 +1466,7 @@ export const ResumePreview = ({
                                 </div>
                                 <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                   {(lead.bullets || []).map((bullet, bullIdx) => (
-                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
+                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
                                       {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
                                     </li>
                                   ))}
@@ -1487,7 +1502,7 @@ export const ResumePreview = ({
                           </div>
                           <div className="flex flex-col !font-inherit" style={{ fontFamily: 'inherit', gap: '0.5px' }}>
                             {localResume.certifications?.map((cert, i) => (
-                              <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', margin: 0, padding: 0 }}>
+                              <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
                                 • {cert}
                               </p>
                             ))}
@@ -1503,7 +1518,7 @@ export const ResumePreview = ({
                           </div>
                           <div className="flex flex-col" style={{ gap: '0.5px' }}>
                             {localResume.awards?.map((award, i) => (
-                              <p key={i} className="text-[#1E2A3A]/90 leading-tight text-justify" style={{ fontSize: fontSizes.body, textAlign: 'justify', margin: 0, padding: 0 }}>
+                              <p key={i} className="text-[#1E2A3A]/90 leading-tight text-justify" style={{ fontSize: fontSizes.body, textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
                                 • {award}
                               </p>
                             ))}
