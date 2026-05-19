@@ -631,114 +631,35 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     }
 
     try {
-      const prompt = `You are an elite Silicon Valley executive resume architect.
+      const prompt = `You are an elite, truth-grounded executive resume architect.
 Your goal is to synthesize a high-impact, ATS-optimized resume in the precise "Andrew Vu" executive style.
 
-### CONTEXT:
-Job Target: ${jdTitle} at ${companyName || "this company"}
-Target Skills: ${jdSkills.map(s => s.skill).join(", ")}
-Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 25).map(v => ({ type: v.type, title: v.title, org: v.organization, period: v.period, desc: v.description, bullets: v.bullets, skills: v.skills, github_link: v.github_link, live_link: v.live_link })), null, 2)}
+### CORE OPERATING PRINCIPLES:
+- FIDELITY TO FACTS (CRITICAL): You are an editor of truth. Do NOT inflate, fabricate, or exaggerate achievements. If the Candidate Profile's experience entries lack specific metrics or scale, do NOT hallucinate or guess them. Instead, craft the narrative focusing on the scope of their responsibility, the technologies utilized, and the qualitative impact of their work as explicitly described in the provided Candidate Profile.
+- DATA INTEGRITY: You are strictly forbidden from "force-quantifying" bullets if the underlying data does not support it. Use the provided data points as your absolute source of truth.
+- ATS OPTIMIZATION: Use strong, professional action verbs. Focus on high-impact phrasing that maps explicitly to the user's provided experience and the target JD.
+- DATE FORMAT: Use exact dates as provided in the profile (e.g., "January 2023 – March 2025" or "Jul 2022 – Present").
+- PROJECT SORTING: Projects must be in reverse chronological order (newest/ongoing first).
 
-### CORE MANDATE:
-- Quantify EVERYTHING. Use metrics (%, $, time, scale) in every bullet.
-- Use strong action verbs (Spearheaded, Orchestrated, Engineered).
-- DATE FORMAT: Use exact dates or month/year formats cleanly as provided (e.g., "January 2023 to March 2025" or "Jul 2022 – Present").
-- PROJECT DATE SORTING (CRITICAL): In the PROJECTS section, you MUST sort the projects by their date in reverse chronological order (latest/newest projects with the most recent year like 2026, 2025 or 'Ongoing' status placed at the very top/first, followed by older years like 2024, 2023, etc.).
-- BULLET LENGTH & STRUCTURE MANDATE (CRITICAL): To ensure maximum density and pristine layout:
-    - If a bullet is designed to fit on a SINGLE line, keep it concise but substantial (at least 60-90 characters, and at least 10 characters minimum. Never write tiny 2-3 word bullets that look like half a line).
-    - If a bullet wraps to a SECOND line, make sure it is rich and detailed (at least 200 characters) so that the second line is fully utilized and never has only 1-2 trailing words or trailing fragments.
-    - NEVER let a bullet wrap to a third line under any circumstances.
-    - Make sure every bullet is extremely crisp, metric-first, and highly professional.
-- SECTION DENSITY & DYNAMIC EXPANSION MANDATES (CRITICAL):
-    - PROFESSIONAL SUMMARY: ${summaryPromptRule} You must compose it dynamically based on the Candidate Profile's experience and target skills. If the candidate's experience is a "Data Science Intern", you MUST refer to them as "Data Science Intern" or "Data Scientist" and NEVER hallucinate titles like "AI Engineer Intern" or "AI Intern".
-    - SUMMARY EXPERIENCE TIMELINE ACCURACY (CRITICAL): Do NOT exaggerate or hallucinate the years of experience of the candidate under any circumstances! Count the exact duration of experience based ONLY on their formal experience items in the Candidate Profile. If the candidate has only one internship of 3 months or less than a year of total experience, you MUST NEVER write "X+ years of experience" or "2+ years of experience". Instead, state "Data Science Intern with hands-on experience" or "Data Science professional with hands-on internship experience". Keep it 100% faithful to the actual duration shown in the profile.
-    - EXPERIENCE BULLETS: Every single role in EXPERIENCE must have EXACTLY ${experienceBullets} bullet points. If the Candidate Profile's entry has fewer than ${experienceBullets} bullets, you MUST expand, elaborate, or split them to generate exactly ${experienceBullets} quantified, metric-driven bullet points.
-    - PROJECT BULLETS: Every single project in PROJECTS must have EXACTLY ${projectLines} bullet points. Expand or elaborate to generate exactly ${projectLines} metric-driven bullet points.
-    - PRODUCT/STARTUP BULLETS: Every single product in PRODUCTS must have EXACTLY ${productLines} bullet points. Expand or elaborate to generate exactly ${productLines} metric-driven bullet points.
-    - SUMMARY LENGTH: Ensure the professional summary is EXACTLY ${summaryLines} sentences long. Never return fewer than ${summaryLines} sentences. Each sentence must be substantial and detailed to span a full line.
-- SECTION INTEGRITY & CLASSIFICATION (CRITICAL): 
-    - EXPERIENCE: Only for formal employment, internships, and fellowships. (e.g., 'Data Science Intern').
-    - PROJECTS: Technical builds, open-source contributions, or academic projects. (e.g., 'Kannada Book AI Agent').
-    - PRODUCTS: Startups, SaaS products, or ventures founded by the user. (e.g., 'Lumina').
-    - NO HALLUCINATIONS (CRITICAL): Do NOT invent or add any fake professional experience entries under any circumstances! Only include experiences that are explicitly provided in the Candidate Profile/vault items under EXPERIENCE. If the Candidate Profile only has 1 internship/job, then you MUST generate exactly that 1 entry under EXPERIENCE in the output JSON. NEVER invent jobs at companies like Google, Meta, or any other company to fill space.
-    - STRICT QUANTITY: You MUST select, tailor, and generate at least 2 to 3 projects from the Candidate Profile/vault items (and up to 4 if present). Never output only 1 project if multiple are available in the Candidate Profile. For experience entries, generate exactly the number of formal employment entries provided.
-    - DO NOT invent additional entries to "fill space" beyond what is provided in the Candidate Profile.
-    - DO NOT mix these categories. If an item is a project, it MUST stay in PROJECTS. If it is a startup, it MUST stay in PRODUCTS.
-    - DO NOT include certifications/awards in any other section. Keep them in AWARDS or CERTIFICATIONS. (CRITICAL: 'AI Engineer for Data Scientists Associate' or anything from 'DataCamp' is a CERTIFICATION, NOT experience).
-    - SKILLS: Must be ONLY keywords and technical terms. NO sentences or descriptive text. Format as "Category: Skill1, Skill2, Skill3".
-- CUSTOM STRUCTURE MANDATE:
-    - You MUST follow this exact sequence: SUMMARY → EDUCATION → EXPERIENCE → PRODUCTS → PROJECTS → LEADERSHIP → SKILLS → AWARDS → CERTIFICATIONS.
-    - ONLY include sections that are TRUE in this list: ${sectionOrder.filter(s => visibleSections[s]).join(', ')}.
-    - If a section like 'LEADERSHIP' or 'AWARDS' is NOT in this list, you MUST OMIT IT from the JSON response entirely.
- 
-### SCHEMA & FORMATTING REQUIREMENTS:
-1. EDUCATION: Each item in the array must strictly match this format:
-   "[Course / Degree Name with Specialization] @ [College/University Name] - [Campus Location] | [Start Date – End Date] | GPA: [GPA_Value]"
-   Example: "Btech in Artificial intelligence and data science @ REVA University - Bengaluru, Karnataka | July 2020 – June 2024 | GPA: 7.5/10"
-2. EXPERIENCE: Professional roles with quantified impact.
-   - "heading": Must strictly match: "[First Job Role] @ [Company Name] - [Mode (Remote or On-site)] ([Location if On-site])"
-     Example: "Software Engineer Intern @ Google - On-site (Bengaluru, Karnataka)" or "Software Engineer Intern @ Google - Remote"
-   - "content": Duration of experience (e.g., "January 2023 to March 2025" or "July 2022 to Present")
-   - "bullets": Array of exactly ${experienceBullets} metric-driven bullets
-3. PRODUCTS: Startups or SaaS products founded by the user.
-   - "heading": Must strictly match: "[Product Name] - [One line of Tech Stack (comma-separated)]"
-     Example: "Lumina Resume Engine - React, Node.js, Groq"
-   - "content": Must strictly contain the status (Ongoing or Live) and optional GitHub/Live links. Do NOT add duration dates (e.g. "January 2023 to Present"). Just add: "[Status (Ongoing or Live)] [| github.com/username/project] [| live_link_url]"
-      Example: "Live | github.com/username/lumina | lumina.io" or "Ongoing | github.com/username/lumina" or "Live | lumina.io"
-   - "bullets": Array of exactly ${productLines} metrics or descriptions
-4. PROJECTS: Technical achievements with stack details.
-   - "heading": Must strictly match: "[Project Title] - [Tech Stack (comma-separated)]"
-     Example: "Decentralized File System - React, Node.js, Web3"
-   - "content": Must strictly contain the year/status and optional links: "[Year (e.g. 2024) or Status (e.g. Ongoing)] [| github.com/username/project] [| live_link_url]"
-     Example: "2024 | github.com/username/project | my-demo.vercel.app" or "Ongoing | github.com/username/project" or "2024 | my-demo.vercel.app"
-   - "bullets": Array of exactly ${projectLines} technical highlights
-5. LEADERSHIP: Non-work impact or community roles.
-   - "heading": "[Role Name] @ [Organization / Community Name]"
-   - "content": Duration (e.g., "Sep 2022 – Dec 2023")
-   - "bullets": Array of impact highlights
-6. SKILLS: Categorized (e.g., "Languages: Python, Go").
-7. CERTIFICATIONS: Each item in the array must strictly match this format:
-   "[Certificate/Course Name] ([Issuing Entity / Company Name]) - [Year Done]"
-   Example: "AWS Solutions Architect (Amazon Web Services) - 2024"
-8. AWARDS: Each item in the array must strictly match this format:
-   "[Award/Honor Name] ([Awarding Body]) - [Year Received]"
-   Example: "Hackathon Winner (Google Cloud) - 2024"
- 
-Return ONLY a JSON object with this exact structure:
+### SECTION MANDATES:
+- PROFESSIONAL SUMMARY: ${summaryPromptRule} Focus on the candidate's actual documented expertise and direct alignment with the target JD. Avoid generic puffery.
+- EXPERIENCE/PROJECTS/PRODUCTS: Each item MUST contain exactly the requested number of bullets (${experienceBullets} for experience, ${projectLines} for projects, ${productLines} for products). You must distill the essence of the available data into precisely this number of bullets, ensuring they are rich and informative without fabricating data.
+- NO HALLUCINATIONS: Do NOT invent jobs, skills, or projects. Only map the content provided in the Candidate Profile.
+
+### STRUCTURE:
+Follow this sequence: SUMMARY → EDUCATION → EXPERIENCE → PRODUCTS → PROJECTS → LEADERSHIP → SKILLS → AWARDS → CERTIFICATIONS.
+
+Return ONLY a JSON object:
 {
-  "professional_summary": "[Synthesize a highly tailored professional summary. ${summarySchemaRule}]",
+  "professional_summary": "[Synthesize summary based on facts. ${summarySchemaRule}]",
   "skills_section": ["Languages: ...", "Frameworks: ..."],
-  "experience": [
-    {
-      "heading": "Job Title @ Company - Mode (Location)",
-      "content": "Duration",
-      "bullets": ["[Bullet 1]", "[Bullet 2]"]
-    }
-  ],
-  "products": [
-    {
-      "heading": "Product Name - Tech Stack",
-      "content": "Live | github.com/username/product | live_link_url",
-      "bullets": ["[Bullet 1]"]
-    }
-  ],
-  "projects": [
-    {
-      "heading": "Project Name - Tech Stack",
-      "content": "2024 | github.com/username/project | live_link_url",
-      "bullets": ["[Bullet 1]"]
-    }
-  ],
-  "leadership": [
-    {
-      "heading": "Role @ Organization",
-      "content": "Timeline",
-      "bullets": ["[Bullet 1]"]
-    }
-  ],
-  "education": ["Course Name @ College Name - Location | Timeline | GPA: X.X"],
-  "certifications": ["Cert Name (Issuer) - Year"],
-  "awards": ["Award Name (Organization) - Year"]
+  "experience": [{"heading": "...", "content": "...", "bullets": ["..."]}],
+  "products": [{"heading": "...", "content": "...", "bullets": ["..."]}],
+  "projects": [{"heading": "...", "content": "...", "bullets": ["..."]}],
+  "leadership": [{"heading": "...", "content": "...", "bullets": ["..."]}],
+  "education": ["..."],
+  "certifications": ["..."],
+  "awards": ["..."]
 }`;
 
       const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
