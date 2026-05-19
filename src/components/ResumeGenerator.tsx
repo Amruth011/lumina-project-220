@@ -51,18 +51,8 @@ const parseProductOrProjectContent = (contentStr: string) => {
     statusOrYear = statusOrYear.replace(url, "").trim();
   });
   
-  statusOrYear = statusOrYear
-    .replace(/\|\s*$/g, "")
-    .replace(/^\s*\|/g, "")
-    .replace(/\s*\|\s*\|\s*/g, " | ")
-    .replace(/\s*-\s*$/g, "")
-    .replace(/^\s*-/g, "")
-    .trim();
+  statusOrYear = statusOrYear.replace(/[|\s-–—]+/g, " ").trim();
     
-  if (statusOrYear === "|" || statusOrYear === "-") {
-    statusOrYear = "";
-  }
-  
   if (statusOrYear.toLowerCase() === "live") {
     statusOrYear = "";
   }
@@ -541,8 +531,9 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.
 - Quantify EVERYTHING. Use metrics (%, $, time, scale) in every bullet.
 - Use strong action verbs (Spearheaded, Orchestrated, Engineered).
 - DATE FORMAT: Use exact dates or month/year formats cleanly as provided (e.g., "January 2023 to March 2025" or "Jul 2022 – Present").
+- PROJECT RELEVANCE SORTING (CRITICAL): In the PROJECTS section, you MUST sort the projects by their similarity/relevance to the Job Target/Job Description. The project that is most closely aligned with the Job Target (e.g., data science, machine learning, AI, etc.) must be placed 1st (index 0 of the projects array), followed by secondary projects.
 - SECTION DENSITY & DYNAMIC EXPANSION MANDATES (CRITICAL):
-    - PROFESSIONAL SUMMARY: ${summaryPromptRule} You must compose it dynamically based on the Candidate Profile's experience and target skills.
+    - PROFESSIONAL SUMMARY: ${summaryPromptRule} You must compose it dynamically based on the Candidate Profile's experience and target skills. If the candidate's experience is a "Data Science Intern", you MUST refer to them as "Data Science Intern" or "Data Scientist" and NEVER hallucinate titles like "AI Engineer Intern" or "AI Intern".
     - EXPERIENCE BULLETS: Every single role in EXPERIENCE must have EXACTLY ${experienceBullets} bullet points. If the Candidate Profile's entry has fewer than ${experienceBullets} bullets, you MUST expand, elaborate, or split them to generate exactly ${experienceBullets} quantified, metric-driven bullet points.
     - PROJECT BULLETS: Every single project in PROJECTS must have EXACTLY ${projectLines} bullet points. Expand or elaborate to generate exactly ${projectLines} metric-driven bullet points.
     - PRODUCT/STARTUP BULLETS: Every single product in PRODUCTS must have EXACTLY ${productLines} bullet points. Expand or elaborate to generate exactly ${productLines} metric-driven bullet points.
@@ -551,7 +542,7 @@ Candidate Profile: ${JSON.stringify(vaultItems.slice(0, 15).map(v => ({ type: v.
     - EXPERIENCE: Only for formal employment, internships, and fellowships. (e.g., 'Data Science Intern').
     - PROJECTS: Technical builds, open-source contributions, or academic projects. (e.g., 'Kannada Book AI Agent').
     - PRODUCTS: Startups, SaaS products, or ventures founded by the user. (e.g., 'Lumina').
-    - NO HALLUCINATIONS: Do NOT create fake professional experience from certifications or projects. If the user has only 1 job in their profile, show ONLY that 1 job in EXPERIENCE. 
+    - NO HALLUCINATIONS (CRITICAL): Do NOT invent or add any fake professional experience entries under any circumstances! Only include experiences that are explicitly provided in the Candidate Profile/vault items under EXPERIENCE. If the Candidate Profile only has 1 internship/job, then you MUST generate exactly that 1 entry under EXPERIENCE in the output JSON. NEVER invent jobs at companies like Google, Meta, or any other company to fill space.
     - STRICT QUANTITY: You MUST select, tailor, and generate at least 2 to 3 projects from the Candidate Profile/vault items (and up to 4 if present). Never output only 1 project if multiple are available in the Candidate Profile. For experience entries, generate exactly the number of formal employment entries provided.
     - DO NOT invent additional entries to "fill space" beyond what is provided in the Candidate Profile.
     - DO NOT mix these categories. If an item is a project, it MUST stay in PROJECTS. If it is a startup, it MUST stay in PRODUCTS.

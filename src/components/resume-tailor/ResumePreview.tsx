@@ -129,21 +129,10 @@ const renderSubHeaderWithLinks = (
   });
   
   // Clean separators from statusOrYear
-  statusOrYear = statusOrYear
-    .replace(/\|\s*$/g, "")
-    .replace(/^\s*\|/g, "")
-    .replace(/\s*\|\s*\|\s*/g, " | ")
-    .replace(/\s*-\s*$/g, "")
-    .replace(/^\s*-/g, "")
-    .trim();
-
-  // If statusOrYear contains just dashes or pipes, clear it
-  if (statusOrYear === "|" || statusOrYear === "-") {
-    statusOrYear = "";
-  }
+  statusOrYear = statusOrYear.replace(/[|\s-–—]+/g, " ").trim();
 
   // Remove redundant "Live" status, but preserve "Ongoing"
-  if (statusOrYear.trim().toLowerCase() === "live") {
+  if (statusOrYear.toLowerCase() === "live") {
     statusOrYear = "";
   }
 
@@ -521,7 +510,110 @@ export const ResumePreview = ({
                   {(localResume.experience || []).map((exp, idx) => (
                     <div key={idx} className="p-4 rounded-xl bg-slate-50/50 border border-border/10 space-y-3 relative group/exp">
                       <button onClick={() => updateResumeState({...localResume, experience: (localResume.experience || []).filter((_, i) => i !== idx)})} className="absolute top-3 right-3 p-1.5 text-red-500 opacity-0 group-hover/exp:opacity-100 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={12} /></button>
-                      <input value={exp.heading} onChange={(e) => updateExperience(idx, 'heading', e.target.value)} className="w-full bg-transparent font-bold text-sm outline-none border-b border-transparent focus:border-lumina-teal/20" />
+                      {(() => {
+                        const headingParts = (exp.heading || "").split('@');
+                        const role = headingParts[0]?.trim() || "";
+                        const orgParts = headingParts[1] ? headingParts[1].split(/\s+[-–—]\s+/) : [];
+                        const org = orgParts[0]?.trim() || "";
+                        const rawLocOrMode = orgParts[1]?.trim() || "";
+
+                        let currentMode = "Remote";
+                        let currentLocation = "";
+                        if (rawLocOrMode.toLowerCase().includes("on-site") || rawLocOrMode.toLowerCase().includes("onsite")) {
+                          currentMode = "On-site";
+                          const locMatch = rawLocOrMode.match(/\(([^)]+)\)/);
+                          if (locMatch) {
+                            currentLocation = locMatch[1];
+                          }
+                        } else if (rawLocOrMode.toLowerCase().includes("offline")) {
+                          currentMode = "Offline";
+                          const locMatch = rawLocOrMode.match(/\(([^)]+)\)/);
+                          if (locMatch) {
+                            currentLocation = locMatch[1];
+                          }
+                        } else if (rawLocOrMode) {
+                          const locMatch = rawLocOrMode.match(/\(([^)]+)\)/);
+                          if (locMatch) {
+                            currentLocation = locMatch[1];
+                            currentMode = rawLocOrMode.split('(')[0].trim();
+                          } else {
+                            if (rawLocOrMode.toLowerCase() === "remote") {
+                              currentMode = "Remote";
+                            } else {
+                              currentMode = "On-site";
+                              currentLocation = rawLocOrMode;
+                            }
+                          }
+                        }
+
+                        const updateHeadingField = (field: 'role' | 'org' | 'mode' | 'location', val: string) => {
+                          const nextRole = field === 'role' ? val : role;
+                          const nextOrg = field === 'org' ? val : org;
+                          const nextMode = field === 'mode' ? val : currentMode;
+                          const nextLoc = field === 'location' ? val : currentLocation;
+
+                          let headingStr = "";
+                          if (nextRole || nextOrg) {
+                            const companyPart = nextOrg ? ` @ ${nextOrg}` : "";
+                            let modePart = "";
+                            if (nextMode === "Remote") {
+                              modePart = " - Remote";
+                            } else if (nextMode === "Offline") {
+                              modePart = nextLoc ? ` - Offline (${nextLoc})` : " - Offline";
+                            } else {
+                              modePart = nextLoc ? ` - On-site (${nextLoc})` : " - On-site";
+                            }
+                            headingStr = `${nextRole}${companyPart}${modePart}`;
+                          }
+                          updateExperience(idx, 'heading', headingStr);
+                        };
+
+                        return (
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] font-black text-[#1E2A3A]/40 uppercase tracking-wider">Role</label>
+                              <input 
+                                value={role} 
+                                onChange={(e) => updateHeadingField('role', e.target.value)} 
+                                className="w-full bg-white/70 rounded-lg px-3 py-1.5 font-bold outline-none border border-slate-200/50 focus:border-lumina-teal/20" 
+                                placeholder="Job Title"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] font-black text-[#1E2A3A]/40 uppercase tracking-wider">Company</label>
+                              <input 
+                                value={org} 
+                                onChange={(e) => updateHeadingField('org', e.target.value)} 
+                                className="w-full bg-white/70 rounded-lg px-3 py-1.5 font-bold outline-none border border-slate-200/50 focus:border-lumina-teal/20" 
+                                placeholder="Company"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] font-black text-[#1E2A3A]/40 uppercase tracking-wider">Mode</label>
+                              <select 
+                                value={currentMode} 
+                                onChange={(e) => updateHeadingField('mode', e.target.value)} 
+                                className="w-full bg-white/70 rounded-lg px-3 py-1.5 outline-none border border-slate-200/50 focus:border-lumina-teal/20 font-semibold"
+                              >
+                                <option value="On-site">On-site</option>
+                                <option value="Remote">Remote</option>
+                                <option value="Offline">Offline</option>
+                              </select>
+                            </div>
+                            {currentMode !== "Remote" && (
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-black text-[#1E2A3A]/40 uppercase tracking-wider">Location</label>
+                                <input 
+                                  value={currentLocation} 
+                                  onChange={(e) => updateHeadingField('location', e.target.value)} 
+                                  className="w-full bg-white/70 rounded-lg px-3 py-1.5 outline-none border border-slate-200/50 focus:border-lumina-teal/20" 
+                                  placeholder="Bengaluru, India"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                       <input 
                         value={exp.content || ""} 
                         onChange={(e) => updateExperience(idx, 'content', e.target.value)} 
