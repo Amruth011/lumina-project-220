@@ -620,13 +620,13 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     let summarySchemaRule = "";
 
     if (summaryLines === 1) {
-      summaryPromptRule = `You MUST synthesize a high-impact professional summary of EXACTLY 1 sentence. Keep the single sentence strictly around 100-115 characters including spaces in total, so that the professional summary spans exactly 1 line on a standard wide page. Do NOT write short 3-5 word fragments; it must be a fully formed, high-impact statement.`;
+      summaryPromptRule = `You MUST synthesize a high-impact, elite, value-first professional summary of EXACTLY 1 sentence. Avoid empty buzzwords. Follow this formula: [Specialist Title] specializing in [Core Tech Stack/Methodologies] with a proven track record of [High-Level Quantitative Career Impact]. Keep it strictly around 100-115 characters including spaces.`;
       summarySchemaRule = `Ensure there is exactly 1 substantial sentence (around 100-115 characters including spaces).`;
     } else if (summaryLines === 2) {
-      summaryPromptRule = `You MUST synthesize a high-impact professional summary of EXACTLY 2 sentences. Do NOT output a single sentence or bullet list under any circumstances. You must write exactly 2 distinct, complete sentences separated by a period and a single space (e.g. "Sentence one. Sentence two."). Keep the entire professional summary strictly around 200-230 characters including spaces in total, so that it spans exactly 2 lines on a standard wide page. Each sentence must be fully formed and high-impact.`;
+      summaryPromptRule = `You MUST synthesize a high-impact, elite, value-first professional summary of EXACTLY 2 sentences. Do NOT use empty buzzwords like 'passionate self-starter'. Follow this formula: Sentence 1: [Specialist Title] specializing in [Core Tech Stack/Methodologies] with a proven track record of [High-Level Quantitative Career Impact]. Sentence 2: Connect your core expertise directly to the target JD's key requirements. Keep the entire professional summary strictly around 200-230 characters including spaces.`;
       summarySchemaRule = `Ensure there are exactly 2 sentences (strictly 200-230 characters in total across both sentences) separated by a period and space.`;
     } else {
-      summaryPromptRule = `You MUST synthesize a high-impact professional summary of EXACTLY ${summaryLines} sentences. Do NOT output a single sentence or bullet list under any circumstances. You must write exactly ${summaryLines} distinct, complete sentences separated by a period and a single space (e.g. "Sentence one. Sentence two. Sentence three."). Keep the entire summary strictly around 300-340 characters including spaces in total (averaging around 100-110 characters per sentence) so that the professional summary spans exactly ${summaryLines} lines (default 3 lines) on a standard wide page. Each sentence must be a fully formed, high-impact statement.`;
+      summaryPromptRule = `You MUST synthesize a high-impact, elite, value-first professional summary of EXACTLY ${summaryLines} sentences. Do NOT use empty buzzwords. Focus on specialization, core domain expertise, and high-level quantifiable outcomes. Keep the entire summary strictly around 300-340 characters including spaces.`;
       summarySchemaRule = `Ensure there are exactly ${summaryLines} sentences (strictly 300-340 characters in total across all sentences) separated by periods and spaces.`;
     }
 
@@ -670,8 +670,9 @@ Your goal is to synthesize a high-impact, ATS-optimized resume in the precise "A
 ### CORE OPERATING PRINCIPLES:
 - FIDELITY TO FACTS (CRITICAL): You are an editor of truth. Do NOT inflate, fabricate, or exaggerate achievements. If the Candidate Profile's experience entries lack specific metrics or scale, do NOT hallucinate or guess them. Instead, craft the narrative focusing on the scope of their responsibility, the technologies utilized, and the qualitative impact of their work as explicitly described in the provided Candidate Profile and Master Vault.
 - DATA INTEGRITY: You are strictly forbidden from "force-quantifying" bullets if the underlying data does not support it. Use the provided data points as your absolute source of truth. Under no circumstances should you invent fake metric percentages (e.g. "increased efficiency by 34%") if they are not explicitly present in the candidate's Master Vault items.
-- ATS OPTIMIZATION: Use strong, professional action verbs. Focus on high-impact phrasing that maps explicitly to the user's provided experience and the target JD.
-- DATE FORMAT: Use exact dates as provided in the profile (e.g., "January 2023 – March 2025" or "Jul 2022 – Present").
+- ZERO DUPLICATION & NO FILLER (CRITICAL): Under no circumstances should you repeat bullet points or phrases across different experience entries, projects, or products. Avoid adding generic filler sentences (e.g., boilerplate about stakeholder collaboration or general team participation). Each bullet point must be completely unique, tailored, and grounded in the specific facts of that individual entry.
+- GOOGLE "XYZ" FORMULA: Experience bullets should follow the Google "XYZ" formula: "Accomplished [X] as measured by [Y], by doing [Z]" where metric details are present. Focus on active verbs, quantifiable impacts, and explicit technical details.
+- DATE FORMAT: Use exact dates as provided in the profile (e.g., "January 2023 – March 2025" or "Jul 2022 – Present"). If no start/end dates are documented for a vault item, you MUST leave the date/content field as a blank string "". Do NOT fabricate placeholders like "No specific dates provided" or "Date – Present".
 - PROJECT SORTING: Projects must be in reverse chronological order (newest/ongoing first).
 
 ### CANDIDATE FACTS & PROFILE VAULT
@@ -712,7 +713,7 @@ Target Key Skills & Keywords: ${targetJdSkills}
 
 ### SECTION MANDATES:
 - PROFESSIONAL SUMMARY: ${summaryPromptRule} Focus on the candidate's actual documented expertise and direct alignment with the target JD. Avoid generic puffery.
-- EXPERIENCE/PROJECTS/PRODUCTS: Each item MUST contain exactly the requested number of bullets (${experienceBullets} for experience, ${projectLines} for projects, ${productLines} for products). You must distill the essence of the available data into precisely this number of bullets, ensuring they are rich and informative without fabricating data.
+- EXPERIENCE/PROJECTS/PRODUCTS: Each item should contain up to a maximum of the requested number of bullets (${experienceBullets} for experience, ${projectLines} for projects, ${productLines} for products). You must distill the essence of the available data into high-impact bullets. If the candidate profile has sparse information, generate only as many authentic bullets as can be strictly supported by the real facts, rather than fabricating generic placeholders.
 - NO HALLUCINATIONS: Do NOT invent jobs, skills, or projects. Only map the content provided in the Candidate Profile. If no items exist in a specific Master Vault category, return an empty array for that section in the JSON (e.g., "certifications": [], "awards": [], "products": [], "projects": [], "leadership": []). Do NOT invent default or fake certifications/awards.
 
 ### STRUCTURE:
@@ -721,7 +722,7 @@ Follow this sequence: SUMMARY → EDUCATION → EXPERIENCE → PRODUCTS → PROJ
 Return ONLY a JSON object matching this exact schema:
 {
   "professional_summary": "[Synthesize summary based on facts. ${summarySchemaRule}]",
-  "skills_section": ["Category: skill1, skill2, ..."],
+  "skills_section": ["Languages: list...", "AI & Machine Learning: list...", "Cloud & Tools: list..."],
   "experience": [{"heading": "Role @ Company - Mode (Location) [or Role @ Company - Remote]", "content": "Start Date – End Date", "bullets": ["..."]}],
   "products": [{"heading": "Product/Startup Name - Tech Stack", "content": "Year or Status | Link(s)", "bullets": ["..."]}],
   "projects": [{"heading": "Project Name - Tech Stack", "content": "Year or Status | Link(s)", "bullets": ["..."]}],
@@ -729,7 +730,9 @@ Return ONLY a JSON object matching this exact schema:
   "education": ["Degree @ School - Location | Dates | metadata"],
   "certifications": ["Certification Name (Issuer) - Year"],
   "awards": ["Award Name (Issuer) - Year"]
-}`;
+}
+
+For "skills_section", you MUST group the candidate's skills into 3-4 logical, professional stack domains (e.g., Languages, Frameworks, Developer Tools, Databases) based on their vault profile and target JD. Never use a single flat line labeled with the literal word 'Category'.`;
 
       const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
       let resultText = "";
@@ -1269,22 +1272,30 @@ Return ONLY a JSON object matching this exact schema:
                     const school = schoolParts[0]?.trim() || "University";
                     const loc = schoolParts[1]?.trim() || editableHeader.location || "";
                     
-                    const dateText = parts[1]?.trim() || "May 2027";
+                    const rawDate = parts[1]?.trim() || "";
+                    const dateText = (rawDate === "No specific dates provided" || !rawDate.trim()) ? "" : rawDate;
                     const metadata = parts.slice(2).map(p => p.trim()).filter(Boolean).join(' | ');
 
                     const maxRightWidth = contentWidth * 0.35;
-                    const dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
-                    const dateWidth = pdf.getTextWidth(dateTextTruncated);
-                    const maxSchoolWidth = contentWidth - dateWidth - 6;
+                    let dateTextTruncated = "";
+                    let dateWidth = 0;
+                    if (dateText) {
+                      dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
+                      dateWidth = pdf.getTextWidth(dateTextTruncated);
+                    }
+                    const maxSchoolWidth = dateWidth > 0 ? contentWidth - dateWidth - 6 : contentWidth;
                     const cleanSchool = truncateText(school, maxSchoolWidth, subHeadlineFontSize, true);
 
                     pdf.setTextColor(0, 0, 0);
                     pdf.setFont(currentFont, "bold");
                     pdf.setFontSize(subHeadlineFontSize);
                     pdf.text(cleanSchool, margin, y);
-                    pdf.setFont(currentFont, "normal");
-                    pdf.setFontSize(bodyFontSize - 1);
-                    pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
+                    
+                    if (dateTextTruncated) {
+                      pdf.setFont(currentFont, "normal");
+                      pdf.setFontSize(bodyFontSize - 1);
+                      pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
+                    }
                     y += getLineHeight(subHeadlineFontSize, 1.25);
 
                     const locTextTruncated = truncateText(loc, maxRightWidth, bodyFontSize - 1, false);
@@ -1317,19 +1328,28 @@ Return ONLY a JSON object matching this exact schema:
                     const loc = getModeOrLocation(rawLocOrMode, editableHeader.location);
 
                     const maxRightWidth = contentWidth * 0.35;
-                    const dateText = exp.content || "Date – Present";
-                    const dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
-                    const dateWidth = pdf.getTextWidth(dateTextTruncated);
-                    const maxRoleWidth = contentWidth - dateWidth - 6;
+                    const rawDate = exp.content || "";
+                    const dateText = (rawDate === "No specific dates provided" || !rawDate.trim()) ? "" : rawDate;
+                    
+                    let dateTextTruncated = "";
+                    let dateWidth = 0;
+                    if (dateText) {
+                      dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
+                      dateWidth = pdf.getTextWidth(dateTextTruncated);
+                    }
+                    const maxRoleWidth = dateWidth > 0 ? contentWidth - dateWidth - 6 : contentWidth;
                     const cleanRole = truncateText(role, maxRoleWidth, subHeadlineFontSize, true);
 
                     pdf.setTextColor(0, 0, 0);
                     pdf.setFont(currentFont, "bold");
                     pdf.setFontSize(subHeadlineFontSize);
                     pdf.text(cleanRole, margin, y);
-                    pdf.setFont(currentFont, "normal");
-                    pdf.setFontSize(bodyFontSize - 1);
-                    pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
+                    
+                    if (dateTextTruncated) {
+                      pdf.setFont(currentFont, "normal");
+                      pdf.setFontSize(bodyFontSize - 1);
+                      pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
+                    }
                     y += getLineHeight(subHeadlineFontSize, 1.25);
 
                     const locText = loc || "";
@@ -1366,13 +1386,13 @@ Return ONLY a JSON object matching this exact schema:
                 if (editableResume.products?.length) {
                   drawSectionHeader("PRODUCTS & VENTURES");
                   editableResume.products.forEach(prod => {
-                    checkPageBreak(12);
-                    
                     const headingParts = prod.heading.split(/\s+[-–—]\s+/);
                     const title = headingParts[0]?.trim() || "Product";
                     const status = headingParts.slice(1).join(" | ")?.trim();
 
                     const parsedContent = parseProductOrProjectContent(prod.content);
+                    
+                    // Measure right side first
                     const rightWidth = measureOrDrawRightSideLinks(
                       pdf,
                       parsedContent.statusOrYear,
@@ -1385,39 +1405,89 @@ Return ONLY a JSON object matching this exact schema:
                       false // measure first
                     );
                     
-                    pdf.setTextColor(0, 0, 0);
                     pdf.setFont(currentFont, "bold");
                     pdf.setFontSize(subHeadlineFontSize);
-                    
-                    const maxTitleStackWidth = contentWidth - rightWidth - 6;
                     const titleWidth = pdf.getTextWidth(title);
+                    const maxTitleStackWidth = contentWidth - rightWidth - 6;
+                    
+                    let inlineStackDrawn = false;
+                    let stackLines: string[] = [];
                     
                     if (titleWidth > maxTitleStackWidth) {
-                      const cleanTitle = truncateText(title, maxTitleStackWidth, subHeadlineFontSize, true);
-                      pdf.text(cleanTitle, margin, y);
-                    } else {
-                      pdf.text(sanitizePdfText(title), margin, y);
                       if (status) {
-                        const maxStatusWidth = maxTitleStackWidth - titleWidth - 2;
-                        const cleanStatus = truncateText(` | ${status}`, maxStatusWidth, bodyFontSize, false);
                         pdf.setFont(currentFont, "normal");
                         pdf.setFontSize(bodyFontSize);
-                        pdf.text(cleanStatus, margin + titleWidth + 2, y);
+                        stackLines = pdf.splitTextToSize(sanitizePdfText(status), contentWidth);
+                      }
+                    } else {
+                      if (status) {
+                        const inlineSeparatorAndStack = ` | ${status}`;
+                        const maxStackSpace = maxTitleStackWidth - titleWidth - 2;
+                        
+                        pdf.setFont(currentFont, "normal");
+                        pdf.setFontSize(bodyFontSize);
+                        const inlineStackWidth = pdf.getTextWidth(inlineSeparatorAndStack);
+                        
+                        if (inlineStackWidth <= maxStackSpace) {
+                          inlineStackDrawn = true;
+                        } else {
+                          stackLines = pdf.splitTextToSize(sanitizePdfText(status), contentWidth);
+                        }
                       }
                     }
-
+                    
+                    // Determine total header block height
+                    let headerHeightNeeded = getLineHeight(subHeadlineFontSize, 1.25);
+                    if (status && !inlineStackDrawn) {
+                      headerHeightNeeded += stackLines.length * getLineHeight(bodyFontSize, 1.25);
+                    }
+                    
+                    checkPageBreak(headerHeightNeeded);
+                    const originalY = y;
+                    
+                    // Draw Title
+                    pdf.setTextColor(0, 0, 0);
+                    if (titleWidth > maxTitleStackWidth) {
+                      const cleanTitle = truncateText(title, maxTitleStackWidth, subHeadlineFontSize, true);
+                      pdf.setFont(currentFont, "bold");
+                      pdf.setFontSize(subHeadlineFontSize);
+                      pdf.text(cleanTitle, margin, originalY);
+                    } else {
+                      pdf.setFont(currentFont, "bold");
+                      pdf.setFontSize(subHeadlineFontSize);
+                      pdf.text(sanitizePdfText(title), margin, originalY);
+                      if (status && inlineStackDrawn) {
+                        pdf.setFont(currentFont, "normal");
+                        pdf.setFontSize(bodyFontSize);
+                        pdf.text(sanitizePdfText(` | ${status}`), margin + titleWidth + 2, originalY);
+                      }
+                    }
+                    
+                    // Draw Right Side links
                     measureOrDrawRightSideLinks(
                       pdf,
                       parsedContent.statusOrYear,
                       parsedContent.urls,
-                      y,
+                      originalY,
                       margin,
                       pageWidth,
                       bodyFontSize,
                       currentFont,
                       true // draw
                     );
+                    
+                    // Update y cursor past the title line
                     y += getLineHeight(subHeadlineFontSize, 1.25);
+                    
+                    // Draw wrapped stack if it couldn't fit inline
+                    if (status && !inlineStackDrawn) {
+                      pdf.setFont(currentFont, "normal");
+                      pdf.setFontSize(bodyFontSize);
+                      stackLines.forEach(lineText => {
+                        pdf.text(lineText, margin, y);
+                        y += getLineHeight(bodyFontSize, 1.25);
+                      });
+                    }
 
                     (prod.bullets || []).forEach(bullet => {
                       pdf.setFont(currentFont, "normal");
@@ -1439,13 +1509,13 @@ Return ONLY a JSON object matching this exact schema:
                 if (editableResume.projects?.length) {
                   drawSectionHeader("PROJECTS");
                   editableResume.projects.forEach(proj => {
-                    checkPageBreak(12);
-                    
                     const headingParts = proj.heading.split(/\s+[-–—]\s+/);
                     const title = headingParts[0]?.trim() || "Project";
                     const stack = headingParts.slice(1).join(" | ")?.trim();
 
                     const parsedProj = parseProductOrProjectContent(proj.content);
+                    
+                    // Measure right side first
                     const rightWidth = measureOrDrawRightSideLinks(
                       pdf,
                       parsedProj.statusOrYear,
@@ -1458,39 +1528,89 @@ Return ONLY a JSON object matching this exact schema:
                       false // measure first
                     );
                     
-                    pdf.setTextColor(0, 0, 0);
                     pdf.setFont(currentFont, "bold");
                     pdf.setFontSize(subHeadlineFontSize);
-                    
-                    const maxTitleStackWidth = contentWidth - rightWidth - 6;
                     const titleWidth = pdf.getTextWidth(title);
+                    const maxTitleStackWidth = contentWidth - rightWidth - 6;
+                    
+                    let inlineStackDrawn = false;
+                    let stackLines: string[] = [];
                     
                     if (titleWidth > maxTitleStackWidth) {
-                      const cleanTitle = truncateText(title, maxTitleStackWidth, subHeadlineFontSize, true);
-                      pdf.text(cleanTitle, margin, y);
-                    } else {
-                      pdf.text(sanitizePdfText(title), margin, y);
                       if (stack) {
-                        const maxStackWidth = maxTitleStackWidth - titleWidth - 2;
-                        const cleanStack = truncateText(` | ${stack}`, maxStackWidth, bodyFontSize, false);
                         pdf.setFont(currentFont, "normal");
                         pdf.setFontSize(bodyFontSize);
-                        pdf.text(cleanStack, margin + titleWidth + 2, y);
+                        stackLines = pdf.splitTextToSize(sanitizePdfText(stack), contentWidth);
+                      }
+                    } else {
+                      if (stack) {
+                        const inlineSeparatorAndStack = ` | ${stack}`;
+                        const maxStackSpace = maxTitleStackWidth - titleWidth - 2;
+                        
+                        pdf.setFont(currentFont, "normal");
+                        pdf.setFontSize(bodyFontSize);
+                        const inlineStackWidth = pdf.getTextWidth(inlineSeparatorAndStack);
+                        
+                        if (inlineStackWidth <= maxStackSpace) {
+                          inlineStackDrawn = true;
+                        } else {
+                          stackLines = pdf.splitTextToSize(sanitizePdfText(stack), contentWidth);
+                        }
                       }
                     }
-
+                    
+                    // Determine total header block height
+                    let headerHeightNeeded = getLineHeight(subHeadlineFontSize, 1.25);
+                    if (stack && !inlineStackDrawn) {
+                      headerHeightNeeded += stackLines.length * getLineHeight(bodyFontSize, 1.25);
+                    }
+                    
+                    checkPageBreak(headerHeightNeeded);
+                    const originalY = y;
+                    
+                    // Draw Title
+                    pdf.setTextColor(0, 0, 0);
+                    if (titleWidth > maxTitleStackWidth) {
+                      const cleanTitle = truncateText(title, maxTitleStackWidth, subHeadlineFontSize, true);
+                      pdf.setFont(currentFont, "bold");
+                      pdf.setFontSize(subHeadlineFontSize);
+                      pdf.text(cleanTitle, margin, originalY);
+                    } else {
+                      pdf.setFont(currentFont, "bold");
+                      pdf.setFontSize(subHeadlineFontSize);
+                      pdf.text(sanitizePdfText(title), margin, originalY);
+                      if (stack && inlineStackDrawn) {
+                        pdf.setFont(currentFont, "normal");
+                        pdf.setFontSize(bodyFontSize);
+                        pdf.text(sanitizePdfText(` | ${stack}`), margin + titleWidth + 2, originalY);
+                      }
+                    }
+                    
+                    // Draw Right Side links
                     measureOrDrawRightSideLinks(
                       pdf,
                       parsedProj.statusOrYear,
                       parsedProj.urls,
-                      y,
+                      originalY,
                       margin,
                       pageWidth,
                       bodyFontSize,
                       currentFont,
                       true // draw
                     );
+                    
+                    // Update y cursor past the title line
                     y += getLineHeight(subHeadlineFontSize, 1.25);
+                    
+                    // Draw wrapped stack if it couldn't fit inline
+                    if (stack && !inlineStackDrawn) {
+                      pdf.setFont(currentFont, "normal");
+                      pdf.setFontSize(bodyFontSize);
+                      stackLines.forEach(lineText => {
+                        pdf.text(lineText, margin, y);
+                        y += getLineHeight(bodyFontSize, 1.25);
+                      });
+                    }
 
                     (proj.bullets || []).forEach(bullet => {
                       pdf.setFont(currentFont, "normal");
@@ -1732,7 +1852,8 @@ Return ONLY a JSON object matching this exact schema:
           const schoolParts = schoolAndLoc.split(/\s*[-–—]\s*/);
           const school = schoolParts[0]?.trim() || "University";
           const loc = schoolParts[1]?.trim() || editableHeader.location || "";
-          const dateText = parts[1]?.trim() || "May 2027";
+          const rawDateText = parts[1]?.trim() || "";
+          const dateText = (rawDateText === "No specific dates provided" || !rawDateText.trim()) ? "" : rawDateText;
           const metadata = parts.slice(2).map(p => p.trim()).filter(Boolean).join(' | ');
 
           return `
@@ -1762,12 +1883,14 @@ Return ONLY a JSON object matching this exact schema:
           const rawLocOrMode = orgParts[1]?.trim() || "";
           const location = getModeOrLocation(rawLocOrMode, editableHeader.location || "");
           const bulletsToRender = exp.bullets || [];
+          const rawDate = exp.content || "";
+          const dateText = (rawDate === "No specific dates provided" || !rawDate.trim()) ? "" : rawDate;
 
           return `
             <table class="meta-table">
               <tr>
                 <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${role}</td>
-                <td style="text-align: right; font-weight: bold; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${exp.content || "Date – Present"}</td>
+                <td style="text-align: right; font-weight: bold; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
               </tr>
               <tr>
                 <td style="text-align: left; font-style: italic; font-size: ${bodyFontSize - 1}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${org}</td>
@@ -1878,12 +2001,14 @@ Return ONLY a JSON object matching this exact schema:
         </div>
         ${editableResume.leadership.map(lead => {
           const bulletsToRender = lead.bullets || [];
+          const rawDate = lead.content || "";
+          const dateText = (rawDate === "No specific dates provided" || !rawDate.trim()) ? "" : rawDate;
 
           return `
             <table class="meta-table">
               <tr>
                 <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${lead.heading || "Role"}</td>
-                <td style="text-align: right; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${lead.content || "Date – Present"}</td>
+                <td style="text-align: right; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
               </tr>
             </table>
             ${bulletsToRender.length > 0 ? `
