@@ -69,6 +69,8 @@ interface ResumePreviewProps {
   productLines?: number;
   marginSize?: number;
   lineSpacing?: number;
+  visibleSections?: Record<string, boolean>;
+  sectionOrder?: string[];
 }
 
 const limitSummarySentences = (summaryText: string, maxSentences: number): string => {
@@ -226,8 +228,23 @@ export const ResumePreview = ({
   projectLines = 3,
   productLines = 3,
   marginSize = 0.5,
-  lineSpacing = 1.15
+  lineSpacing = 1.15,
+  visibleSections,
+  sectionOrder
 }: ResumePreviewProps) => {
+  const defaultSectionOrder = ['SUMMARY', 'EDUCATION', 'EXPERIENCE', 'PRODUCTS', 'PROJECTS', 'LEADERSHIP', 'SKILLS', 'AWARDS', 'CERTIFICATIONS'];
+  const actualSectionOrder = sectionOrder || defaultSectionOrder;
+  const actualVisibleSections = visibleSections || {
+    'SUMMARY': true,
+    'EDUCATION': true,
+    'EXPERIENCE': true,
+    'PROJECTS': true,
+    'PRODUCTS': true,
+    'LEADERSHIP': true,
+    'SKILLS': true,
+    'AWARDS': true,
+    'CERTIFICATIONS': true
+  };
   // ── Core Data State ──
   const [localResume, setLocalResume] = useState<GeneratedResume>(resume);
   const [localHeader, setLocalHeader] = useState<ResumeHeader>(header);
@@ -1321,231 +1338,246 @@ export const ResumePreview = ({
 
                     {/* Body */}
                     <div className="flex flex-col" style={{ gap: '0.5px' }}>
-                      {/* Summary Section */}
-                      {localResume.professional_summary && (
-                        <section className="space-y-1">
-                          <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
-                            <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Professional Summary</h4>
-                          </div>
-                          <p className="text-[#1E2A3A]/90 leading-relaxed !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
-                            {limitSummarySentences(localResume.professional_summary, summaryLines)}
-                          </p>
-                        </section>
-                      )}
+                      {actualSectionOrder.map((sectionKey) => {
+                        if (!actualVisibleSections[sectionKey]) return null;
 
-                      {/* Education First */}
-                      <section className="space-y-1">
-                        <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
-                          <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Education</h4>
-                        </div>
-                        <div className="flex flex-col" style={{ gap: '0.5px' }}>
-                          {(localResume.education || []).map((edu, i) => {
-                            const parts = (edu || "").split('|');
-                            const mainInfo = (parts[0] || "").split('@');
-                            const degree = mainInfo[0]?.trim() || "Degree";
-                            const schoolAndLoc = mainInfo[1] || "";
-                            const schoolParts = schoolAndLoc.split(/\s*[-–—]\s*/);
-                            const school = schoolParts[0]?.trim() || "University";
-                            const loc = schoolParts[1]?.trim() || localHeader.location || "";
-                            const dateText = parts[1]?.trim() || "May 2027";
-                            const metadata = parts.slice(2).map(p => p.trim()).filter(Boolean).join(' | ');
-                            
-                            return (
-                              <div key={i} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
-                                <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.body, fontFamily: 'inherit' }}>
-                                  <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{school}</span>
-                                  <span className="flex-shrink-0 text-right ml-4 text-[11px] !font-inherit" style={{ fontFamily: 'inherit' }}>{dateText}</span>
+                        switch (sectionKey) {
+                          case 'SUMMARY':
+                            return localResume.professional_summary ? (
+                              <section key="SUMMARY" className="space-y-1">
+                                <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
+                                  <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Professional Summary</h4>
                                 </div>
-                                <div className="flex justify-between items-start italic !font-inherit" style={{ fontSize: `calc(${fontSizes.body} - 1px)`, fontFamily: 'inherit' }}>
-                                  <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{degree} {metadata && `| ${metadata}`}</span>
-                                  <span className="flex-shrink-0 text-right ml-4 text-[11px] not-italic !font-inherit" style={{ fontFamily: 'inherit' }}>{loc}</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </section>
+                                <p className="text-[#1E2A3A]/90 leading-relaxed !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
+                                  {limitSummarySentences(localResume.professional_summary, summaryLines)}
+                                </p>
+                              </section>
+                            ) : null;
 
-                      {/* Experience */}
-                      <section className="space-y-1">
-                        <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
-                          <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Experience</h4>
-                        </div>
-                        <div className="flex flex-col" style={{ gap: '1px' }}>
-                          {(localResume.experience || []).map((exp, expIdx) => {
-                            const parts = (exp.heading || "").split('@');
-                            const role = parts[0]?.trim() || "Role";
-                            
-                            // Split organization and mode/location by space-dash-space to preserve hyphens like "On-site"
-                            const orgParts = parts[1] ? parts[1].split(/\s+[-–—]\s+/) : [];
-                            const org = orgParts[0]?.trim() || "Organization";
-                            const rawLocOrMode = orgParts[1]?.trim() || "";
-                            
-                            let location = "";
-                            if (rawLocOrMode.toLowerCase().includes("remote")) {
-                              location = "Remote";
-                            } else {
-                              const match = rawLocOrMode.match(/\(([^)]+)\)/);
-                              if (match && match[1]) {
-                                location = match[1].trim();
-                              } else if (rawLocOrMode.toLowerCase().includes("on-site") || rawLocOrMode.toLowerCase().includes("on site")) {
-                                location = localHeader.location || "On-site";
-                              } else {
-                                location = rawLocOrMode || localHeader.location || "";
-                              }
-                            }
-                            
-                            return (
-                              <div key={expIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
-                                <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
-                                  <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{role}</span>
-                                  <span className="flex-shrink-0 text-right ml-4 text-[11px] !font-inherit" style={{ fontFamily: 'inherit' }}>{exp.content || "Date – Present"}</span>
+                          case 'EDUCATION':
+                            return (localResume.education && localResume.education.length > 0) ? (
+                              <section key="EDUCATION" className="space-y-1">
+                                <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
+                                  <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Education</h4>
                                 </div>
-                                <div className="flex justify-between items-start italic text-[#1E2A3A]/80 !font-inherit" style={{ fontSize: `calc(${fontSizes.body} - 1px)`, fontFamily: 'inherit' }}>
-                                  <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{org}</span>
-                                  <span className="flex-shrink-0 text-right ml-4 text-[11px] not-italic !font-inherit" style={{ fontFamily: 'inherit' }}>{location}</span>
+                                <div className="flex flex-col" style={{ gap: '0.5px' }}>
+                                  {(localResume.education || []).map((edu, i) => {
+                                    const parts = (edu || "").split('|');
+                                    const mainInfo = (parts[0] || "").split('@');
+                                    const degree = mainInfo[0]?.trim() || "Degree";
+                                    const schoolAndLoc = mainInfo[1] || "";
+                                    const schoolParts = schoolAndLoc.split(/\s*[-–—]\s*/);
+                                    const school = schoolParts[0]?.trim() || "University";
+                                    const loc = schoolParts[1]?.trim() || localHeader.location || "";
+                                    const dateText = parts[1]?.trim() || "May 2027";
+                                    const metadata = parts.slice(2).map(p => p.trim()).filter(Boolean).join(' | ');
+                                    
+                                    return (
+                                      <div key={i} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
+                                        <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.body, fontFamily: 'inherit' }}>
+                                          <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{school}</span>
+                                          <span className="flex-shrink-0 text-right ml-4 text-[11px] !font-inherit" style={{ fontFamily: 'inherit' }}>{dateText}</span>
+                                        </div>
+                                        <div className="flex justify-between items-start italic !font-inherit" style={{ fontSize: `calc(${fontSizes.body} - 1px)`, fontFamily: 'inherit' }}>
+                                          <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{degree} {metadata && `| ${metadata}`}</span>
+                                          <span className="flex-shrink-0 text-right ml-4 text-[11px] not-italic !font-inherit" style={{ fontFamily: 'inherit' }}>{loc}</span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
-                                <ul className="list-disc ml-5 space-y-0.5 pt-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
-                                  {(exp.bullets || []).map((bullet, bullIdx) => (
-                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
-                                      {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
-                                    </li>
+                              </section>
+                            ) : null;
+
+                          case 'EXPERIENCE':
+                            return (localResume.experience && localResume.experience.length > 0) ? (
+                              <section key="EXPERIENCE" className="space-y-1">
+                                <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
+                                  <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Experience</h4>
+                                </div>
+                                <div className="flex flex-col" style={{ gap: '1px' }}>
+                                  {(localResume.experience || []).map((exp, expIdx) => {
+                                    const parts = (exp.heading || "").split('@');
+                                    const role = parts[0]?.trim() || "Role";
+                                    
+                                    // Split organization and mode/location by space-dash-space to preserve hyphens like "On-site"
+                                    const orgParts = parts[1] ? parts[1].split(/\s+[-–—]\s+/) : [];
+                                    const org = orgParts[0]?.trim() || "Organization";
+                                    const rawLocOrMode = orgParts[1]?.trim() || "";
+                                    
+                                    let location = "";
+                                    if (rawLocOrMode.toLowerCase().includes("remote")) {
+                                      location = "Remote";
+                                    } else {
+                                      const match = rawLocOrMode.match(/\(([^)]+)\)/);
+                                      if (match && match[1]) {
+                                        location = match[1].trim();
+                                      } else if (rawLocOrMode.toLowerCase().includes("on-site") || rawLocOrMode.toLowerCase().includes("on site")) {
+                                        location = localHeader.location || "On-site";
+                                      } else {
+                                        location = rawLocOrMode || localHeader.location || "";
+                                      }
+                                    }
+                                    
+                                    return (
+                                      <div key={expIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
+                                        <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
+                                          <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{role}</span>
+                                          <span className="flex-shrink-0 text-right ml-4 text-[11px] !font-inherit" style={{ fontFamily: 'inherit' }}>{exp.content || "Date – Present"}</span>
+                                        </div>
+                                        <div className="flex justify-between items-start italic text-[#1E2A3A]/80 !font-inherit" style={{ fontSize: `calc(${fontSizes.body} - 1px)`, fontFamily: 'inherit' }}>
+                                          <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{org}</span>
+                                          <span className="flex-shrink-0 text-right ml-4 text-[11px] not-italic !font-inherit" style={{ fontFamily: 'inherit' }}>{location}</span>
+                                        </div>
+                                        <ul className="list-disc ml-5 space-y-0.5 pt-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
+                                          {(exp.bullets || []).map((bullet, bullIdx) => (
+                                            <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
+                                              {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </section>
+                            ) : null;
+
+                          case 'PRODUCTS':
+                            return (localResume.products && localResume.products.length > 0) ? (
+                              <section key="PRODUCTS" className="space-y-1">
+                                <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
+                                  <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Products & Ventures</h4>
+                                </div>
+                                <div className="flex flex-col" style={{ gap: '1px' }}>
+                                  {localResume.products?.map((prod, prodIdx) => {
+                                    return (
+                                      <div key={prodIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
+                                        <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
+                                          {renderSubHeaderWithLinks(prod.heading || "", prod.content || "", fontSizes)}
+                                        </div>
+                                        <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
+                                          {(prod.bullets || []).map((bullet, bullIdx) => (
+                                            <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
+                                              {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </section>
+                            ) : null;
+
+                          case 'PROJECTS':
+                            return (localResume.projects && localResume.projects.length > 0) ? (
+                              <section key="PROJECTS" className="space-y-1">
+                                <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
+                                  <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Projects</h4>
+                                </div>
+                                <div className="flex flex-col" style={{ gap: '1px' }}>
+                                  {localResume.projects?.map((proj, projIdx) => {
+                                    return (
+                                      <div key={projIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
+                                        <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
+                                          {renderSubHeaderWithLinks(proj.heading || "", proj.content || "", fontSizes)}
+                                        </div>
+                                        <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
+                                          {(proj.bullets || []).map((bullet, bullIdx) => (
+                                            <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
+                                              {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </section>
+                            ) : null;
+
+                          case 'LEADERSHIP':
+                            return (localResume.leadership && localResume.leadership.length > 0) ? (
+                              <section key="LEADERSHIP" className="space-y-1">
+                                <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
+                                  <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Leadership</h4>
+                                </div>
+                                <div className="flex flex-col" style={{ gap: '1px' }}>
+                                  {localResume.leadership?.map((lead, idx) => (
+                                    <div key={idx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
+                                      <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
+                                        <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{lead.heading || "Role"}</span>
+                                        <span className="flex-shrink-0 text-right ml-4 text-[11px] font-normal !font-inherit" style={{ fontFamily: 'inherit' }}>{lead.content || "Date – Present"}</span>
+                                      </div>
+                                      <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
+                                        {(lead.bullets || []).map((bullet, bullIdx) => (
+                                          <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
+                                            {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
                                   ))}
-                                </ul>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </section>
+                                </div>
+                              </section>
+                            ) : null;
 
-                      {/* Products / Startups */}
-                      {(localResume.products && localResume.products.length > 0) && (
-                        <section className="space-y-1">
-                          <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
-                            <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Products & Ventures</h4>
-                          </div>
-                          <div className="flex flex-col" style={{ gap: '1px' }}>
-                            {localResume.products?.map((prod, prodIdx) => {
-                              return (
-                                <div key={prodIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
-                                  <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
-                                    {renderSubHeaderWithLinks(prod.heading || "", prod.content || "", fontSizes)}
-                                  </div>
-                                  <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
-                                    {(prod.bullets || []).map((bullet, bullIdx) => (
-                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
-                                        {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
-                                      </li>
-                                    ))}
-                                  </ul>
+                          case 'SKILLS':
+                            return (localResume.skills_section && localResume.skills_section.length > 0) ? (
+                              <section key="SKILLS" className="space-y-1">
+                                <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
+                                  <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Skills</h4>
                                 </div>
-                              );
-                            })}
-                          </div>
-                        </section>
-                      )}
- 
-                      {/* Projects */}
-                      {(localResume.projects && localResume.projects.length > 0) && (
-                        <section className="space-y-1">
-                          <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
-                            <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Projects</h4>
-                          </div>
-                          <div className="flex flex-col" style={{ gap: '1px' }}>
-                            {localResume.projects?.map((proj, projIdx) => {
-                              return (
-                                <div key={projIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
-                                  <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
-                                    {renderSubHeaderWithLinks(proj.heading || "", proj.content || "", fontSizes)}
-                                  </div>
-                                  <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
-                                    {(proj.bullets || []).map((bullet, bullIdx) => (
-                                      <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
-                                        {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
-                                      </li>
-                                    ))}
-                                  </ul>
+                                <div className="flex flex-col !font-inherit" style={{ fontFamily: 'inherit', gap: '0.5px' }}>
+                                  {(localResume.skills_section || []).map((skillLine, i) => {
+                                    const [category, skills] = (skillLine || "").split(':');
+                                    return (
+                                      <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
+                                        <span className="font-bold !font-inherit" style={{ fontFamily: 'inherit' }}>{(category || "").trim()}:</span> {(skills || "").trim()}
+                                      </p>
+                                    );
+                                  })}
                                 </div>
-                              );
-                            })}
-                          </div>
-                        </section>
-                      )}
+                              </section>
+                            ) : null;
 
-                      {/* Leadership */}
-                      {(localResume.leadership && localResume.leadership.length > 0) && (
-                        <section className="space-y-1">
-                          <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
-                            <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Leadership</h4>
-                          </div>
-                          <div className="flex flex-col" style={{ gap: '1px' }}>
-                            {localResume.leadership?.map((lead, idx) => (
-                              <div key={idx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
-                                <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
-                                  <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{lead.heading || "Role"}</span>
-                                  <span className="flex-shrink-0 text-right ml-4 text-[11px] font-normal !font-inherit" style={{ fontFamily: 'inherit' }}>{lead.content || "Date – Present"}</span>
+                          case 'CERTIFICATIONS':
+                            return (localResume.certifications && localResume.certifications.length > 0) ? (
+                              <section key="CERTIFICATIONS" className="space-y-1">
+                                <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
+                                  <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Certifications</h4>
                                 </div>
-                                <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
-                                  {(lead.bullets || []).map((bullet, bullIdx) => (
-                                    <li key={bullIdx} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
-                                      {(bullet || "").replace(/^[•\s*-]+/, '').trim()}
-                                    </li>
+                                <div className="flex flex-col !font-inherit" style={{ fontFamily: 'inherit', gap: '0.5px' }}>
+                                  {localResume.certifications?.map((cert, i) => (
+                                    <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
+                                      • {cert}
+                                    </p>
                                   ))}
-                                </ul>
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-                      )}
+                                </div>
+                              </section>
+                            ) : null;
 
-                      {/* Skills */}
-                      <section className="space-y-1">
-                        <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
-                          <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Skills</h4>
-                        </div>
-                        <div className="flex flex-col !font-inherit" style={{ fontFamily: 'inherit', gap: '0.5px' }}>
-                          {(localResume.skills_section || []).map((skillLine, i) => {
-                            const [category, skills] = (skillLine || "").split(':');
-                            return (
-                              <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
-                                <span className="font-bold !font-inherit" style={{ fontFamily: 'inherit' }}>{(category || "").trim()}:</span> {(skills || "").trim()}
-                              </p>
-                            );
-                          })}
-                        </div>
-                      </section>
+                          case 'AWARDS':
+                            return (localResume.awards && localResume.awards.length > 0) ? (
+                              <section key="AWARDS" className="space-y-1">
+                                <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
+                                  <h4 className="font-bold uppercase tracking-widest" style={{ fontSize: fontSizes.header }}>Awards</h4>
+                                </div>
+                                <div className="flex flex-col" style={{ gap: '0.5px' }}>
+                                  {localResume.awards?.map((award, i) => (
+                                    <p key={i} className="text-[#1E2A3A]/90 leading-tight text-justify" style={{ fontSize: fontSizes.body, textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
+                                      • {award}
+                                    </p>
+                                  ))}
+                                </div>
+                              </section>
+                            ) : null;
 
-                      {/* Certifications */}
-                      {(localResume.certifications && localResume.certifications.length > 0) && (
-                        <section className="space-y-1">
-                          <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
-                            <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit' }}>Certifications</h4>
-                          </div>
-                          <div className="flex flex-col !font-inherit" style={{ fontFamily: 'inherit', gap: '0.5px' }}>
-                            {localResume.certifications?.map((cert, i) => (
-                              <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
-                                • {cert}
-                              </p>
-                            ))}
-                          </div>
-                        </section>
-                      )}
-
-                      {/* Awards */}
-                      {(localResume.awards && localResume.awards.length > 0) && (
-                        <section className="space-y-1">
-                          <div className="flex items-center gap-3 text-[#1E2A3A] border-b border-[#1E2A3A] pb-0.5">
-                            <h4 className="font-bold uppercase tracking-widest" style={{ fontSize: fontSizes.header }}>Awards</h4>
-                          </div>
-                          <div className="flex flex-col" style={{ gap: '0.5px' }}>
-                            {localResume.awards?.map((award, i) => (
-                              <p key={i} className="text-[#1E2A3A]/90 leading-tight text-justify" style={{ fontSize: fontSizes.body, textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
-                                • {award}
-                              </p>
-                            ))}
-                          </div>
-                        </section>
-                      )}
+                          default:
+                            return null;
+                        }
+                      })}
                     </div>
                   </div>
 

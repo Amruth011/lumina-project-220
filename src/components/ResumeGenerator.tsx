@@ -630,36 +630,105 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
       summarySchemaRule = `Ensure there are exactly ${summaryLines} sentences (strictly 300-340 characters in total across all sentences) separated by periods and spaces.`;
     }
 
+    const experienceItems = vaultItems.filter(item => item.type === 'professional');
+    const projectItems = vaultItems.filter(item => item.type === 'project');
+    const productItems = vaultItems.filter(item => item.type === 'product');
+    const educationItems = vaultItems.filter(item => item.type === 'education');
+    const certificationItems = vaultItems.filter(item => item.type === 'certification');
+    const leadershipItems = vaultItems.filter(item => item.type === 'leadership');
+    const awardItems = vaultItems.filter(item => item.type === 'award');
+
+    const serializeVaultItems = (items: VaultItem[]) => {
+      if (items.length === 0) return "None provided in this category.";
+      return items.map((item, idx) => {
+        const parts = [];
+        parts.push(`  [Item #${idx + 1}]`);
+        if (item.title) parts.push(`  Title/Role: ${item.title}`);
+        if (item.organization) parts.push(`  Organization/Company: ${item.organization}`);
+        if (item.period) parts.push(`  Period/Dates: ${item.period}`);
+        if (item.description) parts.push(`  Description: ${item.description}`);
+        if (item.bullets && item.bullets.length > 0) {
+          parts.push(`  Bullets:\n${item.bullets.map(b => `    - ${b}`).join('\n')}`);
+        }
+        if (item.skills && item.skills.length > 0) {
+          parts.push(`  Associated Skills: ${item.skills.join(', ')}`);
+        }
+        if (item.github_link) parts.push(`  GitHub Link: ${item.github_link}`);
+        if (item.live_link) parts.push(`  Live Link: ${item.live_link}`);
+        return parts.join('\n');
+      }).join('\n\n');
+    };
+
+    const targetJdTitle = jdTitle || "Target Role";
+    const targetJdSkills = (jdSkills || []).map(s => `${s.skill} (Importance: ${s.importance})`).join(', ') || "None specified.";
+    const targetCompany = companyName || "Target Company";
+
     try {
       const prompt = `You are an elite, truth-grounded executive resume architect.
 Your goal is to synthesize a high-impact, ATS-optimized resume in the precise "Andrew Vu" executive style.
 
 ### CORE OPERATING PRINCIPLES:
-- FIDELITY TO FACTS (CRITICAL): You are an editor of truth. Do NOT inflate, fabricate, or exaggerate achievements. If the Candidate Profile's experience entries lack specific metrics or scale, do NOT hallucinate or guess them. Instead, craft the narrative focusing on the scope of their responsibility, the technologies utilized, and the qualitative impact of their work as explicitly described in the provided Candidate Profile.
-- DATA INTEGRITY: You are strictly forbidden from "force-quantifying" bullets if the underlying data does not support it. Use the provided data points as your absolute source of truth.
+- FIDELITY TO FACTS (CRITICAL): You are an editor of truth. Do NOT inflate, fabricate, or exaggerate achievements. If the Candidate Profile's experience entries lack specific metrics or scale, do NOT hallucinate or guess them. Instead, craft the narrative focusing on the scope of their responsibility, the technologies utilized, and the qualitative impact of their work as explicitly described in the provided Candidate Profile and Master Vault.
+- DATA INTEGRITY: You are strictly forbidden from "force-quantifying" bullets if the underlying data does not support it. Use the provided data points as your absolute source of truth. Under no circumstances should you invent fake metric percentages (e.g. "increased efficiency by 34%") if they are not explicitly present in the candidate's Master Vault items.
 - ATS OPTIMIZATION: Use strong, professional action verbs. Focus on high-impact phrasing that maps explicitly to the user's provided experience and the target JD.
 - DATE FORMAT: Use exact dates as provided in the profile (e.g., "January 2023 – March 2025" or "Jul 2022 – Present").
 - PROJECT SORTING: Projects must be in reverse chronological order (newest/ongoing first).
 
+### CANDIDATE FACTS & PROFILE VAULT
+Name: ${editableHeader.fullName || profile?.full_name || "Resume Candidate"}
+Contact Details:
+- Email: ${editableHeader.email || profile?.email || ""}
+- Phone: ${editableHeader.phone || profile?.phone || ""}
+- Location: ${editableHeader.location || profile?.location || ""}
+- LinkedIn: ${editableHeader.linkedin || profile?.linkedin_url || ""}
+- GitHub: ${editableHeader.github || profile?.github_url || ""}
+- Portfolio: ${editableHeader.portfolio || profile?.website_url || ""}
+
+#### MASTER VAULT - EDUCATION
+${serializeVaultItems(educationItems)}
+
+#### MASTER VAULT - PROFESSIONAL EXPERIENCE
+${serializeVaultItems(experienceItems)}
+
+#### MASTER VAULT - PRODUCTS & VENTURES
+${serializeVaultItems(productItems)}
+
+#### MASTER VAULT - PROJECTS
+${serializeVaultItems(projectItems)}
+
+#### MASTER VAULT - LEADERSHIP
+${serializeVaultItems(leadershipItems)}
+
+#### MASTER VAULT - CERTIFICATIONS
+${serializeVaultItems(certificationItems)}
+
+#### MASTER VAULT - HONORS & AWARDS
+${serializeVaultItems(awardItems)}
+
+### TARGET ROLE & JOB DESCRIPTION
+Target Job Title: ${targetJdTitle}
+Target Company: ${targetCompany}
+Target Key Skills & Keywords: ${targetJdSkills}
+
 ### SECTION MANDATES:
 - PROFESSIONAL SUMMARY: ${summaryPromptRule} Focus on the candidate's actual documented expertise and direct alignment with the target JD. Avoid generic puffery.
 - EXPERIENCE/PROJECTS/PRODUCTS: Each item MUST contain exactly the requested number of bullets (${experienceBullets} for experience, ${projectLines} for projects, ${productLines} for products). You must distill the essence of the available data into precisely this number of bullets, ensuring they are rich and informative without fabricating data.
-- NO HALLUCINATIONS: Do NOT invent jobs, skills, or projects. Only map the content provided in the Candidate Profile.
+- NO HALLUCINATIONS: Do NOT invent jobs, skills, or projects. Only map the content provided in the Candidate Profile. If no items exist in a specific Master Vault category, return an empty array for that section in the JSON (e.g., "certifications": [], "awards": [], "products": [], "projects": [], "leadership": []). Do NOT invent default or fake certifications/awards.
 
 ### STRUCTURE:
 Follow this sequence: SUMMARY → EDUCATION → EXPERIENCE → PRODUCTS → PROJECTS → LEADERSHIP → SKILLS → AWARDS → CERTIFICATIONS.
 
-Return ONLY a JSON object:
+Return ONLY a JSON object matching this exact schema:
 {
   "professional_summary": "[Synthesize summary based on facts. ${summarySchemaRule}]",
-  "skills_section": ["Languages: ...", "Frameworks: ..."],
-  "experience": [{"heading": "...", "content": "...", "bullets": ["..."]}],
-  "products": [{"heading": "...", "content": "...", "bullets": ["..."]}],
-  "projects": [{"heading": "...", "content": "...", "bullets": ["..."]}],
-  "leadership": [{"heading": "...", "content": "...", "bullets": ["..."]}],
-  "education": ["..."],
-  "certifications": ["..."],
-  "awards": ["..."]
+  "skills_section": ["Category: skill1, skill2, ..."],
+  "experience": [{"heading": "Role @ Company - Mode (Location) [or Role @ Company - Remote]", "content": "Start Date – End Date", "bullets": ["..."]}],
+  "products": [{"heading": "Product/Startup Name - Tech Stack", "content": "Year or Status | Link(s)", "bullets": ["..."]}],
+  "projects": [{"heading": "Project Name - Tech Stack", "content": "Year or Status | Link(s)", "bullets": ["..."]}],
+  "leadership": [{"heading": "Role @ Organization", "content": "Start Date – End Date", "bullets": ["..."]}],
+  "education": ["Degree @ School - Location | Dates | metadata"],
+  "certifications": ["Certification Name (Issuer) - Year"],
+  "awards": ["Award Name (Issuer) - Year"]
 }`;
 
       const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -1168,383 +1237,398 @@ Return ONLY a JSON object:
         };
 
         if (editableResume) {
-          // --- SUMMARY ---
-          if (editableResume.professional_summary) {
-            drawSectionHeader("SUMMARY");
-            pdf.setTextColor(0, 0, 0);
-            pdf.setFont(currentFont, "normal");
-            pdf.setFontSize(bodyFontSize);
-            const limitedSummary = sanitizePdfText(limitSummarySentences(editableResume.professional_summary, summaryLines));
-            const lines = pdf.splitTextToSize(limitedSummary, contentWidth);
-            const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
-            checkPageBreak(neededHeight);
-            pdf.text(limitedSummary, margin, y, { maxWidth: contentWidth, align: "left" });
-            y += neededHeight + 0.5;
-          }
+          sectionOrder.forEach((sectionKey) => {
+            if (!visibleSections[sectionKey]) return;
 
-          // --- EDUCATION ---
-          if (editableResume.education?.length) {
-            drawSectionHeader("EDUCATION");
-            editableResume.education.forEach(edu => {
-              checkPageBreak(10);
-              const parts = edu.split('|');
-              const mainInfo = parts[0].split('@');
-              const degree = mainInfo[0]?.trim() || "Degree";
-              const schoolAndLoc = mainInfo[1] || "";
-              const schoolParts = schoolAndLoc.split(/\s*[-–—]\s*/);
-              const school = schoolParts[0]?.trim() || "University";
-              const loc = schoolParts[1]?.trim() || editableHeader.location || "";
-              
-              const dateText = parts[1]?.trim() || "May 2027";
-              const metadata = parts.slice(2).map(p => p.trim()).filter(Boolean).join(' | ');
-
-              const maxRightWidth = contentWidth * 0.35;
-              const dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
-              const dateWidth = pdf.getTextWidth(dateTextTruncated);
-              const maxSchoolWidth = contentWidth - dateWidth - 6;
-              const cleanSchool = truncateText(school, maxSchoolWidth, subHeadlineFontSize, true);
-
-              pdf.setTextColor(0, 0, 0);
-              pdf.setFont(currentFont, "bold");
-              pdf.setFontSize(subHeadlineFontSize);
-              pdf.text(cleanSchool, margin, y);
-              pdf.setFont(currentFont, "normal");
-              pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
-              y += getLineHeight(subHeadlineFontSize, 1.25);
-
-              const locTextTruncated = truncateText(loc, maxRightWidth, bodyFontSize - 1, false);
-              const locWidth = pdf.getTextWidth(locTextTruncated);
-              const maxDegreeWidth = contentWidth - locWidth - 6;
-              const fullDegree = `${degree}${metadata ? ` | ${metadata}` : ""}`;
-              const cleanDegree = truncateText(fullDegree, maxDegreeWidth, bodyFontSize, false);
-
-              pdf.setFont(currentFont, "italic");
-              pdf.setFontSize(bodyFontSize);
-              pdf.text(cleanDegree, margin, y);
-              pdf.setFont(currentFont, "normal");
-              pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(sanitizePdfText(locTextTruncated), pageWidth - margin, y, { align: "right" });
-              y += getLineHeight(bodyFontSize, 1.3);
-            });
-          }
-
-          // --- EXPERIENCE ---
-          if (editableResume.experience?.length) {
-            drawSectionHeader("EXPERIENCE");
-            editableResume.experience.forEach(exp => {
-              checkPageBreak(12);
-              const parts = exp.heading.split('@');
-              const role = parts[0]?.trim() || "Role";
-              const orgParts = parts[1] ? parts[1].split(/\s+[-–—]\s+/) : [];
-              const org = orgParts[0]?.trim() || "Organization";
-              const rawLocOrMode = orgParts[1]?.trim() || "";
-              const loc = getModeOrLocation(rawLocOrMode, editableHeader.location);
-
-              const maxRightWidth = contentWidth * 0.35;
-              const dateText = exp.content || "Date – Present";
-              const dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
-              const dateWidth = pdf.getTextWidth(dateTextTruncated);
-              const maxRoleWidth = contentWidth - dateWidth - 6;
-              const cleanRole = truncateText(role, maxRoleWidth, subHeadlineFontSize, true);
-
-              pdf.setTextColor(0, 0, 0);
-              pdf.setFont(currentFont, "bold");
-              pdf.setFontSize(subHeadlineFontSize);
-              pdf.text(cleanRole, margin, y);
-              pdf.setFont(currentFont, "normal");
-              pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
-              y += getLineHeight(subHeadlineFontSize, 1.25);
-
-              const locText = loc || "";
-              const locTextTruncated = truncateText(locText, maxRightWidth, bodyFontSize - 1, false);
-              const locWidth = pdf.getTextWidth(locTextTruncated);
-              const maxOrgWidth = contentWidth - locWidth - 6;
-              const cleanOrg = truncateText(org, maxOrgWidth, bodyFontSize, false);
-
-              pdf.setFont(currentFont, "italic");
-              pdf.setFontSize(bodyFontSize);
-              pdf.text(cleanOrg, margin, y);
-              pdf.setFont(currentFont, "normal");
-              pdf.setFontSize(bodyFontSize - 1);
-              pdf.text(sanitizePdfText(locTextTruncated), pageWidth - margin, y, { align: "right" });
-              y += getLineHeight(bodyFontSize, 1.25);
-
-              (exp.bullets || []).forEach(bullet => {
-                pdf.setFont(currentFont, "normal");
-                pdf.setFontSize(bodyFontSize);
-                const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
-                const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
-                const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
-                checkPageBreak(neededHeight);
-                pdf.text("•", margin + 1.5, y);
-                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
-                y += neededHeight;
-              });
-              y += getLineHeight(bodyFontSize, 0.4);
-            });
-          }
-
-          // --- PRODUCTS ---
-          if (editableResume.products?.length) {
-            drawSectionHeader("PRODUCTS & VENTURES");
-            editableResume.products.forEach(prod => {
-              checkPageBreak(12);
-              
-              const headingParts = prod.heading.split(/\s+[-–—]\s+/);
-              const title = headingParts[0]?.trim() || "Product";
-              const status = headingParts.slice(1).join(" | ")?.trim();
-
-              const parsedContent = parseProductOrProjectContent(prod.content);
-              const rightWidth = measureOrDrawRightSideLinks(
-                pdf,
-                parsedContent.statusOrYear,
-                parsedContent.urls,
-                y,
-                margin,
-                pageWidth,
-                bodyFontSize,
-                currentFont,
-                false // measure first
-              );
-              
-              pdf.setTextColor(0, 0, 0);
-              pdf.setFont(currentFont, "bold");
-              pdf.setFontSize(subHeadlineFontSize);
-              
-              const maxTitleStackWidth = contentWidth - rightWidth - 6;
-              const titleWidth = pdf.getTextWidth(title);
-              
-              if (titleWidth > maxTitleStackWidth) {
-                const cleanTitle = truncateText(title, maxTitleStackWidth, subHeadlineFontSize, true);
-                pdf.text(cleanTitle, margin, y);
-              } else {
-                pdf.text(sanitizePdfText(title), margin, y);
-                if (status) {
-                  const maxStatusWidth = maxTitleStackWidth - titleWidth - 2;
-                  const cleanStatus = truncateText(` | ${status}`, maxStatusWidth, bodyFontSize, false);
+            switch (sectionKey) {
+              case 'SUMMARY':
+                if (editableResume.professional_summary) {
+                  drawSectionHeader("SUMMARY");
+                  pdf.setTextColor(0, 0, 0);
                   pdf.setFont(currentFont, "normal");
                   pdf.setFontSize(bodyFontSize);
-                  pdf.text(cleanStatus, margin + titleWidth + 2, y);
+                  const limitedSummary = sanitizePdfText(limitSummarySentences(editableResume.professional_summary, summaryLines));
+                  const lines = pdf.splitTextToSize(limitedSummary, contentWidth);
+                  const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+                  checkPageBreak(neededHeight);
+                  pdf.text(limitedSummary, margin, y, { maxWidth: contentWidth, align: "left" });
+                  y += neededHeight + 0.5;
                 }
-              }
+                break;
 
-              measureOrDrawRightSideLinks(
-                pdf,
-                parsedContent.statusOrYear,
-                parsedContent.urls,
-                y,
-                margin,
-                pageWidth,
-                bodyFontSize,
-                currentFont,
-                true // draw
-              );
-              y += getLineHeight(subHeadlineFontSize, 1.25);
+              case 'EDUCATION':
+                if (editableResume.education?.length) {
+                  drawSectionHeader("EDUCATION");
+                  editableResume.education.forEach(edu => {
+                    checkPageBreak(10);
+                    const parts = edu.split('|');
+                    const mainInfo = parts[0].split('@');
+                    const degree = mainInfo[0]?.trim() || "Degree";
+                    const schoolAndLoc = mainInfo[1] || "";
+                    const schoolParts = schoolAndLoc.split(/\s*[-–—]\s*/);
+                    const school = schoolParts[0]?.trim() || "University";
+                    const loc = schoolParts[1]?.trim() || editableHeader.location || "";
+                    
+                    const dateText = parts[1]?.trim() || "May 2027";
+                    const metadata = parts.slice(2).map(p => p.trim()).filter(Boolean).join(' | ');
 
-              (prod.bullets || []).forEach(bullet => {
-                pdf.setFont(currentFont, "normal");
-                pdf.setFontSize(bodyFontSize);
-                const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
-                const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
-                const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
-                checkPageBreak(neededHeight);
-                pdf.text("•", margin + 1.5, y);
-                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
-                y += neededHeight;
-              });
-              y += getLineHeight(bodyFontSize, 0.4);
-            });
-          }
+                    const maxRightWidth = contentWidth * 0.35;
+                    const dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
+                    const dateWidth = pdf.getTextWidth(dateTextTruncated);
+                    const maxSchoolWidth = contentWidth - dateWidth - 6;
+                    const cleanSchool = truncateText(school, maxSchoolWidth, subHeadlineFontSize, true);
 
-          // --- PROJECTS ---
-          if (editableResume.projects?.length) {
-            drawSectionHeader("PROJECTS");
-            editableResume.projects.forEach(proj => {
-              checkPageBreak(12);
-              
-              const headingParts = proj.heading.split(/\s+[-–—]\s+/);
-              const title = headingParts[0]?.trim() || "Project";
-              const stack = headingParts.slice(1).join(" | ")?.trim();
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFont(currentFont, "bold");
+                    pdf.setFontSize(subHeadlineFontSize);
+                    pdf.text(cleanSchool, margin, y);
+                    pdf.setFont(currentFont, "normal");
+                    pdf.setFontSize(bodyFontSize - 1);
+                    pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
+                    y += getLineHeight(subHeadlineFontSize, 1.25);
 
-              const parsedProj = parseProductOrProjectContent(proj.content);
-              const rightWidth = measureOrDrawRightSideLinks(
-                pdf,
-                parsedProj.statusOrYear,
-                parsedProj.urls,
-                y,
-                margin,
-                pageWidth,
-                bodyFontSize,
-                currentFont,
-                false // measure first
-              );
-              
-              pdf.setTextColor(0, 0, 0);
-              pdf.setFont(currentFont, "bold");
-              pdf.setFontSize(subHeadlineFontSize);
-              
-              const maxTitleStackWidth = contentWidth - rightWidth - 6;
-              const titleWidth = pdf.getTextWidth(title);
-              
-              if (titleWidth > maxTitleStackWidth) {
-                const cleanTitle = truncateText(title, maxTitleStackWidth, subHeadlineFontSize, true);
-                pdf.text(cleanTitle, margin, y);
-              } else {
-                pdf.text(sanitizePdfText(title), margin, y);
-                if (stack) {
-                  const maxStackWidth = maxTitleStackWidth - titleWidth - 2;
-                  const cleanStack = truncateText(` | ${stack}`, maxStackWidth, bodyFontSize, false);
-                  pdf.setFont(currentFont, "normal");
-                  pdf.setFontSize(bodyFontSize);
-                  pdf.text(cleanStack, margin + titleWidth + 2, y);
+                    const locTextTruncated = truncateText(loc, maxRightWidth, bodyFontSize - 1, false);
+                    const locWidth = pdf.getTextWidth(locTextTruncated);
+                    const maxDegreeWidth = contentWidth - locWidth - 6;
+                    const fullDegree = `${degree}${metadata ? ` | ${metadata}` : ""}`;
+                    const cleanDegree = truncateText(fullDegree, maxDegreeWidth, bodyFontSize, false);
+
+                    pdf.setFont(currentFont, "italic");
+                    pdf.setFontSize(bodyFontSize);
+                    pdf.text(cleanDegree, margin, y);
+                    pdf.setFont(currentFont, "normal");
+                    pdf.setFontSize(bodyFontSize - 1);
+                    pdf.text(sanitizePdfText(locTextTruncated), pageWidth - margin, y, { align: "right" });
+                    y += getLineHeight(bodyFontSize, 1.3);
+                  });
                 }
-              }
+                break;
 
-              measureOrDrawRightSideLinks(
-                pdf,
-                parsedProj.statusOrYear,
-                parsedProj.urls,
-                y,
-                margin,
-                pageWidth,
-                bodyFontSize,
-                currentFont,
-                true // draw
-              );
-              y += getLineHeight(subHeadlineFontSize, 1.25);
+              case 'EXPERIENCE':
+                if (editableResume.experience?.length) {
+                  drawSectionHeader("EXPERIENCE");
+                  editableResume.experience.forEach(exp => {
+                    checkPageBreak(12);
+                    const parts = exp.heading.split('@');
+                    const role = parts[0]?.trim() || "Role";
+                    const orgParts = parts[1] ? parts[1].split(/\s+[-–—]\s+/) : [];
+                    const org = orgParts[0]?.trim() || "Organization";
+                    const rawLocOrMode = orgParts[1]?.trim() || "";
+                    const loc = getModeOrLocation(rawLocOrMode, editableHeader.location);
 
-              (proj.bullets || []).forEach(bullet => {
-                pdf.setFont(currentFont, "normal");
-                pdf.setFontSize(bodyFontSize);
-                const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
-                const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
-                const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
-                checkPageBreak(neededHeight);
-                pdf.text("•", margin + 1.5, y);
-                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
-                y += neededHeight;
-              });
-              y += getLineHeight(bodyFontSize, 0.4);
-            });
-          }
+                    const maxRightWidth = contentWidth * 0.35;
+                    const dateText = exp.content || "Date – Present";
+                    const dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
+                    const dateWidth = pdf.getTextWidth(dateTextTruncated);
+                    const maxRoleWidth = contentWidth - dateWidth - 6;
+                    const cleanRole = truncateText(role, maxRoleWidth, subHeadlineFontSize, true);
 
-          // --- LEADERSHIP ---
-          if (editableResume.leadership?.length) {
-            drawSectionHeader("LEADERSHIP");
-            editableResume.leadership.forEach(lead => {
-              checkPageBreak(12);
-              
-              const maxRightWidth = contentWidth * 0.35;
-              const dateText = lead.content || "";
-              const dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
-              const dateWidth = dateTextTruncated ? pdf.getTextWidth(dateTextTruncated) : 0;
-              const maxHeadingWidth = contentWidth - dateWidth - 6;
-              const cleanHeading = truncateText(lead.heading, maxHeadingWidth, subHeadlineFontSize, true);
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFont(currentFont, "bold");
+                    pdf.setFontSize(subHeadlineFontSize);
+                    pdf.text(cleanRole, margin, y);
+                    pdf.setFont(currentFont, "normal");
+                    pdf.setFontSize(bodyFontSize - 1);
+                    pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
+                    y += getLineHeight(subHeadlineFontSize, 1.25);
 
-              pdf.setTextColor(0, 0, 0);
-              pdf.setFont(currentFont, "bold");
-              pdf.setFontSize(subHeadlineFontSize);
-              pdf.text(cleanHeading, margin, y);
-              
-              pdf.setFont(currentFont, "normal");
-              pdf.setFontSize(bodyFontSize - 1);
-              if (dateTextTruncated) {
-                pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
-              }
-              y += getLineHeight(subHeadlineFontSize, 1.25);
+                    const locText = loc || "";
+                    const locTextTruncated = truncateText(locText, maxRightWidth, bodyFontSize - 1, false);
+                    const locWidth = pdf.getTextWidth(locTextTruncated);
+                    const maxOrgWidth = contentWidth - locWidth - 6;
+                    const cleanOrg = truncateText(org, maxOrgWidth, bodyFontSize, false);
 
-              (lead.bullets || []).forEach(bullet => {
-                pdf.setFont(currentFont, "normal");
-                pdf.setFontSize(bodyFontSize);
-                const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
-                const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
-                const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
-                checkPageBreak(neededHeight);
-                pdf.text("•", margin + 1.5, y);
-                pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
-                y += neededHeight;
-              });
-              y += getLineHeight(bodyFontSize, 0.4);
-            });
-          }
+                    pdf.setFont(currentFont, "italic");
+                    pdf.setFontSize(bodyFontSize);
+                    pdf.text(cleanOrg, margin, y);
+                    pdf.setFont(currentFont, "normal");
+                    pdf.setFontSize(bodyFontSize - 1);
+                    pdf.text(sanitizePdfText(locTextTruncated), pageWidth - margin, y, { align: "right" });
+                    y += getLineHeight(bodyFontSize, 1.25);
 
-          // --- SKILLS ---
-          if (editableResume.skills_section?.length) {
-            drawSectionHeader("SKILLS");
-            editableResume.skills_section.forEach(skillLine => {
-              if (!skillLine) return;
-              const parts = skillLine.split(':');
-              const category = parts[0]?.trim() || "";
-              const skills = parts[1]?.trim() || "";
-              if (!category) return;
-              
-              const categoryText = `${category}: `;
-              
-              pdf.setTextColor(0, 0, 0);
-              pdf.setFont(currentFont, "bold");
-              pdf.setFontSize(bodyFontSize);
-              
-              const catWidth = pdf.getTextWidth(categoryText);
-              
-              pdf.setFont(currentFont, "normal");
-              const skillsText = skills;
-              const lines = pdf.splitTextToSize(skillsText, contentWidth - catWidth);
-              
-              const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.25);
-              checkPageBreak(neededHeight);
-              
-              // Draw category in bold
-              pdf.setFont(currentFont, "bold");
-              pdf.text(categoryText, margin, y);
-              
-              // Draw skills in normal font weight
-              pdf.setFont(currentFont, "normal");
-              lines.forEach((line: string, lineIdx: number) => {
-                const xPos = lineIdx === 0 ? margin + catWidth : margin;
-                pdf.text(line, xPos, y);
-                if (lineIdx < lines.length - 1) {
-                  y += getLineHeight(bodyFontSize, 1.2);
+                    (exp.bullets || []).forEach(bullet => {
+                      pdf.setFont(currentFont, "normal");
+                      pdf.setFontSize(bodyFontSize);
+                      const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
+                      const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
+                      const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+                      checkPageBreak(neededHeight);
+                      pdf.text("•", margin + 1.5, y);
+                      pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
+                      y += neededHeight;
+                    });
+                    y += getLineHeight(bodyFontSize, 0.4);
+                  });
                 }
-              });
-              y += getLineHeight(bodyFontSize, 1.3); // space to next skill category
-            });
-          }
+                break;
 
-          // --- CERTIFICATIONS ---
-          if (editableResume.certifications?.length) {
-            drawSectionHeader("CERTIFICATIONS");
-            editableResume.certifications.forEach(cert => {
-              pdf.setTextColor(0, 0, 0);
-              pdf.setFont(currentFont, "normal");
-              pdf.setFontSize(bodyFontSize);
-              const cleanCert = sanitizePdfText(cert.replace(/^[•\s*-]+/, '').trim());
-              const lines = pdf.splitTextToSize(cleanCert, contentWidth - 4.5);
-              const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
-              checkPageBreak(neededHeight);
-              pdf.text("•", margin + 1.5, y);
-              pdf.text(cleanCert, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
-              y += neededHeight;
-            });
-          }
+              case 'PRODUCTS':
+                if (editableResume.products?.length) {
+                  drawSectionHeader("PRODUCTS & VENTURES");
+                  editableResume.products.forEach(prod => {
+                    checkPageBreak(12);
+                    
+                    const headingParts = prod.heading.split(/\s+[-–—]\s+/);
+                    const title = headingParts[0]?.trim() || "Product";
+                    const status = headingParts.slice(1).join(" | ")?.trim();
 
-          // --- AWARDS ---
-          if (editableResume.awards?.length) {
-            drawSectionHeader("HONORS & AWARDS");
-            editableResume.awards.forEach(award => {
-              pdf.setTextColor(0, 0, 0);
-              pdf.setFont(currentFont, "normal");
-              pdf.setFontSize(bodyFontSize);
-              const cleanAward = sanitizePdfText(award.replace(/^[•\s*-]+/, '').trim());
-              const lines = pdf.splitTextToSize(cleanAward, contentWidth - 4.5);
-              const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
-              checkPageBreak(neededHeight);
-              pdf.text("•", margin + 1.5, y);
-              pdf.text(cleanAward, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
-              y += neededHeight;
-            });
-          }
+                    const parsedContent = parseProductOrProjectContent(prod.content);
+                    const rightWidth = measureOrDrawRightSideLinks(
+                      pdf,
+                      parsedContent.statusOrYear,
+                      parsedContent.urls,
+                      y,
+                      margin,
+                      pageWidth,
+                      bodyFontSize,
+                      currentFont,
+                      false // measure first
+                    );
+                    
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFont(currentFont, "bold");
+                    pdf.setFontSize(subHeadlineFontSize);
+                    
+                    const maxTitleStackWidth = contentWidth - rightWidth - 6;
+                    const titleWidth = pdf.getTextWidth(title);
+                    
+                    if (titleWidth > maxTitleStackWidth) {
+                      const cleanTitle = truncateText(title, maxTitleStackWidth, subHeadlineFontSize, true);
+                      pdf.text(cleanTitle, margin, y);
+                    } else {
+                      pdf.text(sanitizePdfText(title), margin, y);
+                      if (status) {
+                        const maxStatusWidth = maxTitleStackWidth - titleWidth - 2;
+                        const cleanStatus = truncateText(` | ${status}`, maxStatusWidth, bodyFontSize, false);
+                        pdf.setFont(currentFont, "normal");
+                        pdf.setFontSize(bodyFontSize);
+                        pdf.text(cleanStatus, margin + titleWidth + 2, y);
+                      }
+                    }
+
+                    measureOrDrawRightSideLinks(
+                      pdf,
+                      parsedContent.statusOrYear,
+                      parsedContent.urls,
+                      y,
+                      margin,
+                      pageWidth,
+                      bodyFontSize,
+                      currentFont,
+                      true // draw
+                    );
+                    y += getLineHeight(subHeadlineFontSize, 1.25);
+
+                    (prod.bullets || []).forEach(bullet => {
+                      pdf.setFont(currentFont, "normal");
+                      pdf.setFontSize(bodyFontSize);
+                      const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
+                      const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
+                      const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+                      checkPageBreak(neededHeight);
+                      pdf.text("•", margin + 1.5, y);
+                      pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
+                      y += neededHeight;
+                    });
+                    y += getLineHeight(bodyFontSize, 0.4);
+                  });
+                }
+                break;
+
+              case 'PROJECTS':
+                if (editableResume.projects?.length) {
+                  drawSectionHeader("PROJECTS");
+                  editableResume.projects.forEach(proj => {
+                    checkPageBreak(12);
+                    
+                    const headingParts = proj.heading.split(/\s+[-–—]\s+/);
+                    const title = headingParts[0]?.trim() || "Project";
+                    const stack = headingParts.slice(1).join(" | ")?.trim();
+
+                    const parsedProj = parseProductOrProjectContent(proj.content);
+                    const rightWidth = measureOrDrawRightSideLinks(
+                      pdf,
+                      parsedProj.statusOrYear,
+                      parsedProj.urls,
+                      y,
+                      margin,
+                      pageWidth,
+                      bodyFontSize,
+                      currentFont,
+                      false // measure first
+                    );
+                    
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFont(currentFont, "bold");
+                    pdf.setFontSize(subHeadlineFontSize);
+                    
+                    const maxTitleStackWidth = contentWidth - rightWidth - 6;
+                    const titleWidth = pdf.getTextWidth(title);
+                    
+                    if (titleWidth > maxTitleStackWidth) {
+                      const cleanTitle = truncateText(title, maxTitleStackWidth, subHeadlineFontSize, true);
+                      pdf.text(cleanTitle, margin, y);
+                    } else {
+                      pdf.text(sanitizePdfText(title), margin, y);
+                      if (stack) {
+                        const maxStackWidth = maxTitleStackWidth - titleWidth - 2;
+                        const cleanStack = truncateText(` | ${stack}`, maxStackWidth, bodyFontSize, false);
+                        pdf.setFont(currentFont, "normal");
+                        pdf.setFontSize(bodyFontSize);
+                        pdf.text(cleanStack, margin + titleWidth + 2, y);
+                      }
+                    }
+
+                    measureOrDrawRightSideLinks(
+                      pdf,
+                      parsedProj.statusOrYear,
+                      parsedProj.urls,
+                      y,
+                      margin,
+                      pageWidth,
+                      bodyFontSize,
+                      currentFont,
+                      true // draw
+                    );
+                    y += getLineHeight(subHeadlineFontSize, 1.25);
+
+                    (proj.bullets || []).forEach(bullet => {
+                      pdf.setFont(currentFont, "normal");
+                      pdf.setFontSize(bodyFontSize);
+                      const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
+                      const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
+                      const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+                      checkPageBreak(neededHeight);
+                      pdf.text("•", margin + 1.5, y);
+                      pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
+                      y += neededHeight;
+                    });
+                    y += getLineHeight(bodyFontSize, 0.4);
+                  });
+                }
+                break;
+
+              case 'LEADERSHIP':
+                if (editableResume.leadership?.length) {
+                  drawSectionHeader("LEADERSHIP");
+                  editableResume.leadership.forEach(lead => {
+                    checkPageBreak(12);
+                    
+                    const maxRightWidth = contentWidth * 0.35;
+                    const dateText = lead.content || "";
+                    const dateTextTruncated = truncateText(dateText, maxRightWidth, bodyFontSize - 1, false);
+                    const dateWidth = dateTextTruncated ? pdf.getTextWidth(dateTextTruncated) : 0;
+                    const maxHeadingWidth = contentWidth - dateWidth - 6;
+                    const cleanHeading = truncateText(lead.heading, maxHeadingWidth, subHeadlineFontSize, true);
+
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFont(currentFont, "bold");
+                    pdf.setFontSize(subHeadlineFontSize);
+                    pdf.text(cleanHeading, margin, y);
+                    
+                    pdf.setFont(currentFont, "normal");
+                    pdf.setFontSize(bodyFontSize - 1);
+                    if (dateTextTruncated) {
+                      pdf.text(sanitizePdfText(dateTextTruncated), pageWidth - margin, y, { align: "right" });
+                    }
+                    y += getLineHeight(subHeadlineFontSize, 1.25);
+
+                    (lead.bullets || []).forEach(bullet => {
+                      pdf.setFont(currentFont, "normal");
+                      pdf.setFontSize(bodyFontSize);
+                      const cleanBullet = sanitizePdfText(bullet.replace(/^[•\s*-]+/, '').trim());
+                      const lines = pdf.splitTextToSize(cleanBullet, contentWidth - 4.5);
+                      const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+                      checkPageBreak(neededHeight);
+                      pdf.text("•", margin + 1.5, y);
+                      pdf.text(cleanBullet, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
+                      y += neededHeight;
+                    });
+                    y += getLineHeight(bodyFontSize, 0.4);
+                  });
+                }
+                break;
+
+              case 'SKILLS':
+                if (editableResume.skills_section?.length) {
+                  drawSectionHeader("SKILLS");
+                  editableResume.skills_section.forEach(skillLine => {
+                    if (!skillLine) return;
+                    const parts = skillLine.split(':');
+                    const category = parts[0]?.trim() || "";
+                    const skills = parts[1]?.trim() || "";
+                    if (!category) return;
+                    
+                    const categoryText = `${category}: `;
+                    
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFont(currentFont, "bold");
+                    pdf.setFontSize(bodyFontSize);
+                    
+                    const catWidth = pdf.getTextWidth(categoryText);
+                    
+                    pdf.setFont(currentFont, "normal");
+                    const skillsText = skills;
+                    const lines = pdf.splitTextToSize(skillsText, contentWidth - catWidth);
+                    
+                    const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.25);
+                    checkPageBreak(neededHeight);
+                    
+                    // Draw category in bold
+                    pdf.setFont(currentFont, "bold");
+                    pdf.text(categoryText, margin, y);
+                    
+                    // Draw skills in normal font weight
+                    pdf.setFont(currentFont, "normal");
+                    lines.forEach((line: string, lineIdx: number) => {
+                      const xPos = lineIdx === 0 ? margin + catWidth : margin;
+                      pdf.text(line, xPos, y);
+                      if (lineIdx < lines.length - 1) {
+                        y += getLineHeight(bodyFontSize, 1.2);
+                      }
+                    });
+                    y += getLineHeight(bodyFontSize, 1.3); // space to next skill category
+                  });
+                }
+                break;
+
+              case 'CERTIFICATIONS':
+                if (editableResume.certifications?.length) {
+                  drawSectionHeader("CERTIFICATIONS");
+                  editableResume.certifications.forEach(cert => {
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFont(currentFont, "normal");
+                    pdf.setFontSize(bodyFontSize);
+                    const cleanCert = sanitizePdfText(cert.replace(/^[•\s*-]+/, '').trim());
+                    const lines = pdf.splitTextToSize(cleanCert, contentWidth - 4.5);
+                    const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+                    checkPageBreak(neededHeight);
+                    pdf.text("•", margin + 1.5, y);
+                    pdf.text(cleanCert, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
+                    y += neededHeight;
+                  });
+                }
+                break;
+
+              case 'AWARDS':
+                if (editableResume.awards?.length) {
+                  drawSectionHeader("HONORS & AWARDS");
+                  editableResume.awards.forEach(award => {
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFont(currentFont, "normal");
+                    pdf.setFontSize(bodyFontSize);
+                    const cleanAward = sanitizePdfText(award.replace(/^[•\s*-]+/, '').trim());
+                    const lines = pdf.splitTextToSize(cleanAward, contentWidth - 4.5);
+                    const neededHeight = lines.length * getLineHeight(bodyFontSize, 1.2);
+                    checkPageBreak(neededHeight);
+                    pdf.text("•", margin + 1.5, y);
+                    pdf.text(cleanAward, margin + 4.5, y, { maxWidth: contentWidth - 4.5, align: "left" });
+                    y += neededHeight;
+                  });
+                }
+                break;
+            }
+          });
         }
 
       const safeName = (editableHeader.fullName || profile?.full_name || "Resume").replace(/[^a-z0-9]/gi, '_');
@@ -1848,6 +1932,41 @@ Return ONLY a JSON object:
           `).join("")}
         </ul>
       ` : "";
+ 
+      let bodyContentHtml = "";
+      sectionOrder.forEach((sectionKey) => {
+        if (!visibleSections[sectionKey]) return;
+
+        switch (sectionKey) {
+          case 'SUMMARY':
+            bodyContentHtml += summaryHtml;
+            break;
+          case 'EDUCATION':
+            bodyContentHtml += educationHtml;
+            break;
+          case 'EXPERIENCE':
+            bodyContentHtml += experienceHtml;
+            break;
+          case 'PRODUCTS':
+            bodyContentHtml += productsHtml;
+            break;
+          case 'PROJECTS':
+            bodyContentHtml += projectsHtml;
+            break;
+          case 'LEADERSHIP':
+            bodyContentHtml += leadershipHtml;
+            break;
+          case 'SKILLS':
+            bodyContentHtml += skillsHtml;
+            break;
+          case 'CERTIFICATIONS':
+            bodyContentHtml += certificationsHtml;
+            break;
+          case 'AWARDS':
+            bodyContentHtml += awardsHtml;
+            break;
+        }
+      });
 
       const content = `
         <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -1934,15 +2053,7 @@ Return ONLY a JSON object:
             ${headerMeta}
           </div>
           
-          ${summaryHtml}
-          ${educationHtml}
-          ${experienceHtml}
-          ${productsHtml}
-          ${projectsHtml}
-          ${leadershipHtml}
-          ${skillsHtml}
-          ${certificationsHtml}
-          ${awardsHtml}
+          ${bodyContentHtml}
         </body>
         </html>
       `;
@@ -2654,6 +2765,8 @@ Write a compelling, ready-to-send cover letter.`;
               productLines={productLines}
               marginSize={marginSize}
               lineSpacing={lineSpacing}
+              visibleSections={visibleSections}
+              sectionOrder={sectionOrder}
             />
 
             <div className="flex justify-center pb-20">
