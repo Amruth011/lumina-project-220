@@ -147,7 +147,33 @@ To guarantee stable, verifiable, and instant feedback without database roundtrip
    - **Synonym Expansion**: Applies canonical terms from a local lookup table (e.g., mapping `"js"` and `"ecmascript"` to `"javascript"`).
 4. **Weighted Scopes**: Computes an aggregate score out of 100 based on the scavenged skill weight (based on importance attributes). Missing or partial items trigger mathematically scaled score deductions.
 
-### 3.3. The Three-Layer Resume Optimization Pipeline
+### 3.3. Where Does it Generate the Resume From? (Data Sources)
+The resume is compiled from two core database entities in Supabase, merged with the active user session metadata:
+- **The User Profile (`profiles` table)**: This stores core contact metadata—Full Name, Email, Phone, Location, LinkedIn URL, GitHub URL, Portfolio Website, and Master Summary.
+- **The Master Vault (`master_vault` table)**: This acts as a secure career data store. It contains categorized, granular history of professional experience, education, projects, products/ventures, leadership, certifications, and awards.
+- **Target Job Details**: Passed down when scanning a new Job Description, which includes the **Target Job Title**, the **Target Company**, and **Target Skills & Keywords** scored by importance.
+
+---
+
+## 4. Synthesizing Pipeline
+
+When clicking **Generate Resume / Synthesize**, the application orchestrates a structured multi-engine prompt that merges the raw inputs:
+
+```mermaid
+graph TD
+    A[Click Generate Resume / Synthesize] --> B[serializeVaultItems: Compile Candidate Facts]
+    B --> C[Construct Tactical Prompt with Tone, Mandates, and Length Rules]
+    C --> D{Invoke Edge Function: 'analyze'}
+    D -->|Success| G[Receive Tailored JSON Resume]
+    D -->|Failure| E[Loop through Fallback Engines & Local API Proxy Fallback]
+    E -->|Success| G
+    E -->|All Fail| F[Trigger Detailed Toast Failure & Troubleshooting]
+    G --> H[Sanitize & Format Output: 'sanitizeGeneratedResume']
+    H --> I[Restore Exact Date Formats & Links: 'restoreExactProfileData']
+    I --> J[Populate ResumePreview State for Interactive Editing]
+```
+
+### 4.1. The Three-Layer Resume Optimization Pipeline
 Lumina implements an elite personalization mechanism that tailors resumes using structural alignment:
 
 ```mermaid
@@ -156,7 +182,7 @@ sequenceDiagram
     actor User
     participant App as Client Dashboard
     participant Vault as Supabase DB: master_vault
-    participant AI as Edge Function: tailor-resume
+    participant AI as Edge Function: analyze
     participant Exporter as Client Exporter: pdfExporter
 
     User->>App: Paste JD and Resume
@@ -173,23 +199,62 @@ sequenceDiagram
     Exporter-->>User: Download pixel-perfect, tailored ATS-friendly PDF
 ```
 
+### 4.2. Input Serialization
+Before calling the LLM, the application runs a serialization step (`serializeVaultItems`) that compiles all vault cards into structured, textual "Candidate Facts". This ensures dates, links, bullets, and titles are presented cleanly to the AI.
+
+### 4.3. The Tactical Prompt Alignment Strategy
+A rich, recruiter-vetted system prompt is constructed with five major mandates:
+1. **Recruiter Lens & Gap-Alignment (CRITICAL)**: Actively analyze the target Job Description (JD) against the Candidate Facts & Profile Vault. Identify structural gaps (missing keywords, scale limitations, or context variations).
+2. **Proactive Bridge & Context Enrichment**: Proactively bridge these alignment gaps by extracting and framing the candidate's existing achievements, projects, or professional experiences to explicitly showcase the skills, stack, and methodologies demanded by the JD. If a particular technology or skill is not directly detailed with descriptions in the profile, but the item contains that technology/skill in its title or tags, highlight its utilization, execution, and integration details within the generated bullet points, bridging the gap completely using professional, concrete context.
+3. **Fidelity to Facts & Zero Hallucination**: Do NOT inflate, fabricate, or exaggerate achievements. If the Candidate Profile's experience entries lack specific metrics or scale, do NOT hallucinate or guess them. Instead, craft the narrative focusing on the scope of their responsibility, the technologies utilized, and the qualitative impact of their work as explicitly described in the provided Candidate Profile and Master Vault. Under no circumstances should you invent fake metric percentages (e.g. "increased efficiency by 34%") if they are not explicitly present in the candidate's Master Vault items.
+4. **Google "XYZ" Formula**: Experience bullets should follow the Google "XYZ" formula: "Accomplished [X] as measured by [Y], by doing [Z]" where metric details are present. Focus on active verbs, quantifiable impacts, and explicit technical details.
+5. **Strict Bullet Point Line Length Mandate (Visual A4 PDF Optimization)**: Every generated bullet point (for Experience, Projects, Products, and Leadership sections) MUST fall strictly into one of the following perfect-line character length ranges (including spaces) so they beautifully and fully fill visual lines on a standard A4 PDF page without creating awkward visual orphans or hanging words:
+   - For 1 full line: EXACTLY 110 to 125 characters.
+   - For 2 full lines: EXACTLY 220 to 250 characters.
+   - For 3 full lines: EXACTLY 330 to 375 characters.
+   DO NOT generate any bullet point that falls outside these ranges (e.g., do not generate bullets between 126 and 219 characters, or between 251 and 329 characters, or less than 110 characters). Adjust wording, technical detail, or scope description dynamically to hit these exact target ranges perfectly. Maintain 100% truth/fidelity to facts; do not fabricate fake metrics to pad lengths—instead, describe existing tasks, technologies, or responsibilities with more or less descriptive, precise detail.
+6. **Strict Retention of Metadata**: Strictly preserve and use the exact links (GitHub, live links), exact date formats, and organization details from the Candidate facts as provided. Never omit, simplify, or modify links or dates.
+7. **Tone Customization**: Compose all generated narrative (including the professional summary, experience bullets, project descriptions, and leadership items) in a highly specialized tone chosen by the user:
+   - **Professional**: Write in a balanced, authoritative, and traditional executive voice. Focus on established leadership, industry-standard methodologies, cross-functional collaboration, and robust organizational impact.
+   - **Modern**: Write in a forward-looking, tech-forward, and innovative voice. Emphasize modern tech-stack paradigms (cloud-native architectures, AI/ML integrations, microservices, system scaling), engineering velocity, agility, and state-of-the-art developer tools.
+   - **Creative (Executive Impact)**: Write in an ultra-impact, hyper-performance, results-first voice. Use exceptionally punchy and strong action verbs, highlighting massive efficiency gains, significant cost savings, engineering velocity, and direct bottom-line optimization. Make every single bullet point feel relentless, ambitious, and competitively elite.
+
+### 4.4. Multi-Engine Cascade (Fallback Pipeline)
+To ensure the generator never hangs or fails due to third-party rate limits, it runs a sequential fall-back loop through premium AI models:
+1. `llama-3.3-70b-versatile` *(Primary Engine)*
+2. `llama-3.1-70b-versatile` *(Secondary Engine)*
+3. `mixtral-8x7b-32768` *(Tertiary Engine)*
+4. `llama-3.1-8b-instant` *(Quaternary baseline Engine)*
+
+If the Supabase edge function fails, it immediately activates an emergency **Local API Proxy** (`/api/analyze`) to bypass network blocks.
+
+### 4.5. Sanitization and Fact Restoration
+Once the JSON is returned from the AI, it passes through two post-processing steps:
+1. **`sanitizeGeneratedResume`**: Ensures all bullet prefixes, dashes, or non-breaking spaces are normalized. It restricts summary sentence counts and experience bullet budgets to match your layout settings.
+2. **`restoreExactProfileData`**: Re-examines your original master vault items and replaces the AI's output periods, links, and degrees with your exact factual values. This acts as an absolute verification layer, protecting dates and links from AI modifications.
+
+### 4.6. Delivery & Interactive Synchronization
+The sanitized and restored resume object is loaded into the **Interactive Resume Preview editor**.
+- You can freely edit dates, titles, descriptions, and contact info right on the preview.
+- Clicking **Save** triggers the brand-new synchronization engine, instantly updating the underlying `profiles` and `master_vault` tables in Supabase, and calling `loadVault()` to refresh the active generator facts. Your next tailoring instantly builds on top of these edits!
+
 ---
 
-## 4. Coding Conventions & Architectural Guidelines
+## 5. Coding Conventions & Architectural Guidelines
 
 To maintain visual excellence, performance, and structure, all developers must adhere to these patterns:
 
-### 4.1. Visual & Styling Standards (Vercel-Vite Standard)
+### 5.1. Visual & Styling Standards (Vercel-Vite Standard)
 - **Fluid Layout Tokens**: Use native variables (`var(--primary)`, `var(--secondary)`, etc.) instead of hardcoded hex values to support global theme changes.
 - **Glassmorphism & Texture**: Wrap dashboard groups in `.premium-card`, `.glass-panel`, or `.bento-card` classes. Use `.bg-noise` overlays and `.mesh-bg` gradients to preserve the modern visual standard.
 - **Tailwind Restrictions**: Do not build unorganized utility classes. Group Tailwind directives inside CSS components using `@apply` if they are repeated more than three times.
 - **No Placeholders**: Never use mock icons or grey layout boxes. Generate high-fidelity custom SVGs or apply the visual asset generator.
 
-### 4.2. State Management & Data Fetching
+### 5.2. State Management & Data Fetching
 - **Server States**: Use **React Query** (`useQuery`, `useMutation`) for database entities (such as profiles, user applications, and generated resume vaults). Do not store server-fetched data in global React states.
 - **Local Persistence States**: Keep operational JD records, scan history, and active session identifiers synchronized with `localStorage` utilizing wrapper methods in `src/lib/sessionStorage.ts` and `src/lib/jdCache.ts`.
 
-### 4.3. Database Integrity & Row Level Security (RLS)
+### 5.3. Database Integrity & Row Level Security (RLS)
 - **RLS Enforcement**: Every table under the `public` schema **MUST** enable RLS and specify explicit security policies.
 - **User Segregation**: Enforce user segregation by matching against the user token identifier:
   ```sql
@@ -203,7 +268,7 @@ To maintain visual excellence, performance, and structure, all developers must a
 
 ---
 
-## 5. AI Agent Rules (Instructions for Future LLM Agents)
+## 6. AI Agent Rules (Instructions for Future LLM Agents)
 
 > [!IMPORTANT]
 > If you are an AI coding agent working on this repository, you **MUST** strictly follow the guidelines below to prevent system degradation, build crashes, or styling regressions.
