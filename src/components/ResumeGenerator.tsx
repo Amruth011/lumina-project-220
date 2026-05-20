@@ -1179,6 +1179,312 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
     }
     
     try {
+      // 1. Sync header details to the profiles table in Supabase
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          full_name: editableHeader.fullName,
+          phone: editableHeader.phone,
+          location: editableHeader.location,
+          linkedin_url: editableHeader.linkedin,
+          website_url: editableHeader.portfolio,
+          github_url: editableHeader.github
+        })
+        .eq("id", user.id);
+
+      if (profileError) {
+        console.error("Profile synchronization error:", profileError);
+      }
+
+      // 2. Fetch latest master_vault items for the user
+      const { data: latestVaultData, error: vaultFetchError } = await supabase
+        .from("master_vault")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (vaultFetchError) {
+        console.error("Vault fetch error during sync:", vaultFetchError);
+      } else {
+        const latestVault = (latestVaultData as VaultItem[]) || [];
+
+        const checkHasNumbers = (bulletsList: string[]) => {
+          return (bulletsList || []).some(b => /[\d%]/.test(b));
+        };
+
+        // Sync Professional Experience
+        if (Array.isArray(editableResume.experience)) {
+          for (const exp of editableResume.experience) {
+            const headingParts = (exp.heading || "").split('@');
+            const role = headingParts[0]?.trim() || "";
+            const orgParts = headingParts[1] ? headingParts[1].split(/\s+[-–—]\s+/) : [];
+            const org = orgParts[0]?.trim() || "";
+            if (!role && !org) continue;
+
+            const matchedItem = latestVault.find(vItem => {
+              if (vItem.type !== 'professional') return false;
+              const vOrg = (vItem.organization || "").trim().toLowerCase();
+              const vTitle = (vItem.title || "").trim().toLowerCase();
+              if (org && vOrg && role && vTitle) {
+                return vOrg === org.toLowerCase() && vTitle === role.toLowerCase();
+              }
+              return org && vOrg ? vOrg === org.toLowerCase() : (role && vTitle ? vTitle === role.toLowerCase() : false);
+            });
+
+            const hasNumbers = checkHasNumbers(exp.bullets || []);
+
+            if (matchedItem) {
+              await supabase
+                .from("master_vault")
+                .update({
+                  title: role || matchedItem.title,
+                  organization: org || matchedItem.organization,
+                  period: exp.content || matchedItem.period,
+                  bullets: exp.bullets || matchedItem.bullets,
+                  is_quantified: hasNumbers
+                })
+                .eq("id", matchedItem.id);
+            } else {
+              await supabase
+                .from("master_vault")
+                .insert({
+                  user_id: user.id,
+                  type: 'professional',
+                  title: role || "Role",
+                  organization: org || "Company",
+                  period: exp.content || "",
+                  bullets: exp.bullets || [],
+                  description: "",
+                  skills: [],
+                  is_quantified: hasNumbers
+                });
+            }
+          }
+        }
+
+        // Sync Education
+        if (Array.isArray(editableResume.education)) {
+          for (const edu of editableResume.education) {
+            const rawStr = edu || "";
+            const sections = rawStr.split('|').map(s => s.trim());
+            const mainSection = sections[0] || "";
+            const timelineSection = sections[1] || "";
+            const gpaSection = sections[2] || "";
+
+            const mainParts = mainSection.split('@').map(s => s.trim());
+            const degree = mainParts[0] || "";
+            const schoolAndLoc = mainParts[1] || "";
+            const schoolParts = schoolAndLoc.split('-').map(s => s.trim());
+            const school = schoolParts[0] || "";
+            const location = schoolParts[1] || "";
+
+            if (!degree && !school) continue;
+
+            const matchedItem = latestVault.find(vItem => {
+              if (vItem.type !== 'education') return false;
+              const vOrg = (vItem.organization || "").trim().toLowerCase();
+              const vTitle = (vItem.title || "").trim().toLowerCase();
+              if (school && vOrg && degree && vTitle) {
+                return vOrg === school.toLowerCase() && vTitle === degree.toLowerCase();
+              }
+              return school && vOrg ? vOrg === school.toLowerCase() : (degree && vTitle ? vTitle === degree.toLowerCase() : false);
+            });
+
+            const gpaStr = gpaSection ? gpaSection.replace(/^(GPA:\s*)/i, "") : "";
+            const descParts = [];
+            if (gpaStr) descParts.push(`GPA: ${gpaStr}`);
+            if (location) descParts.push(`Location: ${location}`);
+            const nextDescription = descParts.join(' | ');
+
+            if (matchedItem) {
+              await supabase
+                .from("master_vault")
+                .update({
+                  title: degree || matchedItem.title,
+                  organization: school || matchedItem.organization,
+                  period: timelineSection || matchedItem.period,
+                  description: nextDescription || matchedItem.description
+                })
+                .eq("id", matchedItem.id);
+            } else {
+              await supabase
+                .from("master_vault")
+                .insert({
+                  user_id: user.id,
+                  type: 'education',
+                  title: degree || "Degree",
+                  organization: school || "University",
+                  period: timelineSection || "",
+                  description: nextDescription,
+                  bullets: [],
+                  skills: []
+                });
+            }
+          }
+        }
+
+        // Sync Projects
+        if (Array.isArray(editableResume.projects)) {
+          for (const proj of editableResume.projects) {
+            const headingParts = (proj.heading || "").split(/\s+[-–—]\s+/);
+            const title = headingParts[0]?.trim() || "";
+            const techStack = headingParts.slice(1).join(" | ") || "";
+            if (!title) continue;
+
+            const parsed = parseProductOrProjectContent(proj.content);
+            const githubLink = parsed.urls.find(u => u.toLowerCase().includes("github.com")) || "";
+            const liveLink = parsed.urls.find(u => !u.toLowerCase().includes("github.com")) || "";
+            const period = parsed.statusOrYear || "";
+
+            const matchedItem = latestVault.find(vItem => {
+              if (vItem.type !== 'project') return false;
+              const vTitle = (vItem.title || "").trim().toLowerCase();
+              return vTitle === title.toLowerCase();
+            });
+
+            const hasNumbers = checkHasNumbers(proj.bullets || []);
+            const parsedSkills = techStack.split(/[|,\-–—]+/).map(s => s.trim()).filter(Boolean);
+
+            if (matchedItem) {
+              await supabase
+                .from("master_vault")
+                .update({
+                  title: title || matchedItem.title,
+                  period: period || matchedItem.period,
+                  github_link: githubLink || matchedItem.github_link,
+                  live_link: liveLink || matchedItem.live_link,
+                  bullets: proj.bullets || matchedItem.bullets,
+                  skills: parsedSkills.length > 0 ? parsedSkills : matchedItem.skills,
+                  is_quantified: hasNumbers
+                })
+                .eq("id", matchedItem.id);
+            } else {
+              await supabase
+                .from("master_vault")
+                .insert({
+                  user_id: user.id,
+                  type: 'project',
+                  title: title || "Project Name",
+                  period: period || "",
+                  github_link: githubLink,
+                  live_link: liveLink,
+                  bullets: proj.bullets || [],
+                  description: "",
+                  skills: parsedSkills,
+                  is_quantified: hasNumbers
+                });
+            }
+          }
+        }
+
+        // Sync Products
+        if (Array.isArray(editableResume.products)) {
+          for (const prod of editableResume.products) {
+            const headingParts = (prod.heading || "").split(/\s+[-–—]\s+/);
+            const title = headingParts[0]?.trim() || "";
+            const techStack = headingParts.slice(1).join(" | ") || "";
+            if (!title) continue;
+
+            const parsed = parseProductOrProjectContent(prod.content);
+            const githubLink = parsed.urls.find(u => u.toLowerCase().includes("github.com")) || "";
+            const liveLink = parsed.urls.find(u => !u.toLowerCase().includes("github.com")) || "";
+            const period = parsed.statusOrYear || "";
+
+            const matchedItem = latestVault.find(vItem => {
+              if (vItem.type !== 'product') return false;
+              const vTitle = (vItem.title || "").trim().toLowerCase();
+              return vTitle === title.toLowerCase();
+            });
+
+            const hasNumbers = checkHasNumbers(prod.bullets || []);
+            const parsedSkills = techStack.split(/[|,\-–—]+/).map(s => s.trim()).filter(Boolean);
+
+            if (matchedItem) {
+              await supabase
+                .from("master_vault")
+                .update({
+                  title: title || matchedItem.title,
+                  period: period || matchedItem.period,
+                  github_link: githubLink || matchedItem.github_link,
+                  live_link: liveLink || matchedItem.live_link,
+                  bullets: prod.bullets || matchedItem.bullets,
+                  skills: parsedSkills.length > 0 ? parsedSkills : matchedItem.skills,
+                  is_quantified: hasNumbers
+                })
+                .eq("id", matchedItem.id);
+            } else {
+              await supabase
+                .from("master_vault")
+                .insert({
+                  user_id: user.id,
+                  type: 'product',
+                  title: title || "Product Name",
+                  period: period || "",
+                  github_link: githubLink,
+                  live_link: liveLink,
+                  bullets: prod.bullets || [],
+                  description: "",
+                  skills: parsedSkills,
+                  is_quantified: hasNumbers
+                });
+            }
+          }
+        }
+
+        // Sync Leadership
+        if (Array.isArray(editableResume.leadership)) {
+          for (const lead of editableResume.leadership) {
+            const headingParts = (lead.heading || "").split('@');
+            const role = headingParts[0]?.trim() || "";
+            const orgParts = headingParts[1] ? headingParts[1].split(/\s+[-–—]\s+/) : [];
+            const org = orgParts[0]?.trim() || "";
+            if (!role && !org) continue;
+
+            const matchedItem = latestVault.find(vItem => {
+              if (vItem.type !== 'leadership') return false;
+              const vOrg = (vItem.organization || "").trim().toLowerCase();
+              const vTitle = (vItem.title || "").trim().toLowerCase();
+              if (org && vOrg && role && vTitle) {
+                return vOrg === org.toLowerCase() && vTitle === role.toLowerCase();
+              }
+              return org && vOrg ? vOrg === org.toLowerCase() : (role && vTitle ? vTitle === role.toLowerCase() : false);
+            });
+
+            const hasNumbers = checkHasNumbers(lead.bullets || []);
+
+            if (matchedItem) {
+              await supabase
+                .from("master_vault")
+                .update({
+                  title: role || matchedItem.title,
+                  organization: org || matchedItem.organization,
+                  period: lead.content || matchedItem.period,
+                  bullets: lead.bullets || matchedItem.bullets,
+                  is_quantified: hasNumbers
+                })
+                .eq("id", matchedItem.id);
+            } else {
+              await supabase
+                .from("master_vault")
+                .insert({
+                  user_id: user.id,
+                  type: 'leadership',
+                  title: role || "Leadership Role",
+                  organization: org || "Organization",
+                  period: lead.content || "",
+                  bullets: lead.bullets || [],
+                  description: "",
+                  skills: [],
+                  is_quantified: hasNumbers
+                });
+            }
+          }
+        }
+      }
+
+      // Reload local vault state to reflect updates
+      await loadVault();
+
+      // 3. Save resume blueprint draft to generated_resumes table
       const { data, error } = await supabase.from("generated_resumes").upsert({
         ...(draftId ? { id: draftId } : {}),
         user_id: user.id,
@@ -1212,7 +1518,7 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
       }
       
       fetchSavedResumes(); // Refresh archive list
-      toast.success("Resume draft saved successfully!");
+      toast.success("Resume blueprint & master profile synchronized successfully!");
     } catch (err: unknown) {
       console.error("Unexpected save error:", err);
       const message = (err as { message?: string })?.message || (typeof err === 'string' ? err : "Unknown process error");
