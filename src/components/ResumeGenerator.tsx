@@ -213,6 +213,147 @@ interface ArchiveRecord {
   };
 }
 
+const restoreExactProfileData = (generated: GeneratedResume, vaultItems: VaultItem[]): GeneratedResume => {
+  if (!generated || !vaultItems || vaultItems.length === 0) return generated;
+
+  // Clone to avoid side effects
+  const restored = { ...generated };
+
+  // 1. Restore Professional Experience dates
+  if (Array.isArray(restored.experience)) {
+    restored.experience = restored.experience.map(genItem => {
+      const match = vaultItems.find(vItem => {
+        if (vItem.type !== 'professional') return false;
+        
+        const org = (vItem.organization || "").trim().toLowerCase();
+        const title = (vItem.title || "").trim().toLowerCase();
+        const heading = (genItem.heading || "").trim().toLowerCase();
+        
+        if (!org) return false;
+        
+        if (title) {
+          return heading.includes(org) && heading.includes(title);
+        }
+        return heading.includes(org);
+      });
+
+      if (match) {
+        return {
+          ...genItem,
+          content: match.period || genItem.content
+        };
+      }
+      return genItem;
+    });
+  }
+
+  // 2. Restore Products details, status, and links
+  if (Array.isArray(restored.products)) {
+    restored.products = restored.products.map(genItem => {
+      const match = vaultItems.find(vItem => {
+        if (vItem.type !== 'product') return false;
+        const title = (vItem.title || "").trim().toLowerCase();
+        const heading = (genItem.heading || "").trim().toLowerCase();
+        return title && heading.includes(title);
+      });
+
+      if (match) {
+        const links = [match.github_link, match.live_link].filter(Boolean);
+        const newContent = [match.period, ...links].filter(Boolean).join(" | ");
+        
+        const headingParts = (genItem.heading || "").split(/\s+[-–—]\s+/);
+        const techStack = headingParts.slice(1).join(" - ");
+        const newHeading = techStack ? `${match.title} - ${techStack}` : match.title || genItem.heading;
+
+        return {
+          ...genItem,
+          heading: newHeading,
+          content: newContent || genItem.content
+        };
+      }
+      return genItem;
+    });
+  }
+
+  // 3. Restore Projects details, status, and links
+  if (Array.isArray(restored.projects)) {
+    restored.projects = restored.projects.map(genItem => {
+      const match = vaultItems.find(vItem => {
+        if (vItem.type !== 'project') return false;
+        const title = (vItem.title || "").trim().toLowerCase();
+        const heading = (genItem.heading || "").trim().toLowerCase();
+        return title && heading.includes(title);
+      });
+
+      if (match) {
+        const links = [match.github_link, match.live_link].filter(Boolean);
+        const newContent = [match.period, ...links].filter(Boolean).join(" | ");
+
+        const headingParts = (genItem.heading || "").split(/\s+[-–—]\s+/);
+        const techStack = headingParts.slice(1).join(" - ");
+        const newHeading = techStack ? `${match.title} - ${techStack}` : match.title || genItem.heading;
+
+        return {
+          ...genItem,
+          heading: newHeading,
+          content: newContent || genItem.content
+        };
+      }
+      return genItem;
+    });
+  }
+
+  // 4. Restore Leadership dates
+  if (Array.isArray(restored.leadership)) {
+    restored.leadership = restored.leadership.map(genItem => {
+      const match = vaultItems.find(vItem => {
+        if (vItem.type !== 'leadership') return false;
+        const org = (vItem.organization || "").trim().toLowerCase();
+        const title = (vItem.title || "").trim().toLowerCase();
+        const heading = (genItem.heading || "").trim().toLowerCase();
+        
+        if (org && title) {
+          return heading.includes(org) && heading.includes(title);
+        }
+        return (org && heading.includes(org)) || (title && heading.includes(title));
+      });
+
+      if (match) {
+        return {
+          ...genItem,
+          content: match.period || genItem.content
+        };
+      }
+      return genItem;
+    });
+  }
+
+  // 5. Restore Education exact details
+  if (Array.isArray(restored.education)) {
+    restored.education = restored.education.map(genEdu => {
+      const match = vaultItems.find(vItem => {
+        if (vItem.type !== 'education') return false;
+        const org = (vItem.organization || "").trim().toLowerCase();
+        return org && genEdu.toLowerCase().includes(org);
+      });
+
+      if (match) {
+        const deg = match.title || "Degree";
+        const sch = match.organization || "University";
+        const loc = match.location || "";
+        const dt = match.period || "";
+        const parts = [];
+        if (loc) parts.push(loc);
+        if (dt) parts.push(dt);
+        return `${deg} @ ${sch}${parts.length > 0 ? ` - ${parts.join(" | ")}` : ""}`;
+      }
+      return genEdu;
+    });
+  }
+
+  return restored;
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3, experienceBullets = 3, projectLines = 3, productLines = 3): GeneratedResume => {
   if (!data || typeof data !== "object") {
@@ -654,8 +795,15 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
       const enabledSections = sectionOrder.filter(sec => visibleSections[sec]);
       const disabledSections = sectionOrder.filter(sec => !visibleSections[sec]);
 
-      const prompt = `You are an elite, truth-grounded executive resume architect.
+      const prompt = `You are an elite technical recruiter and world-class resume writer.
 Your goal is to synthesize a high-impact, ATS-optimized resume in the precise "Andrew Vu" executive style.
+
+### RECRUITER LENS & GAP-ALIGNMENT STRATEGY (CRITICAL):
+1. Actively analyze the target Job Description (JD) against the Candidate Facts & Profile Vault. Identify structural gaps (missing keywords, scale limitations, or context variations).
+2. Proactively bridge these alignment gaps by extracting and framing the candidate's existing achievements, projects, or professional experiences to explicitly showcase the skills, stack, and methodologies demanded by the JD.
+3. If a particular technology or skill is not directly detailed with descriptions in the profile, but the item contains that technology/skill in its title or tags, highlight its utilization, execution, and integration details within the generated bullet points, bridging the gap completely using professional, concrete context.
+4. Keep 100% truth and fidelity to facts—never fabricate fake numerical metrics (like "increased sales by 85%" out of thin air). Instead, bridge gaps qualitatively by focusing on the scope of their responsibility, the exact tech stack integration, developer tooling, and the technical outcomes.
+5. STRICT RETENTION OF METADATA: You must strictly use the exact links (GitHub, live links), exact date formats, and organization details from the Candidate facts as provided. Never omit, simplify, or modify links or dates.
 
 ### SECTION VISIBILITY & ORDER SEQUENCE:
 The candidate has configured a custom layout architecture. You MUST strictly generate the resume according to these custom settings:
@@ -722,6 +870,11 @@ Target Key Skills & Keywords: ${targetJdSkills}
 - TONE STRATEGY: Adhere strictly to the ${tone} tone guidelines.
 - PROFESSIONAL SUMMARY: ${summaryPromptRule} Focus on the candidate's actual documented expertise and direct alignment with the target JD. Avoid generic puffery.
 - EXPERIENCE/PROJECTS/PRODUCTS: Each item MUST contain EXACTLY the requested number of bullets (${experienceBullets} for experience, ${projectLines} for projects, ${productLines} for products). You must distill and distribute the available data points across exactly this number of bullets, ensuring they are rich, distinct, and completely free of filler or duplication. Focus on technical execution, system context, and scope of responsibility to achieve the exact bullet count without fabricating metrics or inventing facts.
+- STRICT BULLET POINT LINE LENGTH MANDATE: Every generated bullet point (for Experience, Projects, Products, and Leadership sections) MUST fall strictly into one of the following perfect-line character length ranges (including spaces) so they beautifully and fully fill visual lines on a standard A4 PDF page without creating awkward visual orphans/hanging words:
+  * For 1 full line: EXACTLY 110 to 125 characters.
+  * For 2 full lines: EXACTLY 220 to 250 characters.
+  * For 3 full lines: EXACTLY 330 to 375 characters.
+  DO NOT generate any bullet point that falls outside these ranges (e.g., do not generate bullets between 126 and 219 characters, or between 251 and 329 characters, or less than 110 characters). Adjust wording, technical detail, or scope description dynamically to hit these exact target ranges perfectly. Maintain 100% truth/fidelity to facts; do not fabricate fake metrics to pad lengths—instead, describe existing tasks, technologies, or responsibilities with more or less descriptive, precise detail.
 - NO HALLUCINATIONS: Do NOT invent jobs, skills, or projects. Only map the content provided in the Candidate Profile. If no items exist in a specific Master Vault category, return an empty array for that section in the JSON (e.g., "certifications": [], "awards": [], "products": [], "projects": [], "leadership": []). Do NOT invent default or fake certifications/awards.
 
 ### STRUCTURE:
@@ -886,8 +1039,10 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
         productLines
       );
 
-      setResume(hydratedData);
-      setEditableResume(hydratedData);
+      const fullyRestoredData = restoreExactProfileData(hydratedData, vaultItems);
+
+      setResume(fullyRestoredData);
+      setEditableResume(fullyRestoredData);
       setIsOpen(true);
       toast.success("Silicon Valley Modern resume generated!");
     } catch (err: unknown) {

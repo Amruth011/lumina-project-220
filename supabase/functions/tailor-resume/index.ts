@@ -14,13 +14,25 @@ serve(async (req) => {
 
     const skillList = (skills as { skill: string }[] || []).map(s => s.skill).join(", ");
     const prompt = `
-      You are an expert resume writer. Tailor this resume for the position of "${jobTitle || 'selected role'}".
-      Focus on these keywords: ${skillList}
+      You are an elite technical recruiter and world-class resume writer. Tailor this resume for the position of "${jobTitle || 'selected role'}".
+      
+      ### RECRUITER LENS & GAP-ALIGNMENT STRATEGY (CRITICAL):
+      1. Actively analyze the target Job Description (JD) keywords "${skillList}" against the Original Resume. Identify structural gaps (missing keywords, scale limitations, or context variations).
+      2. Proactively bridge these alignment gaps by extracting and framing the candidate's existing achievements, projects, or professional experiences to explicitly showcase the skills, stack, and methodologies demanded by the JD.
+      3. If a particular technology or skill is not directly detailed with descriptions in the profile, but the item contains that technology/skill in its title or tags, highlight its utilization, execution, and integration details within the generated bullet points, bridging the gap completely using professional, concrete context.
+      4. Keep 100% truth and fidelity to facts—never fabricate fake numerical metrics (like "increased sales by 85%" out of thin air). Instead, bridge gaps qualitatively by focusing on the scope of their responsibility, the exact tech stack integration, developer tooling, and the technical outcomes.
+      5. STRICT RETENTION OF METADATA: You must strictly use the exact links (GitHub, live links), exact date formats, and organization details from the Candidate facts as provided. Never omit, simplify, or modify links or dates.
 
-      Original Resume:
+      Original Resume to Tailor:
       ${resumeText}
 
-      CRITICAL: Keep all text responses EXTREMELY concise (max 1 sentence per array item) to ensure fast processing.
+      CRITICAL: Keep all text responses EXTREMELY concise to ensure fast processing. Each bullet point generated must be a single high-impact sentence.
+
+      STRICT BULLET POINT LINE LENGTH MANDATE: Every generated bullet point in the "experience" section MUST strictly fall into one of the following visual line character length ranges (including spaces) to beautifully and fully fill visual lines on a standard A4 PDF template without creating awkward visual orphans or underfilled trailing lines:
+      - For 1 full line: EXACTLY 110 to 125 characters.
+      - For 2 full lines: EXACTLY 220 to 250 characters.
+      - For 3 full lines: EXACTLY 330 to 375 characters.
+      DO NOT generate any bullet point that falls outside these ranges (e.g., do not return bullets less than 110 characters, or between 126 and 219 characters, or between 251 and 329 characters). Adjust wording, precision, and technical detail dynamically to hit these exact target ranges perfectly. Maintain absolute factual alignment to facts without hallucinating fake metrics.
 
       RETURN JSON FORMAT ONLY:
       {

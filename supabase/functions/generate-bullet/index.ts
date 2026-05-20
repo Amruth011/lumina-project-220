@@ -18,7 +18,13 @@ serve(async (req) => {
       Context: ${jdContext || 'General role'}
       Focus Keywords: ${focusKeywords?.join(", ") || 'Action verbs, impact'}
 
-      CRITICAL: Keep all text responses EXTREMELY concise (max 1 sentence per array item) to ensure fast processing.
+      CRITICAL: Keep all text responses EXTREMELY concise (max 1 sentence) to ensure fast processing.
+      
+      STRICT BULLET POINT LINE LENGTH MANDATE: The optimized "bullet" MUST strictly fall into one of the following visual line character length ranges (including spaces) to beautifully and fully fill visual lines on a standard A4 PDF template without creating awkward visual orphans or underfilled trailing lines:
+      - For 1 full line: EXACTLY 110 to 125 characters.
+      - For 2 full lines: EXACTLY 220 to 250 characters.
+      - For 3 full lines: EXACTLY 330 to 375 characters.
+      DO NOT return a bullet point that falls outside these ranges (e.g., do not return bullets less than 110 characters, or between 126 and 219 characters, or between 251 and 329 characters). Adjust wording, precision, and technical detail dynamically to hit these exact target ranges perfectly. Maintain absolute factual alignment to facts without hallucinating fake metrics.
 
       RETURN JSON FORMAT ONLY:
       {

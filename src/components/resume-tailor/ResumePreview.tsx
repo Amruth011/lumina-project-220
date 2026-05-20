@@ -110,6 +110,88 @@ const limitBullets = (bullets: string[], maxBullets: number): string[] => {
   return bullets.slice(0, maxBullets);
 };
 
+const checkBulletLineLength = (bullet: string) => {
+  const L = (bullet || "").trim().length;
+  if (L === 0) return { isValid: true, status: 'empty', message: '' };
+  
+  if (L < 110) {
+    return {
+      isValid: false,
+      status: 'too-short-1',
+      charCount: L,
+      needed: 110 - L,
+      message: `Bullet is too short (${L} chars). Needs at least 110 characters to fully fill 1 line.`
+    };
+  }
+  
+  if (L >= 110 && L <= 125) {
+    return {
+      isValid: true,
+      status: 'perfect-1',
+      charCount: L,
+      message: `Perfect! Exactly 1 full line (${L} chars).`
+    };
+  }
+  
+  if (L > 125 && L < 220) {
+    return {
+      isValid: false,
+      status: 'too-short-2',
+      charCount: L,
+      needed: 220 - L,
+      message: `Orphan warning: Spans 2 lines but underfills the second line (${L} chars). Add ${220 - L} more characters to fully fill 2 lines, or reduce under 125 characters.`
+    };
+  }
+  
+  if (L >= 220 && L <= 250) {
+    return {
+      isValid: true,
+      status: 'perfect-2',
+      charCount: L,
+      message: `Perfect! Exactly 2 full lines (${L} chars).`
+    };
+  }
+  
+  if (L > 250 && L < 330) {
+    return {
+      isValid: false,
+      status: 'too-short-3',
+      charCount: L,
+      needed: 330 - L,
+      message: `Orphan warning: Spans 3 lines but underfills the third line (${L} chars). Add ${330 - L} more characters to fully fill 3 lines, or reduce under 250 characters.`
+    };
+  }
+  
+  if (L >= 330 && L <= 375) {
+    return {
+      isValid: true,
+      status: 'perfect-3',
+      charCount: L,
+      message: `Perfect! Exactly 3 full lines (${L} chars).`
+    };
+  }
+  
+  // Generic fallback for longer lines
+  const estimatedLines = Math.ceil(L / 125);
+  const minRequiredForTheseLines = estimatedLines * 110;
+  if (L < minRequiredForTheseLines) {
+    return {
+      isValid: false,
+      status: 'too-short-multi',
+      charCount: L,
+      needed: minRequiredForTheseLines - L,
+      message: `Orphan warning: Underfills the last line (${L} chars). Add ${minRequiredForTheseLines - L} more characters to fill ${estimatedLines} lines.`
+    };
+  }
+  
+  return {
+    isValid: true,
+    status: 'perfect-multi',
+    charCount: L,
+    message: `Perfect! Beautifully filled multi-line bullet (${L} chars).`
+  };
+};
+
 const renderSubHeaderWithLinks = (
   heading: string, 
   content: string, 
@@ -823,6 +905,19 @@ export const ResumePreview = ({
                                 />
                                 <button onClick={() => removeBullet('experience', idx, bullIdx)} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
                               </div>
+                              {bullet.trim() !== "" && (() => {
+                                const check = checkBulletLineLength(bullet);
+                                return (
+                                  <div className="flex justify-between items-center px-2 py-0.5 rounded-lg text-[9px] font-medium mt-0.5 select-none transition-all">
+                                    <span className={check.isValid ? "text-emerald-600 flex items-center gap-1 font-semibold" : "text-amber-600 flex items-center gap-1 font-semibold"}>
+                                      {check.isValid ? "✓" : "⚠"} {check.message}
+                                    </span>
+                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${check.isValid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50 animate-pulse' : 'bg-amber-50 text-amber-700 border border-amber-200/50'}`}>
+                                      {check.charCount} ch
+                                    </span>
+                                  </div>
+                                );
+                              })()}
                               {isOverLimit && (
                                 <span className="text-[9px] text-amber-600 font-medium px-2 self-start flex items-center gap-1">
                                   ⚠️ Exceeds limit ({experienceBullets} bullets allowed in settings) - will be hidden in PDF
@@ -894,6 +989,19 @@ export const ResumePreview = ({
                                 />
                                 <button onClick={() => removeBullet('products', idx, bullIdx)} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
                               </div>
+                              {bullet.trim() !== "" && (() => {
+                                const check = checkBulletLineLength(bullet);
+                                return (
+                                  <div className="flex justify-between items-center px-2 py-0.5 rounded-lg text-[9px] font-medium mt-0.5 select-none transition-all">
+                                    <span className={check.isValid ? "text-emerald-600 flex items-center gap-1 font-semibold" : "text-amber-600 flex items-center gap-1 font-semibold"}>
+                                      {check.isValid ? "✓" : "⚠"} {check.message}
+                                    </span>
+                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${check.isValid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50 animate-pulse' : 'bg-amber-50 text-amber-700 border border-amber-200/50'}`}>
+                                      {check.charCount} ch
+                                    </span>
+                                  </div>
+                                );
+                              })()}
                               {isOverLimit && (
                                 <span className="text-[9px] text-amber-600 font-medium px-2 self-start flex items-center gap-1">
                                   ⚠️ Exceeds limit ({productLines} bullets allowed in settings) - will be hidden in PDF
@@ -965,6 +1073,19 @@ export const ResumePreview = ({
                                 />
                                 <button onClick={() => removeBullet('projects', idx, bullIdx)} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
                               </div>
+                              {bullet.trim() !== "" && (() => {
+                                const check = checkBulletLineLength(bullet);
+                                return (
+                                  <div className="flex justify-between items-center px-2 py-0.5 rounded-lg text-[9px] font-medium mt-0.5 select-none transition-all">
+                                    <span className={check.isValid ? "text-emerald-600 flex items-center gap-1 font-semibold" : "text-amber-600 flex items-center gap-1 font-semibold"}>
+                                      {check.isValid ? "✓" : "⚠"} {check.message}
+                                    </span>
+                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${check.isValid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50 animate-pulse' : 'bg-amber-50 text-amber-700 border border-amber-200/50'}`}>
+                                      {check.charCount} ch
+                                    </span>
+                                  </div>
+                                );
+                              })()}
                               {isOverLimit && (
                                 <span className="text-[9px] text-amber-600 font-medium px-2 self-start flex items-center gap-1">
                                   ⚠️ Exceeds limit ({projectLines} bullets allowed in settings) - will be hidden in PDF
@@ -1011,20 +1132,39 @@ export const ResumePreview = ({
                       }} className="w-full bg-transparent font-bold text-sm outline-none border-b border-transparent focus:border-lumina-teal/20" />
                       <div className="space-y-2">
                         {lead.bullets?.map((bullet, bullIdx) => (
-                          <div key={bullIdx} className="flex gap-2 items-start group/bull">
-                            <textarea value={bullet} onChange={(e) => {
-                              const newLead = [...(localResume.leadership || [])];
-                              const newBullets = [...(newLead[idx].bullets || [])];
-                              newBullets[bullIdx] = e.target.value;
-                              newLead[idx] = { ...newLead[idx], bullets: newBullets };
-                              updateResumeState({ ...localResume, leadership: newLead });
-                            }} className="flex-1 bg-white/50 rounded-xl px-3 py-1.5 text-[11px] font-body outline-none min-h-[36px] border border-transparent focus:border-lumina-teal/20" />
-                            <button onClick={() => {
-                              const newLead = [...(localResume.leadership || [])];
-                              const newBullets = (newLead[idx].bullets || []).filter((_, i) => i !== bullIdx);
-                              newLead[idx] = { ...newLead[idx], bullets: newBullets };
-                              updateResumeState({ ...localResume, leadership: newLead });
-                            }} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
+                          <div key={bullIdx} className="flex flex-col gap-1 w-full">
+                            <div className="flex gap-2 items-start group/bull">
+                              <textarea 
+                                value={bullet} 
+                                onChange={(e) => {
+                                  const newLead = [...(localResume.leadership || [])];
+                                  const newBullets = [...(newLead[idx].bullets || [])];
+                                  newBullets[bullIdx] = e.target.value;
+                                  newLead[idx] = { ...newLead[idx], bullets: newBullets };
+                                  updateResumeState({ ...localResume, leadership: newLead });
+                                }} 
+                                className="flex-1 bg-white/50 rounded-xl px-3 py-1.5 text-[11px] font-body outline-none min-h-[36px] border border-transparent focus:border-lumina-teal/20" 
+                              />
+                              <button onClick={() => {
+                                const newLead = [...(localResume.leadership || [])];
+                                const newBullets = (newLead[idx].bullets || []).filter((_, i) => i !== bullIdx);
+                                newLead[idx] = { ...newLead[idx], bullets: newBullets };
+                                updateResumeState({ ...localResume, leadership: newLead });
+                              }} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
+                            </div>
+                            {bullet.trim() !== "" && (() => {
+                              const check = checkBulletLineLength(bullet);
+                              return (
+                                <div className="flex justify-between items-center px-2 py-0.5 rounded-lg text-[9px] font-medium mt-0.5 select-none transition-all">
+                                  <span className={check.isValid ? "text-emerald-600 flex items-center gap-1 font-semibold" : "text-amber-600 flex items-center gap-1 font-semibold"}>
+                                    {check.isValid ? "✓" : "⚠"} {check.message}
+                                  </span>
+                                  <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${check.isValid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50 animate-pulse' : 'bg-amber-50 text-amber-700 border border-amber-200/50'}`}>
+                                    {check.charCount} ch
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </div>
                         ))}
                         <button onClick={() => {
