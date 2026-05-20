@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { UsageMeter } from "./ui/UsageMeter";
 import { useUsage } from "@/hooks/useUsage";
 import type { VaultItem, VaultItemType, UserProfileWithVault } from "@/types/jd";
+import { generateAndStoreEmbedding, batchGenerateEmbeddings } from "@/lib/embeddingClient";
 
 const getFieldLabels = (type?: VaultItemType) => {
   switch (type) {
@@ -777,8 +778,15 @@ RETURN JSON FORMAT ONLY:
       });
 
       if (uniques.length > 0) {
-        const { error: insertError } = await supabase.from("master_vault").insert(uniques);
+        const { data: insertedRows, error: insertError } = await supabase.from("master_vault").insert(uniques).select("id, title, organization, description, bullets, skills, type, period");
         if (insertError) throw insertError;
+
+        // ── RAG: Batch-generate embeddings for all newly imported items (non-blocking) ──
+        if (insertedRows && insertedRows.length > 0) {
+          batchGenerateEmbeddings(insertedRows).catch(err =>
+            console.warn("[RAG] Batch embedding generation failed (non-blocking):", err)
+          );
+        }
       }
 
       // Store duplicates in temporary session state to show them to user
@@ -900,15 +908,25 @@ RETURN JSON FORMAT ONLY:
           console.error("MasterVault Update Error:", error);
           throw error;
         }
+        // ── RAG: Regenerate embedding for updated item (non-blocking) ──
+        generateAndStoreEmbedding(editingItem.id, itemToSave).catch(err =>
+          console.warn("[RAG] Embedding update failed (non-blocking):", err)
+        );
       } else {
-        const { error } = await supabase.from("master_vault").insert({
+        const { data: insertedData, error } = await supabase.from("master_vault").insert({
           ...itemToSave,
           user_id: user.id,
           type: editingItem.type || 'professional'
-        });
+        }).select("id").single();
         if (error) {
           console.error("MasterVault Insert Error:", error);
           throw error;
+        }
+        // ── RAG: Generate embedding for new item (non-blocking) ──
+        if (insertedData?.id) {
+          generateAndStoreEmbedding(insertedData.id, itemToSave).catch(err =>
+            console.warn("[RAG] Embedding generation failed (non-blocking):", err)
+          );
         }
       }
 

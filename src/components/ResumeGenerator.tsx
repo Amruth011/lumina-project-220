@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Skill, VaultItem, UserProfileWithVault, GeneratedResume } from "@/types/jd";
 import jsPDF from "jspdf";
 import { ResumePreview } from "./resume-tailor/ResumePreview";
+import { matchVaultItems, type VaultMatchResult } from "@/lib/embeddingClient";
 
 const sanitizePdfText = (text: string): string => {
   if (!text) return "";
@@ -791,6 +792,60 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     const targetJdSkills = (jdSkills || []).map(s => `${s.skill} (Importance: ${s.importance})`).join(', ') || "None specified.";
     const targetCompany = companyName || "Target Company";
 
+    // ── RAG PHASE: Semantic Vault Matching & Career Pivot Detection ──
+    let ragContext = "";
+    let isCareerPivot = false;
+    let ragMatches: VaultMatchResult[] = [];
+
+    if (user?.id) {
+      try {
+        // Build a rich query from the JD title + skills for embedding
+        const jdQueryText = `${targetJdTitle} at ${targetCompany}. Required skills: ${targetJdSkills}`;
+        console.log("[RAG] Embedding JD for semantic matching...");
+
+        ragMatches = await matchVaultItems(jdQueryText, user.id, 0.40, 10);
+
+        if (ragMatches.length > 0) {
+          // Calculate average similarity to determine pivot status
+          const avgSimilarity = ragMatches.reduce((sum, m) => sum + m.similarity, 0) / ragMatches.length;
+          console.log(`[RAG] Found ${ragMatches.length} matches (avg similarity: ${avgSimilarity.toFixed(3)})`);
+
+          // Career Pivot Detection: If best match is below 0.55, the user is pivoting
+          const bestSimilarity = ragMatches[0]?.similarity || 0;
+          isCareerPivot = bestSimilarity < 0.55;
+
+          if (isCareerPivot) {
+            console.log(`[RAG] ⚡ CAREER PIVOT detected (best similarity: ${bestSimilarity.toFixed(3)})`);
+          }
+
+          // Build RAG context block with top matches
+          ragContext = `\n\n### RAG-RETRIEVED CONTEXT (Semantically Matched Vault Items)
+The following vault items were retrieved via semantic similarity search against the target JD.
+Use these as PRIORITY source material for tailoring — they are the most relevant items in the candidate's profile:
+${ragMatches.map((m, i) => `  [Match #${i + 1}] (Similarity: ${(m.similarity * 100).toFixed(1)}%) Title: ${m.title}. ${m.description}. Skills: ${(m.skills || []).join(", ")}`).join("\n")}`;
+        } else {
+          // No matches at all — full career pivot
+          isCareerPivot = true;
+          console.log("[RAG] ⚡ CAREER PIVOT detected (no vault items matched above threshold)");
+        }
+      } catch (ragErr) {
+        console.warn("[RAG] Semantic matching failed (non-blocking), proceeding with standard generation:", ragErr);
+      }
+    }
+
+    // ── Career Pivot Strategy Override ──
+    const careerPivotDirective = isCareerPivot
+      ? `\n\n### ⚡ CAREER PIVOT MODE ACTIVATED
+The candidate is applying for a role OUTSIDE their direct past experience domain.
+You MUST activate the following special strategies:
+1. **Transferable Skills Emphasis**: Identify and prominently showcase transferable skills (leadership, problem-solving, system design, communication, analytical thinking) that bridge the gap between the candidate's experience and the target role.
+2. **Adjacent Technology Mapping**: Map the candidate's known technologies to equivalent/adjacent technologies in the target domain (e.g., if they know React but the JD requires Angular, emphasize "modern component-based frontend architecture").
+3. **Impact Reframing**: Reframe the candidate's achievements using language and metrics that resonate with the target industry/role, without fabricating facts.
+4. **Skill Stack Bridging**: In the Skills section, strategically organize skills to lead with those most relevant to the target JD, even if they were secondary in previous roles.
+5. **Summary Pivot Framing**: The professional summary MUST position the candidate as a versatile professional whose diverse background is a STRENGTH, not a gap. Frame the pivot as intentional career growth.
+CRITICAL: Do NOT fabricate experience or skills. Only reframe and emphasize existing profile data through the lens of the target role.`
+      : "";
+
     try {
       const enabledSections = sectionOrder.filter(sec => visibleSections[sec]);
       const disabledSections = sectionOrder.filter(sec => !visibleSections[sec]);
@@ -865,6 +920,7 @@ ${serializeVaultItems(awardItems)}
 Target Job Title: ${targetJdTitle}
 Target Company: ${targetCompany}
 Target Key Skills & Keywords: ${targetJdSkills}
+${ragContext}${careerPivotDirective}
 
 ### SECTION MANDATES:
 - TONE STRATEGY: Adhere strictly to the ${tone} tone guidelines.
