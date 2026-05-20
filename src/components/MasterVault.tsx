@@ -68,6 +68,39 @@ interface ParsedProduct { name: string; status: string; live_link?: string; desc
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const YEARS = Array.from({ length: 21 }, (_, i) => String(2015 + i));
 
+const parseMonthYear = (dateStr: string): { month: string | null; year: string | null } => {
+  dateStr = dateStr.trim();
+  if (!dateStr) return { month: null, year: null };
+
+  const yearMatch = dateStr.match(/\b\d{4}\b/);
+  const year = yearMatch ? yearMatch[0] : null;
+
+  let rest = dateStr;
+  if (year) {
+    rest = dateStr.replace(year, "").replace(/[\s,./\-_]+/g, "").trim();
+  }
+
+  let month: string | null = null;
+  if (rest) {
+    if (/^\d{1,2}$/.test(rest)) {
+      const monthIdx = parseInt(rest, 10) - 1;
+      if (monthIdx >= 0 && monthIdx < 12) {
+        month = MONTHS[monthIdx];
+      }
+    } else {
+      const foundMonth = MONTHS.find(m => 
+        m.toLowerCase().startsWith(rest.toLowerCase()) || 
+        rest.toLowerCase().startsWith(m.toLowerCase().substring(0, 3))
+      );
+      if (foundMonth) {
+        month = foundMonth;
+      }
+    }
+  }
+
+  return { month, year };
+};
+
 const calculateCompletion = (profile: UserProfileWithVault | null, items: VaultItem[]) => {
   if (!profile) return 0;
   
@@ -255,6 +288,13 @@ export const MasterVault = () => {
       setExpMode(parsedMode);
       setExpLocation(parsedLoc);
 
+      // Reset duration builder assistant states to defaults first
+      setStartMonth("January");
+      setStartYear("2023");
+      setEndMonth("June");
+      setEndYear("2026");
+      setIsCurrent(false);
+
       // Parse period into selectors
       const period = item.period || "";
       const parts = period.split(/\s*[-–—to]\s*/i).filter(Boolean);
@@ -262,37 +302,29 @@ export const MasterVault = () => {
         const start = parts[0].trim();
         const end = parts[1].trim();
         
-        const startParts = start.split(/\s+/);
-        if (startParts.length >= 2) {
-          const sm = startParts[0];
-          const sy = startParts[1];
-          const foundMonth = MONTHS.find(m => m.toLowerCase().startsWith(sm.toLowerCase()));
-          if (foundMonth) setStartMonth(foundMonth);
-          if (/^\d{4}$/.test(sy)) setStartYear(sy);
-        }
+        const startParsed = parseMonthYear(start);
+        if (startParsed.month) setStartMonth(startParsed.month);
+        if (startParsed.year && YEARS.includes(startParsed.year)) setStartYear(startParsed.year);
         
-        if (end.toLowerCase() === 'present') {
+        if (/present|current|ongoing|now/i.test(end)) {
           setIsCurrent(true);
         } else {
           setIsCurrent(false);
-          const endParts = end.split(/\s+/);
-          if (endParts.length >= 2) {
-            const em = endParts[0];
-            const ey = endParts[1];
-            const foundMonth = MONTHS.find(m => m.toLowerCase().startsWith(em.toLowerCase()));
-            if (foundMonth) setEndMonth(foundMonth);
-            if (/^\d{4}$/.test(ey)) setEndYear(ey);
-          }
+          const endParsed = parseMonthYear(end);
+          if (endParsed.month) setEndMonth(endParsed.month);
+          if (endParsed.year && YEARS.includes(endParsed.year)) setEndYear(endParsed.year);
         }
-      } else if (period.toLowerCase().includes('present')) {
-        setIsCurrent(true);
-        const startParts = period.split(/\s+/);
-        if (startParts.length >= 2) {
-          const sm = startParts[0];
-          const sy = startParts[1].replace(/[^0-9]/g, '');
-          const foundMonth = MONTHS.find(m => m.toLowerCase().startsWith(sm.toLowerCase()));
-          if (foundMonth) setStartMonth(foundMonth);
-          if (/^\d{4}$/.test(sy)) setStartYear(sy);
+      } else if (period.trim()) {
+        if (/present|current|ongoing|now/i.test(period)) {
+          setIsCurrent(true);
+          const cleanPeriod = period.replace(/present|current|ongoing|now/i, "").trim();
+          const startParsed = parseMonthYear(cleanPeriod);
+          if (startParsed.month) setStartMonth(startParsed.month);
+          if (startParsed.year && YEARS.includes(startParsed.year)) setStartYear(startParsed.year);
+        } else {
+          const parsed = parseMonthYear(period);
+          if (parsed.month) setStartMonth(parsed.month);
+          if (parsed.year && YEARS.includes(parsed.year)) setStartYear(parsed.year);
         }
       }
 
@@ -1354,7 +1386,7 @@ RETURN JSON FORMAT ONLY:
                 Clear Education
               </button>
               <button
-                onClick={() => setEditingItem({ type: 'education', bullets: [], skills: [], title: '', organization: '', period: '', description: '' })}
+                onClick={() => handleStartEdit({ type: 'education', bullets: [], skills: [], title: '', organization: '', period: '', description: '' })}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all"
               >
                 <Plus size={14} /> Add Degree
@@ -1375,7 +1407,7 @@ RETURN JSON FORMAT ONLY:
                     <p className="text-xs text-muted-foreground">{item.period}</p>
                   </div>
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                    <button onClick={() => setEditingItem(item)} className="p-2.5 rounded-xl bg-muted/40 hover:bg-muted font-bold text-[10px] uppercase tracking-widest flex items-center gap-2"><Edit3 size={14} /> Edit</button>
+                    <button onClick={() => handleStartEdit(item)} className="p-2.5 rounded-xl bg-muted/40 hover:bg-muted font-bold text-[10px] uppercase tracking-widest flex items-center gap-2"><Edit3 size={14} /> Edit</button>
                     <button onClick={() => handleDeleteItem(item.id)} className="p-2.5 rounded-xl bg-muted/40 hover:text-red-500 transition-all"><Trash2 size={14} /></button>
                   </div>
                 </motion.div>
@@ -1413,7 +1445,7 @@ RETURN JSON FORMAT ONLY:
               >
                 Clear
               </button>
-              <button onClick={() => setEditingItem({ type: 'project', bullets: [], skills: [], title: '', organization: '', period: '', description: '' })} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"><Plus size={20} /></button>
+              <button onClick={() => handleStartEdit({ type: 'project', bullets: [], skills: [], title: '', organization: '', period: '', description: '' })} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"><Plus size={20} /></button>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1424,7 +1456,7 @@ RETURN JSON FORMAT ONLY:
                   <p className="text-[10px] text-muted-foreground uppercase">{item.organization}</p>
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                  <button onClick={() => setEditingItem(item)} className="text-muted-foreground hover:text-primary"><Edit3 size={14} /></button>
+                  <button onClick={() => handleStartEdit(item)} className="text-muted-foreground hover:text-primary"><Edit3 size={14} /></button>
                   <button onClick={() => handleDeleteItem(item.id)} className="text-muted-foreground hover:text-red-500"><Trash2 size={14} /></button>
                 </div>
               </div>
@@ -1461,7 +1493,7 @@ RETURN JSON FORMAT ONLY:
               >
                 Clear
               </button>
-              <button onClick={() => setEditingItem({ type: 'product', bullets: [], skills: [], title: '', organization: '', period: '', description: '' })} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"><Plus size={20} /></button>
+              <button onClick={() => handleStartEdit({ type: 'product', bullets: [], skills: [], title: '', organization: '', period: '', description: '' })} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"><Plus size={20} /></button>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1472,7 +1504,7 @@ RETURN JSON FORMAT ONLY:
                   <p className="text-[10px] text-muted-foreground uppercase">{item.organization}</p>
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                  <button onClick={() => setEditingItem(item)} className="text-muted-foreground hover:text-primary"><Edit3 size={14} /></button>
+                  <button onClick={() => handleStartEdit(item)} className="text-muted-foreground hover:text-primary"><Edit3 size={14} /></button>
                   <button onClick={() => handleDeleteItem(item.id)} className="text-muted-foreground hover:text-red-500"><Trash2 size={14} /></button>
                 </div>
               </div>
@@ -1509,7 +1541,7 @@ RETURN JSON FORMAT ONLY:
               >
                 Clear
               </button>
-              <button onClick={() => setEditingItem({ type: 'certification', bullets: [], skills: [], title: '', organization: '', period: '', description: '' })} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"><Plus size={20} /></button>
+              <button onClick={() => handleStartEdit({ type: 'certification', bullets: [], skills: [], title: '', organization: '', period: '', description: '' })} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"><Plus size={20} /></button>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1520,7 +1552,7 @@ RETURN JSON FORMAT ONLY:
                   <p className="text-[10px] text-muted-foreground uppercase">{item.organization}</p>
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                  <button onClick={() => setEditingItem(item)} className="text-muted-foreground hover:text-primary"><Edit3 size={14} /></button>
+                  <button onClick={() => handleStartEdit(item)} className="text-muted-foreground hover:text-primary"><Edit3 size={14} /></button>
                   <button onClick={() => handleDeleteItem(item.id)} className="text-muted-foreground hover:text-red-500"><Trash2 size={14} /></button>
                 </div>
               </div>
@@ -1557,7 +1589,7 @@ RETURN JSON FORMAT ONLY:
               >
                 Clear
               </button>
-              <button onClick={() => setEditingItem({ type: 'leadership', bullets: [], skills: [], title: '', organization: '', period: '', description: '' })} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"><Plus size={20} /></button>
+              <button onClick={() => handleStartEdit({ type: 'leadership', bullets: [], skills: [], title: '', organization: '', period: '', description: '' })} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"><Plus size={20} /></button>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1568,7 +1600,7 @@ RETURN JSON FORMAT ONLY:
                   <p className="text-[10px] text-muted-foreground uppercase">{item.organization}</p>
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                  <button onClick={() => setEditingItem(item)} className="text-muted-foreground hover:text-primary"><Edit3 size={14} /></button>
+                  <button onClick={() => handleStartEdit(item)} className="text-muted-foreground hover:text-primary"><Edit3 size={14} /></button>
                   <button onClick={() => handleDeleteItem(item.id)} className="text-muted-foreground hover:text-red-500"><Trash2 size={14} /></button>
                 </div>
               </div>
@@ -1605,7 +1637,7 @@ RETURN JSON FORMAT ONLY:
               >
                 Clear
               </button>
-              <button onClick={() => setEditingItem({ type: 'award', bullets: [], skills: [], title: '', organization: '', period: '', description: '' })} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"><Plus size={20} /></button>
+              <button onClick={() => handleStartEdit({ type: 'award', bullets: [], skills: [], title: '', organization: '', period: '', description: '' })} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"><Plus size={20} /></button>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1616,7 +1648,7 @@ RETURN JSON FORMAT ONLY:
                   <p className="text-[10px] text-muted-foreground uppercase">{item.organization}</p>
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                  <button onClick={() => setEditingItem(item)} className="text-muted-foreground hover:text-primary"><Edit3 size={14} /></button>
+                  <button onClick={() => handleStartEdit(item)} className="text-muted-foreground hover:text-primary"><Edit3 size={14} /></button>
                   <button onClick={() => handleDeleteItem(item.id)} className="text-muted-foreground hover:text-red-500"><Trash2 size={14} /></button>
                 </div>
               </div>
@@ -1878,6 +1910,12 @@ RETURN JSON FORMAT ONLY:
                           localStorage.removeItem(`draft_vault_item_${user?.id}`);
                           localStorage.removeItem(`draft_exp_mode_${user?.id}`);
                           localStorage.removeItem(`draft_exp_location_${user?.id}`);
+                          localStorage.removeItem(`draft_product_status_${user?.id}`);
+                          localStorage.removeItem(`draft_start_month_${user?.id}`);
+                          localStorage.removeItem(`draft_start_year_${user?.id}`);
+                          localStorage.removeItem(`draft_end_month_${user?.id}`);
+                          localStorage.removeItem(`draft_end_year_${user?.id}`);
+                          localStorage.removeItem(`draft_is_current_${user?.id}`);
                           setEditingItem(null);
                         }
                       },
