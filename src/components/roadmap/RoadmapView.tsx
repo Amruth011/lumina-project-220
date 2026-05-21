@@ -347,7 +347,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
           const text = await response.text();
           try {
             const errDetails = JSON.parse(text);
-            errMsg = errDetails.error || errDetails.message || errMsg;
+            errMsg = errDetails.details ? `${errDetails.error}: ${errDetails.details}` : (errDetails.error || errDetails.message || errMsg);
           } catch {
             if (text && text.trim().length > 0) {
               if (text.length < 500) {

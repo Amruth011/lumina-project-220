@@ -115,7 +115,8 @@ export const useDecodeJD = () => {
               console.log("Lumina Engine: Vercel API Proxy fallback succeeded.");
             } else {
               const fallbackErr = await apiResponse.json().catch(() => ({ error: `HTTP ${apiResponse.status}` }));
-              throw new Error(fallbackErr?.error || fallbackErr?.details || `Vercel proxy failed: HTTP ${apiResponse.status}`);
+              const fullErrMsg = fallbackErr?.details ? `${fallbackErr.error}: ${fallbackErr.details}` : (fallbackErr?.error || `Vercel proxy failed: HTTP ${apiResponse.status}`);
+              throw new Error(fullErrMsg);
             }
           } catch (apiErr) {
             console.error("Vercel API Proxy also failed:", apiErr);
