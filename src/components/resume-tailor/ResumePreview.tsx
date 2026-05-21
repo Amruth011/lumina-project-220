@@ -958,19 +958,7 @@ export const ResumePreview = ({
                                 />
                                 <button onClick={() => removeBullet('experience', idx, bullIdx)} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
                               </div>
-                              {bullet.trim() !== "" && (() => {
-                                const check = checkBulletLineLength(bullet);
-                                return (
-                                  <div className="flex justify-between items-center px-2 py-0.5 rounded-lg text-[9px] font-medium mt-0.5 select-none transition-all">
-                                    <span className={check.isValid ? "text-emerald-600 flex items-center gap-1 font-semibold" : "text-amber-600 flex items-center gap-1 font-semibold"}>
-                                      {check.isValid ? "✓" : "⚠"} {check.message}
-                                    </span>
-                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${check.isValid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50 animate-pulse' : 'bg-amber-50 text-amber-700 border border-amber-200/50'}`}>
-                                      {check.charCount} ch
-                                    </span>
-                                  </div>
-                                );
-                              })()}
+
                               {isOverLimit && (
                                 <span className="text-[9px] text-amber-600 font-medium px-2 self-start flex items-center gap-1">
                                   ⚠️ Exceeds limit ({experienceBullets} bullets allowed in settings) - will be hidden in PDF
@@ -1042,19 +1030,7 @@ export const ResumePreview = ({
                                 />
                                 <button onClick={() => removeBullet('products', idx, bullIdx)} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
                               </div>
-                              {bullet.trim() !== "" && (() => {
-                                const check = checkBulletLineLength(bullet);
-                                return (
-                                  <div className="flex justify-between items-center px-2 py-0.5 rounded-lg text-[9px] font-medium mt-0.5 select-none transition-all">
-                                    <span className={check.isValid ? "text-emerald-600 flex items-center gap-1 font-semibold" : "text-amber-600 flex items-center gap-1 font-semibold"}>
-                                      {check.isValid ? "✓" : "⚠"} {check.message}
-                                    </span>
-                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${check.isValid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50 animate-pulse' : 'bg-amber-50 text-amber-700 border border-amber-200/50'}`}>
-                                      {check.charCount} ch
-                                    </span>
-                                  </div>
-                                );
-                              })()}
+
                               {isOverLimit && (
                                 <span className="text-[9px] text-amber-600 font-medium px-2 self-start flex items-center gap-1">
                                   ⚠️ Exceeds limit ({productLines} bullets allowed in settings) - will be hidden in PDF
@@ -1126,19 +1102,7 @@ export const ResumePreview = ({
                                 />
                                 <button onClick={() => removeBullet('projects', idx, bullIdx)} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
                               </div>
-                              {bullet.trim() !== "" && (() => {
-                                const check = checkBulletLineLength(bullet);
-                                return (
-                                  <div className="flex justify-between items-center px-2 py-0.5 rounded-lg text-[9px] font-medium mt-0.5 select-none transition-all">
-                                    <span className={check.isValid ? "text-emerald-600 flex items-center gap-1 font-semibold" : "text-amber-600 flex items-center gap-1 font-semibold"}>
-                                      {check.isValid ? "✓" : "⚠"} {check.message}
-                                    </span>
-                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${check.isValid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50 animate-pulse' : 'bg-amber-50 text-amber-700 border border-amber-200/50'}`}>
-                                      {check.charCount} ch
-                                    </span>
-                                  </div>
-                                );
-                              })()}
+
                               {isOverLimit && (
                                 <span className="text-[9px] text-amber-600 font-medium px-2 self-start flex items-center gap-1">
                                   ⚠️ Exceeds limit ({projectLines} bullets allowed in settings) - will be hidden in PDF
@@ -1205,19 +1169,8 @@ export const ResumePreview = ({
                                 updateResumeState({ ...localResume, leadership: newLead });
                               }} className="p-1.5 text-red-500 opacity-0 group-hover/bull:opacity-100"><Minus size={10} /></button>
                             </div>
-                            {bullet.trim() !== "" && (() => {
-                              const check = checkBulletLineLength(bullet);
-                              return (
-                                <div className="flex justify-between items-center px-2 py-0.5 rounded-lg text-[9px] font-medium mt-0.5 select-none transition-all">
-                                  <span className={check.isValid ? "text-emerald-600 flex items-center gap-1 font-semibold" : "text-amber-600 flex items-center gap-1 font-semibold"}>
-                                    {check.isValid ? "✓" : "⚠"} {check.message}
-                                  </span>
-                                  <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${check.isValid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50 animate-pulse' : 'bg-amber-50 text-amber-700 border border-amber-200/50'}`}>
-                                    {check.charCount} ch
-                                  </span>
-                                </div>
-                              );
-                            })()}
+
+
                           </div>
                         ))}
                         <button onClick={() => {
