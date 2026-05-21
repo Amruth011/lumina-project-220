@@ -3317,7 +3317,7 @@ Write a compelling, ready-to-send cover letter.`;
                     setIsOpen(true);
                     setTimeout(() => {
                       previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 300);
+                    }, 1000);
                   }}
                   className="w-full py-4 rounded-2xl bg-slate-950 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-950/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
                 >
@@ -3425,7 +3425,7 @@ Write a compelling, ready-to-send cover letter.`;
             {/* ── Unified Preview & Edit Experience ── */}
             <div ref={previewRef}>
             <ResumePreview 
-              resume={editableResume || resume || { summary: '', experience: [], education: [], skills: [], projects: [], products: [], certifications: [], awards: [], leadership: [] } as GeneratedResume}
+              resume={editableResume || resume || { professional_summary: '', skills_section: [], experience: [], education: [], projects: [], products: [], certifications: [], awards: [], leadership: [] }}
               header={editableHeader}
               vaultItems={vaultItems}
               isGenerating={isGenerating}
