@@ -1,14 +1,15 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Mail } from "lucide-react";
+import { ArrowRight, Sparkles, Mail, Compass } from "lucide-react";
 
 interface JdActionCtaProps {
   onCheckResume: () => void;
   onGenerateResume: () => void;
   onGenerateCoverLetter: () => void;
+  onGenerateRoadmap: () => void;
 }
 
-export const JdActionCta = ({ onCheckResume, onGenerateResume, onGenerateCoverLetter }: JdActionCtaProps) => {
+export const JdActionCta = ({ onCheckResume, onGenerateResume, onGenerateCoverLetter, onGenerateRoadmap }: JdActionCtaProps) => {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 30 }}
@@ -44,7 +45,7 @@ export const JdActionCta = ({ onCheckResume, onGenerateResume, onGenerateCoverLe
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
+        <div className="flex flex-wrap items-center justify-center gap-6 pt-4">
           <motion.button
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.98 }}
@@ -73,6 +74,16 @@ export const JdActionCta = ({ onCheckResume, onGenerateResume, onGenerateCoverLe
           >
             Synthesize Cover Letter
             <Mail size={16} className="group-hover:scale-110 transition-transform" />
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onGenerateRoadmap}
+            className="group flex items-center gap-4 px-10 py-4 rounded-full bg-teal-900 border-2 border-white/20 text-white text-[12px] font-black uppercase tracking-widest hover:bg-white hover:text-teal-900 transition-all shadow-2xl"
+          >
+            Upskilling Roadmap
+            <Compass size={16} className="group-hover:animate-spin transition-transform" style={{ animationDuration: '3s' }} />
           </motion.button>
         </div>
       </div>

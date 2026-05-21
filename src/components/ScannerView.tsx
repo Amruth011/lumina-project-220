@@ -16,6 +16,7 @@ const ResumeEnhancer = lazy(() => import("@/components/ResumeEnhancer").then(m =
 const MasterVault = lazy(() => import("@/components/MasterVault").then(m => ({ default: m.MasterVault })));
 const ResumeGenerator = lazy(() => import("@/components/ResumeGenerator").then(m => ({ default: m.ResumeGenerator })));
 const ApplicationTracker = lazy(() => import("@/components/ApplicationTracker").then(m => ({ default: m.ApplicationTracker })));
+const RoadmapView = lazy(() => import("./roadmap/RoadmapView").then(m => ({ default: m.RoadmapView })));
 
 import { scavengeSkills } from "@/lib/skillScavenger";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
@@ -219,6 +220,7 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                       onCheckResume={() => handleTabSwitch("analysis")} 
                       onGenerateResume={() => handleTabSwitch("generator")}
                       onGenerateCoverLetter={() => handleTabSwitch("cover-letter")}
+                      onGenerateRoadmap={() => handleTabSwitch("roadmap")}
                     />
 
                   </motion.div>
@@ -321,6 +323,25 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                 icon="generator"
                 title="Signal Lost"
                 description="The Cover Letter Generator requires a Job Description signal to structure its outputs."
+                actionLabel="Return to Decoder"
+                onAction={() => handleTabSwitch("decode")}
+              />
+            )}
+          </motion.div>
+        ) : activeTab === "roadmap" ? (
+          <motion.div
+            key="roadmap"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+          >
+            {results ? (
+              <RoadmapView results={results} jdText={jdText} />
+            ) : (
+              <EmptyState 
+                icon="generator"
+                title="Roadmap Signal Required"
+                description="The Adaptive Roadmap Generator requires a Job Description signal to identify skill gaps."
                 actionLabel="Return to Decoder"
                 onAction={() => handleTabSwitch("decode")}
               />

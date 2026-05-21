@@ -255,11 +255,11 @@ const MOCK_VAULT = [
     console.log(`Saved screenshot to: ${screenshotPath2}`);
 
     console.log("Waiting for candidacy hub tab selector...");
-    const clTabSelector = 'div.shadow-inner button:has-text("Cover Letter")';
-    await page.waitForSelector(clTabSelector, { timeout: 20000 });
+    const clTabLocator = page.locator('div.shadow-inner button:has-text("Cover Letter")').nth(1);
+    await clTabLocator.waitFor({ state: 'visible', timeout: 20000 });
     
     console.log("Clicking 'Cover Letter' button in candidacy hub tab selector...");
-    await page.click(clTabSelector);
+    await clTabLocator.click();
     await page.waitForTimeout(2000);
 
     console.log("Checking if Synthesize Cover Letter or Generate Now is visible...");
@@ -267,6 +267,7 @@ const MOCK_VAULT = [
     const synthesizeBtnGeneral = await page.$('button:has-text("Synthesize Cover Letter")');
     const generateNowBtn = await page.$('button:has-text("Generate Now")');
     const synthesizeLetterBtn = await page.$('button:has-text("Synthesize Letter")');
+    const synthesizeNarrativeBtn = await page.$('button:has-text("Synthesize Narrative")');
     
     if (synthesizeBtn && await synthesizeBtn.isVisible()) {
       console.log("Clicking 'Synthesize Cover Letter' in preview hub...");
@@ -280,6 +281,9 @@ const MOCK_VAULT = [
     } else if (synthesizeLetterBtn && await synthesizeLetterBtn.isVisible()) {
       console.log("Clicking 'Synthesize Letter'...");
       await synthesizeLetterBtn.click();
+    } else if (synthesizeNarrativeBtn && await synthesizeNarrativeBtn.isVisible()) {
+      console.log("Clicking 'Synthesize Narrative'...");
+      await synthesizeNarrativeBtn.click();
     } else {
       console.log("Warning: No synthesis button found! Checking if it's already generated...");
     }

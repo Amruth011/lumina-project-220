@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { LogOut, User, Search, ShieldCheck, Zap, Info, Mail } from "lucide-react";
+import { LogOut, User, Search, ShieldCheck, Zap, Info, Mail, Compass } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -39,6 +39,7 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
     { key: "profile" as Tab, icon: User, label: "Profile" },
     { key: "generator" as Tab, icon: Zap, label: "Generator" },
     { key: "cover-letter" as Tab, icon: Mail, label: "Cover Letter" },
+    { key: "roadmap" as Tab, icon: Compass, label: "Roadmap" },
     { key: "guide" as Tab, icon: Info, label: "Guide" },
   ];
 
