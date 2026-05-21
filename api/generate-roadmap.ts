@@ -200,7 +200,8 @@ OUTPUT SCHEMA (return ONLY this JSON — no markdown, no prose)
         {
           "title": string,
           "url": string,
-          "source_type": "documentation" | "video" | "course"
+          "source_type": "documentation" | "video" | "course",
+          "estimated_time": string (e.g. "45m", "2h", "15m")
         }
       ]
     }

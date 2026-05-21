@@ -883,10 +883,16 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                               <div className="w-6 h-6 rounded-lg bg-white border border-slate-100 flex items-center justify-center shrink-0">
                                 {getResourceIcon(res.source_type)}
                               </div>
-                              <div className="space-y-0.5 truncate">
+                              <div className="space-y-0.5 truncate flex-1">
                                 <p className="text-[13px] font-bold text-slate-700 truncate group-hover/phase:text-lumina-teal">{res.title}</p>
                                 <p className="text-[10px] font-semibold text-slate-400 capitalize tracking-tight leading-none">{res.source_type}</p>
                               </div>
+                              {res.estimated_time && (
+                                <div className="flex items-center gap-1.5 shrink-0 text-slate-400 bg-slate-100/80 px-2 py-1 rounded-md">
+                                  <Clock size={10} />
+                                  <span className="text-[9px] font-bold tracking-tight">{res.estimated_time}</span>
+                                </div>
+                              )}
                             </a>
                           ))}
                           

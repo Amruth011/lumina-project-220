@@ -17,6 +17,7 @@ export interface RoadmapItem {
     title: string;
     url: string;
     source_type: string;
+    estimated_time?: string;
   }[];
 }
 
