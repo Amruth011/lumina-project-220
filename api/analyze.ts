@@ -64,14 +64,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { messages, temperature, response_format } = req.body;
 
     for (const config of fallbackConfigs) {
-      let retries = 3;
-      let delay = 2000;
+      let retries = 2; // Reduced retries to save time
+      let delay = 1000;
       let success = false;
 
       while (retries > 0 && !success) {
         try {
           console.log(`API_PROXY: Attempting with ${config.model} on ${config.url}... (Retries left: ${retries})`);
           
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6000); // 6-second strict timeout
+
           // OpenAI doesn't always support the exact same response_format params as Groq, but type: "json_object" is safe
           const groqResponse = await fetch(config.url, {
             method: 'POST',
@@ -79,6 +82,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               'Authorization': `Bearer ${config.key}`,
               'Content-Type': 'application/json',
             },
+            signal: controller.signal,
             body: JSON.stringify({
               model: config.model,
               messages,
@@ -86,6 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               response_format: response_format?.type === 'json_object' ? { type: 'json_object' } : undefined,
             }),
           });
+          clearTimeout(timeoutId);
 
           if (groqResponse.ok) {
             resultData = await groqResponse.json();
@@ -116,7 +121,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         } catch (err) {
           lastError = err instanceof Error ? err.message : String(err);
           console.error(`API_PROXY: ${config.model} crash:`, lastError);
-          break;
+          
+          // If aborted (timed out), immediately skip retries for this slow engine and try the next one
+          if (lastError.includes("aborted") || lastError.includes("Abort") || lastError.includes("timeout")) {
+            console.log(`API_PROXY: ${config.model} timed out. Skipping further retries and falling back to next engine.`);
+            break;
+          }
+          
+          retries--;
+          if (retries > 0) {
+            await sleep(delay);
+          }
         }
       }
       if (success) break;

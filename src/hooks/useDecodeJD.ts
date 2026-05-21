@@ -40,9 +40,15 @@ export const useDecodeJD = () => {
       let error = null;
 
       try {
-        const response = await supabase.functions.invoke('decode-jd', {
+        const invokePromise = supabase.functions.invoke('decode-jd', {
           body: { jdText }
         });
+        
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Timeout: Supabase function took too long")), 12000)
+        );
+
+        const response = await Promise.race([invokePromise, timeoutPromise]) as { data: Record<string, unknown> | null; error: { message?: string; status?: number } | null };
         data = response.data;
         error = response.error;
         // If the edge function returned a JSON error payload, treat it as an error

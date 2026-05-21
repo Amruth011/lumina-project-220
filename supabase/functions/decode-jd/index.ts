@@ -104,9 +104,13 @@ NativeDeno.serve(async (req: Request) => {
     for (const model of fallbackModels) {
         try {
             console.log(`Lumina Engine: Activating Forensic Scan with ${model}...`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8-second strict timeout
+
             const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${groqKey}` },
+                signal: controller.signal,
                 body: JSON.stringify({
                     model: model,
                     messages: [
@@ -136,6 +140,7 @@ ${JSON.stringify(nakedSchema)}` }
                     max_tokens: 4000,
                 }),
             });
+            clearTimeout(timeoutId);
 
             if (!groqResponse.ok) {
                 const status = groqResponse.status;
@@ -152,7 +157,10 @@ ${JSON.stringify(nakedSchema)}` }
             if (resultText && resultText.trim().startsWith('{')) break;
         } catch (err: unknown) {
             lastError = err instanceof Error ? err.message : String(err);
-            if (lastError.includes("429") || lastError.includes("400") || lastError.includes("404")) continue;
+            console.error(`Lumina Engine Error with ${model}:`, lastError);
+            if (lastError.includes("aborted") || lastError.includes("Abort") || lastError.includes("429") || lastError.includes("400") || lastError.includes("404") || lastError.includes("timeout")) {
+                continue; 
+            }
             throw err;
         }
     }
