@@ -13,7 +13,7 @@ serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { jd, resume, tone, focus, length } = await req.json();
+    const { jd, resume, tone, focus, length, candidateName, companyName, jdTitle } = await req.json();
 
     const groqKey = Deno.env.get("GROQ_API_KEY")?.trim();
     if (!groqKey) {
@@ -23,11 +23,22 @@ serve(async (req: Request) => {
       });
     }
 
+    const safeName = candidateName || 'the candidate';
+    const safeCompany = companyName || 'the company';
+    const safeTitle = jdTitle || 'this role';
+
     const messages = [
       {
         role: "system",
         content: `You are an elite Silicon Valley Career Strategist specializing in "Human-First" candidacy narratives.
-Your goal is to write a high-impact, ready-to-send cover letter that is 100% ATS-optimized while sounding completely human and original.
+Your goal is to write ONLY the body paragraphs of a cover letter. The letter header, date, recipient info, salutation ("Dear..."), and closing signature are handled separately by the application.
+
+IMPORTANT OUTPUT RULES:
+- Output ONLY the body paragraphs of the letter. Nothing else.
+- Do NOT include any of these: "Dear...", "To:", "From:", "Subject:", "Date:", "Sincerely,", "Best regards,", "Yours truly,", "[Your Name]", "[Company Name]", any sign-off, any header, any salutation.
+- Do NOT use markdown formatting. No **bold**, no *italic*, no bullet points, no headers (#).
+- Output plain text paragraphs only, separated by blank lines.
+- Use the candidate's actual name "${safeName}" if referencing themselves, and the actual company name "${safeCompany}".
 
 Tone: ${tone || 'Professional'}
 Narrative Focus: ${focus || 'Technical Excellence'}
@@ -35,29 +46,29 @@ Length Mode: ${length || 'Concise'}
 
 STRICT HUMANIZATION GUIDELINES:
 1. NO AI-isms: Avoid words like "delve", "testament", "vibrant", "holistic", "meticulous", "passionate about", "unwavering", "synergy", "realm", "bespoke".
-2. NO ROBOTIC STRUCTURES: Avoid the typical "I am writing to express my interest..." or "In conclusion, I am confident...". Start with a punchy, unique hook.
+2. NO ROBOTIC STRUCTURES: Start with a punchy, unique hook. No generic openings.
 3. VARY SENTENCE DYNAMICS: Mix short, impactful sentences with longer, complex ones. Use active voice.
-4. BE SPECIFIC: Never use generic praise for the company. Reference specific technical challenges or industry shifts.
+4. BE SPECIFIC: Reference specific technical challenges or industry shifts relevant to the job.
 
 ATS ALIGNMENT STRATEGY:
-1. SEMANTIC MIRRORING: Identify the 5 most critical keywords/phrases from the Job Description and weave them naturally into the narrative.
+1. SEMANTIC MIRRORING: Identify the 5 most critical keywords/phrases from the Job Description and weave them naturally.
 2. METRIC-DRIVEN IMPACT: Quantify achievements using the resume data (e.g., "Increased pipeline efficiency by 40%").
-3. PROBLEM-SOLUTION FIT: Frame the candidate's skills as a direct solution to the JD's specific pain points.
+3. PROBLEM-SOLUTION FIT: Frame skills as a direct solution to the JD's specific pain points.
 4. ${focus === 'Leadership' ? 'Prioritize leadership metrics and strategic oversight.' : focus === 'Cultural' ? 'Highlight mission alignment and team-first philosophy.' : 'Prioritize technical stack proficiency and architectural impact.'}
 
-FORMAT:
-- Length: ${length === 'Concise' ? 'Under 250 words, extremely punchy.' : 'Under 450 words, providing more narrative depth and specific examples.'}
-- Structure: Salutation, Hook/Problem-Solution, Evidence/Metrics, Call to Action, Professional Sign-off.`
+LENGTH: ${length === 'Concise' ? 'Under 250 words, 3-4 tight paragraphs.' : 'Under 450 words, 4-5 paragraphs with specific examples.'}`
       },
       {
         role: "user",
-        content: `Job Description:
-${jd}
+        content: `Job Title: ${safeTitle}
+Company: ${safeCompany}
+Job Description Skills: ${jd}
 
-Candidate's Tailored Resume Data:
+Candidate Name: ${safeName}
+Candidate Resume Data:
 ${JSON.stringify(resume)}
 
-Write a compelling, ready-to-send cover letter.`
+Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no placeholders.`
       }
     ];
 

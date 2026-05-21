@@ -2749,8 +2749,18 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
     toast.loading("Synthesizing Cover Letter...", { id: "cl-gen" });
 
     // Build static system & user prompts matching Deno
+    const candidateName = editableHeader?.fullName || 'the candidate';
+    const targetCompany = companyName || 'the company';
+    
     const clSystemPrompt = `You are an elite Silicon Valley Career Strategist specializing in "Human-First" candidacy narratives.
-Your goal is to write a high-impact, ready-to-send cover letter that is 100% ATS-optimized while sounding completely human and original.
+Your goal is to write ONLY the body paragraphs of a cover letter. The letter header, date, recipient info, salutation ("Dear..."), and closing signature are handled separately by the application.
+
+IMPORTANT OUTPUT RULES:
+- Output ONLY the body paragraphs of the letter. Nothing else.
+- Do NOT include any of these: "Dear...", "To:", "From:", "Subject:", "Date:", "Sincerely,", "Best regards,", "Yours truly,", "[Your Name]", "[Company Name]", any sign-off, any header, any salutation.
+- Do NOT use markdown formatting. No **bold**, no *italic*, no bullet points, no headers (#).
+- Output plain text paragraphs only, separated by blank lines.
+- Use the candidate's actual name "${candidateName}" if referencing themselves, and the actual company name "${targetCompany}".
 
 Tone: ${tone || 'Professional'}
 Narrative Focus: ${clFocus || 'Technical Excellence'}
@@ -2758,27 +2768,27 @@ Length Mode: ${clLength || 'Concise'}
 
 STRICT HUMANIZATION GUIDELINES:
 1. NO AI-isms: Avoid words like "delve", "testament", "vibrant", "holistic", "meticulous", "passionate about", "unwavering", "synergy", "realm", "bespoke".
-2. NO ROBOTIC STRUCTURES: Avoid the typical "I am writing to express my interest..." or "In conclusion, I am confident...". Start with a punchy, unique hook.
+2. NO ROBOTIC STRUCTURES: Start with a punchy, unique hook. No generic openings.
 3. VARY SENTENCE DYNAMICS: Mix short, impactful sentences with longer, complex ones. Use active voice.
-4. BE SPECIFIC: Never use generic praise for the company. Reference specific technical challenges or industry shifts.
+4. BE SPECIFIC: Reference specific technical challenges or industry shifts relevant to the job.
 
 ATS ALIGNMENT STRATEGY:
-1. SEMANTIC MIRRORING: Identify the 5 most critical keywords/phrases from the Job Description and weave them naturally into the narrative.
+1. SEMANTIC MIRRORING: Identify the 5 most critical keywords/phrases from the Job Description and weave them naturally.
 2. METRIC-DRIVEN IMPACT: Quantify achievements using the resume data (e.g., "Increased pipeline efficiency by 40%").
-3. PROBLEM-SOLUTION FIT: Frame the candidate's skills as a direct solution to the JD's specific pain points.
+3. PROBLEM-SOLUTION FIT: Frame skills as a direct solution to the JD's specific pain points.
 4. ${clFocus === 'Leadership' ? 'Prioritize leadership metrics and strategic oversight.' : clFocus === 'Cultural' ? 'Highlight mission alignment and team-first philosophy.' : 'Prioritize technical stack proficiency and architectural impact.'}
 
-FORMAT:
-- Length: ${clLength === 'Concise' ? 'Under 250 words, extremely punchy.' : 'Under 450 words, providing more narrative depth and specific examples.'}
-- Structure: Salutation, Hook/Problem-Solution, Evidence/Metrics, Call to Action, Professional Sign-off.`;
+LENGTH: ${clLength === 'Concise' ? 'Under 250 words, 3-4 tight paragraphs.' : 'Under 450 words, 4-5 paragraphs with specific examples.'}`;
 
-    const clUserPrompt = `Job Description:
-${jdTitle + (jdSkills?.length ? ` with skills: ${jdSkills.map(s => s.skill).join(", ")}` : "")}
+    const clUserPrompt = `Job Title: ${jdTitle || 'Not specified'}
+Company: ${targetCompany}
+Key Skills: ${jdSkills?.length ? jdSkills.map(s => s.skill).join(", ") : 'Not specified'}
 
-Candidate's Tailored Resume Data:
+Candidate Name: ${candidateName}
+Candidate Resume Data:
 ${JSON.stringify(contextData)}
 
-Write a compelling, ready-to-send cover letter.`;
+Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no placeholders.`;
 
     try {
       let content = "";
@@ -2791,7 +2801,10 @@ Write a compelling, ready-to-send cover letter.`;
             resume: contextData,
             tone: tone,
             focus: clFocus,
-            length: clLength
+            length: clLength,
+            candidateName: candidateName,
+            companyName: targetCompany,
+            jdTitle: jdTitle || ''
           }
         });
 
@@ -2835,6 +2848,32 @@ Write a compelling, ready-to-send cover letter.`;
       }
 
       if (!content) throw new Error("AI returned empty content — try regenerating");
+
+      // Post-process: strip markdown formatting, remove duplicate headers/sign-offs, replace placeholders
+      content = content
+        // Remove markdown bold/italic
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/__([^_]+)__/g, '$1')
+        .replace(/_([^_]+)_/g, '$1')
+        // Remove any "Dear ..." or "To:" lines the AI might have added
+        .replace(/^(Dear\s+.+[,:]\s*\n?)/i, '')
+        .replace(/^(To:\s*.+\n?)/im, '')
+        .replace(/^(From:\s*.+\n?)/im, '')
+        .replace(/^(Subject:\s*.+\n?)/im, '')
+        .replace(/^(Date:\s*.+\n?)/im, '')
+        // Remove sign-off lines at the end
+        .replace(/(Sincerely|Best regards|Yours truly|Warm regards|Kind regards|Respectfully|Best|Regards)[,.]?\s*\n?.*/is, '')
+        // Replace common placeholders
+        .replace(/\[Your Name\]/gi, candidateName)
+        .replace(/\[Company Name\]/gi, targetCompany)
+        .replace(/\[Company\]/gi, targetCompany)
+        .replace(/\[Hiring Manager\]/gi, 'Hiring Manager')
+        .replace(/\[Position\]/gi, jdTitle || 'this role')
+        .replace(/\[Job Title\]/gi, jdTitle || 'this role')
+        // Clean up excessive whitespace
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
 
       setCoverLetter(content);
       setClActiveTab('cover-letter');
