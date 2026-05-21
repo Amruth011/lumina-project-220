@@ -150,10 +150,10 @@ XXX BANNED (Generic Directive):
 Every title must answer: What do I build? What constraint or production reality makes it non-trivial?
 
 ══════════════════════════════════════════
-RULE 2 — ANTIGRAVITY VERIFICATION PROMPT (MANDATORY FIELD)
+RULE 2 — AI VERIFICATION PROMPT (MANDATORY FIELD)
 ══════════════════════════════════════════
 Every task object MUST include a "verification_prompt" string field.
-This is a ready-to-paste expert reviewer prompt the user can drop into Antigravity after completing the task.
+This is a ready-to-paste expert reviewer prompt the user can drop into any AI assistant (ChatGPT, Claude, etc.) after completing the task.
 It must:
   a) Name a specific senior reviewer persona relevant to the technology used
   b) List 3-4 concrete code review criteria targeting the exact artefact built

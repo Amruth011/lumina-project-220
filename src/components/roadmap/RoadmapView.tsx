@@ -45,7 +45,7 @@ const loadingSteps = [
 ];
 
 // ── Verification Task Card ──────────────────────────────────────────────────
-// Self-contained card that renders a task row + the collapsible Antigravity
+// Self-contained card that renders a task row + the collapsible AI
 // verification prompt panel with a one-click copy-to-clipboard utility.
 interface VerificationTaskCardProps {
   task: RoadmapTask;
@@ -136,7 +136,7 @@ const VerificationTaskCard = ({ task, isTaskDone, onToggle }: VerificationTaskCa
         </div>
       </div>
 
-      {/* ── Collapsible Antigravity Verification Panel ── */}
+      {/* ── Collapsible AI Verification Panel ── */}
       <AnimatePresence>
         {verifyOpen && task.verification_prompt && (
           <motion.div
@@ -154,7 +154,7 @@ const VerificationTaskCard = ({ task, isTaskDone, onToggle }: VerificationTaskCa
                     <Bot size={11} className="text-violet-600" />
                   </div>
                   <span className="text-[10px] font-black uppercase tracking-widest text-violet-700">
-                    Antigravity Verification Prompt
+                    AI Code Review Prompt
                   </span>
                 </div>
 
@@ -164,7 +164,7 @@ const VerificationTaskCard = ({ task, isTaskDone, onToggle }: VerificationTaskCa
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider border transition-all duration-200 ${
                     copied
                       ? "bg-emerald-500/10 border-emerald-400/30 text-emerald-600"
-                      : "bg-white border-violet-200/60 text-violet-600 hover:bg-violet-500/10 hover:border-violet-300/60"
+                      : "bg-white border-violet-200/60 text-violet-600 hover:bg-violet-50/10 hover:border-violet-300/60"
                   }`}
                 >
                   {copied ? (
@@ -191,7 +191,7 @@ const VerificationTaskCard = ({ task, isTaskDone, onToggle }: VerificationTaskCa
               {/* Footer hint */}
               <div className="px-4 py-2 bg-violet-500/5 border-t border-violet-100/50">
                 <p className="text-[9px] text-violet-500/70 font-medium tracking-tight">
-                  Paste this prompt into Antigravity after completing the task to get expert-level code review feedback.
+                  Paste this prompt into ChatGPT, Claude, or any AI assistant after completing the task to get expert-level code review feedback.
                 </p>
               </div>
             </div>

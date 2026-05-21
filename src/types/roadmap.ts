@@ -3,7 +3,7 @@ export interface RoadmapTask {
   title: string;
   estimated_hours: number;
   is_completed: boolean;
-  /** Pre-formatted Antigravity verification prompt the user can paste back to evaluate their work */
+  /** Pre-formatted AI verification prompt the user can paste back to evaluate their work */
   verification_prompt?: string;
 }
 
