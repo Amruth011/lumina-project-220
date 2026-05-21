@@ -24,7 +24,11 @@ import {
   Layers,
   Cpu,
   Sparkles,
-  Rocket
+  Rocket,
+  Calendar,
+  Edit3,
+  PenTool,
+  Building2
 } from "lucide-react";
 import { GeneratedResume, VaultItem } from "@/types/jd";
 import { toast } from "sonner";
@@ -62,6 +66,7 @@ interface ResumePreviewProps {
   isGeneratingCL: boolean;
   onGenerateCL: () => void;
   onDownloadCL: (format: 'pdf' | 'doc') => void;
+  onUpdateCoverLetter?: (updatedCL: string) => void;
   onSave?: () => void;
   summaryLines?: number;
   experienceBullets?: number;
@@ -71,6 +76,8 @@ interface ResumePreviewProps {
   lineSpacing?: number;
   visibleSections?: Record<string, boolean>;
   sectionOrder?: string[];
+  companyName?: string;
+  jdTitle?: string;
 }
 
 const limitSummarySentences = (summaryText: string, maxSentences: number): string => {
@@ -299,6 +306,7 @@ export const ResumePreview = ({
   isGeneratingCL,
   onGenerateCL,
   onDownloadCL,
+  onUpdateCoverLetter,
   onSave,
   initialTab,
   nameFontSize,
@@ -312,7 +320,9 @@ export const ResumePreview = ({
   marginSize = 0.5,
   lineSpacing = 1.15,
   visibleSections,
-  sectionOrder
+  sectionOrder,
+  companyName,
+  jdTitle
 }: ResumePreviewProps) => {
   const defaultSectionOrder = ['SUMMARY', 'EDUCATION', 'EXPERIENCE', 'PRODUCTS', 'PROJECTS', 'LEADERSHIP', 'SKILLS', 'AWARDS', 'CERTIFICATIONS'];
   const actualSectionOrder = sectionOrder || defaultSectionOrder;
@@ -351,6 +361,35 @@ export const ResumePreview = ({
   const [showVaultPicker, setShowVaultPicker] = useState<{ section: 'experience' | 'projects' | 'products' | 'education' | 'certifications', index?: number } | null>(null);
   const [activeTab, setActiveTab] = useState<'resume' | 'cover-letter'>(initialTab || 'resume');
   
+  // ── Cover Letter Editing State ──
+  const [clDate, setClDate] = useState(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+  const [clRecipientName, setClRecipientName] = useState('Hiring Manager');
+  const [clRecipientTitle, setClRecipientTitle] = useState('');
+  const [clRecipientCompany, setClRecipientCompany] = useState(companyName || '');
+  const [clRecipientAddress, setClRecipientAddress] = useState('');
+  const [clSignatureName, setClSignatureName] = useState(header.fullName || '');
+  const [clIsEditingBody, setClIsEditingBody] = useState(false);
+  const [clEditableBody, setClEditableBody] = useState(coverLetter || '');
+  const [clShowEditor, setClShowEditor] = useState(true);
+  
+  // Sync editable body when cover letter changes from generation
+  useEffect(() => {
+    if (coverLetter) {
+      setClEditableBody(coverLetter);
+      setClIsEditingBody(false);
+    }
+  }, [coverLetter]);
+
+  // Sync signature name when header changes
+  useEffect(() => {
+    if (header.fullName) setClSignatureName(header.fullName);
+  }, [header.fullName]);
+
+  // Sync company name
+  useEffect(() => {
+    if (companyName) setClRecipientCompany(companyName);
+  }, [companyName]);
+
   const resumeRef = useRef<HTMLDivElement>(null);
   const [pageCount, setPageCount] = useState(1);
 
@@ -1826,6 +1865,7 @@ export const ResumePreview = ({
             className="w-full max-w-5xl mx-auto"
           >
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+              {/* ── LEFT PANEL: COVER LETTER EDITOR ── */}
               <div className="lg:col-span-4 space-y-6">
                 <div className="p-8 rounded-[2.5rem] bg-white border border-[#1E2A3A]/5 shadow-sm space-y-6">
                   <div className="flex items-center gap-4 border-b border-slate-100 pb-6">
@@ -1838,7 +1878,7 @@ export const ResumePreview = ({
                     </div>
                   </div>
                   <p className="text-xs text-[#1E2A3A]/60 leading-relaxed font-medium">
-                    This cover letter is synthesized using your **Tailored Resume Blueprint** and the target **Job Description** to ensure 100% thematic consistency.
+                    This cover letter is synthesized using your <strong>Tailored Resume Blueprint</strong> and the target <strong>Job Description</strong> to ensure 100% thematic consistency.
                   </p>
                   {!coverLetter && (
                     <button 
@@ -1850,45 +1890,209 @@ export const ResumePreview = ({
                     </button>
                   )}
                 </div>
+
+                {/* ── Cover Letter Edit Fields ── */}
+                {coverLetter && (
+                  <div className="p-6 rounded-[2.5rem] bg-white border border-[#1E2A3A]/5 shadow-sm space-y-5 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                      <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                        <Edit3 size={18} />
+                      </div>
+                      <div>
+                        <h4 className="font-serif font-bold text-sm text-[#1E2A3A]">Letter Details</h4>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-[#1E2A3A]/30">Customize Before Export</p>
+                      </div>
+                    </div>
+
+                    {/* Date */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                        <Calendar size={10} /> Date
+                      </label>
+                      <input
+                        value={clDate}
+                        onChange={(e) => setClDate(e.target.value)}
+                        className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 text-[11px] font-semibold outline-none border border-slate-200/50 focus:border-lumina-teal/30 focus:bg-white transition-all text-slate-800"
+                        placeholder="May 21, 2026"
+                      />
+                    </div>
+
+                    {/* Recipient Name */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                        <User size={10} /> Recipient Name
+                      </label>
+                      <input
+                        value={clRecipientName}
+                        onChange={(e) => setClRecipientName(e.target.value)}
+                        className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 text-[11px] font-semibold outline-none border border-slate-200/50 focus:border-lumina-teal/30 focus:bg-white transition-all text-slate-800"
+                        placeholder="e.g. John Smith / Hiring Manager"
+                      />
+                    </div>
+
+                    {/* Recipient Title */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                        <Briefcase size={10} /> Recipient Title
+                      </label>
+                      <input
+                        value={clRecipientTitle}
+                        onChange={(e) => setClRecipientTitle(e.target.value)}
+                        className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 text-[11px] font-semibold outline-none border border-slate-200/50 focus:border-lumina-teal/30 focus:bg-white transition-all text-slate-800"
+                        placeholder="e.g. Engineering Manager"
+                      />
+                    </div>
+
+                    {/* Recipient Company */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                        <Building2 size={10} /> Company
+                      </label>
+                      <input
+                        value={clRecipientCompany}
+                        onChange={(e) => setClRecipientCompany(e.target.value)}
+                        className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 text-[11px] font-semibold outline-none border border-slate-200/50 focus:border-lumina-teal/30 focus:bg-white transition-all text-slate-800"
+                        placeholder="e.g. Google"
+                      />
+                    </div>
+
+                    {/* Recipient Address */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                        <MapPin size={10} /> Company Address
+                      </label>
+                      <input
+                        value={clRecipientAddress}
+                        onChange={(e) => setClRecipientAddress(e.target.value)}
+                        className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 text-[11px] font-semibold outline-none border border-slate-200/50 focus:border-lumina-teal/30 focus:bg-white transition-all text-slate-800"
+                        placeholder="e.g. 1600 Amphitheatre Pkwy, Mountain View, CA"
+                      />
+                    </div>
+
+                    <div className="h-px bg-slate-100" />
+
+                    {/* Signature Name */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                        <PenTool size={10} /> Signature Name
+                      </label>
+                      <input
+                        value={clSignatureName}
+                        onChange={(e) => setClSignatureName(e.target.value)}
+                        className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 text-[11px] font-semibold outline-none border border-slate-200/50 focus:border-lumina-teal/30 focus:bg-white transition-all text-slate-800"
+                        placeholder="Your Full Name"
+                      />
+                    </div>
+
+                    {/* Edit Body Toggle */}
+                    <button
+                      onClick={() => {
+                        if (clIsEditingBody) {
+                          // Save edits
+                          onUpdateCoverLetter?.(clEditableBody);
+                          setClIsEditingBody(false);
+                          toast.success('Cover letter body updated!');
+                        } else {
+                          setClIsEditingBody(true);
+                        }
+                      }}
+                      className={`w-full py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 ${
+                        clIsEditingBody 
+                          ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-600' 
+                          : 'bg-slate-50 border border-slate-200/50 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {clIsEditingBody ? (
+                        <><Save size={12} /> Save Letter Body</>
+                      ) : (
+                        <><Edit3 size={12} /> Edit Letter Body</>
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
 
+              {/* ── RIGHT PANEL: COVER LETTER PREVIEW ── */}
               <div className="lg:col-span-8">
-                <div className="p-10 sm:p-16 rounded-[3rem] bg-white border border-[#1E2A3A]/5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] min-h-[700px] flex flex-col relative overflow-hidden">
-                  {isGeneratingCL ? (
-                    <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-                      <RotateCcw size={48} className="animate-spin text-lumina-teal" />
-                      <p className="text-xs font-black uppercase tracking-[0.3em] text-[#1E2A3A]/40">Synthesizing Narrative...</p>
-                    </div>
-                  ) : coverLetter ? (
-                    <div className="space-y-8 relative z-10">
-                      <div className="space-y-1">
-                        <h2 className="text-2xl font-bold text-[#1E2A3A]">{localHeader.fullName}</h2>
-                        <p className="text-sm text-[#1E2A3A]/50 font-medium">{localHeader.location} | {localHeader.phone} | {localHeader.email}</p>
+                <div className="w-full flex-1 perspective-2000 rounded-[2.5rem] shadow-inner bg-slate-100/50 p-4 sm:p-6 md:p-8 border border-white/40">
+                  <div className="relative bg-white border border-[#1E2A3A]/5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.12)] mx-auto min-h-[700px] flex flex-col" style={{ maxWidth: '850px', padding: '1in' }}>
+                    {isGeneratingCL ? (
+                      <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+                        <RotateCcw size={48} className="animate-spin text-lumina-teal" />
+                        <p className="text-xs font-black uppercase tracking-[0.3em] text-[#1E2A3A]/40">Synthesizing Narrative...</p>
                       </div>
-                      <div className="h-px bg-slate-100" />
-                      <div className="text-sm text-[#1E2A3A]/80 font-serif italic leading-[1.8] whitespace-pre-wrap">
-                        {coverLetter}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center space-y-8 text-center px-12">
-                      <div className="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center text-slate-200">
-                        <Mail size={40} />
-                      </div>
-                      <div className="space-y-3">
-                        <h5 className="text-lg font-serif font-bold text-[#1E2A3A]">Letter Vault Empty</h5>
-                        <p className="text-sm text-[#1E2A3A]/40 max-w-sm leading-relaxed">
-                          Your resume is ready! Now, let's craft the perfect narrative to open the door.
+                    ) : coverLetter ? (
+                      <div className="space-y-6 relative z-10 flex flex-col flex-1" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                        {/* ── Sender Info (From Header) ── */}
+                        <div className="space-y-0.5">
+                          <p className="text-[13px] font-bold text-[#1E2A3A]">{localHeader.fullName}</p>
+                          {localHeader.location && <p className="text-[11px] text-[#1E2A3A]/70">{localHeader.location}</p>}
+                          {localHeader.phone && <p className="text-[11px] text-[#1E2A3A]/70">{localHeader.phone}</p>}
+                          {localHeader.email && <p className="text-[11px] text-[#1E2A3A]/70">{localHeader.email}</p>}
+                          {localHeader.linkedin && <p className="text-[11px] text-blue-600">{localHeader.linkedin}</p>}
+                        </div>
+
+                        {/* ── Date ── */}
+                        <p className="text-[12px] text-[#1E2A3A]/80">{clDate}</p>
+
+                        {/* ── Recipient Info ── */}
+                        <div className="space-y-0.5">
+                          {clRecipientName && <p className="text-[12px] text-[#1E2A3A]/80">{clRecipientName}</p>}
+                          {clRecipientTitle && <p className="text-[12px] text-[#1E2A3A]/70 italic">{clRecipientTitle}</p>}
+                          {clRecipientCompany && <p className="text-[12px] text-[#1E2A3A]/80">{clRecipientCompany}</p>}
+                          {clRecipientAddress && <p className="text-[12px] text-[#1E2A3A]/70">{clRecipientAddress}</p>}
+                        </div>
+
+                        {/* ── Salutation ── */}
+                        <p className="text-[12px] text-[#1E2A3A]">
+                          Dear {clRecipientName || 'Hiring Manager'},
                         </p>
+
+                        {/* ── Letter Body ── */}
+                        {clIsEditingBody ? (
+                          <textarea
+                            value={clEditableBody}
+                            onChange={(e) => setClEditableBody(e.target.value)}
+                            className="flex-1 w-full text-[12px] text-[#1E2A3A]/80 leading-[1.8] outline-none border border-lumina-teal/20 rounded-xl p-4 bg-lumina-teal/[0.02] min-h-[400px] resize-y transition-all focus:border-lumina-teal/40 focus:shadow-lg focus:shadow-lumina-teal/5"
+                            style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+                          />
+                        ) : (
+                          <div className="text-[12px] text-[#1E2A3A]/80 leading-[1.8] whitespace-pre-wrap flex-1">
+                            {clEditableBody || coverLetter}
+                          </div>
+                        )}
+
+                        {/* ── Closing & Signature ── */}
+                        <div className="space-y-4 pt-4">
+                          <p className="text-[12px] text-[#1E2A3A]">Sincerely,</p>
+                          <div className="space-y-0.5">
+                            <p className="text-[13px] font-semibold text-[#1E2A3A] italic" style={{ fontFamily: '"Brush Script MT", "Segoe Script", cursive' }}>
+                              {clSignatureName || localHeader.fullName}
+                            </p>
+                            <p className="text-[12px] font-medium text-[#1E2A3A]">{clSignatureName || localHeader.fullName}</p>
+                          </div>
+                        </div>
                       </div>
-                      <button 
-                        onClick={onGenerateCL}
-                        className="px-10 py-4 rounded-2xl bg-lumina-teal text-white text-[10px] font-black uppercase tracking-[0.3em] shadow-xl shadow-lumina-teal/20 hover:scale-105 transition-all"
-                      >
-                        Synthesize Narrative
-                      </button>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="flex-1 flex flex-col items-center justify-center space-y-8 text-center px-12">
+                        <div className="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center text-slate-200">
+                          <Mail size={40} />
+                        </div>
+                        <div className="space-y-3">
+                          <h5 className="text-lg font-serif font-bold text-[#1E2A3A]">Letter Vault Empty</h5>
+                          <p className="text-sm text-[#1E2A3A]/40 max-w-sm leading-relaxed">
+                            Your resume is ready! Now, let's craft the perfect narrative to open the door.
+                          </p>
+                        </div>
+                        <button 
+                          onClick={onGenerateCL}
+                          className="px-10 py-4 rounded-2xl bg-lumina-teal text-white text-[10px] font-black uppercase tracking-[0.3em] shadow-xl shadow-lumina-teal/20 hover:scale-105 transition-all"
+                        >
+                          Synthesize Narrative
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

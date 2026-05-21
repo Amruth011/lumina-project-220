@@ -3410,6 +3410,9 @@ Write a compelling, ready-to-send cover letter.`;
               isGeneratingCL={isGeneratingCL}
               onGenerateCL={generateCoverLetter}
               onDownloadCL={handleDownloadCL}
+              onUpdateCoverLetter={(updatedCL: string) => setCoverLetter(updatedCL)}
+              companyName={companyName}
+              jdTitle={jdTitle}
               initialTab={forceTab}
               nameFontSize={nameFontSize}
               headlineFontSize={headlineFontSize}
