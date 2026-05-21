@@ -98,14 +98,14 @@ const VerificationTaskCard = ({ task, isTaskDone, onToggle }: VerificationTaskCa
         </span>
 
         <div className="flex-1 min-w-0 space-y-1.5">
-          <p className={`text-[12px] font-bold leading-normal transition-all duration-500 print-text ${
+          <p className={`text-[13px] font-bold leading-normal transition-all duration-500 print-text ${
             isTaskDone ? "line-through text-slate-400 print-task-checked" : "text-slate-700"
           }`}>
             {task.title}
           </p>
 
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1.5 text-[9px] font-semibold text-slate-400 tracking-tight">
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 tracking-tight">
               <Clock size={10} />
               <span>{task.estimated_hours}h allocated</span>
             </div>
@@ -534,7 +534,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
               {loadingSteps[loadingStep]}
             </motion.h4>
           </AnimatePresence>
-          <p className="text-[10px] text-slate-400 leading-normal">
+          <p className="text-[12px] text-slate-500 leading-relaxed">
             Synthesizing master vault analytics against Job requirements to formulate a customized training regimen. This can take up to 45 seconds.
           </p>
         </div>
@@ -824,10 +824,10 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                 {/* Phase header info */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-5">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-lumina-teal">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-lumina-teal">
                       Module {phase.phase_number} • {phase.focus_area}
                     </span>
-                    <h3 className="text-base font-black tracking-tight text-slate-800 transition-colors print-title">
+                    <h3 className="text-lg font-black tracking-tight text-slate-800 transition-colors print-title">
                       {phase.phase_title}
                     </h3>
                   </div>
@@ -854,9 +854,9 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                     <div className="p-5 rounded-2xl border border-lumina-teal/10 bg-lumina-teal/5 relative">
                       <div className="flex items-center gap-2 mb-2">
                         <TrendingUp size={14} className="text-lumina-teal" />
-                        <span className="text-[10px] font-black uppercase tracking-wider text-lumina-teal">Gaps Addressed</span>
+                        <span className="text-[11px] font-black uppercase tracking-wider text-lumina-teal">Gaps Addressed</span>
                       </div>
-                      <p className="text-[11px] leading-relaxed text-slate-600">
+                      <p className="text-[13px] leading-relaxed text-slate-600">
                         {phase.gap_addressed}
                       </p>
                     </div>
@@ -878,8 +878,8 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                                 {getResourceIcon(res.source_type)}
                               </div>
                               <div className="space-y-0.5 truncate">
-                                <p className="text-[11px] font-bold text-slate-700 truncate group-hover/phase:text-lumina-teal">{res.title}</p>
-                                <p className="text-[9px] font-semibold text-slate-400 capitalize tracking-tight leading-none">{res.source_type}</p>
+                                <p className="text-[13px] font-bold text-slate-700 truncate group-hover/phase:text-lumina-teal">{res.title}</p>
+                                <p className="text-[10px] font-semibold text-slate-400 capitalize tracking-tight leading-none">{res.source_type}</p>
                               </div>
                             </a>
                           ))}
@@ -887,7 +887,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                           {/* Print-visible resources */}
                           <ul className="hidden print:block list-disc pl-4 space-y-1">
                             {phase.deep_dive_resources.map((res, rIdx) => (
-                              <li key={rIdx} className="text-[10px] text-slate-500">
+                              <li key={rIdx} className="text-[12px] text-slate-500">
                                 <strong className="print-text">{res.title}</strong> ({res.source_type}): <span className="print-resource-link">{res.url}</span>
                               </li>
                             ))}
@@ -899,7 +899,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
 
                   {/* Right column: Actionable Checklist (8 cols) */}
                   <div className="lg:col-span-8 space-y-4">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 pl-1 block">Actionable Checklist</span>
+                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 pl-1 block">Actionable Checklist</span>
                     <div className="space-y-2.5">
                       {phase.actionable_tasks.map((task, taskIdx) => {
                         const isTaskDone = completedTaskIds.has(task.id);
