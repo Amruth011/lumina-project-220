@@ -94,76 +94,132 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Server configuration error: Groq API key is not configured.' });
   }
 
-  // 6. Build the prompt targeting the exact JSON structure
-  const formattedVaultEntries = Array.isArray(vault_data?.items) 
-    ? vault_data.items.map((item: VaultItemInput) => 
+  // 6. Build the elite prompt targeting the exact JSON structure
+  const formattedVaultEntries = Array.isArray(vault_data?.items)
+    ? vault_data.items.map((item: VaultItemInput) =>
         `- [${(item.type || 'UNKNOWN').toUpperCase()}] Title: "${item.title || 'Not Specified'}" at "${item.organization || 'Not Specified'}" (Period: ${item.period || 'Not Specified'})\n  Description: ${item.description || ''}\n  Bullets: ${Array.isArray(item.bullets) ? item.bullets.join('; ') : ''}`
       ).join('\n\n')
     : 'No vault entries recorded.';
 
-  const formattedVaultProfile = vault_data?.profile 
+  const formattedVaultProfile = vault_data?.profile
     ? `Full Name: ${vault_data.profile.full_name || ''}\nProfessional Summary: ${vault_data.profile.summary_master || ''}`
     : 'No master profile summary recorded.';
 
-  const systemMessage = `You are a world-class career strategist and technology upskilling coach.
-Your job is to analyze the exact skill gaps between a Job Description (JD) and a candidate's recorded experience, skills, and highlights (Vault Data).
-Then, you must construct a highly detailed, professional, and practical week-by-week study syllabus (Roadmap) tailored exactly to the candidate's requested duration.
+  // Duration → time-budget calibration table injected into the prompt
+  const durationBudgetTable: Record<string, { hours_per_task: string; phase_count: string; depth: string }> = {
+    '1 Week':   { hours_per_task: '1.5-2',  phase_count: '3-4',   depth: 'hyper-focused, single-skill micro-builds only. Each task must be completable in one sitting.' },
+    '2 Weeks':  { hours_per_task: '2-3',    phase_count: '4-5',   depth: 'tight, daily-sprint sized builds with clear start/finish artefacts.' },
+    '3 Weeks':  { hours_per_task: '3-4',    phase_count: '5-6',   depth: 'multi-day feature builds with basic integration.' },
+    '4 Weeks':  { hours_per_task: '4-6',    phase_count: '6-8',   depth: 'feature-complete mini-projects with testing and documentation.' },
+    '2 Months': { hours_per_task: '6-8',    phase_count: '8-10',  depth: 'full sub-system implementations with CI integration and peer-review readiness.' },
+    '3 Months': { hours_per_task: '8-12',   phase_count: '10-12', depth: 'end-to-end module designs including architecture decisions and load considerations.' },
+    '6 Months': { hours_per_task: '12-18',  phase_count: '12-16', depth: 'production-grade systems with observability, fault-tolerance, and scalability baked in.' },
+    '1 Year':   { hours_per_task: '15-20',  phase_count: '16-20', depth: 'full-stack architecture designs with deployment pipelines, monitoring, and team-scale documentation.' },
+  };
+  const budget = durationBudgetTable[duration] || { hours_per_task: '4-6', phase_count: '6-8', depth: 'feature-complete mini-projects.' };
 
-You must return ONLY a raw JSON object matching this schema definition exactly:
+  const systemMessage = `You are an elite-tier technical career architect operating at the 0.01% level.
+Your singular mission: transform skill gaps into a ruthlessly actionable, production-grade implementation curriculum.
+Generic study plans are STRICTLY FORBIDDEN. Every output must read like a senior engineer designed it.
+
+══════════════════════════════════════════
+RULE 1 — PRODUCTION MICRO-PROJECT TASKS (NON-NEGOTIABLE)
+══════════════════════════════════════════
+Every task in "actionable_tasks" MUST be a concrete, scenario-based micro-project tied directly to the target role.
+The task must specify: WHAT to build, HOW it works, and WHAT production constraint applies.
+
+XXX BANNED (Generic Directive):
+  "Learn Docker fundamentals"
+  "Practice TypeScript generics"
+  "Study system design concepts"
+
+✓✓✓ REQUIRED (Elite Micro-Project):
+  "Containerise a Node.js REST API with a multi-stage Dockerfile that reduces the final image to under 80 MB, configure a non-root user, and add a health-check endpoint consumed by Docker Compose."
+  "Write a generic Result<T, E> type in TypeScript that models Ok/Err variants, implement a safe fetch wrapper using it, and test exhaustive narrowing with vitest."
+  "Design a URL-shortener at 10k RPS: sketch the consistent-hashing ring, justify the read/write replica split, and document the cache-aside strategy with TTL rationale."
+
+Every title must answer: What do I build? What constraint or production reality makes it non-trivial?
+
+══════════════════════════════════════════
+RULE 2 — ANTIGRAVITY VERIFICATION PROMPT (MANDATORY FIELD)
+══════════════════════════════════════════
+Every task object MUST include a "verification_prompt" string field.
+This is a ready-to-paste expert reviewer prompt the user can drop into Antigravity after completing the task.
+It must:
+  a) Name a specific senior reviewer persona relevant to the technology used
+  b) List 3-4 concrete code review criteria targeting the exact artefact built
+  c) Include at least one adversarial challenge (e.g. "What happens when X fails?", "How does this behave under Y load?")
+
+Example format:
+  "Act as a Staff-level Site Reliability Engineer. Review my multi-stage Dockerfile for: (1) layer-caching efficiency and whether non-root user setup is correct, (2) whether the COPY --chown directive avoids permission escalation, (3) final image size — can you spot any unnecessary layers? Adversarial: what happens when the health-check endpoint itself is the source of the crash loop?"
+
+══════════════════════════════════════════
+RULE 3 — STRICT TIME-BUDGET CALIBRATION
+══════════════════════════════════════════
+For the requested duration "${duration}":
+- estimated_hours per task: ${budget.hours_per_task} hours
+- Target phase count: ${budget.phase_count} phases
+- Task depth level: ${budget.depth}
+
+Do NOT generate tasks that overflow or underflow this time-budget. A 1-week roadmap must NOT have 15-hour tasks. A 1-year roadmap must NOT have 2-hour trivial exercises.
+
+══════════════════════════════════════════
+OUTPUT SCHEMA (return ONLY this JSON — no markdown, no prose)
+══════════════════════════════════════════
 {
-  "target_role": string (the exact job title matching the scanned JD),
-  "duration": string (the requested duration),
-  "skill_gaps_identified": string[] (list of concrete skills, tools, or concepts missing from the candidate's profile compared to the JD),
+  "target_role": string,
+  "duration": string,
+  "skill_gaps_identified": string[],
   "timeline": [
     {
-      "phase_number": number (1-indexed phase number),
-      "phase_title": string (engaging title e.g. "Phase 1: React State & Custom Hooks Mastery"),
-      "focus_area": string (e.g. "Advanced State Management"),
-      "gap_addressed": string (explain precisely which identified gap from the candidate's profile is addressed by this phase),
+      "phase_number": number,
+      "phase_title": string (e.g. "Phase 2: Stateful Streaming Pipelines"),
+      "focus_area": string,
+      "gap_addressed": string,
       "actionable_tasks": [
         {
-          "id": string (unique short ID like "task-1-1"),
-          "title": string (very specific actionable task title e.g., "Build a high-performance custom hook using useReducer to manage complex form validation state"),
-          "estimated_hours": number (realistic estimated effort e.g., 4),
+          "id": string (e.g. "task-2-1"),
+          "title": string (MUST be a concrete micro-project per Rule 1 — no generic verbs like 'learn', 'study', 'read'),
+          "estimated_hours": number (MUST fall within ${budget.hours_per_task} per Rule 3),
+          "verification_prompt": string (MUST follow Rule 2 format — senior persona + 3 review criteria + 1 adversarial),
           "is_completed": false
         }
       ],
       "deep_dive_resources": [
         {
-          "title": string (highly specific learning reference e.g., "React Docs: Reusing Logic with Custom Hooks"),
-          "url": string (high-quality URL e.g., "https://react.dev/learn/reusing-logic-with-custom-hooks"),
-          "source_type": string (must be "documentation", "video", or "course")
+          "title": string,
+          "url": string,
+          "source_type": "documentation" | "video" | "course"
         }
       ]
     }
   ]
 }
 
-CRITICAL DIRECTIVES:
-1. Focus heavily on providing high-impact, realistic upskilling items.
-2. DO NOT output any explanations, markdown code fences (\`\`\`json), comments, or extra conversational text.
-3. The response MUST be ONLY valid parseable JSON starting with '{' and ending with '}'.`;
+FINAL ENFORCEMENT: The JSON must begin with '{' and end with '}'. No triple backticks. No commentary. Only parseable JSON.`;
 
-  const userMessage = `Please generate my adaptive roadmap based on the following metrics:
+  const userMessage = `Generate my elite adaptive roadmap:
 
-JOB DESCRIPTION (Scanned JD Data):
-- Target Role/Title: ${jd_data.title || 'Not Specified'}
-- Target Skills: ${Array.isArray(jd_data.skills) ? jd_data.skills.join(', ') : 'Not Specified'}
-- Description: ${jd_data.description || 'Not Specified'}
+TARGET ROLE: ${jd_data.title || 'Not Specified'}
+REQUIRED SKILLS FROM JD: ${Array.isArray(jd_data.skills) ? jd_data.skills.join(', ') : 'Not Specified'}
+JD DESCRIPTION: ${(jd_data.description || '').substring(0, 4000)}
 
 CANDIDATE VAULT PROFILE:
 ${formattedVaultProfile}
 
-CANDIDATE VAULT RECORDS:
+CANDIDATE VAULT RECORDS (existing experience — DO NOT repeat these as tasks):
 ${formattedVaultEntries}
 
-REQUESTED ROADMAP DURATION:
-${duration} (Please adjust the density and count of phases/tasks to fit this exact timeframe logically)`;
+REQUESTED DURATION: ${duration}
+TIME BUDGET: ${budget.hours_per_task} hours/task · ${budget.phase_count} phases · ${budget.depth}
 
+Generate the roadmap now. Every task must be a production micro-project with a verification_prompt. Zero generic directives.`;
+
+  // Lead with the most capable model for this complex structured-output task
   const fallbackModels = [
+    'llama-3.3-70b-versatile',
     'llama-3.1-8b-instant',
     'gemma2-9b-it',
-    'llama-3.3-70b-versatile'
   ];
 
   let rawResponseText = '';

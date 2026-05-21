@@ -16,7 +16,10 @@ import {
   RefreshCw, 
   Trophy, 
   Info,
-  ChevronRight
+  ChevronRight,
+  Copy,
+  Bot,
+  ChevronDown
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,6 +43,165 @@ const loadingSteps = [
   "Compiling deep-dive resources...",
   "Finalizing customized roadmap payload..."
 ];
+
+// ── Verification Task Card ──────────────────────────────────────────────────
+// Self-contained card that renders a task row + the collapsible Antigravity
+// verification prompt panel with a one-click copy-to-clipboard utility.
+interface VerificationTaskCardProps {
+  task: RoadmapTask;
+  isTaskDone: boolean;
+  onToggle: () => void;
+}
+
+const VerificationTaskCard = ({ task, isTaskDone, onToggle }: VerificationTaskCardProps) => {
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!task.verification_prompt) return;
+    navigator.clipboard.writeText(task.verification_prompt).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleToggleVerify = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setVerifyOpen((prev) => !prev);
+  };
+
+  return (
+    <div className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
+      isTaskDone
+        ? "bg-lumina-teal/5 border-lumina-teal/20"
+        : "bg-slate-50/30 border-slate-100 hover:border-lumina-teal/20 hover:bg-lumina-teal/5"
+    }`}>
+      {/* ── Top Row: toggle checkbox + task info ── */}
+      <div
+        role="button"
+        onClick={onToggle}
+        className="flex items-start gap-4 p-4 text-left w-full cursor-pointer"
+      >
+        {/* Toggle Box */}
+        <div className={`w-5 h-5 mt-0.5 rounded-md border flex items-center justify-center shrink-0 transition-all duration-300 no-print ${
+          isTaskDone
+            ? "bg-lumina-teal border-lumina-teal text-white shadow-lg shadow-emerald-500/10"
+            : "border-slate-200 hover:border-lumina-teal/40 bg-white"
+        }`}>
+          {isTaskDone && <Check size={11} className="stroke-[3.5px]" />}
+        </div>
+
+        {/* Print checkbox */}
+        <span className="hidden print:inline-block border border-slate-400 w-3 h-3 text-[8px] leading-none text-center mr-2 shrink-0 mt-0.5">
+          {isTaskDone ? "X" : " "}
+        </span>
+
+        <div className="flex-1 min-w-0 space-y-1.5">
+          <p className={`text-[12px] font-bold leading-normal transition-all duration-500 print-text ${
+            isTaskDone ? "line-through text-slate-400 print-task-checked" : "text-slate-700"
+          }`}>
+            {task.title}
+          </p>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5 text-[9px] font-semibold text-slate-400 tracking-tight">
+              <Clock size={10} />
+              <span>{task.estimated_hours}h allocated</span>
+            </div>
+
+            {/* Verification prompt toggle — only shown when field exists */}
+            {task.verification_prompt && (
+              <button
+                type="button"
+                onClick={handleToggleVerify}
+                className={`no-print flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border transition-all duration-200 ${
+                  verifyOpen
+                    ? "bg-violet-500/10 border-violet-400/30 text-violet-600"
+                    : "bg-slate-100 border-slate-200 text-slate-400 hover:bg-violet-500/10 hover:border-violet-400/30 hover:text-violet-600"
+                }`}
+              >
+                <Bot size={9} />
+                Verify
+                <motion.span
+                  animate={{ rotate: verifyOpen ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="inline-flex"
+                >
+                  <ChevronDown size={9} />
+                </motion.span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Collapsible Antigravity Verification Panel ── */}
+      <AnimatePresence>
+        {verifyOpen && task.verification_prompt && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="overflow-hidden no-print"
+          >
+            <div className="mx-4 mb-4 rounded-xl border border-violet-200/60 bg-gradient-to-br from-violet-50/80 to-slate-50/60 overflow-hidden">
+              {/* Panel header */}
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-violet-100/60">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md bg-violet-500/10 border border-violet-300/40 flex items-center justify-center">
+                    <Bot size={11} className="text-violet-600" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-violet-700">
+                    Antigravity Verification Prompt
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider border transition-all duration-200 ${
+                    copied
+                      ? "bg-emerald-500/10 border-emerald-400/30 text-emerald-600"
+                      : "bg-white border-violet-200/60 text-violet-600 hover:bg-violet-500/10 hover:border-violet-300/60"
+                  }`}
+                >
+                  {copied ? (
+                    <>
+                      <Check size={9} className="stroke-[3px]" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={9} />
+                      Copy
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Prompt code block */}
+              <div className="px-4 py-3">
+                <p className="text-[11px] leading-relaxed text-slate-600 font-mono whitespace-pre-wrap break-words select-all">
+                  {task.verification_prompt}
+                </p>
+              </div>
+
+              {/* Footer hint */}
+              <div className="px-4 py-2 bg-violet-500/5 border-t border-violet-100/50">
+                <p className="text-[9px] text-violet-500/70 font-medium tracking-tight">
+                  Paste this prompt into Antigravity after completing the task to get expert-level code review feedback.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+// ───────────────────────────────────────────────────────────────────────────
 
 export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
   const { user } = useAuth();
@@ -742,45 +904,12 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                       {phase.actionable_tasks.map((task, taskIdx) => {
                         const isTaskDone = completedTaskIds.has(task.id);
                         return (
-                          <div
+                          <VerificationTaskCard
                             key={task.id}
-                            role="button"
-                            onClick={() => handleToggleTask(phaseIdx, taskIdx, task.id)}
-                            className={`flex items-start gap-4 p-4 rounded-2xl border transition-all duration-300 text-left w-full ${
-                              isTaskDone
-                                ? "bg-lumina-teal/5 border-lumina-teal/20 hover:bg-lumina-teal/10"
-                                : "bg-slate-50/30 border-slate-100 hover:border-lumina-teal/20 hover:bg-lumina-teal/5"
-                            }`}
-                          >
-                            {/* Toggle Box */}
-                            <div className={`w-5.5 h-5.5 rounded-md border flex items-center justify-center shrink-0 transition-all duration-300 no-print ${
-                              isTaskDone 
-                                ? "bg-lumina-teal border-lumina-teal text-white shadow-lg shadow-emerald-500/10 scale-102" 
-                                : "border-slate-200 hover:border-lumina-teal/40 bg-white"
-                            }`}>
-                              {isTaskDone && <Check size={11} className="stroke-[3.5px]" />}
-                            </div>
-
-                            {/* Print-visible native checkbox representation */}
-                            <span className="hidden print:inline-block border border-slate-400 w-3 h-3 text-[8px] leading-none text-center mr-2 shrink-0">
-                              {isTaskDone ? "X" : " "}
-                            </span>
-
-                            <div className="space-y-1">
-                              <p className={`text-[12px] font-bold leading-normal transition-all duration-500 print-text ${
-                                isTaskDone 
-                                  ? "line-through text-slate-400 print-task-checked" 
-                                  : "text-slate-700"
-                              }`}>
-                                {task.title}
-                              </p>
-                              
-                              <div className="flex items-center gap-1.5 text-[9px] font-semibold text-slate-400 tracking-tight pl-0.5">
-                                <Clock size={10} />
-                                <span>{task.estimated_hours} Hours Allocated</span>
-                              </div>
-                            </div>
-                          </div>
+                            task={task}
+                            isTaskDone={isTaskDone}
+                            onToggle={() => handleToggleTask(phaseIdx, taskIdx, task.id)}
+                          />
                         );
                       })}
                     </div>
