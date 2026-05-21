@@ -254,23 +254,26 @@ const MOCK_VAULT = [
     await page.screenshot({ path: screenshotPath2, fullPage: true });
     console.log(`Saved screenshot to: ${screenshotPath2}`);
 
+    console.log("Waiting for candidacy hub tab selector...");
+    const clTabSelector = 'div.shadow-inner button:has-text("Cover Letter")';
+    await page.waitForSelector(clTabSelector, { timeout: 20000 });
+    
     console.log("Clicking 'Cover Letter' button in candidacy hub tab selector...");
-    try {
-      await page.click('div.shadow-inner button:has-text("Cover Letter")', { timeout: 5000 });
-    } catch (e) {
-      console.log("Candidacy hub selector failed, trying first available 'Cover Letter' button...");
-      await page.locator('button:has-text("Cover Letter")').first().click();
-    }
+    await page.click(clTabSelector);
     await page.waitForTimeout(2000);
 
     console.log("Checking if Synthesize Cover Letter or Generate Now is visible...");
-    const synthesizeBtn = await page.$('button:has-text("Synthesize Cover Letter")');
+    const synthesizeBtn = await page.$('div.perspective-2000 button:has-text("Synthesize Cover Letter")');
+    const synthesizeBtnGeneral = await page.$('button:has-text("Synthesize Cover Letter")');
     const generateNowBtn = await page.$('button:has-text("Generate Now")');
     const synthesizeLetterBtn = await page.$('button:has-text("Synthesize Letter")');
     
     if (synthesizeBtn && await synthesizeBtn.isVisible()) {
-      console.log("Clicking 'Synthesize Cover Letter' in header...");
+      console.log("Clicking 'Synthesize Cover Letter' in preview hub...");
       await synthesizeBtn.click();
+    } else if (synthesizeBtnGeneral && await synthesizeBtnGeneral.isVisible()) {
+      console.log("Clicking 'Synthesize Cover Letter'...");
+      await synthesizeBtnGeneral.click();
     } else if (generateNowBtn && await generateNowBtn.isVisible()) {
       console.log("Clicking 'Generate Now' in sidebar...");
       await generateNowBtn.click();
@@ -282,8 +285,8 @@ const MOCK_VAULT = [
     }
     
     console.log("Synthesizing cover letter... Waiting for LLM generation response...");
-    // We wait for the 'Save Changes' button in the Letter Body collapsible editor, which appears when generated!
-    await page.waitForSelector('button:has-text("Save Changes")', { timeout: 60000 });
+    // Wait for the A4 Preview letter body container to render (which only mounts when coverLetter is truthy)
+    await page.waitForSelector('div.whitespace-pre-wrap.flex-1', { timeout: 60000 });
     console.log("SUCCESS: Cover Letter synthesized successfully!");
 
     console.log("Verifying clean letter body rendering...");
@@ -305,6 +308,14 @@ const MOCK_VAULT = [
     
     console.log(`Validation - Contains raw markdown: ${hasMarkdown ? '❌ FAIL' : '✅ PASS'}`);
     console.log(`Validation - Contains square brackets: ${hasPlaceholders ? '❌ FAIL' : '✅ PASS'}`);
+
+    console.log("Expanding 'Letter Body' editor panel on the left...");
+    try {
+      await page.click('h4:has-text("Letter Body")', { timeout: 5000 });
+      await page.waitForTimeout(1000);
+    } catch (e) {
+      console.log("Could not expand Letter Body collapsible section.");
+    }
 
     console.log("Capturing Cover Letter verification screenshot showing left editor panel & right justified A4...");
     const screenshotPath3 = path.join(ARTIFACTS_DIR, 'step3_cover_letter.png');

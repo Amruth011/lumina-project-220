@@ -75,7 +75,7 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
     const fallbackModels = [
       "llama-3.1-8b-instant",
       "llama-3.3-70b-versatile",
-      "llama3-70b-8192"
+      "llama-3.3-70b-specdec"
     ];
 
     let resultData = null;

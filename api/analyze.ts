@@ -38,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ? [req.body.model] 
     : [
         'llama-3.3-70b-versatile',
-        'llama3-70b-8192',
+        'llama-3.3-70b-specdec',
         'gemma2-9b-it',
         'llama-3.1-8b-instant'
       ];
