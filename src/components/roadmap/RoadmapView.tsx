@@ -178,26 +178,30 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       });
 
       if (!response.ok) {
-        let errMsg = "Failed to compile roadmap.";
+        let errMsg = `HTTP Error ${response.status}: Failed to compile roadmap.`;
         try {
-          const errDetails = await response.json();
-          errMsg = errDetails.error || errMsg;
-        } catch {
+          const text = await response.text();
           try {
-            const text = await response.text();
-            if (text && text.length < 500) {
-              errMsg = text;
-            } else if (text && text.includes("<title>")) {
-              const matches = text.match(/<title>([^<]+)<\/title>/i);
-              if (matches && matches[1]) {
-                errMsg = matches[1];
+            const errDetails = JSON.parse(text);
+            errMsg = errDetails.error || errDetails.message || errMsg;
+          } catch {
+            if (text && text.trim().length > 0) {
+              if (text.length < 500) {
+                errMsg = text;
+              } else if (text.includes("<title>")) {
+                const matches = text.match(/<title>([^<]+)<\/title>/i);
+                if (matches && matches[1]) {
+                  errMsg = `Server Error: ${matches[1]}`;
+                } else {
+                  errMsg = `Serverless Function error (HTTP ${response.status}).`;
+                }
               } else {
-                errMsg = "Serverless Function error (probably timeout).";
+                errMsg = `Serverless Function error (HTTP ${response.status}).`;
               }
             }
-          } catch {
-            // Keep default
           }
+        } catch (readErr) {
+          console.error("Error reading error response:", readErr);
         }
         throw new Error(errMsg);
       }
@@ -387,10 +391,12 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
   // Initial Configuration Screen (No Roadmap compiled yet)
   if (!roadmap) {
     return (
-      <div className="max-w-3xl mx-auto p-8 lg:p-12 glass-panel rounded-[3rem] border-foreground/5 bg-white/[0.01] shadow-2xl relative overflow-hidden">
-        {/* Glow circles */}
-        <div className="absolute -top-32 -right-32 w-64 h-64 bg-teal-500/10 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-indigo-500/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="max-w-3xl mx-auto p-8 lg:p-12 glass-panel rounded-[3rem] border-foreground/5 bg-white/[0.01] shadow-2xl relative">
+        {/* Glow circles container to prevent layout spill while allowing absolute dropdown overlay */}
+        <div className="absolute inset-0 rounded-[3rem] overflow-hidden pointer-events-none z-0">
+          <div className="absolute -top-32 -right-32 w-64 h-64 bg-teal-500/10 rounded-full blur-[100px]" />
+          <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-indigo-500/5 rounded-full blur-[100px]" />
+        </div>
 
         <div className="flex items-center gap-4 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-teal-50/50 dark:bg-teal-950/20 border border-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-400">

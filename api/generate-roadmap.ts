@@ -46,6 +46,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ error: 'Unauthorized: Invalid token session.', details: authError?.message });
   }
 
+  // Ensure the profile row exists to prevent database insert foreign key constraints from failing
+  try {
+    const { data: profileExists, error: profileCheckError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (profileCheckError) {
+      console.warn('API_ROADMAP: Profile check error:', profileCheckError.message);
+    }
+
+    if (!profileExists) {
+      console.log(`API_ROADMAP: Profile record missing for user ${user.id}, auto-creating standard fallback...`);
+      const { error: profileInsertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          email: user.email,
+          display_name: user.email ? user.email.split('@')[0] : 'User'
+        });
+
+      if (profileInsertError) {
+        console.error('API_ROADMAP: Fallback profile insertion failed:', profileInsertError.message);
+      } else {
+        console.log(`API_ROADMAP: Fallback profile successfully created for user ${user.id}.`);
+      }
+    }
+  } catch (err) {
+    console.error('API_ROADMAP: Profile recovery block failed:', err);
+  }
+
   // 4. Retrieve and Validate Payload
   const { jd_data, vault_data, duration, jd_id } = req.body || {};
   
@@ -63,7 +95,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 6. Build the prompt targeting the exact JSON structure
   const formattedVaultEntries = Array.isArray(vault_data?.items) 
     ? vault_data.items.map((item: VaultItemInput) => 
-        `- [${item.type.toUpperCase()}] Title: "${item.title}" at "${item.organization}" (Period: ${item.period})\n  Description: ${item.description || ''}\n  Bullets: ${Array.isArray(item.bullets) ? item.bullets.join('; ') : ''}`
+        `- [${(item.type || 'UNKNOWN').toUpperCase()}] Title: "${item.title || 'Not Specified'}" at "${item.organization || 'Not Specified'}" (Period: ${item.period || 'Not Specified'})\n  Description: ${item.description || ''}\n  Bullets: ${Array.isArray(item.bullets) ? item.bullets.join('; ') : ''}`
       ).join('\n\n')
     : 'No vault entries recorded.';
 
