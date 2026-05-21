@@ -2816,7 +2816,6 @@ Write a compelling, ready-to-send cover letter.`;
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
             messages: [
               { role: "system", content: clSystemPrompt },
               { role: "user", content: clUserPrompt }

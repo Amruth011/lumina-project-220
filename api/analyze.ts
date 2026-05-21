@@ -7,6 +7,9 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
  * requests from the frontend to the Groq API. This prevents the key
  * from being exposed to users in the browser.
  */
+// Increase timeout for large cover letter / resume generation prompts
+export const maxDuration = 60;
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 1. Basic Security: Only allow POST
   if (req.method !== 'POST') {
