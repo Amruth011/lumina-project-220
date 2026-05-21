@@ -13,10 +13,11 @@ interface VaultItemInput {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // 1. Guard against non-POST requests
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  try {
+    // 1. Guard against non-POST requests
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
 
   // 2. Validate Authorization header and retrieve User JWT
   const authHeader = req.headers.authorization;
@@ -373,5 +374,9 @@ Generate the roadmap now. Every task must be a production micro-project with a v
       error: 'Failed to write the generated roadmap to the database.', 
       details: dbErrMsg
     });
+  }
+  } catch (globalError) {
+    console.error('API_ROADMAP: Unhandled server error:', globalError);
+    return res.status(500).json({ error: 'Internal server error', details: String(globalError) });
   }
 }
