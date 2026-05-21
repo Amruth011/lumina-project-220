@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Download, Sparkles, Copy, X, Wand2, FileText, CheckCircle2, AlertCircle, ArrowRight, Github, Linkedin, Mail, MapPin, Plus, Minus, Archive, ArrowUp, ArrowDown, Type } from "lucide-react";
+import { Loader2, Download, Sparkles, Copy, X, Wand2, FileText, CheckCircle2, AlertCircle, ArrowRight, Github, Linkedin, Mail, MapPin, Plus, Minus, Archive, ArrowUp, ArrowDown, Type, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -510,6 +510,8 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
   const [profile, setProfile] = useState<UserProfileWithVault | null>(null);
   const [resumeSettingsActive, setResumeSettingsActive] = useState(false);
   const [clSettingsActive, setClSettingsActive] = useState(false);
+  const [clActiveTab, setClActiveTab] = useState<'resume' | 'cover-letter'>(forceTab || 'resume');
+  const previewRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     console.log("ResumeGenerator: Mounted");
@@ -2821,7 +2823,13 @@ Write a compelling, ready-to-send cover letter.`;
       if (!content) throw new Error("AI returned empty content");
 
       setCoverLetter(content);
+      setClActiveTab('cover-letter');
+      setIsOpen(true);
       toast.success("Elite Cover Letter Synthesized!", { id: "cl-gen" });
+      // Scroll to preview after a short delay for animation
+      setTimeout(() => {
+        previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 600);
     } catch (err) {
       console.error("Cover Letter Error:", err);
       toast.error("Failed to generate cover letter.", { id: "cl-gen" });
@@ -3293,6 +3301,30 @@ Write a compelling, ready-to-send cover letter.`;
                 </button>
               </div>
             )}
+
+            {/* Cover Letter Inline Preview + View & Edit Button */}
+            {coverLetter && (
+              <div className="space-y-4 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="p-5 rounded-2xl bg-slate-50/80 border border-slate-100 space-y-3">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Preview</p>
+                  <p className="text-[12px] text-slate-700 leading-relaxed font-serif italic line-clamp-4">
+                    {coverLetter.slice(0, 300)}{coverLetter.length > 300 ? '...' : ''}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setClActiveTab('cover-letter');
+                    setIsOpen(true);
+                    setTimeout(() => {
+                      previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 300);
+                  }}
+                  className="w-full py-4 rounded-2xl bg-slate-950 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-950/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                >
+                  <Eye size={14} /> View & Edit Full Letter
+                </button>
+              </div>
+            )}
           </motion.div>
         </div>
 
@@ -3391,6 +3423,7 @@ Write a compelling, ready-to-send cover letter.`;
             className="mt-20 pt-20 border-t border-[#1E2A3A]/10 space-y-24"
           >
             {/* ── Unified Preview & Edit Experience ── */}
+            <div ref={previewRef}>
             <ResumePreview 
               resume={editableResume || resume}
               header={editableHeader}
@@ -3413,7 +3446,9 @@ Write a compelling, ready-to-send cover letter.`;
               onUpdateCoverLetter={(updatedCL: string) => setCoverLetter(updatedCL)}
               companyName={companyName}
               jdTitle={jdTitle}
-              initialTab={forceTab}
+              initialTab={clActiveTab}
+              activeTabOverride={clActiveTab}
+              onTabChange={(tab: 'resume' | 'cover-letter') => setClActiveTab(tab)}
               nameFontSize={nameFontSize}
               headlineFontSize={headlineFontSize}
               subHeadlineFontSize={subHeadlineFontSize}
@@ -3427,6 +3462,7 @@ Write a compelling, ready-to-send cover letter.`;
               visibleSections={visibleSections}
               sectionOrder={sectionOrder}
             />
+            </div>
 
             <div className="flex justify-center pb-20">
               <button 

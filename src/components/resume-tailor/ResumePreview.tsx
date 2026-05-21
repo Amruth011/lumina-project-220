@@ -78,6 +78,8 @@ interface ResumePreviewProps {
   sectionOrder?: string[];
   companyName?: string;
   jdTitle?: string;
+  activeTabOverride?: 'resume' | 'cover-letter';
+  onTabChange?: (tab: 'resume' | 'cover-letter') => void;
 }
 
 const limitSummarySentences = (summaryText: string, maxSentences: number): string => {
@@ -322,7 +324,9 @@ export const ResumePreview = ({
   visibleSections,
   sectionOrder,
   companyName,
-  jdTitle
+  jdTitle,
+  activeTabOverride,
+  onTabChange
 }: ResumePreviewProps) => {
   const defaultSectionOrder = ['SUMMARY', 'EDUCATION', 'EXPERIENCE', 'PRODUCTS', 'PROJECTS', 'LEADERSHIP', 'SKILLS', 'AWARDS', 'CERTIFICATIONS'];
   const actualSectionOrder = sectionOrder || defaultSectionOrder;
@@ -360,6 +364,19 @@ export const ResumePreview = ({
   const [openSection, setOpenSection] = useState<string | null>("profile");
   const [showVaultPicker, setShowVaultPicker] = useState<{ section: 'experience' | 'projects' | 'products' | 'education' | 'certifications', index?: number } | null>(null);
   const [activeTab, setActiveTab] = useState<'resume' | 'cover-letter'>(initialTab || 'resume');
+
+  // Sync active tab when parent overrides it (e.g., after cover letter generation)
+  useEffect(() => {
+    if (activeTabOverride) {
+      setActiveTab(activeTabOverride);
+    }
+  }, [activeTabOverride]);
+
+  // Notify parent when tab changes locally
+  const handleTabChange = (tab: 'resume' | 'cover-letter') => {
+    setActiveTab(tab);
+    onTabChange?.(tab);
+  };
   
   // ── Cover Letter Editing State ──
   const [clDate, setClDate] = useState(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
@@ -559,14 +576,14 @@ export const ResumePreview = ({
       <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-white/60 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.05)] mb-10 gap-6">
         <div className="flex bg-slate-100/50 p-1.5 rounded-[1.8rem] border border-slate-200/50 shadow-inner">
           <button 
-            onClick={() => setActiveTab('resume')}
+            onClick={() => handleTabChange('resume')}
             className={`flex items-center gap-2 px-8 py-3 rounded-[1.4rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === 'resume' ? 'bg-[#1E2A3A] text-white shadow-xl scale-105' : 'text-[#1E2A3A]/40 hover:text-[#1E2A3A]'}`}
           >
             <Layers size={14} />
             Resume Blueprint
           </button>
           <button 
-            onClick={() => setActiveTab('cover-letter')}
+            onClick={() => handleTabChange('cover-letter')}
             className={`flex items-center gap-2 px-8 py-3 rounded-[1.4rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === 'cover-letter' ? 'bg-[#1E2A3A] text-white shadow-xl scale-105' : 'text-[#1E2A3A]/40 hover:text-[#1E2A3A]'}`}
           >
             <Mail size={14} />
