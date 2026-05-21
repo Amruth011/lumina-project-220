@@ -3414,7 +3414,7 @@ Write a compelling, ready-to-send cover letter.`;
       </div>
 
       <AnimatePresence mode="wait">
-        {isOpen && resume && (
+        {isOpen && (resume || coverLetter) && (
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -3425,7 +3425,7 @@ Write a compelling, ready-to-send cover letter.`;
             {/* ── Unified Preview & Edit Experience ── */}
             <div ref={previewRef}>
             <ResumePreview 
-              resume={editableResume || resume}
+              resume={editableResume || resume || { summary: '', experience: [], education: [], skills: [], projects: [], products: [], certifications: [], awards: [], leadership: [] } as GeneratedResume}
               header={editableHeader}
               vaultItems={vaultItems}
               isGenerating={isGenerating}
