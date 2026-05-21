@@ -127,8 +127,8 @@ REQUESTED ROADMAP DURATION:
 ${duration} (Please adjust the density and count of phases/tasks to fit this exact timeframe logically)`;
 
   const fallbackModels = [
-    'llama-3.3-70b-versatile',
-    'llama-3.1-8b-instant'
+    'llama-3.1-8b-instant',
+    'llama-3.3-70b-versatile'
   ];
 
   let rawResponseText = '';

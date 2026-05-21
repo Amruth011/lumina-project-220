@@ -15,7 +15,8 @@ import {
   TrendingUp, 
   RefreshCw, 
   Trophy, 
-  Info 
+  Info,
+  ChevronRight
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,13 +44,21 @@ const loadingSteps = [
 export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
   const { user } = useAuth();
   const [duration, setDuration] = useState("4 Weeks");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [roadmap, setRoadmap] = useState<RoadmapData | null>(null);
   const [roadmapId, setRoadmapId] = useState<string | null>(null);
   const [completedTaskIds, setCompletedTaskIds] = useState<Set<string>>(new Set());
 
-  const durationOptions = ["2 Weeks", "4 Weeks", "8 Weeks", "12 Weeks"];
+  const durationOptions = [
+    "1 Week",
+    "2 Weeks",
+    "3 Weeks",
+    "4 Weeks",
+    "Up to 1 Year",
+    "5 Years"
+  ];
 
   const fetchExistingRoadmap = useCallback(async () => {
     try {
@@ -169,8 +178,28 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       });
 
       if (!response.ok) {
-        const errDetails = await response.json();
-        throw new Error(errDetails.error || "Failed to compile roadmap.");
+        let errMsg = "Failed to compile roadmap.";
+        try {
+          const errDetails = await response.json();
+          errMsg = errDetails.error || errMsg;
+        } catch {
+          try {
+            const text = await response.text();
+            if (text && text.length < 500) {
+              errMsg = text;
+            } else if (text && text.includes("<title>")) {
+              const matches = text.match(/<title>([^<]+)<\/title>/i);
+              if (matches && matches[1]) {
+                errMsg = matches[1];
+              } else {
+                errMsg = "Serverless Function error (probably timeout).";
+              }
+            }
+          } catch {
+            // Keep default
+          }
+        }
+        throw new Error(errMsg);
       }
 
       const dbRow = await response.json();
@@ -385,25 +414,73 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 relative">
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Learning Duration</label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {durationOptions.map((opt) => (
-                <button
-                  key={opt}
-                  onClick={() => setDuration(opt)}
-                  className={`py-4 rounded-xl border text-[12px] font-black uppercase tracking-wider transition-all duration-300 ${
-                    duration === opt
-                      ? "bg-teal-500/10 border-teal-500 text-teal-600 dark:text-teal-400 scale-[1.03] shadow-lg shadow-teal-500/5"
-                      : "bg-white/[0.02] border-foreground/5 text-muted-foreground hover:border-foreground/20 hover:text-foreground"
-                  }`}
+            
+            <div className="relative max-w-md">
+              <button
+                type="button"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="w-full flex items-center justify-between px-6 py-4.5 rounded-2xl border border-foreground/10 bg-slate-950/40 hover:bg-slate-900/60 hover:border-teal-500/30 text-[13px] font-bold text-foreground transition-all duration-300 focus:outline-none focus:border-teal-500/50 shadow-lg shadow-black/20"
+              >
+                <div className="flex items-center gap-3">
+                  <Clock size={16} className="text-teal-500" />
+                  <span className="tracking-tight uppercase tracking-wider">{duration}</span>
+                </div>
+                <motion.div
+                  animate={{ rotate: dropdownOpen ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  {opt}
-                </button>
-              ))}
+                  <ChevronRight size={16} className="text-muted-foreground rotate-90" />
+                </motion.div>
+              </button>
+
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <>
+                    {/* Click outside overlay */}
+                    <div 
+                      className="fixed inset-0 z-30" 
+                      onClick={() => setDropdownOpen(false)} 
+                    />
+                    
+                    {/* Rolling dropdown body */}
+                    <motion.div
+                      initial={{ opacity: 0, y: -15, scaleY: 0.8 }}
+                      animate={{ opacity: 1, y: 4, scaleY: 1 }}
+                      exit={{ opacity: 0, y: -15, scaleY: 0.8 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      style={{ originY: 0 }}
+                      className="absolute top-full left-0 right-0 z-40 mt-1.5 overflow-hidden rounded-2xl border border-foreground/10 bg-slate-950/95 backdrop-blur-xl shadow-2xl shadow-black/80"
+                    >
+                      <div className="py-2 max-h-[300px] overflow-y-auto">
+                        {durationOptions.map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => {
+                              setDuration(opt);
+                              setDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-6 py-3.5 text-left text-[12px] font-black uppercase tracking-wider transition-all duration-200 ${
+                              duration === opt
+                                ? "bg-teal-500/10 text-teal-400 font-bold border-l-4 border-teal-500"
+                                : "text-muted-foreground hover:text-foreground hover:bg-white/[0.03] border-l-4 border-transparent"
+                            }`}
+                          >
+                            <span>{opt}</span>
+                            {duration === opt && <Check size={14} className="text-teal-400" />}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
+            
             <p className="text-[10px] text-muted-foreground/60 italic leading-relaxed">
-              Recommended: **4 Weeks** for moderate skill updates; **8-12 Weeks** for complete technical shifts.
+              Choose shorter timelines for rapid adjustments, or longer pathways for intensive role upskilling.
             </p>
           </div>
 
