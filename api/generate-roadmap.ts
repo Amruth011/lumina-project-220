@@ -87,11 +87,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Request body must contain "jd_data" and "duration" fields.' });
   }
 
-  // 5. Load Groq API Key
+  // 5. Load API Keys
   const groqKey = process.env.GROQ_API_KEY;
-  if (!groqKey) {
-    console.error('SERVER_ERROR: GROQ_API_KEY is missing from environment variables.');
-    return res.status(500).json({ error: 'Server configuration error: Groq API key is not configured.' });
+  const openAiKey = process.env.OPENAI_API_KEY;
+  
+  if (!groqKey && !openAiKey) {
+    console.error('SERVER_ERROR: API keys are missing from environment variables.');
+    return res.status(500).json({ error: 'Server configuration error: Neither GROQ_API_KEY nor OPENAI_API_KEY is configured.' });
   }
 
   // 6. Build the elite prompt targeting the exact JSON structure
@@ -216,28 +218,48 @@ TIME BUDGET: ${budget.hours_per_task} hours/task · ${budget.phase_count} phases
 Generate the roadmap now. Every task must be a production micro-project with a verification_prompt. Zero generic directives.`;
 
   // Lead with the most capable model for this complex structured-output task
-  const fallbackModels = [
-    'llama-3.3-70b-versatile',
-    'llama-3.1-8b-instant',
-    'gemma2-9b-it',
-  ];
+  // 6b. Configure Fallbacks
+  const fallbackConfigs: Array<{ url: string; key: string; model: string }> = [];
+
+  if (groqKey) {
+    const groqModels = [
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant',
+      'gemma2-9b-it',
+    ];
+    for (const m of groqModels) {
+      fallbackConfigs.push({
+        url: 'https://api.groq.com/openai/v1/chat/completions',
+        key: groqKey,
+        model: m
+      });
+    }
+  }
+
+  if (openAiKey) {
+    fallbackConfigs.push({
+      url: 'https://api.openai.com/v1/chat/completions',
+      key: openAiKey,
+      model: 'gpt-4o'
+    });
+  }
 
   let rawResponseText = '';
   let lastError = '';
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-  // 7. Execute Multi-Model Fallback Groq request
-  for (const model of fallbackModels) {
+  // 7. Execute Multi-Model Fallback request
+  for (const config of fallbackConfigs) {
     try {
-      console.log(`API_ROADMAP: Fetching from Groq using model ${model}...`);
-      const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      console.log(`API_ROADMAP: Fetching from ${config.url} using model ${config.model}...`);
+      const apiResponse = await fetch(config.url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${groqKey}`,
+          'Authorization': `Bearer ${config.key}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: model,
+          model: config.model,
           messages: [
             { role: 'system', content: systemMessage },
             { role: 'user', content: userMessage }
@@ -248,18 +270,18 @@ Generate the roadmap now. Every task must be a production micro-project with a v
       });
 
       // Read the body ONCE as text to avoid "body used already" crash
-      const rawBody = await groqResponse.text().catch(() => '');
+      const rawBody = await apiResponse.text().catch(() => '');
 
-      if (groqResponse.ok) {
+      if (apiResponse.ok) {
         try {
           const responseData = JSON.parse(rawBody);
           rawResponseText = responseData?.choices?.[0]?.message?.content || '';
           if (rawResponseText.trim()) {
-            console.log(`API_ROADMAP: Successfully generated roadmap with ${model}`);
+            console.log(`API_ROADMAP: Successfully generated roadmap with ${config.model}`);
             break;
           }
         } catch {
-          console.warn(`API_ROADMAP: Could not parse success body for model ${model}`);
+          console.warn(`API_ROADMAP: Could not parse success body for model ${config.model}`);
         }
       } else {
         // Parse error from already-read text body
@@ -267,23 +289,23 @@ Generate the roadmap now. Every task must be a production micro-project with a v
           const errorData = JSON.parse(rawBody);
           lastError = errorData?.error?.message || JSON.stringify(errorData);
         } catch {
-          lastError = rawBody || groqResponse.statusText;
+          lastError = rawBody || apiResponse.statusText;
         }
-        console.warn(`API_ROADMAP: Model ${model} failed (HTTP ${groqResponse.status}): ${lastError}`);
+        console.warn(`API_ROADMAP: Model ${config.model} failed (HTTP ${apiResponse.status}): ${lastError}`);
       }
 
-      if (groqResponse.status === 429) {
-        console.log(`API_ROADMAP: Rate limited on ${model}, waiting 2s before next attempt...`);
+      if (apiResponse.status === 429) {
+        console.log(`API_ROADMAP: Rate limited on ${config.model}, waiting 2s before next attempt...`);
         await sleep(2000);
       }
     } catch (err) {
       lastError = err instanceof Error ? err.message : String(err);
-      console.error(`API_ROADMAP: Model ${model} crash error:`, lastError);
+      console.error(`API_ROADMAP: Model ${config.model} crash error:`, lastError);
     }
   }
 
   if (!rawResponseText) {
-    console.error('API_ROADMAP: All Groq models exhausted.');
+    console.error('API_ROADMAP: All AI engines exhausted.');
     return res.status(500).json({ error: 'All AI engines exhausted', details: lastError });
   }
 

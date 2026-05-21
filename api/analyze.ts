@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 /**
- * Proxy API for Groq
+ * Proxy API for Groq / OpenAI
  * =================
- * This serverless function securely holds the GROQ_API_KEY and proxies
- * requests from the frontend to the Groq API. This prevents the key
+ * This serverless function securely holds API keys and proxies
+ * requests from the frontend to the LLM API. This prevents the key
  * from being exposed to users in the browser.
  */
 // Increase timeout for large cover letter / resume generation prompts
@@ -18,10 +18,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // 2. Load API Key from Environment
   const groqKey = process.env.GROQ_API_KEY;
+  const openAiKey = process.env.OPENAI_API_KEY;
 
-  if (!groqKey) {
-    console.error('SERVER_ERROR: GROQ_API_KEY is missing from environment variables.');
-    return res.status(500).json({ error: 'Server configuration error' });
+  if (!groqKey && !openAiKey) {
+    console.error('SERVER_ERROR: API keys are missing from environment variables.');
+    return res.status(500).json({ error: 'Server configuration error: Neither GROQ_API_KEY nor OPENAI_API_KEY is configured.' });
   }
 
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -29,17 +30,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   /**
    * Multi-Model Fallback List
    * ========================
-   * 1. Primary: Requested or Llama 3.3 70B (Intelligence)
-   * 2. Secondary: Gemma 2 27B (Stability/Rate Limits)
-   * 3. Tertiary: Llama 3.1 8B (Speed)
-   * 4. Base: Gemma 2 9B (Ultra-fast)
    */
-  const fallbackModels = req.body.model 
-    ? [req.body.model] 
-    : [
-        'llama-3.3-70b-versatile',
-        'llama-3.1-8b-instant'
-      ];
+  const fallbackConfigs: Array<{ url: string; key: string; model: string }> = [];
+
+  if (groqKey) {
+    const groqModels = req.body.model 
+      ? [req.body.model] 
+      : ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
+    for (const model of groqModels) {
+      fallbackConfigs.push({
+        url: 'https://api.groq.com/openai/v1/chat/completions',
+        key: groqKey,
+        model: model
+      });
+    }
+  }
+
+  if (openAiKey) {
+    fallbackConfigs.push({
+      url: 'https://api.openai.com/v1/chat/completions',
+      key: openAiKey,
+      model: 'gpt-4o-mini' // Standard fallback if Groq fails or is not available
+    });
+  }
 
   let lastError = "";
   let resultData = null;
@@ -47,20 +60,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { messages, temperature, response_format } = req.body;
 
-    for (const model of fallbackModels) {
+    for (const config of fallbackConfigs) {
       try {
-        console.log(`API_PROXY: Attempting with ${model}...`);
-        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        console.log(`API_PROXY: Attempting with ${config.model} on ${config.url}...`);
+        
+        // OpenAI doesn't always support the exact same response_format params as Groq, but type: "json_object" is safe
+        const groqResponse = await fetch(config.url, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${groqKey}`,
+            'Authorization': `Bearer ${config.key}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: model,
+            model: config.model,
             messages,
             temperature: temperature ?? 0.3,
-            response_format,
+            response_format: response_format?.type === 'json_object' ? { type: 'json_object' } : undefined,
           }),
         });
 
@@ -78,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         
         lastError = lastErrorDetails || groqResponse.statusText;
-        console.warn(`API_PROXY: ${model} failed with status ${groqResponse.status}: ${lastError}`);
+        console.warn(`API_PROXY: ${config.model} failed with status ${groqResponse.status}: ${lastError}`);
 
         if (groqResponse.status === 429) {
           console.log("API_PROXY: Rate limit hit. Waiting 1500ms...");
@@ -86,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       } catch (err) {
         lastError = err instanceof Error ? err.message : String(err);
-        console.error(`API_PROXY: ${model} crash:`, lastError);
+        console.error(`API_PROXY: ${config.model} crash:`, lastError);
       }
     }
 
@@ -95,7 +110,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ 
         error: "All AI engines exhausted", 
         details: lastError,
-        diagnostics: "Check GROQ_API_KEY and usage limits at console.groq.com"
+        diagnostics: "Check GROQ_API_KEY / OPENAI_API_KEY and usage limits"
       });
     }
 
