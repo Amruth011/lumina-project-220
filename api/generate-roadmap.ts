@@ -166,11 +166,13 @@ Example format:
 RULE 3 — STRICT TIME-BUDGET CALIBRATION
 ══════════════════════════════════════════
 For the requested duration "${duration}":
+- Target phase count: YOU MUST GENERATE EXACTLY ${budget.phase_count} PHASES. This is non-negotiable.
+- Tasks per phase: YOU MUST GENERATE EXACTLY 3 to 4 actionable_tasks per phase.
 - estimated_hours per task: ${budget.hours_per_task} hours
-- Target phase count: ${budget.phase_count} phases
 - Task depth level: ${budget.depth}
 
 Do NOT generate tasks that overflow or underflow this time-budget. A 1-week roadmap must NOT have 15-hour tasks. A 1-year roadmap must NOT have 2-hour trivial exercises.
+CRITICAL: You MUST output exactly ${budget.phase_count} phases in the timeline array. Outputting fewer phases than requested will result in system failure.
 
 ══════════════════════════════════════════
 OUTPUT SCHEMA (return ONLY this JSON — no markdown, no prose)

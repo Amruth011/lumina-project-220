@@ -237,26 +237,32 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        // Try to find if one matches current JD results title, otherwise load the latest
+        // Try to find if one matches current JD results title
         const matched = data.find((r: { id: string; roadmap_data: unknown }) => {
           const rData = r.roadmap_data as RoadmapData;
           return rData.target_role?.toLowerCase() === results?.title?.toLowerCase();
-        }) || data[0];
-
-        const rData = matched.roadmap_data as RoadmapData;
-        setRoadmap(rData);
-        setRoadmapId(matched.id);
-
-        // Populate completed task IDs from DB state
-        const completed = new Set<string>();
-        rData.timeline.forEach((phase) => {
-          phase.actionable_tasks.forEach((task) => {
-            if (task.is_completed) {
-              completed.add(task.id);
-            }
-          });
         });
-        setCompletedTaskIds(completed);
+
+        if (matched) {
+          const rData = matched.roadmap_data as RoadmapData;
+          setRoadmap(rData);
+          setRoadmapId(matched.id);
+
+          // Populate completed task IDs from DB state
+          const completed = new Set<string>();
+          rData.timeline.forEach((phase) => {
+            phase.actionable_tasks.forEach((task) => {
+              if (task.is_completed) {
+                completed.add(task.id);
+              }
+            });
+          });
+          setCompletedTaskIds(completed);
+        } else {
+          setRoadmap(null);
+          setRoadmapId(null);
+          setCompletedTaskIds(new Set());
+        }
       }
     } catch (err) {
       console.error("Error fetching roadmap:", err);
@@ -587,7 +593,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
           <div className="space-y-4 relative">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Select Learning Duration</label>
             
-            <div className="relative max-w-md">
+            <div className="relative w-full">
               <button
                 type="button"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
