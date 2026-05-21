@@ -957,8 +957,8 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
       let resultText = "";
       const models = [
         "llama-3.3-70b-versatile",    // High intelligence (Standard / Primary)
-        "llama-3.1-70b-versatile",    // Fallback intelligence
-        "mixtral-8x7b-32768",         // Secondary fallback
+        "llama3-70b-8192",            // Fallback intelligence
+        "gemma2-9b-it",               // Secondary fallback
         "llama-3.1-8b-instant"        // Instant baseline fallback
       ];
       let lastError = "";
