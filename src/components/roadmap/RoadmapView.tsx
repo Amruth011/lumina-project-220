@@ -43,7 +43,7 @@ const loadingSteps = [
 
 export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
   const { user } = useAuth();
-  const [duration, setDuration] = useState("3 Months");
+  const [duration, setDuration] = useState("4 Weeks");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
@@ -56,9 +56,10 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
     "2 Weeks",
     "3 Weeks",
     "4 Weeks",
+    "2 Months",
     "3 Months",
-    "Up to 1 Year",
-    "5 Years"
+    "6 Months",
+    "1 Year"
   ];
 
   const fetchExistingRoadmap = useCallback(async () => {
@@ -283,7 +284,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
         confetti({
           particleCount: 150,
           spread: 80,
-          colors: ['#0d9488', '#14b8a6', '#5eead4', '#ffffff']
+          colors: ['#10B981', '#34D399', '#6EE7B7', '#ffffff']
         });
         toast.success("Flawless Execution! You have completed 100% of your Adaptive Upskilling Syllabus!", {
           description: "You are fully optimized for this role.",
@@ -337,7 +338,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       case "course":
         return <GraduationCap size={14} className="text-indigo-500" />;
       default:
-        return <BookOpen size={14} className="text-teal-500" />;
+        return <BookOpen size={14} className="text-lumina-teal" />;
     }
   };
 
@@ -351,14 +352,14 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
           className="relative w-24 h-24"
         >
           {/* Inner ring */}
-          <div className="absolute inset-2 rounded-full border-2 border-dashed border-teal-500/30 border-t-teal-500 animate-spin" style={{ animationDuration: '6s' }} />
+          <div className="absolute inset-2 rounded-full border-2 border-dashed border-lumina-teal/30 border-t-lumina-teal animate-spin" style={{ animationDuration: '6s' }} />
           {/* Outer ring */}
-          <div className="absolute inset-0 rounded-full border-4 border-slate-100 border-t-teal-500 animate-spin" />
-          <Compass className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-teal-500 animate-pulse" />
+          <div className="absolute inset-0 rounded-full border-4 border-slate-100 border-t-lumina-teal animate-spin" />
+          <Compass className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-lumina-teal animate-pulse" />
         </motion.div>
         
         <div className="space-y-3 text-center max-w-md">
-          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-teal-600">Tactical AI Engine Working</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-lumina-teal">Tactical AI Engine Working</p>
           <AnimatePresence mode="wait">
             <motion.h4
               key={loadingStep}
@@ -379,7 +380,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
         {/* Progress bar */}
         <div className="w-64 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
           <motion.div 
-            className="h-full bg-teal-500 shadow-[0_0_8px_#0d9488]"
+            className="h-full bg-lumina-teal shadow-[0_0_8px_#10B981]"
             initial={{ width: "0%" }}
             animate={{ width: `${((loadingStep + 1) / loadingSteps.length) * 100}%` }}
             transition={{ duration: 0.5 }}
@@ -392,15 +393,15 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
   // Initial Configuration Screen (No Roadmap compiled yet)
   if (!roadmap) {
     return (
-      <div className="max-w-3xl mx-auto p-8 lg:p-12 bg-white border border-slate-100 rounded-[3rem] shadow-[0_20px_50px_rgba(13,148,136,0.04)] relative">
+      <div className="max-w-3xl mx-auto p-8 lg:p-12 bg-white border border-slate-100 rounded-[3rem] shadow-[0_20px_50px_rgba(16,185,129,0.04)] relative">
         {/* Glow circles container to prevent layout spill while allowing absolute dropdown overlay */}
         <div className="absolute inset-0 rounded-[3rem] overflow-hidden pointer-events-none z-0">
-          <div className="absolute -top-32 -right-32 w-64 h-64 bg-teal-500/5 rounded-full blur-[100px]" />
+          <div className="absolute -top-32 -right-32 w-64 h-64 bg-lumina-teal/5 rounded-full blur-[100px]" />
           <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-indigo-500/5 rounded-full blur-[100px]" />
         </div>
 
         <div className="flex items-center gap-4 mb-6 relative z-10">
-          <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-500/20 flex items-center justify-center text-teal-600">
+          <div className="w-12 h-12 rounded-2xl bg-lumina-teal/5 border border-lumina-teal/20 flex items-center justify-center text-lumina-teal">
             <Compass size={24} className="animate-pulse" />
           </div>
           <div>
@@ -410,11 +411,11 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
         </div>
 
         <div className="space-y-8 mt-10 relative z-10">
-          <div className="p-5 rounded-2xl border border-teal-500/10 bg-teal-50/20 flex gap-4 items-start">
-            <Info size={16} className="text-teal-500 mt-1 shrink-0" />
+          <div className="p-5 rounded-2xl border border-lumina-teal/10 bg-lumina-teal/5 flex gap-4 items-start">
+            <Info size={16} className="text-lumina-teal mt-1 shrink-0" />
             <div className="space-y-1">
               <p className="text-[12px] font-bold text-slate-800">Target Role Detected</p>
-              <p className="text-[13px] text-teal-600 font-black uppercase tracking-wider">{results?.title || "Professional Developer"}</p>
+              <p className="text-[13px] text-lumina-teal font-black uppercase tracking-wider">{results?.title || "Professional Developer"}</p>
               <p className="text-[11px] text-slate-500 leading-relaxed">
                 Lumina's AI will parse all assets inside your **Master Vault**, compare them against this target role, identify exact architectural & technical gaps, and deploy a precise training syllabus to guarantee your readiness.
               </p>
@@ -428,10 +429,10 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
               <button
                 type="button"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="w-full flex items-center justify-between px-6 py-4.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50/50 hover:border-teal-500/30 text-[13px] font-bold text-slate-700 transition-all duration-300 focus:outline-none focus:border-teal-500/50 shadow-md shadow-slate-100"
+                className="w-full flex items-center justify-between px-6 py-4.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50/50 hover:border-lumina-teal/30 text-[13px] font-bold text-slate-700 transition-all duration-300 focus:outline-none focus:border-lumina-teal/50 shadow-md shadow-slate-100"
               >
                 <div className="flex items-center gap-3">
-                  <Clock size={16} className="text-teal-500" />
+                  <Clock size={16} className="text-lumina-teal" />
                   <span className="tracking-tight uppercase tracking-wider">{duration}</span>
                 </div>
                 <motion.div
@@ -471,12 +472,12 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                             }}
                             className={`w-full flex items-center justify-between px-6 py-3.5 text-left text-[12px] font-black uppercase tracking-wider transition-all duration-200 ${
                               duration === opt
-                                ? "bg-teal-50 text-teal-600 font-bold border-l-4 border-teal-600"
+                                ? "bg-lumina-teal/10 text-lumina-teal font-bold border-l-4 border-lumina-teal"
                                 : "text-slate-500 hover:text-slate-800 hover:bg-slate-50 border-l-4 border-transparent"
                             }`}
                           >
                             <span>{opt}</span>
-                            {duration === opt && <Check size={14} className="text-teal-600" />}
+                            {duration === opt && <Check size={14} className="text-lumina-teal" />}
                           </button>
                         ))}
                       </div>
@@ -494,7 +495,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
           <div className="flex justify-center pt-4">
             <button
               onClick={handleGenerate}
-              className="group flex items-center gap-3 px-12 py-5 rounded-full bg-teal-600 text-white text-[11px] font-black uppercase tracking-widest hover:bg-teal-700 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-teal-500/20"
+              className="group flex items-center gap-3 px-12 py-5 rounded-full bg-lumina-teal text-white text-[11px] font-black uppercase tracking-widest hover:bg-lumina-teal/90 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-emerald-500/20"
             >
               Generate Syllabus <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </button>
@@ -560,19 +561,19 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
           }
           .print-resource-link {
             text-decoration: underline !important;
-            color: #0f766e !important;
+            color: #10B981 !important;
           }
         }
       `}} />
 
       {/* Global Status Bar (Overview Panel) */}
-      <div className="p-6 lg:p-8 rounded-[2.5rem] bg-white border border-slate-100 shadow-[0_8px_30px_rgba(13,148,136,0.02)] relative overflow-hidden flex flex-col md:flex-row justify-between gap-6 print-header print-card">
+      <div className="p-6 lg:p-8 rounded-[2.5rem] bg-white border border-slate-100 shadow-[0_8px_30px_rgba(16,185,129,0.02)] relative overflow-hidden flex flex-col md:flex-row justify-between gap-6 print-header print-card">
         {/* Glow */}
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-teal-500/5 rounded-full blur-[60px] pointer-events-none" />
+        <div className="absolute -top-12 -right-12 w-32 h-32 bg-lumina-teal/5 rounded-full blur-[60px] pointer-events-none" />
 
         <div className="space-y-3">
           <div className="flex items-center gap-2.5">
-            <span className="px-3.5 py-1 text-[9px] font-black uppercase tracking-wider bg-teal-50 border border-teal-500/10 text-teal-600 rounded-full print-badge">
+            <span className="px-3.5 py-1 text-[9px] font-black uppercase tracking-wider bg-lumina-teal/5 border border-lumina-teal/20 text-lumina-teal rounded-full print-badge">
               {roadmap.duration} Plan
             </span>
             <span className="text-[10px] font-bold text-slate-400">Targeting Syllabus Completion</span>
@@ -582,7 +583,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
           </h2>
           <div className="flex flex-wrap gap-2 pt-1 no-print">
             {roadmap.skill_gaps_identified.slice(0, 5).map((gap, i) => (
-              <span key={i} className="text-[10px] font-medium px-3 py-1 rounded-md bg-teal-50/40 text-teal-700 border border-teal-500/10">
+              <span key={i} className="text-[10px] font-medium px-3 py-1 rounded-md bg-lumina-teal/5 text-lumina-teal border border-lumina-teal/10">
                 {gap}
               </span>
             ))}
@@ -593,12 +594,12 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
         <div className="flex flex-col justify-center min-w-[200px] space-y-2">
           <div className="flex justify-between items-baseline">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Overall Mastery Progress</span>
-            <span className="text-lg font-black tracking-tight text-teal-600">{getGlobalPercentage()}%</span>
+            <span className="text-lg font-black tracking-tight text-lumina-teal">{getGlobalPercentage()}%</span>
           </div>
           
           <div className="w-full h-2.5 bg-slate-100 rounded-full border border-slate-200 overflow-hidden relative">
             <motion.div 
-              className="h-full bg-teal-600 rounded-full shadow-[0_0_10px_rgba(20,184,166,0.2)]"
+              className="h-full bg-lumina-teal rounded-full shadow-[0_0_10px_rgba(16,185,129,0.2)]"
               initial={{ width: "0%" }}
               animate={{ width: `${getGlobalPercentage()}%` }}
               transition={{ duration: 0.8, ease: "easeOut" }}
@@ -616,21 +617,21 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       <div className="flex justify-between items-center no-print px-4">
         <button
           onClick={() => setRoadmap(null)}
-          className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-teal-600 transition-colors"
+          className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-lumina-teal transition-colors"
         >
           <RefreshCw size={12} className="group-hover:rotate-180 transition-transform" /> Reconfigure Roadmap
         </button>
 
         <button
           onClick={handlePrint}
-          className="flex items-center gap-3 px-8 py-3.5 rounded-full bg-teal-600 text-white hover:bg-teal-700 hover:scale-102 active:scale-97 text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-teal-500/10"
+          className="flex items-center gap-3 px-8 py-3.5 rounded-full bg-lumina-teal text-white hover:bg-lumina-teal/90 hover:scale-102 active:scale-97 text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-emerald-500/10"
         >
           <Download size={14} className="text-white animate-pulse" /> Download Off-line Syllabus
         </button>
       </div>
 
       {/* Vertical Stepper Workspace */}
-      <div className="relative border-l-2 border-teal-100 ml-4 md:ml-8 pl-6 md:pl-10 space-y-12 pb-6">
+      <div className="relative border-l-2 border-lumina-teal/20 ml-4 md:ml-8 pl-6 md:pl-10 space-y-12 pb-6">
         
         {roadmap.timeline.map((phase, phaseIdx) => {
           const isPhaseDone = getPhaseProgress(phase) === 100;
@@ -645,8 +646,8 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
               {/* Stepper Dot */}
               <div className={`absolute top-0 -left-[35px] md:-left-[51px] w-8 h-8 rounded-full border-2 bg-white flex items-center justify-center transition-all duration-500 z-10 ${
                 isPhaseDone 
-                  ? "border-teal-500 text-teal-600 bg-teal-50 shadow-md shadow-teal-500/20" 
-                  : "border-slate-200 text-slate-400 group-hover/phase:border-teal-500/40"
+                  ? "border-lumina-teal text-lumina-teal bg-lumina-teal/5 shadow-md shadow-emerald-500/20" 
+                  : "border-slate-200 text-slate-400 group-hover/phase:border-lumina-teal/40"
               }`}>
                 {isPhaseDone ? (
                   <Check size={14} className="stroke-[3px]" />
@@ -656,12 +657,12 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
               </div>
 
               {/* Glass Phase Card */}
-              <div className="bg-white border border-slate-100 p-6 lg:p-8 rounded-[2rem] shadow-[0_8px_30px_rgba(13,148,136,0.02)] hover:border-teal-500/25 transition-all duration-300 relative group/card">
+              <div className="bg-white border border-slate-100 p-6 lg:p-8 rounded-[2rem] shadow-[0_8px_30px_rgba(16,185,129,0.02)] hover:border-lumina-teal/25 transition-all duration-300 relative group/card">
                 
                 {/* Phase header info */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-5">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-teal-600">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-lumina-teal">
                       Module {phase.phase_number} • {phase.focus_area}
                     </span>
                     <h3 className="text-base font-black tracking-tight text-slate-800 transition-colors print-title">
@@ -674,11 +675,11 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Progress</span>
                     <div className="w-20 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50 no-print">
                       <div 
-                        className={`h-full rounded-full transition-all duration-700 ${isPhaseDone ? "bg-teal-500" : "bg-teal-500/60"}`}
+                        className={`h-full rounded-full transition-all duration-700 ${isPhaseDone ? "bg-lumina-teal" : "bg-lumina-teal/60"}`}
                         style={{ width: `${getPhaseProgress(phase)}%` }}
                       />
                     </div>
-                    <span className={`text-[11px] font-black tracking-tight ${isPhaseDone ? "text-teal-600" : "text-slate-500"}`}>
+                    <span className={`text-[11px] font-black tracking-tight ${isPhaseDone ? "text-lumina-teal" : "text-slate-500"}`}>
                       {getPhaseProgress(phase)}%
                     </span>
                   </div>
@@ -688,10 +689,10 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                   {/* Left column: Gaps addressed callout (4 cols) */}
                   <div className="lg:col-span-4 space-y-4">
-                    <div className="p-5 rounded-2xl border border-teal-500/10 bg-teal-50/20 relative">
+                    <div className="p-5 rounded-2xl border border-lumina-teal/10 bg-lumina-teal/5 relative">
                       <div className="flex items-center gap-2 mb-2">
-                        <TrendingUp size={14} className="text-teal-500" />
-                        <span className="text-[10px] font-black uppercase tracking-wider text-teal-600">Gaps Addressed</span>
+                        <TrendingUp size={14} className="text-lumina-teal" />
+                        <span className="text-[10px] font-black uppercase tracking-wider text-lumina-teal">Gaps Addressed</span>
                       </div>
                       <p className="text-[11px] leading-relaxed text-slate-600">
                         {phase.gap_addressed}
@@ -709,13 +710,13 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                               href={res.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="flex items-center gap-2.5 p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-teal-50/30 hover:border-teal-500/20 transition-all text-left no-print"
+                              className="flex items-center gap-2.5 p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-lumina-teal/5 hover:border-lumina-teal/20 transition-all text-left no-print"
                             >
                               <div className="w-6 h-6 rounded-lg bg-white border border-slate-100 flex items-center justify-center shrink-0">
                                 {getResourceIcon(res.source_type)}
                               </div>
                               <div className="space-y-0.5 truncate">
-                                <p className="text-[11px] font-bold text-slate-700 truncate group-hover/phase:text-teal-600">{res.title}</p>
+                                <p className="text-[11px] font-bold text-slate-700 truncate group-hover/phase:text-lumina-teal">{res.title}</p>
                                 <p className="text-[9px] font-semibold text-slate-400 capitalize tracking-tight leading-none">{res.source_type}</p>
                               </div>
                             </a>
@@ -747,15 +748,15 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                             onClick={() => handleToggleTask(phaseIdx, taskIdx, task.id)}
                             className={`flex items-start gap-4 p-4 rounded-2xl border transition-all duration-300 text-left w-full ${
                               isTaskDone
-                                ? "bg-teal-50/30 border-teal-500/20 hover:bg-teal-50/50"
-                                : "bg-slate-50/30 border-slate-100 hover:border-teal-500/20 hover:bg-teal-50/10"
+                                ? "bg-lumina-teal/5 border-lumina-teal/20 hover:bg-lumina-teal/10"
+                                : "bg-slate-50/30 border-slate-100 hover:border-lumina-teal/20 hover:bg-lumina-teal/5"
                             }`}
                           >
                             {/* Toggle Box */}
                             <div className={`w-5.5 h-5.5 rounded-md border flex items-center justify-center shrink-0 transition-all duration-300 no-print ${
                               isTaskDone 
-                                ? "bg-teal-600 border-teal-600 text-white shadow-lg shadow-teal-500/10 scale-102" 
-                                : "border-slate-200 hover:border-teal-500/40 bg-white"
+                                ? "bg-lumina-teal border-lumina-teal text-white shadow-lg shadow-emerald-500/10 scale-102" 
+                                : "border-slate-200 hover:border-lumina-teal/40 bg-white"
                             }`}>
                               {isTaskDone && <Check size={11} className="stroke-[3.5px]" />}
                             </div>
@@ -793,8 +794,8 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       </div>
       
       {/* Footer Encouragement */}
-      <div className="no-print p-8 text-center bg-white border border-slate-100 shadow-[0_8px_30px_rgba(13,148,136,0.02)] rounded-[2.5rem] flex flex-col items-center justify-center space-y-3">
-        <div className="w-10 h-10 bg-teal-50 border border-teal-500/10 text-teal-600 rounded-full flex items-center justify-center">
+      <div className="no-print p-8 text-center bg-white border border-slate-100 shadow-[0_8px_30px_rgba(16,185,129,0.02)] rounded-[2.5rem] flex flex-col items-center justify-center space-y-3">
+        <div className="w-10 h-10 bg-lumina-teal/5 border border-lumina-teal/10 text-lumina-teal rounded-full flex items-center justify-center">
           <Sparkles size={16} />
         </div>
         <h4 className="text-[12px] font-black uppercase tracking-widest text-slate-800">Continuous Mastery Loop</h4>
