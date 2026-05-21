@@ -2795,10 +2795,23 @@ Write a compelling, ready-to-send cover letter.`;
           }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.warn("Cover Letter Edge Function error:", error);
+          throw error;
+        }
+        
+        // Supabase edge function returns the Groq response directly
         content = data?.choices?.[0]?.message?.content || "";
+        
+        // If data has error field, it means the edge function returned an error
+        if (!content && data?.error) {
+          console.warn("Cover Letter Edge Function returned error in data:", data.error);
+          throw new Error(data.error);
+        }
       } catch (invokeError) {
         console.warn("Cover Letter Edge Function failed. Falling back to secure Local API Proxy...", invokeError);
+        toast.loading("Primary engine failed, trying fallback...", { id: "cl-gen" });
+        
         const apiResponse = await fetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -2816,11 +2829,13 @@ Write a compelling, ready-to-send cover letter.`;
           const rawData = await apiResponse.json();
           content = rawData?.choices?.[0]?.message?.content || "";
         } else {
-          throw new Error("Both Supabase edge function and Local API Proxy failed.");
+          const errorText = await apiResponse.text().catch(() => apiResponse.statusText);
+          console.error("Fallback API error:", apiResponse.status, errorText);
+          throw new Error(`API error (${apiResponse.status}): ${errorText}`);
         }
       }
 
-      if (!content) throw new Error("AI returned empty content");
+      if (!content) throw new Error("AI returned empty content — try regenerating");
 
       setCoverLetter(content);
       setClActiveTab('cover-letter');
@@ -2829,10 +2844,11 @@ Write a compelling, ready-to-send cover letter.`;
       // Scroll to preview after a short delay for animation
       setTimeout(() => {
         previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 600);
+      }, 1000);
     } catch (err) {
       console.error("Cover Letter Error:", err);
-      toast.error("Failed to generate cover letter.", { id: "cl-gen" });
+      const errorMsg = err instanceof Error ? err.message : "Unknown error";
+      toast.error(`Cover letter failed: ${errorMsg.slice(0, 100)}`, { id: "cl-gen" });
     } finally {
       setIsGeneratingCL(false);
     }
