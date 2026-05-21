@@ -30,8 +30,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 3. Initialize Supabase client inside secure server context using user's JWT
   // Strip any surrounding quotes Vercel may inject into env var values
   const sanitize = (val: string | undefined) => (val || '').replace(/^"|"$/g, '').replace(/^'|'$/g, '').trim();
-  const supabaseUrl = sanitize(process.env.VITE_SUPABASE_URL) || 'https://esjzitabjftwiqjzjttw.supabase.co';
-  const supabaseAnonKey = sanitize(process.env.VITE_SUPABASE_PUBLISHABLE_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzanppdGFiamZ0d2lxanpqdHR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMzA2NTQsImV4cCI6MjA4OTkwNjY1NH0.rF4FNw2X94XEkl4Vm7XyrnbXF1m1rtyGdV9Wbdh7lXE';
+  let supabaseUrl = sanitize(process.env.VITE_SUPABASE_URL);
+  if (!supabaseUrl.startsWith('http')) {
+    supabaseUrl = 'https://esjzitabjftwiqjzjttw.supabase.co';
+  }
+  let supabaseAnonKey = sanitize(process.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+  if (!supabaseAnonKey || supabaseAnonKey === 'undefined') {
+    supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzanppdGFiamZ0d2lxanpqdHR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMzA2NTQsImV4cCI6MjA4OTkwNjY1NH0.rF4FNw2X94XEkl4Vm7XyrnbXF1m1rtyGdV9Wbdh7lXE';
+  }
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: { persistSession: false },
