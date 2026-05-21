@@ -227,47 +227,41 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
   const fetchExistingRoadmap = useCallback(async () => {
     try {
       if (!user?.id) return;
-      // Find latest roadmap saved by user
+      
+      const currentSessionRoadmapId = sessionStorage.getItem("current_roadmap_id");
+      if (!currentSessionRoadmapId) return;
+
       const { data, error } = await supabase
         .from("roadmaps")
         .select("id, roadmap_data")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: false });
+        .eq("id", currentSessionRoadmapId)
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code !== "PGRST116") throw error; // Ignore not found
+        return;
+      }
 
-      if (data && data.length > 0) {
-        // Try to find if one matches current JD results title
-        const matched = data.find((r: { id: string; roadmap_data: unknown }) => {
-          const rData = r.roadmap_data as RoadmapData;
-          return rData.target_role?.toLowerCase() === results?.title?.toLowerCase();
-        });
+      if (data) {
+        const rData = data.roadmap_data as RoadmapData;
+        setRoadmap(rData);
+        setRoadmapId(data.id);
 
-        if (matched) {
-          const rData = matched.roadmap_data as RoadmapData;
-          setRoadmap(rData);
-          setRoadmapId(matched.id);
-
-          // Populate completed task IDs from DB state
-          const completed = new Set<string>();
-          rData.timeline.forEach((phase) => {
-            phase.actionable_tasks.forEach((task) => {
-              if (task.is_completed) {
-                completed.add(task.id);
-              }
-            });
+        // Populate completed task IDs from DB state
+        const completed = new Set<string>();
+        rData.timeline.forEach((phase) => {
+          phase.actionable_tasks.forEach((task) => {
+            if (task.is_completed) {
+              completed.add(task.id);
+            }
           });
-          setCompletedTaskIds(completed);
-        } else {
-          setRoadmap(null);
-          setRoadmapId(null);
-          setCompletedTaskIds(new Set());
-        }
+        });
+        setCompletedTaskIds(completed);
       }
     } catch (err) {
       console.error("Error fetching roadmap:", err);
     }
-  }, [user?.id, results?.title]);
+  }, [user?.id]);
 
   // Fetch existing roadmap on mount / JD change
   useEffect(() => {
@@ -381,6 +375,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
 
       setRoadmap(rData);
       setRoadmapId(dbRow.id);
+      sessionStorage.setItem("current_roadmap_id", dbRow.id);
 
       // Reset completed checklist
       setCompletedTaskIds(new Set());
