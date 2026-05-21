@@ -47,11 +47,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (openAiKey) {
-    fallbackConfigs.push({
-      url: 'https://api.openai.com/v1/chat/completions',
-      key: openAiKey,
-      model: 'gpt-4o-mini' // Standard fallback if Groq fails or is not available
-    });
+    const openAiModels = ['gpt-4o-mini', 'gpt-4o'];
+    for (const model of openAiModels) {
+      fallbackConfigs.push({
+        url: 'https://api.openai.com/v1/chat/completions',
+        key: openAiKey,
+        model: model
+      });
+    }
   }
 
   let lastError = "";
@@ -61,48 +64,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { messages, temperature, response_format } = req.body;
 
     for (const config of fallbackConfigs) {
-      try {
-        console.log(`API_PROXY: Attempting with ${config.model} on ${config.url}...`);
-        
-        // OpenAI doesn't always support the exact same response_format params as Groq, but type: "json_object" is safe
-        const groqResponse = await fetch(config.url, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${config.key}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: config.model,
-            messages,
-            temperature: temperature ?? 0.3,
-            response_format: response_format?.type === 'json_object' ? { type: 'json_object' } : undefined,
-          }),
-        });
+      let retries = 3;
+      let delay = 2000;
+      let success = false;
 
-        if (groqResponse.ok) {
-          resultData = await groqResponse.json();
+      while (retries > 0 && !success) {
+        try {
+          console.log(`API_PROXY: Attempting with ${config.model} on ${config.url}... (Retries left: ${retries})`);
+          
+          // OpenAI doesn't always support the exact same response_format params as Groq, but type: "json_object" is safe
+          const groqResponse = await fetch(config.url, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${config.key}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: config.model,
+              messages,
+              temperature: temperature ?? 0.3,
+              response_format: response_format?.type === 'json_object' ? { type: 'json_object' } : undefined,
+            }),
+          });
+
+          if (groqResponse.ok) {
+            resultData = await groqResponse.json();
+            success = true;
+            break;
+          }
+
+          let lastErrorDetails = "";
+          try {
+            const errorData = await groqResponse.json();
+            lastErrorDetails = errorData.error?.message || JSON.stringify(errorData);
+          } catch (e) {
+            lastErrorDetails = await groqResponse.text().catch(() => groqResponse.statusText);
+          }
+          
+          lastError = lastErrorDetails || groqResponse.statusText;
+          console.warn(`API_PROXY: ${config.model} failed with status ${groqResponse.status}: ${lastError}`);
+
+          if (groqResponse.status === 429 || groqResponse.status >= 500) {
+            console.log(`API_PROXY: Rate limit or server error hit. Waiting ${delay}ms...`);
+            await sleep(delay);
+            delay *= 2; // Exponential backoff
+            retries--;
+          } else {
+            // Other errors (e.g. 400 Bad Request, 401 Unauthorized, 404 Not Found), move to next model
+            break;
+          }
+        } catch (err) {
+          lastError = err instanceof Error ? err.message : String(err);
+          console.error(`API_PROXY: ${config.model} crash:`, lastError);
           break;
         }
-
-        let lastErrorDetails = "";
-        try {
-          const errorData = await groqResponse.json();
-          lastErrorDetails = errorData.error?.message || JSON.stringify(errorData);
-        } catch (e) {
-          lastErrorDetails = await groqResponse.text().catch(() => groqResponse.statusText);
-        }
-        
-        lastError = lastErrorDetails || groqResponse.statusText;
-        console.warn(`API_PROXY: ${config.model} failed with status ${groqResponse.status}: ${lastError}`);
-
-        if (groqResponse.status === 429) {
-          console.log("API_PROXY: Rate limit hit. Waiting 1500ms...");
-          await sleep(1500);
-        }
-      } catch (err) {
-        lastError = err instanceof Error ? err.message : String(err);
-        console.error(`API_PROXY: ${config.model} crash:`, lastError);
       }
+      if (success) break;
     }
 
     if (!resultData) {

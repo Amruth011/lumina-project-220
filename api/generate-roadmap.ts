@@ -237,11 +237,14 @@ Generate the roadmap now. Every task must be a production micro-project with a v
   }
 
   if (openAiKey) {
-    fallbackConfigs.push({
-      url: 'https://api.openai.com/v1/chat/completions',
-      key: openAiKey,
-      model: 'gpt-4o'
-    });
+    const openAiModels = ['gpt-4o', 'gpt-4o-mini'];
+    for (const model of openAiModels) {
+      fallbackConfigs.push({
+        url: 'https://api.openai.com/v1/chat/completions',
+        key: openAiKey,
+        model: model
+      });
+    }
   }
 
   let rawResponseText = '';
@@ -250,58 +253,71 @@ Generate the roadmap now. Every task must be a production micro-project with a v
 
   // 7. Execute Multi-Model Fallback request
   for (const config of fallbackConfigs) {
-    try {
-      console.log(`API_ROADMAP: Fetching from ${config.url} using model ${config.model}...`);
-      const apiResponse = await fetch(config.url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${config.key}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: config.model,
-          messages: [
-            { role: 'system', content: systemMessage },
-            { role: 'user', content: userMessage }
-          ],
-          temperature: 0.2,
-          response_format: { type: 'json_object' }
-        }),
-      });
+    let retries = 3;
+    let delay = 2000;
+    let success = false;
 
-      // Read the body ONCE as text to avoid "body used already" crash
-      const rawBody = await apiResponse.text().catch(() => '');
+    while (retries > 0 && !success) {
+      try {
+        console.log(`API_ROADMAP: Fetching from ${config.url} using model ${config.model}... (Retries left: ${retries})`);
+        const apiResponse = await fetch(config.url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${config.key}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: config.model,
+            messages: [
+              { role: 'system', content: systemMessage },
+              { role: 'user', content: userMessage }
+            ],
+            temperature: 0.2,
+            response_format: { type: 'json_object' }
+          }),
+        });
 
-      if (apiResponse.ok) {
-        try {
-          const responseData = JSON.parse(rawBody);
-          rawResponseText = responseData?.choices?.[0]?.message?.content || '';
-          if (rawResponseText.trim()) {
-            console.log(`API_ROADMAP: Successfully generated roadmap with ${config.model}`);
-            break;
+        // Read the body ONCE as text to avoid "body used already" crash
+        const rawBody = await apiResponse.text().catch(() => '');
+
+        if (apiResponse.ok) {
+          try {
+            const responseData = JSON.parse(rawBody);
+            rawResponseText = responseData?.choices?.[0]?.message?.content || '';
+            if (rawResponseText.trim()) {
+              console.log(`API_ROADMAP: Successfully generated roadmap with ${config.model}`);
+              success = true;
+              break;
+            }
+          } catch {
+            console.warn(`API_ROADMAP: Could not parse success body for model ${config.model}`);
           }
-        } catch {
-          console.warn(`API_ROADMAP: Could not parse success body for model ${config.model}`);
+        } else {
+          // Parse error from already-read text body
+          try {
+            const errorData = JSON.parse(rawBody);
+            lastError = errorData?.error?.message || JSON.stringify(errorData);
+          } catch {
+            lastError = rawBody || apiResponse.statusText;
+          }
+          console.warn(`API_ROADMAP: Model ${config.model} failed (HTTP ${apiResponse.status}): ${lastError}`);
         }
-      } else {
-        // Parse error from already-read text body
-        try {
-          const errorData = JSON.parse(rawBody);
-          lastError = errorData?.error?.message || JSON.stringify(errorData);
-        } catch {
-          lastError = rawBody || apiResponse.statusText;
-        }
-        console.warn(`API_ROADMAP: Model ${config.model} failed (HTTP ${apiResponse.status}): ${lastError}`);
-      }
 
-      if (apiResponse.status === 429) {
-        console.log(`API_ROADMAP: Rate limited on ${config.model}, waiting 2s before next attempt...`);
-        await sleep(2000);
+        if (apiResponse.status === 429 || apiResponse.status >= 500) {
+          console.log(`API_ROADMAP: Rate limited or server error on ${config.model}, waiting ${delay}ms...`);
+          await sleep(delay);
+          delay *= 2;
+          retries--;
+        } else {
+          break; // Move to next config on other errors
+        }
+      } catch (err) {
+        lastError = err instanceof Error ? err.message : String(err);
+        console.error(`API_ROADMAP: Model ${config.model} crash error:`, lastError);
+        break;
       }
-    } catch (err) {
-      lastError = err instanceof Error ? err.message : String(err);
-      console.error(`API_ROADMAP: Model ${config.model} crash error:`, lastError);
     }
+    if (success) break;
   }
 
   if (!rawResponseText) {
