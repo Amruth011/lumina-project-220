@@ -3,9 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
+    const sanitize = (val: string | undefined) => (val || '').replace(/^"|"$/g, '').replace(/^'|'$/g, '').trim();
     const groqKey = process.env.GROQ_API_KEY;
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://esjzitabjftwiqjzjttw.supabase.co';
-    const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+    const supabaseUrl = sanitize(process.env.VITE_SUPABASE_URL) || 'https://esjzitabjftwiqjzjttw.supabase.co';
+    const supabaseKey = sanitize(process.env.VITE_SUPABASE_PUBLISHABLE_KEY) || '';
 
     const diagnostics = {
       groq_key_set: !!groqKey,
