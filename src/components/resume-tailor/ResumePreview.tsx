@@ -385,15 +385,12 @@ export const ResumePreview = ({
   const [clRecipientCompany, setClRecipientCompany] = useState(companyName || '');
   const [clRecipientAddress, setClRecipientAddress] = useState('');
   const [clSignatureName, setClSignatureName] = useState(header.fullName || '');
-  const [clIsEditingBody, setClIsEditingBody] = useState(false);
   const [clEditableBody, setClEditableBody] = useState(coverLetter || '');
-  const [clShowEditor, setClShowEditor] = useState(true);
   
   // Sync editable body when cover letter changes from generation
   useEffect(() => {
     if (coverLetter) {
       setClEditableBody(coverLetter);
-      setClIsEditingBody(false);
     }
   }, [coverLetter]);
 
@@ -1873,244 +1870,244 @@ export const ResumePreview = ({
             </div>
           </motion.div>
         ) : (
-          <motion.div
+          <motion.div 
             key="cl-view"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="w-full max-w-5xl mx-auto"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start h-auto w-full"
           >
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-              {/* ── LEFT PANEL: COVER LETTER EDITOR ── */}
-              <div className="lg:col-span-4 space-y-6">
-                <div className="p-8 rounded-[2.5rem] bg-white border border-[#1E2A3A]/5 shadow-sm space-y-6">
-                  <div className="flex items-center gap-4 border-b border-slate-100 pb-6">
-                    <div className="w-12 h-12 rounded-2xl bg-lumina-teal/10 flex items-center justify-center text-lumina-teal">
-                      <Mail size={24} />
-                    </div>
-                    <div>
-                      <h4 className="font-serif font-bold text-lg text-[#1E2A3A]">Candidacy Letter</h4>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[#1E2A3A]/40">Strategic Alignment</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-[#1E2A3A]/60 leading-relaxed font-medium">
-                    This cover letter is synthesized using your <strong>Tailored Resume Blueprint</strong> and the target <strong>Job Description</strong> to ensure 100% thematic consistency.
-                  </p>
-                  {!coverLetter && (
-                    <button 
-                      onClick={onGenerateCL}
-                      disabled={isGeneratingCL}
-                      className="w-full py-4 rounded-2xl bg-[#1E2A3A] text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all"
-                    >
-                      Generate Now
-                    </button>
-                  )}
-                </div>
-
-                {/* ── Cover Letter Edit Fields ── */}
-                {coverLetter && (
-                  <div className="p-6 rounded-[2.5rem] bg-white border border-[#1E2A3A]/5 shadow-sm space-y-5 animate-in fade-in slide-in-from-top-4 duration-500">
-                    <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-                      <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                        <Edit3 size={18} />
-                      </div>
-                      <div>
-                        <h4 className="font-serif font-bold text-sm text-[#1E2A3A]">Letter Details</h4>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-[#1E2A3A]/30">Customize Before Export</p>
-                      </div>
-                    </div>
-
-                    {/* Date */}
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                        <Calendar size={10} /> Date
-                      </label>
-                      <input
-                        value={clDate}
-                        onChange={(e) => setClDate(e.target.value)}
-                        className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 text-[11px] font-semibold outline-none border border-slate-200/50 focus:border-lumina-teal/30 focus:bg-white transition-all text-slate-800"
-                        placeholder="May 21, 2026"
-                      />
-                    </div>
-
-                    {/* Recipient Name */}
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                        <User size={10} /> Recipient Name
-                      </label>
-                      <input
-                        value={clRecipientName}
-                        onChange={(e) => setClRecipientName(e.target.value)}
-                        className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 text-[11px] font-semibold outline-none border border-slate-200/50 focus:border-lumina-teal/30 focus:bg-white transition-all text-slate-800"
-                        placeholder="e.g. John Smith / Hiring Manager"
-                      />
-                    </div>
-
-                    {/* Recipient Title */}
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                        <Briefcase size={10} /> Recipient Title
-                      </label>
-                      <input
-                        value={clRecipientTitle}
-                        onChange={(e) => setClRecipientTitle(e.target.value)}
-                        className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 text-[11px] font-semibold outline-none border border-slate-200/50 focus:border-lumina-teal/30 focus:bg-white transition-all text-slate-800"
-                        placeholder="e.g. Engineering Manager"
-                      />
-                    </div>
-
-                    {/* Recipient Company */}
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                        <Building2 size={10} /> Company
-                      </label>
-                      <input
-                        value={clRecipientCompany}
-                        onChange={(e) => setClRecipientCompany(e.target.value)}
-                        className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 text-[11px] font-semibold outline-none border border-slate-200/50 focus:border-lumina-teal/30 focus:bg-white transition-all text-slate-800"
-                        placeholder="e.g. Google"
-                      />
-                    </div>
-
-                    {/* Recipient Address */}
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                        <MapPin size={10} /> Company Address
-                      </label>
-                      <input
-                        value={clRecipientAddress}
-                        onChange={(e) => setClRecipientAddress(e.target.value)}
-                        className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 text-[11px] font-semibold outline-none border border-slate-200/50 focus:border-lumina-teal/30 focus:bg-white transition-all text-slate-800"
-                        placeholder="e.g. 1600 Amphitheatre Pkwy, Mountain View, CA"
-                      />
-                    </div>
-
-                    <div className="h-px bg-slate-100" />
-
-                    {/* Signature Name */}
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                        <PenTool size={10} /> Signature Name
-                      </label>
-                      <input
-                        value={clSignatureName}
-                        onChange={(e) => setClSignatureName(e.target.value)}
-                        className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 text-[11px] font-semibold outline-none border border-slate-200/50 focus:border-lumina-teal/30 focus:bg-white transition-all text-slate-800"
-                        placeholder="Your Full Name"
-                      />
-                    </div>
-
-                    {/* Edit Body Toggle */}
-                    <button
-                      onClick={() => {
-                        if (clIsEditingBody) {
-                          // Save edits
-                          onUpdateCoverLetter?.(clEditableBody);
-                          setClIsEditingBody(false);
-                          toast.success('Cover letter body updated!');
-                        } else {
-                          setClIsEditingBody(true);
-                        }
-                      }}
-                      className={`w-full py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 ${
-                        clIsEditingBody 
-                          ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-600' 
-                          : 'bg-slate-50 border border-slate-200/50 text-slate-600 hover:bg-slate-100'
-                      }`}
-                    >
-                      {clIsEditingBody ? (
-                        <><Save size={12} /> Save Letter Body</>
-                      ) : (
-                        <><Edit3 size={12} /> Edit Letter Body</>
-                      )}
-                    </button>
-                  </div>
+            {/* ── LEFT PANEL: COVER LETTER EDITOR ── */}
+            <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-4 space-y-6 h-auto">
+              <CollapsibleSection 
+                title="Letter Info" 
+                icon={Mail} 
+                isOpen={openSection === "cl-info"} 
+                onToggle={() => setOpenSection(openSection === "cl-info" ? null : "cl-info")}
+              >
+                <p className="text-xs text-[#1E2A3A]/60 leading-relaxed font-medium pb-3">
+                  This cover letter is synthesized using your <strong>Tailored Resume Blueprint</strong> and the target <strong>Job Description</strong> to ensure 100% thematic consistency.
+                </p>
+                {!coverLetter && (
+                  <button 
+                    onClick={onGenerateCL}
+                    disabled={isGeneratingCL}
+                    className="w-full py-4 rounded-2xl bg-[#1E2A3A] text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all"
+                  >
+                    Generate Now
+                  </button>
                 )}
-              </div>
+              </CollapsibleSection>
 
-              {/* ── RIGHT PANEL: COVER LETTER PREVIEW ── */}
-              <div className="lg:col-span-8">
-                <div className="w-full flex-1 perspective-2000 rounded-[2.5rem] shadow-inner bg-slate-100/50 p-4 sm:p-6 md:p-8 border border-white/40">
-                  <div className="relative bg-white border border-[#1E2A3A]/5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.12)] mx-auto min-h-[700px] flex flex-col" style={{ maxWidth: '850px', padding: '1in' }}>
-                    {isGeneratingCL ? (
-                      <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-                        <RotateCcw size={48} className="animate-spin text-lumina-teal" />
-                        <p className="text-xs font-black uppercase tracking-[0.3em] text-[#1E2A3A]/40">Synthesizing Narrative...</p>
+              {/* ── Cover Letter Edit Fields ── */}
+              {coverLetter && (
+                <>
+                  <CollapsibleSection 
+                    title="Date & Recipient" 
+                    icon={Calendar} 
+                    isOpen={openSection === "cl-recipient"} 
+                    onToggle={() => setOpenSection(openSection === "cl-recipient" ? null : "cl-recipient")}
+                  >
+                    <div className="space-y-3 pt-2">
+                      {/* Date */}
+                      <div className="space-y-1">
+                        <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Date</span>
+                        <input
+                          value={clDate}
+                          onChange={(e) => setClDate(e.target.value)}
+                          className="w-full bg-slate-50 rounded-xl px-4 py-2.5 text-[11px] font-medium outline-none border border-transparent focus:border-lumina-teal/20"
+                          placeholder="May 21, 2026"
+                        />
                       </div>
-                    ) : coverLetter ? (
-                      <div className="space-y-6 relative z-10 flex flex-col flex-1" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
-                        {/* ── Sender Info (From Header) ── */}
-                        <div className="space-y-0.5">
-                          <p className="text-[13px] font-bold text-[#1E2A3A]">{localHeader.fullName}</p>
-                          {localHeader.location && <p className="text-[11px] text-[#1E2A3A]/70">{localHeader.location}</p>}
-                          {localHeader.phone && <p className="text-[11px] text-[#1E2A3A]/70">{localHeader.phone}</p>}
-                          {localHeader.email && <p className="text-[11px] text-[#1E2A3A]/70">{localHeader.email}</p>}
-                          {localHeader.linkedin && <p className="text-[11px] text-blue-600">{localHeader.linkedin}</p>}
-                        </div>
 
-                        {/* ── Date ── */}
-                        <p className="text-[12px] text-[#1E2A3A]/80">{clDate}</p>
+                      {/* Recipient Name */}
+                      <div className="space-y-1">
+                        <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Recipient Name</span>
+                        <input
+                          value={clRecipientName}
+                          onChange={(e) => setClRecipientName(e.target.value)}
+                          className="w-full bg-slate-50 rounded-xl px-4 py-2.5 text-[11px] font-medium outline-none border border-transparent focus:border-lumina-teal/20"
+                          placeholder="e.g. John Smith / Hiring Manager"
+                        />
+                      </div>
 
-                        {/* ── Recipient Info ── */}
-                        <div className="space-y-0.5">
-                          {clRecipientName && <p className="text-[12px] text-[#1E2A3A]/80">{clRecipientName}</p>}
-                          {clRecipientTitle && <p className="text-[12px] text-[#1E2A3A]/70 italic">{clRecipientTitle}</p>}
-                          {clRecipientCompany && <p className="text-[12px] text-[#1E2A3A]/80">{clRecipientCompany}</p>}
-                          {clRecipientAddress && <p className="text-[12px] text-[#1E2A3A]/70">{clRecipientAddress}</p>}
-                        </div>
+                      {/* Recipient Title */}
+                      <div className="space-y-1">
+                        <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Recipient Title</span>
+                        <input
+                          value={clRecipientTitle}
+                          onChange={(e) => setClRecipientTitle(e.target.value)}
+                          className="w-full bg-slate-50 rounded-xl px-4 py-2.5 text-[11px] font-medium outline-none border border-transparent focus:border-lumina-teal/20"
+                          placeholder="e.g. Engineering Manager"
+                        />
+                      </div>
 
-                        {/* ── Salutation ── */}
-                        <p className="text-[12px] text-[#1E2A3A]">
-                          Dear {clRecipientName || 'Hiring Manager'},
-                        </p>
-
-                        {/* ── Letter Body ── */}
-                        {clIsEditingBody ? (
-                          <textarea
-                            value={clEditableBody}
-                            onChange={(e) => setClEditableBody(e.target.value)}
-                            className="flex-1 w-full text-[12px] text-[#1E2A3A]/80 leading-[1.8] outline-none border border-lumina-teal/20 rounded-xl p-4 bg-lumina-teal/[0.02] min-h-[400px] resize-y transition-all focus:border-lumina-teal/40 focus:shadow-lg focus:shadow-lumina-teal/5"
-                            style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+                      {/* Company & Address */}
+                      <div className="grid grid-cols-1 gap-2">
+                        <div className="space-y-1">
+                          <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Company</span>
+                          <input
+                            value={clRecipientCompany}
+                            onChange={(e) => setClRecipientCompany(e.target.value)}
+                            className="w-full bg-slate-50 rounded-xl px-4 py-2.5 text-[11px] font-medium outline-none border border-transparent focus:border-lumina-teal/20"
+                            placeholder="e.g. Google"
                           />
-                        ) : (
-                          <div className="text-[12px] text-[#1E2A3A]/80 leading-[1.8] whitespace-pre-wrap flex-1">
-                            {clEditableBody || coverLetter}
-                          </div>
-                        )}
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Company Address</span>
+                          <input
+                            value={clRecipientAddress}
+                            onChange={(e) => setClRecipientAddress(e.target.value)}
+                            className="w-full bg-slate-50 rounded-xl px-4 py-2.5 text-[11px] font-medium outline-none border border-transparent focus:border-lumina-teal/20"
+                            placeholder="e.g. 1600 Amphitheatre Pkwy, Mountain View, CA"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </CollapsibleSection>
 
-                        {/* ── Closing & Signature ── */}
-                        <div className="space-y-4 pt-4">
-                          <p className="text-[12px] text-[#1E2A3A]">Sincerely,</p>
-                          <div className="space-y-0.5">
-                            <p className="text-[13px] font-semibold text-[#1E2A3A] italic" style={{ fontFamily: '"Brush Script MT", "Segoe Script", cursive' }}>
-                              {clSignatureName || localHeader.fullName}
-                            </p>
-                            <p className="text-[12px] font-medium text-[#1E2A3A]">{clSignatureName || localHeader.fullName}</p>
-                          </div>
-                        </div>
+                  <CollapsibleSection 
+                    title="Signature" 
+                    icon={PenTool} 
+                    isOpen={openSection === "cl-signature"} 
+                    onToggle={() => setOpenSection(openSection === "cl-signature" ? null : "cl-signature")}
+                  >
+                    <div className="space-y-3 pt-2">
+                      <div className="space-y-1">
+                        <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Signature Name</span>
+                        <input
+                          value={clSignatureName}
+                          onChange={(e) => setClSignatureName(e.target.value)}
+                          className="w-full bg-slate-50 rounded-xl px-4 py-2.5 text-[11px] font-medium outline-none border border-transparent focus:border-lumina-teal/20"
+                          placeholder="Your Full Name"
+                        />
                       </div>
-                    ) : (
-                      <div className="flex-1 flex flex-col items-center justify-center space-y-8 text-center px-12">
-                        <div className="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center text-slate-200">
-                          <Mail size={40} />
-                        </div>
-                        <div className="space-y-3">
-                          <h5 className="text-lg font-serif font-bold text-[#1E2A3A]">Letter Vault Empty</h5>
-                          <p className="text-sm text-[#1E2A3A]/40 max-w-sm leading-relaxed">
-                            Your resume is ready! Now, let's craft the perfect narrative to open the door.
-                          </p>
-                        </div>
-                        <button 
-                          onClick={onGenerateCL}
-                          className="px-10 py-4 rounded-2xl bg-lumina-teal text-white text-[10px] font-black uppercase tracking-[0.3em] shadow-xl shadow-lumina-teal/20 hover:scale-105 transition-all"
-                        >
-                          Synthesize Narrative
-                        </button>
+                    </div>
+                  </CollapsibleSection>
+
+                  <CollapsibleSection 
+                    title="Letter Body" 
+                    icon={Edit3} 
+                    isOpen={openSection === "cl-body"} 
+                    onToggle={() => setOpenSection(openSection === "cl-body" ? null : "cl-body")}
+                  >
+                    <div className="space-y-3 pt-2">
+                      <textarea
+                        value={clEditableBody}
+                        onChange={(e) => setClEditableBody(e.target.value)}
+                        className="w-full bg-slate-50 rounded-xl px-4 py-3 text-[11px] font-medium outline-none border border-transparent focus:border-lumina-teal/20 min-h-[300px] resize-y leading-relaxed"
+                        placeholder="Edit your cover letter body here..."
+                      />
+                      <button
+                        onClick={() => {
+                          onUpdateCoverLetter?.(clEditableBody);
+                          toast.success('Cover letter body saved!');
+                        }}
+                        className="w-full py-3 rounded-2xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 hover:scale-[1.02]"
+                      >
+                        <Save size={12} /> Save Changes
+                      </button>
+                    </div>
+                  </CollapsibleSection>
+                </>
+              )}
+            </div>
+
+            {/* ── RIGHT PANEL: COVER LETTER PREVIEW ── */}
+            <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-8 flex justify-center w-full">
+              <div className="w-full flex-1 perspective-2000 rounded-[2.5rem] shadow-inner bg-slate-100/50 p-4 sm:p-6 md:p-8 border border-white/40">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="relative bg-white border border-[#1E2A3A]/5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.12)] mx-auto"
+                  style={{ 
+                    width: '100%', 
+                    maxWidth: '850px',
+                    minHeight: '297mm',
+                    height: 'auto',
+                    padding: '1in',
+                    fontFamily: getHtmlFont(fontFamily)
+                  }}
+                >
+                  {isGeneratingCL ? (
+                    <div className="flex flex-col items-center justify-center space-y-6" style={{ minHeight: '600px' }}>
+                      <RotateCcw size={48} className="animate-spin text-lumina-teal" />
+                      <p className="text-xs font-black uppercase tracking-[0.3em] text-[#1E2A3A]/40">Synthesizing Narrative...</p>
+                    </div>
+                  ) : coverLetter ? (
+                    <div className="space-y-0 relative z-10 flex flex-col" style={{ fontFamily: getHtmlFont(fontFamily) }}>
+                      {/* ── Sender Info Block ── */}
+                      <div style={{ marginBottom: '20px' }}>
+                        <p style={{ fontSize: fontSizes.body, fontWeight: 'bold', color: '#1E2A3A', margin: '0 0 2px 0', lineHeight: 1.4 }}>{localHeader.fullName}</p>
+                        {localHeader.location && <p style={{ fontSize: `calc(${fontSizes.body} - 1px)`, color: 'rgba(30,42,58,0.7)', margin: '0 0 1px 0', lineHeight: 1.4 }}>{localHeader.location}</p>}
+                        {localHeader.phone && <p style={{ fontSize: `calc(${fontSizes.body} - 1px)`, color: 'rgba(30,42,58,0.7)', margin: '0 0 1px 0', lineHeight: 1.4 }}>{localHeader.phone}</p>}
+                        {localHeader.email && <p style={{ fontSize: `calc(${fontSizes.body} - 1px)`, color: 'rgba(30,42,58,0.7)', margin: '0 0 1px 0', lineHeight: 1.4 }}>{localHeader.email}</p>}
+                        {localHeader.linkedin && <p style={{ fontSize: `calc(${fontSizes.body} - 1px)`, color: '#2563eb', margin: '0', lineHeight: 1.4 }}>{localHeader.linkedin}</p>}
                       </div>
-                    )}
-                  </div>
-                </div>
+
+                      {/* ── Date ── */}
+                      <p style={{ fontSize: fontSizes.body, color: '#1E2A3A', margin: '0 0 20px 0', lineHeight: 1.4 }}>{clDate}</p>
+
+                      {/* ── Recipient Block ── */}
+                      <div style={{ marginBottom: '20px' }}>
+                        {clRecipientName && <p style={{ fontSize: fontSizes.body, color: '#1E2A3A', margin: '0 0 1px 0', lineHeight: 1.4 }}>{clRecipientName}</p>}
+                        {clRecipientTitle && <p style={{ fontSize: fontSizes.body, color: 'rgba(30,42,58,0.7)', fontStyle: 'italic', margin: '0 0 1px 0', lineHeight: 1.4 }}>{clRecipientTitle}</p>}
+                        {clRecipientCompany && <p style={{ fontSize: fontSizes.body, color: '#1E2A3A', margin: '0 0 1px 0', lineHeight: 1.4 }}>{clRecipientCompany}</p>}
+                        {clRecipientAddress && <p style={{ fontSize: fontSizes.body, color: 'rgba(30,42,58,0.7)', margin: '0', lineHeight: 1.4 }}>{clRecipientAddress}</p>}
+                      </div>
+
+                      {/* ── Salutation ── */}
+                      <p style={{ fontSize: fontSizes.body, color: '#1E2A3A', margin: '0 0 16px 0', lineHeight: 1.4 }}>
+                        Dear {clRecipientName || 'Hiring Manager'},
+                      </p>
+
+                      {/* ── Letter Body (Justified) ── */}
+                      <div 
+                        className="whitespace-pre-wrap flex-1"
+                        style={{ 
+                          fontSize: fontSizes.body, 
+                          color: 'rgba(30,42,58,0.85)', 
+                          lineHeight: lineSpacing + 0.45,
+                          textAlign: 'justify',
+                          textAlignLast: 'left',
+                          margin: '0 0 24px 0',
+                          fontFamily: getHtmlFont(fontFamily)
+                        }}
+                      >
+                        {clEditableBody || coverLetter}
+                      </div>
+
+                      {/* ── Closing & Signature ── */}
+                      <div style={{ marginTop: '8px' }}>
+                        <p style={{ fontSize: fontSizes.body, color: '#1E2A3A', margin: '0 0 24px 0', lineHeight: 1.4 }}>Sincerely,</p>
+                        <p style={{ fontSize: '16px', fontWeight: 600, color: '#1E2A3A', fontStyle: 'italic', fontFamily: '"Brush Script MT", "Segoe Script", cursive', margin: '0 0 4px 0' }}>
+                          {clSignatureName || localHeader.fullName}
+                        </p>
+                        <p style={{ fontSize: fontSizes.body, fontWeight: 500, color: '#1E2A3A', margin: 0 }}>{clSignatureName || localHeader.fullName}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center space-y-8 text-center px-12" style={{ minHeight: '600px' }}>
+                      <div className="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center text-slate-200">
+                        <Mail size={40} />
+                      </div>
+                      <div className="space-y-3">
+                        <h5 className="text-lg font-serif font-bold text-[#1E2A3A]">Letter Vault Empty</h5>
+                        <p className="text-sm text-[#1E2A3A]/40 max-w-sm leading-relaxed">
+                          Your resume is ready! Now, let&apos;s craft the perfect narrative to open the door.
+                        </p>
+                      </div>
+                      <button 
+                        onClick={onGenerateCL}
+                        className="px-10 py-4 rounded-2xl bg-lumina-teal text-white text-[10px] font-black uppercase tracking-[0.3em] shadow-xl shadow-lumina-teal/20 hover:scale-105 transition-all"
+                      >
+                        Synthesize Narrative
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
               </div>
             </div>
           </motion.div>
