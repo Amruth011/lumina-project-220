@@ -162,6 +162,7 @@ ${duration} (Please adjust the density and count of phases/tasks to fit this exa
 
   const fallbackModels = [
     'llama-3.1-8b-instant',
+    'gemma2-9b-it',
     'llama-3.3-70b-versatile'
   ];
 
@@ -190,28 +191,34 @@ ${duration} (Please adjust the density and count of phases/tasks to fit this exa
         }),
       });
 
-      if (groqResponse.ok) {
-        const responseData = await groqResponse.json();
-        rawResponseText = responseData?.choices?.[0]?.message?.content || '';
-        if (rawResponseText.trim()) {
-          console.log(`API_ROADMAP: Successfully generated roadmap with ${model}`);
-          break;
-        }
-      }
+      // Read the body ONCE as text to avoid "body used already" crash
+      const rawBody = await groqResponse.text().catch(() => '');
 
-      let errorText = '';
-      try {
-        const errorData = await groqResponse.json();
-        errorText = errorData.error?.message || JSON.stringify(errorData);
-      } catch {
-        errorText = await groqResponse.text().catch(() => groqResponse.statusText);
+      if (groqResponse.ok) {
+        try {
+          const responseData = JSON.parse(rawBody);
+          rawResponseText = responseData?.choices?.[0]?.message?.content || '';
+          if (rawResponseText.trim()) {
+            console.log(`API_ROADMAP: Successfully generated roadmap with ${model}`);
+            break;
+          }
+        } catch {
+          console.warn(`API_ROADMAP: Could not parse success body for model ${model}`);
+        }
+      } else {
+        // Parse error from already-read text body
+        try {
+          const errorData = JSON.parse(rawBody);
+          lastError = errorData?.error?.message || JSON.stringify(errorData);
+        } catch {
+          lastError = rawBody || groqResponse.statusText;
+        }
+        console.warn(`API_ROADMAP: Model ${model} failed (HTTP ${groqResponse.status}): ${lastError}`);
       }
-      
-      lastError = errorText;
-      console.warn(`API_ROADMAP: Model ${model} failed: ${errorText}`);
 
       if (groqResponse.status === 429) {
-        await sleep(1500);
+        console.log(`API_ROADMAP: Rate limited on ${model}, waiting 2s before next attempt...`);
+        await sleep(2000);
       }
     } catch (err) {
       lastError = err instanceof Error ? err.message : String(err);

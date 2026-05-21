@@ -1,4 +1,15 @@
 {
+  "functions": {
+    "api/generate-roadmap.ts": {
+      "maxDuration": 60
+    },
+    "api/analyze.ts": {
+      "maxDuration": 30
+    },
+    "api/embed.ts": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",

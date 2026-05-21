@@ -45,54 +45,87 @@ export const useDecodeJD = () => {
         });
         data = response.data;
         error = response.error;
+        // If the edge function returned a JSON error payload, treat it as an error
+        if (!error && data?.error) {
+          error = new Error(data.error);
+          data = null;
+        }
       } catch (e) {
         error = e;
       }
 
       // ── EMERGENCY FALLBACK: Try Local API Proxy if Edge Function Fails ──
-      if (error && (error.message?.includes("Failed to send a request") || error.status === 404 || error.status === 500)) {
-        console.warn("Lumina Engine: Edge Function bottleneck. Switching to Local API Proxy...");
-        try {
-          const apiResponse = await fetch("/api/analyze", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              model: "llama-3.3-70b-versatile",
-              messages: [{ 
-                role: "user", 
-                content: `You are the Lumina Forensic Intelligence Architect. 
-                Task: Decode this Job Description and return a structured forensic report.
-                JD Text: ${jdText.substring(0, 8000)}
-                
-                Requirements for JSON:
-                - grade: { score: number, letter: string, summary: string, breakdown: object, plain_english_summary: string[] }
-                - title: string
-                - skills: { skill: string, importance: number, category: string }[]
-                - red_flags: { phrase: string, intensity: number, note: string }[]
-                - recruiter_lens: { jargon: string, reality: string }[]
-                - logistics: { salary_range: object, work_arrangement: object, responsibility_mix: object[], archetype: object }
-                - deep_dive: { day_in_life: object[], health_radar: object, bias_analysis: object, culture_radar: object }
-                - role_reality: object
-                - bonus_pulse: object
-                - interview_kit: object
-                - resume_help: object
-                - winning_strategy: object` 
-              }],
-              response_format: { type: "json_object" }
-            })
-          });
-          if (apiResponse.ok) {
-            data = await apiResponse.json();
-            error = null;
+      // Triggers on: network errors, 404, 500, or any error from the edge function
+      if (error) {
+        const errMsg = (error as { message?: string })?.message || '';
+        const errStatus = (error as { status?: number })?.status;
+        const shouldFallback = errMsg.includes("Failed to send a request") 
+          || errMsg.includes("GROQ_API_KEY")
+          || errMsg.includes("Lumina Engine Fault")
+          || errMsg.includes("Engines exhausted")
+          || errStatus === 404 
+          || errStatus === 500
+          || true; // Always try fallback on any edge function error
+
+        if (shouldFallback) {
+          console.warn("Lumina Engine: Edge Function error. Switching to Vercel API Proxy...", errMsg);
+          try {
+            const apiResponse = await fetch("/api/analyze", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                messages: [{ 
+                  role: "user", 
+                  content: `You are the Lumina Forensic Intelligence Architect. 
+                  Task: Decode this Job Description and return a structured forensic report.
+                  JD Text: ${jdText.substring(0, 8000)}
+                  
+                  Requirements for JSON:
+                  - grade: { score: number, letter: string, summary: string, breakdown: object, plain_english_summary: string[] }
+                  - title: string
+                  - skills: { skill: string, importance: number, category: string }[]
+                  - red_flags: { phrase: string, intensity: number, note: string }[]
+                  - recruiter_lens: { jargon: string, reality: string }[]
+                  - logistics: { salary_range: object, work_arrangement: object, responsibility_mix: object[], archetype: object }
+                  - deep_dive: { day_in_life: object[], health_radar: object, bias_analysis: object, culture_radar: object }
+                  - role_reality: object
+                  - bonus_pulse: object
+                  - interview_kit: object
+                  - resume_help: object
+                  - winning_strategy: object` 
+                }],
+                response_format: { type: "json_object" }
+              })
+            });
+            if (apiResponse.ok) {
+              const fallbackData = await apiResponse.json();
+              // The /api/analyze proxy returns the raw Groq response: { choices: [...] }
+              // Extract content if it's still wrapped
+              if (fallbackData?.choices?.[0]?.message?.content) {
+                try {
+                  data = JSON.parse(fallbackData.choices[0].message.content);
+                } catch {
+                  data = fallbackData.choices[0].message.content;
+                }
+              } else {
+                data = fallbackData;
+              }
+              error = null;
+              console.log("Lumina Engine: Vercel API Proxy fallback succeeded.");
+            } else {
+              const fallbackErr = await apiResponse.json().catch(() => ({ error: `HTTP ${apiResponse.status}` }));
+              throw new Error(fallbackErr?.error || fallbackErr?.details || `Vercel proxy failed: HTTP ${apiResponse.status}`);
+            }
+          } catch (apiErr) {
+            console.error("Vercel API Proxy also failed:", apiErr);
+            throw apiErr; // Re-throw so the outer catch handles it
           }
-        } catch (apiErr) {
-          console.error("Local API Proxy also failed:", apiErr);
         }
       }
 
       if (error) throw error;
       if (!data) throw new Error("AI Engine returned empty data");
-      if (data.error) throw new Error(data.error);
 
       // ── JD SIGNAL VALIDATION ──
       if (data.valid === false) {
@@ -411,8 +444,12 @@ export const useDecodeJD = () => {
       toast.success(`Forensic Intelligence Active: ${result.title}`, { duration: 4000 });
       
     } catch (err: unknown) {
-      console.error("── LUMINA FORENSIC CRASH DETECTED ──");
-      toast.error("Forensic Engine Fault", { description: "The intelligence engine encountered a multi-context bottleneck.", duration: 8000 });
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error("── LUMINA FORENSIC CRASH DETECTED ──", errMsg);
+      toast.error("Forensic Engine Fault", { 
+        description: errMsg.length < 200 ? errMsg : "The intelligence engine encountered an error. Check Supabase secrets and Vercel env vars.", 
+        duration: 8000 
+      });
     } finally {
       setIsScanning(false);
     }
