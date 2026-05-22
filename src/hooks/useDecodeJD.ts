@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import type { DecodeResult } from "@/types/jd";
 import { getCachedDecode, setCachedDecode, clearDecodeCache } from "@/lib/jdCache";
 import { clearResumeAnalysisCache } from "@/lib/resumeAnalysisCache";
+import { decodeJDHeuristic } from "@/lib/heuristicDecoder";
 
 export const useDecodeJD = () => {
   const [isScanning, setIsScanning] = useState(false);
@@ -31,49 +32,159 @@ export const useDecodeJD = () => {
     setWasCached(false);
 
     try {
-      // ── FRESH SCAN ARCHITECTURE: Bypassing local cache for deterministic forensic accuracy ──
-      console.log("── FRESH SCAN INITIATED (CACHE BYPASSED) ──");
+      // ── READ CONFIGURATION SETTINGS ──
+      const engineMode = localStorage.getItem("lumina_engine_mode") || "default";
+      const customProvider = localStorage.getItem("lumina_custom_provider") || "groq";
+      const customKey = localStorage.getItem("lumina_custom_key") || "";
 
-      // ── CALL TOTAL INTELLIGENCE ENGINE (Supabase Edge Function) ──
-      console.log("── LUMINA ENGINE REQUEST INITIATED ──");
+      // ── MOCK/HEURISTIC SCANNER FOR LIFETIME RESILIENCY & OFFLINE SANDBOX ──
+      if (engineMode === "heuristic") {
+        console.log("── SANDBOX HEURISTIC SCAN INITIATED ──");
+        // Short artificial delay to make the UX feel premium and deliberate
+        await new Promise(resolve => setTimeout(resolve, 800));
+        const result = decodeJDHeuristic(jdText);
+        await setCachedDecode(jdText, result);
+        clearResumeAnalysisCache();
+        if (typeof window !== "undefined" && window.sessionStorage) {
+          sessionStorage.removeItem("current_roadmap_id");
+          sessionStorage.removeItem("current_roadmap_jd_title");
+        }
+        setResults(result);
+        setWasCached(false);
+        toast.success(`Forensic Intelligence Active: ${result.title} (Sandbox Engine)`, {
+          description: "Using offline-first heuristic pattern scanner.",
+          duration: 4000
+        });
+        setIsScanning(false);
+        return;
+      }
+
       let data = null;
       let error = null;
 
-      try {
-        const invokePromise = supabase.functions.invoke('decode-jd', {
-          body: { jdText }
-        });
+      // ── DUAL DIRECT BROWSER CONNECTION (For User/Developer Keys) ──
+      const executeDirectBrowserFetch = async (): Promise<Record<string, unknown>> => {
+        const url = customProvider === "openai"
+          ? "https://api.openai.com/v1/chat/completions"
+          : "https://api.groq.com/openai/v1/chat/completions";
         
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Timeout: Supabase function took too long")), 12000)
-        );
+        const model = customProvider === "openai" ? "gpt-4o-mini" : "llama-3.3-70b-versatile";
+        console.log(`API_DIRECT: Initiating client-side direct request with ${model} on ${url}...`);
 
-        const response = await Promise.race([invokePromise, timeoutPromise]) as { data: Record<string, unknown> | null; error: { message?: string; status?: number } | null };
-        data = response.data;
-        error = response.error;
-        // If the edge function returned a JSON error payload, treat it as an error
-        if (!error && data?.error) {
-          error = new Error(data.error);
-          data = null;
+        const systemPrompt = `You are the Lumina Forensic Intelligence Architect. 
+Your goal is to deconstruct JDs into hyper-accurate data structures.
+
+MANDATORY RULES:
+1. ESTIMATION IS COMPULSORY: Never return 0, null, or empty for scores or salary. If the JD is vague, use your deep knowledge of the market to provide highly probable estimates.
+2. CURRENCY: India roles = INR. 
+3. VERDICT: The "grade.summary" MUST be a unique, insightful sentence. The "grade.plain_english_summary" MUST contain EXACTLY 5 key insight points.
+4. RED FLAGS: You MUST identify EXACTLY 2 red flags in "red_flags". If none exist, identify subtle competitive risks or growth bottlenecks.
+5. INTERVIEW KIT: "interview_kit.questions" MUST contain EXACTLY 10 diverse questions. "interview_kit.reverse_questions" MUST contain EXACTLY 5 strategic questions for the candidate to ask.
+6. STRATEGIC DEFICIT: "resume_help.keywords" MUST contain EXACTLY 10-12 high-impact ATS keywords extracted from the JD.
+7. ICEBERG: The "role_reality" must contain non-obvious truths about working in this domain.
+
+RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
+{
+  "valid": true,
+  "title": "string",
+  "skills": [{"category": "string", "skill": "string", "importance": 90}],
+  "requirements": {"education": ["string"], "experience": "string", "soft_skills": ["string"], "agreements": ["string"]},
+  "grade": { 
+    "score": 85, "letter": "A", "summary": "string", 
+    "breakdown": {"clarity": 15, "realistic": 12, "compensation": 12, "red_flags": 13, "benefits": 8, "growth": 8, "inclusivity": 8, "readability": 4}, 
+    "plain_english_summary": ["string", "string", "string", "string", "string"] 
+  },
+  "red_flags": [{"phrase": "string", "intensity": 50, "note": "string"}, {"phrase": "string", "intensity": 50, "note": "string"}],
+  "recruiter_lens": [{"jargon": "string", "reality": "string"}, {"jargon": "string", "reality": "string"}],
+  "logistics": { 
+    "salary_range": {"min": 120000, "max": 180000, "currency": "USD", "estimate": true, "note": "string"}, 
+    "work_arrangement": {"remote_friendly": "yes", "office_presence": "none", "flexible_hours": true},
+    "archetype": {"label": "string", "description": "string", "primary_focus": "string", "primary_tool": "string", "match_score": 90}
+  },
+  "bonus_pulse": {"ghost_job_probability": 10, "desperation_meter": 30, "skill_rarity": 60, "interview_difficulty": 80},
+  "role_reality": {"iceberg_above": ["string"], "iceberg_below": ["string"]},
+  "deep_dive": { 
+    "day_in_life": [{"time": "09:30", "task": "string", "description": "string"}],
+    "bias_analysis": {"inclusivity_score": 80, "gender_meter": "neutral", "age_bias_graph": 50, "tonal_map": [{"category": "string", "tone": "string"}]},
+    "culture_radar": {"innovation": 80, "work_life_balance": 75, "collaboration": 80, "hierarchy": 40, "results_driven": 85, "stability": 70},
+    "health_radar": {"market_position": 80, "tech_innovation": 85, "transparency": 70, "client_quality": 80, "employee_benefits": 75}
+  },
+  "interview_kit": { 
+    "questions": [{"question": "string", "type": "technical", "tip": "string", "target_answer": "string"}],
+    "reverse_questions": ["string", "string", "string", "string", "string"]
+  },
+  "resume_help": {"keywords": ["string"], "bullets": ["string"]}
+}`;
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${customKey.trim()}`
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [
+              { role: "system", content: "You are the Lumina Forensic Intelligence Architect." },
+              { role: "user", content: `ACT ON THIS JD:\n###\n${jdText.substring(0, 10000)}\n###\n\nRETURN ONLY RAW JSON MATCHING SCHEMA.` }
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.3
+          })
+        });
+
+        if (!response.ok) {
+          const errorBody = await response.text();
+          throw new Error(`Direct connection key error (${response.status}): ${errorBody.substring(0, 150)}`);
         }
-      } catch (e) {
-        error = e;
-      }
 
-      // ── EMERGENCY FALLBACK: Try Local API Proxy if Edge Function Fails ──
-      // Triggers on: network errors, 404, 500, or any error from the edge function
-      if (error) {
-        const errMsg = (error as { message?: string })?.message || '';
-        const errStatus = (error as { status?: number })?.status;
-        const shouldFallback = errMsg.includes("Failed to send a request") 
-          || errMsg.includes("GROQ_API_KEY")
-          || errMsg.includes("Lumina Engine Fault")
-          || errMsg.includes("Engines exhausted")
-          || errStatus === 404 
-          || errStatus === 500
-          || true; // Always try fallback on any edge function error
+        const resJson = await response.json();
+        const contentText = resJson.choices?.[0]?.message?.content;
+        if (!contentText) throw new Error("Direct API returned empty text choices.");
 
-        if (shouldFallback) {
+        const startIdx = contentText.indexOf('{');
+        const endIdx = contentText.lastIndexOf('}');
+        return JSON.parse(contentText.substring(startIdx, endIdx + 1));
+      };
+
+      if (engineMode === "custom") {
+        if (!customKey.trim()) {
+          throw new Error("Lumina Auth Error: Custom API Key is missing. Click the API Configuration settings (gear icon) to input your key or switch to Sandbox Mode.");
+        }
+        try {
+          data = await executeDirectBrowserFetch();
+          toast.success("Intelligence Active (Direct Browser Connection)", { duration: 4000 });
+        } catch (customErr) {
+          error = customErr;
+          console.error("Direct browser execution failed:", customErr);
+        }
+      } else {
+        // ── CALL TOTAL INTELLIGENCE ENGINE (Supabase Edge Function) ──
+        console.log("── LUMINA DEFAULT SERVER ENGINE REQUEST INITIATED ──");
+        try {
+          const invokePromise = supabase.functions.invoke('decode-jd', {
+            body: { jdText }
+          });
+          
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Timeout: Supabase function took too long")), 12000)
+          );
+
+          const response = await Promise.race([invokePromise, timeoutPromise]) as { data: Record<string, unknown> | null; error: { message?: string; status?: number } | null };
+          data = response.data;
+          error = response.error;
+          // If the edge function returned a JSON error payload, treat it as an error
+          if (!error && data?.error) {
+            error = new Error(data.error);
+            data = null;
+          }
+        } catch (e) {
+          error = e;
+        }
+
+        // ── EMERGENCY FALLBACK: Try Local API Proxy if Edge Function Fails ──
+        if (error) {
+          const errMsg = (error as { message?: string })?.message || '';
           console.warn("Lumina Engine: Edge Function error. Switching to Vercel API Proxy...", errMsg);
           try {
             const apiResponse = await fetch("/api/analyze", {
@@ -106,8 +217,6 @@ export const useDecodeJD = () => {
             });
             if (apiResponse.ok) {
               const fallbackData = await apiResponse.json();
-              // The /api/analyze proxy returns the raw Groq response: { choices: [...] }
-              // Extract content if it's still wrapped
               if (fallbackData?.choices?.[0]?.message?.content) {
                 try {
                   data = JSON.parse(fallbackData.choices[0].message.content);
@@ -126,13 +235,35 @@ export const useDecodeJD = () => {
             }
           } catch (apiErr) {
             console.error("Vercel API Proxy also failed:", apiErr);
-            throw apiErr; // Re-throw so the outer catch handles it
+            
+            // If the user has a custom browser key, attempt that as a secondary backend failure fallback!
+            if (customKey.trim()) {
+              console.warn("Vercel proxy failed. Trying direct browser connection as final LLM backup...");
+              try {
+                data = await executeDirectBrowserFetch();
+                error = null;
+                toast.success("Intelligence Active (Direct Browser Fallback Connection)", { duration: 4000 });
+              } catch (customBackupErr) {
+                console.error("Direct browser fallback also failed:", customBackupErr);
+                throw customBackupErr;
+              }
+            } else {
+              throw apiErr;
+            }
           }
         }
       }
 
-      if (error) throw error;
-      if (!data) throw new Error("AI Engine returned empty data");
+      // ── RESILIENT DEGRADATION: Automatically use Heuristic Parser on total LLM failure ──
+      if (error || !data) {
+        console.warn("── TOTAL SERVER/CLIENT LLM FAILURES ── Gracefully degrading to Premium Offline Heuristic Fallback Engine.");
+        data = decodeJDHeuristic(jdText);
+        error = null;
+        toast.info("Active: Heuristic Fallback Scan", {
+          description: "Local forensic pattern engine activated due to server API connection failure. Open settings to configure your credentials.",
+          duration: 9000
+        });
+      }
 
       // ── JD SIGNAL VALIDATION ──
       if (data.valid === false) {
@@ -140,6 +271,7 @@ export const useDecodeJD = () => {
         setIsScanning(false);
         return;
       }
+
 
       // ── DATA HYDRATION & PRECISION MAPPING ──
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -460,10 +592,38 @@ export const useDecodeJD = () => {
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
       console.error("── LUMINA FORENSIC CRASH DETECTED ──", errMsg);
-      toast.error("Forensic Engine Fault", { 
-        description: errMsg.length < 200 ? errMsg : "The intelligence engine encountered an error. Check Supabase secrets and Vercel env vars.", 
-        duration: 8000 
-      });
+      
+      // Proactively notify UI to display the connection settings & diagnostics panel
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("lumina_scan_crashed"));
+      }
+
+      // ── EXTREME LIFETIME RESILIENT FALLBACK ──
+      try {
+        console.warn("── CATCH FALLBACK INITIATED ── Gracefully degrading to Sandbox Heuristic Engine due to:", errMsg);
+        const fallbackResult = decodeJDHeuristic(jdText);
+        await setCachedDecode(jdText, fallbackResult);
+        clearResumeAnalysisCache();
+        
+        if (typeof window !== "undefined" && window.sessionStorage) {
+          sessionStorage.removeItem("current_roadmap_id");
+          sessionStorage.removeItem("current_roadmap_jd_title");
+        }
+
+        setResults(fallbackResult);
+        setWasCached(false);
+        
+        toast.info("Active: Heuristic Fallback Scan", {
+          description: `Offline Forensic engine activated (${fallbackResult.title}) due to network or server authentication fault. Open API Settings to configure.`,
+          duration: 9000
+        });
+      } catch (fallbackErr) {
+        console.error("Critical fallback engine crash:", fallbackErr);
+        toast.error("Forensic Engine Fault", { 
+          description: "A critical offline parser fault occurred. Workspace reset recommended.", 
+          duration: 9000 
+        });
+      }
     } finally {
       setIsScanning(false);
     }
