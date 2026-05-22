@@ -539,7 +539,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.4 }}
-              className="text-base font-bold text-slate-800 tracking-tight h-6"
+              className="text-base font-display font-bold text-slate-800 tracking-tight h-6"
             >
               {loadingSteps[loadingStep]}
             </motion.h4>
@@ -577,7 +577,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
             <Compass size={24} className="animate-pulse" />
           </div>
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-800">Adaptive Upskilling Roadmap</h2>
+            <h2 className="text-xl font-display font-bold tracking-tight text-slate-800">Adaptive Upskilling Roadmap</h2>
             <p className="text-[11px] font-semibold text-slate-500 tracking-tight">Synthesize a custom learning timeline to crush specific role requirements</p>
           </div>
         </div>
@@ -750,7 +750,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
             </span>
             <span className="text-[10px] font-bold text-slate-400">Targeting Syllabus Completion</span>
           </div>
-          <h2 className="text-xl md:text-2xl font-black tracking-tight text-slate-800 print-title">
+          <h2 className="text-xl md:text-2xl font-display font-black tracking-tight text-slate-800 print-title">
             Roadmap: {roadmap.target_role}
           </h2>
           <div className="flex flex-wrap gap-2 pt-1 no-print">
@@ -842,7 +842,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                     <span className="text-[11px] font-black uppercase tracking-widest text-lumina-teal">
                       Module {phase.phase_number} • {phase.focus_area}
                     </span>
-                    <h3 className="text-lg font-black tracking-tight text-slate-800 transition-colors print-title">
+                    <h3 className="text-lg font-display font-black tracking-tight text-slate-800 transition-colors print-title">
                       {phase.phase_title}
                     </h3>
                   </div>
@@ -948,7 +948,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
         <div className="w-10 h-10 bg-lumina-teal/5 border border-lumina-teal/10 text-lumina-teal rounded-full flex items-center justify-center">
           <Sparkles size={16} />
         </div>
-        <h4 className="text-[12px] font-black uppercase tracking-widest text-slate-800">Continuous Mastery Loop</h4>
+        <h4 className="text-[12px] font-display font-black uppercase tracking-widest text-slate-800">Continuous Mastery Loop</h4>
         <p className="text-[10px] text-slate-500 max-w-md mx-auto leading-normal">
           Toggle each requirement as you finish building its matching projects in the real world. As you check off items, your overall tactical status is synchronized across all active resume tailors and coaches automatically.
         </p>

@@ -175,6 +175,36 @@ Do NOT generate tasks that overflow or underflow this time-budget. A 1-week road
 CRITICAL: You MUST output exactly ${budget.phase_count} phases in the timeline array. Outputting fewer phases than requested will result in system failure.
 
 ══════════════════════════════════════════
+RULE 4 — RESOURCE LINK INTEGRITY (NON-NEGOTIABLE)
+══════════════════════════════════════════
+Every URL provided in the "deep_dive_resources" MUST be a 100% real, active, verified, permanent, and functional public website or documentation URL.
+1. ABSOLUTELY FORBIDDEN to guess nested routes, write fake paths, or invent detailed resource subdirectories (e.g. no fake subdirectories that cause 404s).
+2. ONLY use official technology landing pages, standard documentations, or stable reference sections.
+3. Every URL MUST match the target technology.
+4. Banned domains: placeholder.com, example.com, yourdocs.com, domain.com, tutorial.com.
+5. Standard safe documentation URLs to prioritize for matching topics:
+   - React: https://react.dev
+   - MDN Web Docs: https://developer.mozilla.org
+   - TypeScript: https://www.typescriptlang.org/docs
+   - Node.js: https://nodejs.org/docs
+   - Python: https://docs.python.org/3/
+   - AWS: https://docs.aws.amazon.com/
+   - PostgreSQL: https://www.postgresql.org/docs/
+   - Docker: https://docs.docker.com/
+   - Next.js: https://nextjs.org/docs
+   - Tailwind CSS: https://tailwindcss.com/docs
+   - GitHub/Git: https://git-scm.com/doc
+   - Vite: https://vite.dev
+   - Vitest: https://vitest.dev
+   - Prisma: https://www.prisma.io/docs
+   - Redux: https://redux.js.org
+   - GraphQL: https://graphql.org/learn/
+   - Kubernetes: https://kubernetes.io/docs/
+   - Terraform: https://developer.hashicorp.com/terraform/docs
+   - NestJS: https://docs.nestjs.com
+If the technology is not listed here, use its official verified main documentation home page. All URLs must start with https://.
+
+══════════════════════════════════════════
 OUTPUT SCHEMA (return ONLY this JSON — no markdown, no prose)
 ══════════════════════════════════════════
 {
