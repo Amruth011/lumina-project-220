@@ -8,8 +8,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { useDecodeJD } from "@/hooks/useDecodeJD";
 import { GlassTextArea } from "@/components/GlassTextArea";
 import { DecodeButton } from "@/components/DecodeButton";
-import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+import { LuminaUltraDashboard } from "./LuminaUltraDashboard";
+import { JdActionCta } from "./JdActionCta";
+import { ResumeGapAnalyzer } from "@/components/ResumeGapAnalyzer";
+import { ATSScoreSimulator } from "@/components/ATSScoreSimulator";
+import { ResumeEnhancer } from "@/components/ResumeEnhancer";
+import { MasterVault } from "@/components/MasterVault";
+import { ResumeGenerator } from "@/components/ResumeGenerator";
+import { ApplicationTracker } from "@/components/ApplicationTracker";
+import { RoadmapView } from "./roadmap/RoadmapView";
 
 const TabLoader = ({ message = "Calibrating Career Intelligence..." }: { message?: string }) => (
   <div className="flex flex-col items-center justify-center p-12 min-h-[400px] text-center space-y-6 bg-slate-900/10 backdrop-blur-sm rounded-[3rem] border border-white/5 shadow-inner">
@@ -23,16 +32,6 @@ const TabLoader = ({ message = "Calibrating Career Intelligence..." }: { message
     </div>
   </div>
 );
-
-const LuminaUltraDashboard = lazyWithRetry(() => import("./LuminaUltraDashboard").then(m => ({ default: m.LuminaUltraDashboard })));
-const JdActionCta = lazyWithRetry(() => import("./JdActionCta").then(m => ({ default: m.JdActionCta })));
-const ResumeGapAnalyzer = lazyWithRetry(() => import("@/components/ResumeGapAnalyzer").then(m => ({ default: m.ResumeGapAnalyzer })));
-const ATSScoreSimulator = lazyWithRetry(() => import("@/components/ATSScoreSimulator").then(m => ({ default: m.ATSScoreSimulator })));
-const ResumeEnhancer = lazyWithRetry(() => import("@/components/ResumeEnhancer").then(m => ({ default: m.ResumeEnhancer })));
-const MasterVault = lazyWithRetry(() => import("@/components/MasterVault").then(m => ({ default: m.MasterVault })));
-const ResumeGenerator = lazyWithRetry(() => import("@/components/ResumeGenerator").then(m => ({ default: m.ResumeGenerator })));
-const ApplicationTracker = lazyWithRetry(() => import("@/components/ApplicationTracker").then(m => ({ default: m.ApplicationTracker })));
-const RoadmapView = lazyWithRetry(() => import("./roadmap/RoadmapView").then(m => ({ default: m.RoadmapView })));
 
 import { scavengeSkills } from "@/lib/skillScavenger";
 import { generateUnifiedReport } from "@/lib/pdfExporter";
