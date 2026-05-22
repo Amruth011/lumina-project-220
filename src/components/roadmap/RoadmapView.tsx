@@ -229,7 +229,15 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       if (!user?.id) return;
       
       const currentSessionRoadmapId = sessionStorage.getItem("current_roadmap_id");
-      if (!currentSessionRoadmapId) return;
+      const currentSessionJdTitle = sessionStorage.getItem("current_roadmap_jd_title");
+
+      if (!currentSessionRoadmapId || currentSessionJdTitle !== results?.title) {
+        sessionStorage.removeItem("current_roadmap_id");
+        sessionStorage.removeItem("current_roadmap_jd_title");
+        setRoadmap(null);
+        setRoadmapId(null);
+        return;
+      }
 
       const { data, error } = await supabase
         .from("roadmaps")
@@ -261,7 +269,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
     } catch (err) {
       console.error("Error fetching roadmap:", err);
     }
-  }, [user?.id]);
+  }, [user?.id, results?.title]);
 
   // Fetch existing roadmap on mount / JD change
   useEffect(() => {
@@ -376,6 +384,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       setRoadmap(rData);
       setRoadmapId(dbRow.id);
       sessionStorage.setItem("current_roadmap_id", dbRow.id);
+      sessionStorage.setItem("current_roadmap_jd_title", results?.title || "");
 
       // Reset completed checklist
       setCompletedTaskIds(new Set());
@@ -779,7 +788,12 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       {/* Controller Buttons */}
       <div className="flex justify-between items-center no-print px-4">
         <button
-          onClick={() => setRoadmap(null)}
+          onClick={() => {
+            setRoadmap(null);
+            setRoadmapId(null);
+            sessionStorage.removeItem("current_roadmap_id");
+            sessionStorage.removeItem("current_roadmap_jd_title");
+          }}
           className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-lumina-teal transition-colors"
         >
           <RefreshCw size={12} className="group-hover:rotate-180 transition-transform" /> Reconfigure Roadmap

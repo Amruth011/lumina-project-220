@@ -446,6 +446,13 @@ export const useDecodeJD = () => {
       const result: DecodeResult = hydrate(data);
       await setCachedDecode(jdText, result);
       clearResumeAnalysisCache();
+      
+      // Proactively clear cached roadmap values for the new job description
+      if (typeof window !== "undefined" && window.sessionStorage) {
+        sessionStorage.removeItem("current_roadmap_id");
+        sessionStorage.removeItem("current_roadmap_jd_title");
+      }
+
       setResults(result);
       setWasCached(false);
       toast.success(`Forensic Intelligence Active: ${result.title}`, { duration: 4000 });
