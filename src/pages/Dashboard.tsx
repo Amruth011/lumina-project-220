@@ -1,10 +1,11 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useLocation } from "react-router-dom";
-const GlobalNavbar = lazy(() => import("@/components/GlobalNavbar").then(m => ({ default: m.GlobalNavbar })));
-const ScannerView = lazy(() => import("@/components/ScannerView").then(m => ({ default: m.ScannerView })));
-const WelcomeScreen = lazy(() => import("@/components/onboarding/WelcomeScreen").then(m => ({ default: m.WelcomeScreen })));
-const TooltipTour = lazy(() => import("@/components/onboarding/TooltipTour").then(m => ({ default: m.TooltipTour })));
-const HistoryPanel = lazy(() => import("@/components/dashboard/HistoryPanel").then(m => ({ default: m.HistoryPanel })));
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
+const GlobalNavbar = lazyWithRetry(() => import("@/components/GlobalNavbar").then(m => ({ default: m.GlobalNavbar })));
+const ScannerView = lazyWithRetry(() => import("@/components/ScannerView").then(m => ({ default: m.ScannerView })));
+const WelcomeScreen = lazyWithRetry(() => import("@/components/onboarding/WelcomeScreen").then(m => ({ default: m.WelcomeScreen })));
+const TooltipTour = lazyWithRetry(() => import("@/components/onboarding/TooltipTour").then(m => ({ default: m.TooltipTour })));
+const HistoryPanel = lazyWithRetry(() => import("@/components/dashboard/HistoryPanel").then(m => ({ default: m.HistoryPanel })));
 
 import type { Tab } from "@/types/tabs";
 

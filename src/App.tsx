@@ -6,15 +6,16 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { SessionProvider } from "@/context/SessionContext";
 import { ToastProvider } from "@/context/ToastContext";
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { FeedbackBar } from "@/components/ui/FeedbackBar";
 import { CommandPalette } from "@/components/ui/CommandPalette";
 
-// Lazy load pages to prevent circular dependency initialization crashes
-const Index = lazy(() => import("./pages/Index"));
-const Auth = lazy(() => import("./pages/Auth"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+// Lazy load pages securely with self-healing chunk failure protection
+const Index = lazyWithRetry(() => import("./pages/Index"));
+const Auth = lazyWithRetry(() => import("./pages/Auth"));
+const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
