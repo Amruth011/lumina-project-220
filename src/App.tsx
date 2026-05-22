@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { SessionProvider } from "@/context/SessionContext";
 import { ToastProvider } from "@/context/ToastContext";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { FeedbackBar } from "@/components/ui/FeedbackBar";
 import { CommandPalette } from "@/components/ui/CommandPalette";
@@ -57,7 +57,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.sessionStorage) {
+      sessionStorage.removeItem("lumina_chunk_fail_refresh");
+    }
+  }, []);
+
+  return (
   <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
     <ToastProvider>
       <SessionProvider>
@@ -97,6 +104,7 @@ const App = () => (
       </SessionProvider>
     </ToastProvider>
   </ThemeProvider>
-);
+  );
+};
 
 export default App;

@@ -13,7 +13,12 @@ export function lazyWithRetry<T extends React.ComponentType<any>>(
 ) {
   return lazy(async () => {
     try {
-      return await componentImport();
+      const component = await componentImport();
+      // Reset chunk fail reload flag on successful hydration
+      if (typeof window !== "undefined" && window.sessionStorage) {
+        sessionStorage.removeItem("lumina_chunk_fail_refresh");
+      }
+      return component;
     } catch (error: any) {
       // Check if the error is a dynamic import / chunk load failure
       const isChunkLoadFailed = 
