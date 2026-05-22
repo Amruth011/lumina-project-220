@@ -56,89 +56,31 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
   const [jdUrl, setJdUrl] = useState("");
 
   // ── Engine Configuration States ──
-  const [showSettings, setShowSettings] = useState(false);
   const [engineMode, setEngineMode] = useState(() => localStorage.getItem("lumina_engine_mode") || "default");
   const [customProvider, setCustomProvider] = useState(() => localStorage.getItem("lumina_custom_provider") || "groq");
-  const [customKey, setCustomKey] = useState(() => localStorage.getItem("lumina_custom_key") || "");
-  const [testingDiagnostics, setTestingDiagnostics] = useState(false);
-  const [diagnosticStatus, setDiagnosticStatus] = useState({
-    supabase: "idle",
-    vercel: "idle",
-    groq: "idle"
-  });
 
-  const handleEngineModeChange = (mode: string) => {
-    localStorage.setItem("lumina_engine_mode", mode);
-    setEngineMode(mode);
-    toast.success(`Engine changed: ${mode === "default" ? "Server Cloud" : mode === "custom" ? "Browser Custom Key" : "Sandbox Heuristic"}`);
-  };
-
-  const handleCustomProviderChange = (provider: string) => {
-    localStorage.setItem("lumina_custom_provider", provider);
-    setCustomProvider(provider);
-  };
-
-  const handleCustomKeyChange = (key: string) => {
-    localStorage.setItem("lumina_custom_key", key);
-    setCustomKey(key);
-  };
-
-  const runDiagnosticsTest = async () => {
-    setTestingDiagnostics(true);
-    setDiagnosticStatus({ supabase: "checking", vercel: "checking", groq: "checking" });
-    
-    // 1. Supabase Check
-    let sbStatus = "ERROR";
-    try {
-      const { error } = await supabase.from('profiles').select('id').limit(1);
-      sbStatus = error ? "OFFLINE" : "OK";
-    } catch (e) {
-      sbStatus = "CRASHED";
-    }
-
-    // 2. Vercel & Groq via api/diagnose check
-    let vercelStatus = "OFFLINE";
-    let groqStatus = "MISSING_KEY";
-    try {
-      const res = await fetch("/api/diagnose");
-      if (res.ok) {
-        const dData = await res.json();
-        vercelStatus = "OK";
-        if (dData?.groq_test) {
-          groqStatus = dData.groq_test.includes("OK") ? "OK" : dData.groq_test;
-        } else if (dData?.diagnostics?.groq_key_set) {
-          groqStatus = "KEY_SET";
-        }
-      } else {
-        vercelStatus = `HTTP ${res.status}`;
-      }
-    } catch (e) {
-      vercelStatus = "UNREACHABLE";
-    }
-
-    setDiagnosticStatus({
-      supabase: sbStatus,
-      vercel: vercelStatus,
-      groq: groqStatus
-    });
-    setTestingDiagnostics(false);
-  };
-
-  // Run diagnostics when settings open
+  // Keep engineMode and customProvider updated when tab is active
   useEffect(() => {
-    if (showSettings) {
-      runDiagnosticsTest();
+    if (activeTab === "decode") {
+      setEngineMode(localStorage.getItem("lumina_engine_mode") || "default");
+      setCustomProvider(localStorage.getItem("lumina_custom_provider") || "groq");
     }
-  }, [showSettings]);
+  }, [activeTab]);
 
-  // Listen for scan crash event to auto-open settings
+  // Listen for scan crash event to auto-guide user to profile settings
   useEffect(() => {
     const handleCrash = () => {
-      setShowSettings(true);
+      toast.error("Scanning encountered an engine connection issue.", {
+        description: "Please check your engine settings in your Profile/Master Vault tab.",
+        action: {
+          label: "Configure",
+          onClick: () => handleTabSwitch("profile")
+        }
+      });
     };
     window.addEventListener("lumina_scan_crashed", handleCrash);
     return () => window.removeEventListener("lumina_scan_crashed", handleCrash);
-  }, []);
+  }, [handleTabSwitch]);
 
   useEffect(() => { setSavedJdId(null); }, [results]);
   
@@ -189,7 +131,6 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
     setJdText("");
     setSavedJdId(null);
     setGapResult(null);
-    setShowSettings(false);
     toast.success("Forensic workspace reset successfully.");
   }, [resetResults]);
 
@@ -266,220 +207,6 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                 {/* ── Empty State Input View ── */}
                 {!results && (
                   <div className="space-y-4">
-                    {/* Sleek Engine Pill Indicator */}
-                    <div className="flex justify-end mb-2">
-                      <button
-                        onClick={() => setShowSettings(prev => !prev)}
-                        className="group flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-[11px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all duration-300 shadow-md"
-                      >
-                        <Shield size={12} className={engineMode === "heuristic" ? "text-amber-500 animate-pulse" : "text-lumina-teal"} />
-                        <span>Engine: <span className="text-foreground">{engineMode === "default" ? "Total Server Cloud" : engineMode === "custom" ? "Direct Browser Key" : "Sandbox Heuristic"}</span></span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60 group-hover:bg-lumina-teal group-hover:text-white transition-all">Configure</span>
-                      </button>
-                    </div>
-
-                    {/* API Diagnostics & Configuration Dashboard */}
-                    {showSettings && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="p-6 rounded-[2rem] border border-white/10 bg-slate-950/60 backdrop-blur-md space-y-6 text-left shadow-2xl overflow-hidden mb-6"
-                      >
-                        {/* Header */}
-                        <div className="flex justify-between items-center pb-3 border-b border-white/5">
-                          <div className="flex items-center gap-2.5">
-                            <BrainCircuit className="text-lumina-teal w-5 h-5" />
-                            <div>
-                              <h3 className="text-[13px] font-black uppercase tracking-widest text-white leading-none">Lumina Engine Configurations</h3>
-                              <span className="text-[10px] text-muted-foreground">Diagnostics & Credential Management Matrix</span>
-                            </div>
-                          </div>
-                          <button 
-                            onClick={() => setShowSettings(false)}
-                            className="text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-white px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-all border border-white/5"
-                          >
-                            Close Matrix
-                          </button>
-                        </div>
-
-                        {/* Content grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-4">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 flex items-center gap-1.5">
-                              <Zap size={11} className="text-lumina-teal" /> Active Intelligence Mode
-                            </h4>
-                            
-                            <div className="space-y-3">
-                              {/* Mode: Default */}
-                              <button
-                                onClick={() => handleEngineModeChange("default")}
-                                className={`w-full p-4 rounded-2xl border text-left transition-all ${
-                                  engineMode === "default" 
-                                    ? "border-lumina-teal/40 bg-teal-950/20 text-white shadow-lg shadow-teal-500/5" 
-                                    : "border-white/5 bg-white/[0.01] hover:bg-white/5 text-muted-foreground"
-                                }`}
-                              >
-                                <div className="flex justify-between items-center">
-                                  <span className="text-[11px] font-bold text-white">Default Server-Side Engine</span>
-                                  <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-white/10 font-bold">Standard</span>
-                                </div>
-                                <p className="text-[10px] mt-1 text-muted-foreground/80 leading-relaxed font-medium">
-                                  Invokes cloud-based Supabase Edge Functions with a secondary Vercel proxy. Relies on developer backend environment variables.
-                                </p>
-                              </button>
-
-                              {/* Mode: Custom */}
-                              <button
-                                onClick={() => handleEngineModeChange("custom")}
-                                className={`w-full p-4 rounded-2xl border text-left transition-all ${
-                                  engineMode === "custom" 
-                                    ? "border-cyan-500/40 bg-cyan-950/20 text-white shadow-lg shadow-cyan-500/5" 
-                                    : "border-white/5 bg-white/[0.01] hover:bg-white/5 text-muted-foreground"
-                                }`}
-                              >
-                                <div className="flex justify-between items-center">
-                                  <span className="text-[11px] font-bold text-white">Direct Browser Engine (User Key)</span>
-                                  <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-bold">Developer</span>
-                                </div>
-                                <p className="text-[10px] mt-1 text-muted-foreground/80 leading-relaxed font-medium">
-                                  Executes LLM completions directly from your browser. Input your custom key below. Saved strictly local in your browser memory.
-                                </p>
-                              </button>
-
-                              {/* Mode: Heuristic */}
-                              <button
-                                onClick={() => handleEngineModeChange("heuristic")}
-                                className={`w-full p-4 rounded-2xl border text-left transition-all ${
-                                  engineMode === "heuristic" 
-                                    ? "border-amber-500/40 bg-amber-950/20 text-white shadow-lg shadow-amber-500/5" 
-                                    : "border-white/5 bg-white/[0.01] hover:bg-white/5 text-muted-foreground"
-                                }`}
-                              >
-                                <div className="flex justify-between items-center">
-                                  <span className="text-[11px] font-bold text-white">Sandbox Heuristic Engine (Offline)</span>
-                                  <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">Fail-Safe</span>
-                                </div>
-                                <p className="text-[10px] mt-1 text-muted-foreground/80 leading-relaxed font-medium">
-                                  Runs a sophisticated local semantic pattern matching parser in native JavaScript. 100% offline, keyless, and guaranteed to work forever.
-                                </p>
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Right Column: Connection Diagnostics and API Inputs */}
-                          <div className="space-y-6">
-                            {engineMode === "custom" && (
-                              <div className="space-y-3 p-4 rounded-2xl border border-white/5 bg-white/[0.01]">
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">
-                                  Browser Key Configuration
-                                </h4>
-                                
-                                <div className="space-y-3">
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => handleCustomProviderChange("groq")}
-                                      className={`flex-1 py-2 rounded-xl text-[10px] font-bold border transition-all ${
-                                        customProvider === "groq"
-                                          ? "border-lumina-teal/40 bg-lumina-teal/10 text-white"
-                                          : "border-white/5 bg-transparent text-muted-foreground hover:bg-white/5"
-                                      }`}
-                                    >
-                                      Groq (Llama 3.3)
-                                    </button>
-                                    <button
-                                      onClick={() => handleCustomProviderChange("openai")}
-                                      className={`flex-1 py-2 rounded-xl text-[10px] font-bold border transition-all ${
-                                        customProvider === "openai"
-                                          ? "border-cyan-500/40 bg-cyan-500/10 text-white"
-                                          : "border-white/5 bg-transparent text-muted-foreground hover:bg-white/5"
-                                      }`}
-                                    >
-                                      OpenAI (GPT-4o)
-                                    </button>
-                                  </div>
-
-                                  <div className="space-y-1">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">
-                                      {customProvider === "groq" ? "GROQ API Key" : "OpenAI API Key"}
-                                    </label>
-                                    <input
-                                      type="password"
-                                      value={customKey}
-                                      onChange={(e) => handleCustomKeyChange(e.target.value)}
-                                      placeholder={customProvider === "groq" ? "gsk_..." : "sk-proj-..."}
-                                      className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-black/40 text-[11px] font-mono text-white focus:outline-none focus:border-lumina-teal/50 transition-all placeholder:text-white/20"
-                                    />
-                                    <span className="text-[8px] text-muted-foreground/50 block leading-tight font-medium">
-                                      Keys are stored in your `localStorage` and never sent to any server other than the direct API completion endpoints.
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="space-y-3">
-                              <div className="flex justify-between items-center">
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 flex items-center gap-1.5">
-                                  <ShieldCheck size={12} className="text-lumina-teal" /> Cloud Connection Diagnostics
-                                </h4>
-                                <button
-                                  onClick={runDiagnosticsTest}
-                                  disabled={testingDiagnostics}
-                                  className="text-[9px] font-black uppercase tracking-widest text-lumina-teal hover:text-teal-400 disabled:text-muted-foreground transition-all flex items-center gap-1"
-                                >
-                                  {testingDiagnostics ? (
-                                    <>
-                                      <Loader2 size={10} className="animate-spin" /> Checking...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <RefreshCw size={10} /> Run Diagnostics
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-
-                              <div className="space-y-2">
-                                {/* Supabase status row */}
-                                <div className="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 text-[11px]">
-                                  <span className="text-white font-medium flex items-center gap-2">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${diagnosticStatus.supabase === "OK" ? "bg-emerald-500 shadow-md shadow-emerald-500/20" : diagnosticStatus.supabase === "checking" ? "bg-amber-500 animate-pulse" : diagnosticStatus.supabase === "idle" ? "bg-white/20" : "bg-red-500 shadow-md shadow-red-500/20"}`} />
-                                    Supabase Client Endpoint
-                                  </span>
-                                  <span className="font-mono text-[9px] font-bold text-muted-foreground">
-                                    {diagnosticStatus.supabase}
-                                  </span>
-                                </div>
-
-                                {/* Vercel status row */}
-                                <div className="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 text-[11px]">
-                                  <span className="text-white font-medium flex items-center gap-2">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${diagnosticStatus.vercel === "OK" ? "bg-emerald-500 shadow-md shadow-emerald-500/20" : diagnosticStatus.vercel === "checking" ? "bg-amber-500 animate-pulse" : diagnosticStatus.vercel === "idle" ? "bg-white/20" : "bg-red-500 shadow-md shadow-red-500/20"}`} />
-                                    Vercel Serverless Gateway
-                                  </span>
-                                  <span className="font-mono text-[9px] font-bold text-muted-foreground">
-                                    {diagnosticStatus.vercel}
-                                  </span>
-                                </div>
-
-                                {/* Groq credential status row */}
-                                <div className="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 text-[11px]">
-                                  <span className="text-white font-medium flex items-center gap-2">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${diagnosticStatus.groq === "OK" || diagnosticStatus.groq === "KEY_SET" ? "bg-emerald-500 shadow-md shadow-emerald-500/20" : diagnosticStatus.groq === "checking" ? "bg-amber-500 animate-pulse" : diagnosticStatus.groq === "idle" ? "bg-white/20" : "bg-red-500 shadow-md shadow-red-500/20"}`} />
-                                    Server-Side API Authentication
-                                  </span>
-                                  <span className="font-mono text-[9px] font-bold text-muted-foreground truncate max-w-[120px]">
-                                    {diagnosticStatus.groq}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-
                     <GlassTextArea value={jdText} onChange={setJdText} isScanning={isScanning} />
                     <div className="flex justify-between items-center px-4">
                       <span className={`text-[10px] font-black uppercase tracking-widest ${jdText.length > 15000 ? 'text-red-500' : 'text-muted-foreground/40'}`}>
@@ -535,14 +262,6 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                       {/* Actions */}
                       <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
                         <button
-                          onClick={() => setShowSettings(prev => !prev)}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/5 bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all shadow-sm"
-                        >
-                          <RefreshCw size={10} className={showSettings ? "rotate-180 transition-transform duration-500" : ""} />
-                          <span>Settings</span>
-                        </button>
-
-                        <button
                           onClick={() => {
                             generateUnifiedReport(results, gapResult);
                             toast.success("Intelligence Report Exported");
@@ -562,208 +281,6 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                         </button>
                       </div>
                     </div>
-
-                    {/* Diagnostics and Configurations Panel */}
-                    {showSettings && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="p-6 rounded-[2rem] border border-white/10 bg-slate-950/60 backdrop-blur-md space-y-6 text-left shadow-2xl overflow-hidden mb-6"
-                      >
-                        {/* Header */}
-                        <div className="flex justify-between items-center pb-3 border-b border-white/5">
-                          <div className="flex items-center gap-2.5">
-                            <BrainCircuit className="text-lumina-teal w-5 h-5" />
-                            <div>
-                              <h3 className="text-[13px] font-black uppercase tracking-widest text-white leading-none">Lumina Engine Configurations</h3>
-                              <span className="text-[10px] text-muted-foreground">Diagnostics & Credential Management Matrix</span>
-                            </div>
-                          </div>
-                          <button 
-                            onClick={() => setShowSettings(false)}
-                            className="text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-white px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-all border border-white/5"
-                          >
-                            Close Matrix
-                          </button>
-                        </div>
-
-                        {/* Content grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-4">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 flex items-center gap-1.5">
-                              <Zap size={11} className="text-lumina-teal" /> Active Intelligence Mode
-                            </h4>
-                            
-                            <div className="space-y-3">
-                              {/* Mode: Default */}
-                              <button
-                                onClick={() => handleEngineModeChange("default")}
-                                className={`w-full p-4 rounded-2xl border text-left transition-all ${
-                                  engineMode === "default" 
-                                    ? "border-lumina-teal/40 bg-teal-950/20 text-white shadow-lg shadow-teal-500/5" 
-                                    : "border-white/5 bg-white/[0.01] hover:bg-white/5 text-muted-foreground"
-                                }`}
-                              >
-                                <div className="flex justify-between items-center">
-                                  <span className="text-[11px] font-bold text-white">Default Server-Side Engine</span>
-                                  <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-white/10 font-bold">Standard</span>
-                                </div>
-                                <p className="text-[10px] mt-1 text-muted-foreground/80 leading-relaxed font-medium">
-                                  Invokes cloud-based Supabase Edge Functions with a secondary Vercel proxy. Relies on developer backend environment variables.
-                                </p>
-                              </button>
-
-                              {/* Mode: Custom */}
-                              <button
-                                onClick={() => handleEngineModeChange("custom")}
-                                className={`w-full p-4 rounded-2xl border text-left transition-all ${
-                                  engineMode === "custom" 
-                                    ? "border-cyan-500/40 bg-cyan-950/20 text-white shadow-lg shadow-cyan-500/5" 
-                                    : "border-white/5 bg-white/[0.01] hover:bg-white/5 text-muted-foreground"
-                                }`}
-                              >
-                                <div className="flex justify-between items-center">
-                                  <span className="text-[11px] font-bold text-white">Direct Browser Engine (User Key)</span>
-                                  <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-bold">Developer</span>
-                                </div>
-                                <p className="text-[10px] mt-1 text-muted-foreground/80 leading-relaxed font-medium">
-                                  Executes LLM completions directly from your browser. Input your custom key below. Saved strictly local in your browser memory.
-                                </p>
-                              </button>
-
-                              {/* Mode: Heuristic */}
-                              <button
-                                onClick={() => handleEngineModeChange("heuristic")}
-                                className={`w-full p-4 rounded-2xl border text-left transition-all ${
-                                  engineMode === "heuristic" 
-                                    ? "border-amber-500/40 bg-amber-950/20 text-white shadow-lg shadow-amber-500/5" 
-                                    : "border-white/5 bg-white/[0.01] hover:bg-white/5 text-muted-foreground"
-                                }`}
-                              >
-                                <div className="flex justify-between items-center">
-                                  <span className="text-[11px] font-bold text-white">Sandbox Heuristic Engine (Offline)</span>
-                                  <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">Fail-Safe</span>
-                                </div>
-                                <p className="text-[10px] mt-1 text-muted-foreground/80 leading-relaxed font-medium">
-                                  Runs a sophisticated local semantic pattern matching parser in native JavaScript. 100% offline, keyless, and guaranteed to work forever.
-                                </p>
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Right Column: Connection Diagnostics and API Inputs */}
-                          <div className="space-y-6">
-                            {engineMode === "custom" && (
-                              <div className="space-y-3 p-4 rounded-2xl border border-white/5 bg-white/[0.01]">
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">
-                                  Browser Key Configuration
-                                </h4>
-                                
-                                <div className="space-y-3">
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => handleCustomProviderChange("groq")}
-                                      className={`flex-1 py-2 rounded-xl text-[10px] font-bold border transition-all ${
-                                        customProvider === "groq"
-                                          ? "border-lumina-teal/40 bg-lumina-teal/10 text-white"
-                                          : "border-white/5 bg-transparent text-muted-foreground hover:bg-white/5"
-                                      }`}
-                                    >
-                                      Groq (Llama 3.3)
-                                    </button>
-                                    <button
-                                      onClick={() => handleCustomProviderChange("openai")}
-                                      className={`flex-1 py-2 rounded-xl text-[10px] font-bold border transition-all ${
-                                        customProvider === "openai"
-                                          ? "border-cyan-500/40 bg-cyan-500/10 text-white"
-                                          : "border-white/5 bg-transparent text-muted-foreground hover:bg-white/5"
-                                      }`}
-                                    >
-                                      OpenAI (GPT-4o)
-                                    </button>
-                                  </div>
-
-                                  <div className="space-y-1">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">
-                                      {customProvider === "groq" ? "GROQ API Key" : "OpenAI API Key"}
-                                    </label>
-                                    <input
-                                      type="password"
-                                      value={customKey}
-                                      onChange={(e) => handleCustomKeyChange(e.target.value)}
-                                      placeholder={customProvider === "groq" ? "gsk_..." : "sk-proj-..."}
-                                      className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-black/40 text-[11px] font-mono text-white focus:outline-none focus:border-lumina-teal/50 transition-all placeholder:text-white/20"
-                                    />
-                                    <span className="text-[8px] text-muted-foreground/50 block leading-tight font-medium">
-                                      Keys are stored in your `localStorage` and never sent to any server other than the direct API completion endpoints.
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="space-y-3">
-                              <div className="flex justify-between items-center">
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 flex items-center gap-1.5">
-                                  <ShieldCheck size={12} className="text-lumina-teal" /> Cloud Connection Diagnostics
-                                </h4>
-                                <button
-                                  onClick={runDiagnosticsTest}
-                                  disabled={testingDiagnostics}
-                                  className="text-[9px] font-black uppercase tracking-widest text-lumina-teal hover:text-teal-400 disabled:text-muted-foreground transition-all flex items-center gap-1"
-                                >
-                                  {testingDiagnostics ? (
-                                    <>
-                                      <Loader2 size={10} className="animate-spin" /> Checking...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <RefreshCw size={10} /> Run Diagnostics
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-
-                              <div className="space-y-2">
-                                {/* Supabase status row */}
-                                <div className="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 text-[11px]">
-                                  <span className="text-white font-medium flex items-center gap-2">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${diagnosticStatus.supabase === "OK" ? "bg-emerald-500 shadow-md shadow-emerald-500/20" : diagnosticStatus.supabase === "checking" ? "bg-amber-500 animate-pulse" : diagnosticStatus.supabase === "idle" ? "bg-white/20" : "bg-red-500 shadow-md shadow-red-500/20"}`} />
-                                    Supabase Client Endpoint
-                                  </span>
-                                  <span className="font-mono text-[9px] font-bold text-muted-foreground">
-                                    {diagnosticStatus.supabase}
-                                  </span>
-                                </div>
-
-                                {/* Vercel status row */}
-                                <div className="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 text-[11px]">
-                                  <span className="text-white font-medium flex items-center gap-2">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${diagnosticStatus.vercel === "OK" ? "bg-emerald-500 shadow-md shadow-emerald-500/20" : diagnosticStatus.vercel === "checking" ? "bg-amber-500 animate-pulse" : diagnosticStatus.vercel === "idle" ? "bg-white/20" : "bg-red-500 shadow-md shadow-red-500/20"}`} />
-                                    Vercel Serverless Gateway
-                                  </span>
-                                  <span className="font-mono text-[9px] font-bold text-muted-foreground">
-                                    {diagnosticStatus.vercel}
-                                  </span>
-                                </div>
-
-                                {/* Groq credential status row */}
-                                <div className="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 text-[11px]">
-                                  <span className="text-white font-medium flex items-center gap-2">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${diagnosticStatus.groq === "OK" || diagnosticStatus.groq === "KEY_SET" ? "bg-emerald-500 shadow-md shadow-emerald-500/20" : diagnosticStatus.groq === "checking" ? "bg-amber-500 animate-pulse" : diagnosticStatus.groq === "idle" ? "bg-white/20" : "bg-red-500 shadow-md shadow-red-500/20"}`} />
-                                    Server-Side API Authentication
-                                  </span>
-                                  <span className="font-mono text-[9px] font-bold text-muted-foreground truncate max-w-[120px]">
-                                    {diagnosticStatus.groq}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
 
                     <LuminaUltraDashboard results={results} resumeResults={gapResult} jdText={jdText} />
                     

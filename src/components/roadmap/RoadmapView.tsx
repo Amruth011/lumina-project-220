@@ -514,6 +514,57 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
     }
   };
 
+  const healResourceUrl = (url: string, title: string): string => {
+    if (!url) return `https://www.google.com/search?q=${encodeURIComponent(title + " official documentation")}`;
+    
+    const cleanUrl = url.trim().toLowerCase();
+    const cleanTitle = title.trim().toLowerCase();
+    
+    const mappings = [
+      { keys: ["react"], fallback: "https://react.dev" },
+      { keys: ["next.js", "nextjs"], fallback: "https://nextjs.org/docs" },
+      { keys: ["typescript", "tsc"], fallback: "https://www.typescriptlang.org/docs/" },
+      { keys: ["javascript", "js", "html", "css", "mdn", "dom"], fallback: "https://developer.mozilla.org" },
+      { keys: ["node", "npm"], fallback: "https://nodejs.org/docs/" },
+      { keys: ["tailwind"], fallback: "https://tailwindcss.com/docs" },
+      { keys: ["vite"], fallback: "https://vite.dev" },
+      { keys: ["docker"], fallback: "https://docs.docker.com" },
+      { keys: ["kubernetes", "k8s"], fallback: "https://kubernetes.io/docs/" },
+      { keys: ["aws", "amazon", "s3", "ec2", "lambda", "cloudfront"], fallback: "https://docs.aws.amazon.com" },
+      { keys: ["supabase"], fallback: "https://supabase.com/docs" },
+      { keys: ["git", "github"], fallback: "https://git-scm.com/doc" },
+      { keys: ["python"], fallback: "https://docs.python.org/3/" },
+      { keys: ["postgres", "postgresql", "sql", "database", "db"], fallback: "https://www.postgresql.org/docs/" },
+      { keys: ["redux"], fallback: "https://redux.js.org" },
+      { keys: ["vue"], fallback: "https://vuejs.org" },
+      { keys: ["angular"], fallback: "https://angular.dev" },
+      { keys: ["go", "golang"], fallback: "https://go.dev/doc/" },
+      { keys: ["rust"], fallback: "https://www.rust-lang.org/learn" },
+      { keys: ["spring", "java"], fallback: "https://docs.spring.io" }
+    ];
+
+    const isSuspicious = cleanUrl.includes("fictional") || 
+                        cleanUrl.includes("example.com") || 
+                        cleanUrl.includes("localhost") || 
+                        cleanUrl.includes("todo") ||
+                        cleanUrl.includes("placeholder") ||
+                        !cleanUrl.startsWith("http");
+
+    for (const mapping of mappings) {
+      if (mapping.keys.some(k => cleanUrl.includes(k) || cleanTitle.includes(k))) {
+        if (isSuspicious || cleanUrl.split("/").length > 4) {
+          return mapping.fallback;
+        }
+      }
+    }
+
+    if (isSuspicious) {
+      return `https://www.google.com/search?q=${encodeURIComponent(title + " official documentation")}`;
+    }
+
+    return url;
+  };
+
   // Loading Screen
   if (loading) {
     return (
@@ -881,10 +932,10 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                       <div className="space-y-2">
                         <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 pl-1 block">Deep Dive Curations</span>
                         <div className="space-y-2">
-                          {phase.deep_dive_resources.map((res, rIdx) => (
+                           {phase.deep_dive_resources.map((res, rIdx) => (
                             <a
                               key={rIdx}
-                              href={res.url}
+                              href={healResourceUrl(res.url, res.title)}
                               target="_blank"
                               rel="noreferrer"
                               className="flex items-center gap-2.5 p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-lumina-teal/5 hover:border-lumina-teal/20 transition-all text-left no-print"
@@ -909,7 +960,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                           <ul className="hidden print:block list-disc pl-4 space-y-1">
                             {phase.deep_dive_resources.map((res, rIdx) => (
                               <li key={rIdx} className="text-[12px] text-slate-500">
-                                <strong className="print-text">{res.title}</strong> ({res.source_type}): <span className="print-resource-link">{res.url}</span>
+                                <strong className="print-text">{res.title}</strong> ({res.source_type}): <span className="print-resource-link">{healResourceUrl(res.url, res.title)}</span>
                               </li>
                             ))}
                           </ul>
