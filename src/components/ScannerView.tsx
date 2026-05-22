@@ -82,21 +82,6 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
     }
   }, [activeTab]);
 
-  // Listen for scan crash event to auto-guide user to profile settings
-  useEffect(() => {
-    const handleCrash = () => {
-      toast.error("Scanning encountered an engine connection issue.", {
-        description: "Please check your engine settings in your Profile/Master Vault tab.",
-        action: {
-          label: "Configure",
-          onClick: () => handleTabSwitch("profile")
-        }
-      });
-    };
-    window.addEventListener("lumina_scan_crashed", handleCrash);
-    return () => window.removeEventListener("lumina_scan_crashed", handleCrash);
-  }, [handleTabSwitch]);
-
   useEffect(() => { setSavedJdId(null); }, [results]);
   
   const restorationStarted = useRef(false);
@@ -127,6 +112,22 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
     }
     if (onTabChange) onTabChange(tab);
   }, [user, navigate, onTabChange]);
+
+  // Listen for scan crash event to auto-guide user to profile settings
+  useEffect(() => {
+    const handleCrash = () => {
+      toast.error("Scanning encountered an engine connection issue.", {
+        description: "Please check your engine settings in your Profile/Master Vault tab.",
+        action: {
+          label: "Configure",
+          onClick: () => handleTabSwitch("profile")
+        }
+      });
+    };
+    window.addEventListener("lumina_scan_crashed", handleCrash);
+    return () => window.removeEventListener("lumina_scan_crashed", handleCrash);
+  }, [handleTabSwitch]);
+
 
   const handleDecode = useCallback(async () => { 
     if (!user) {
