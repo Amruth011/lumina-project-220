@@ -30,7 +30,7 @@ export const JdActionCta = ({ onCheckResume, onGenerateResume, onGenerateCoverLe
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 border border-white/20"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border-2 border-white text-white"
           >
             <Sparkles size={12} className="text-white" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Strategic Next Step</span>
@@ -70,7 +70,7 @@ export const JdActionCta = ({ onCheckResume, onGenerateResume, onGenerateCoverLe
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.98 }}
             onClick={onGenerateCoverLetter}
-            className="group flex items-center gap-4 px-10 py-4 rounded-full bg-slate-950 border-2 border-white/10 text-white text-[12px] font-black uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all shadow-2xl"
+            className="group flex items-center gap-4 px-10 py-4 rounded-full bg-slate-950 border-2 border-white text-white text-[12px] font-black uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all shadow-2xl"
           >
             Synthesize Cover Letter
             <Mail size={16} className="group-hover:scale-110 transition-transform" />
@@ -80,7 +80,7 @@ export const JdActionCta = ({ onCheckResume, onGenerateResume, onGenerateCoverLe
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.98 }}
             onClick={onGenerateRoadmap}
-            className="group flex items-center gap-4 px-10 py-4 rounded-full bg-teal-900 border-2 border-white/20 text-white text-[12px] font-black uppercase tracking-widest hover:bg-white hover:text-teal-900 transition-all shadow-2xl"
+            className="group flex items-center gap-4 px-10 py-4 rounded-full bg-teal-900 border-2 border-white text-white text-[12px] font-black uppercase tracking-widest hover:bg-white hover:text-teal-900 transition-all shadow-2xl"
           >
             Upskilling Roadmap
             <Compass size={16} className="group-hover:animate-spin transition-transform" style={{ animationDuration: '3s' }} />

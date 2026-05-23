@@ -67,7 +67,7 @@ export const WelcomeScreen = () => {
           >
             <div className="inline-flex items-center justify-center w-[120px] h-[120px] mb-0">
               {step === 1 ? (
-                <img src="/favicon.png" alt="Lumina" className="w-full h-full object-contain" />
+                <img src="/logo.png" alt="Lumina" className="w-full h-auto object-contain" />
               ) : (
                 <div className="w-16 h-16 text-[#10B981]">
                   {currentStep.icon}

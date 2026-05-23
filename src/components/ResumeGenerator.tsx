@@ -3023,7 +3023,7 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
   return (
     <div className="glass-panel rounded-[3rem] p-6 lg:p-10 relative overflow-hidden group border-white/20">
       <div className="absolute top-0 right-0 p-16 opacity-5 scale-150 group-hover:opacity-10 transition-opacity duration-1000 pointer-events-none">
-        <img src="/favicon.png" alt="Lumina Icon" className="w-80 h-80 rotate-12 grayscale" />
+        <img src="/logo.png" alt="Lumina Icon" className="w-80 h-auto rotate-12 grayscale" />
       </div>
       <div className="relative z-10 flex flex-col items-center text-center space-y-6">
         <div className="w-16 h-16 rounded-[2rem] bg-primary/10 flex items-center justify-center border border-primary/20">

@@ -181,8 +181,9 @@ Every URL provided in the "deep_dive_resources" MUST be a 100% real, active, ver
 1. ABSOLUTELY FORBIDDEN to guess nested routes, write fake paths, or invent detailed resource subdirectories (e.g. no fake subdirectories that cause 404s).
 2. ONLY use official technology landing pages, standard documentations, or stable reference sections.
 3. Every URL MUST match the target technology.
-4. Banned domains: placeholder.com, example.com, yourdocs.com, domain.com, tutorial.com.
-5. Standard safe documentation URLs to prioritize for matching topics:
+4. Banned domains: placeholder.com, example.com, yourdocs.com, domain.com, tutorial.com, datacamp.com, coursera.org, udemy.com, pluralsight.com.
+5. STRICTLY PROHIBITED: Do not include links to paid courses, paid tutorials, or paid subscription platforms (such as DataCamp, Coursera, Udemy, Pluralsight, etc.). All resources must be completely FREE, prioritizing official technology documentations.
+6. Standard safe documentation URLs to prioritize for matching topics:
    - React: https://react.dev
    - MDN Web Docs: https://developer.mozilla.org
    - TypeScript: https://www.typescriptlang.org/docs

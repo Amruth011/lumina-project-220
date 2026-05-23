@@ -527,6 +527,10 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                         lowerUrl.includes("localhost") || 
                         lowerUrl.includes("todo") ||
                         lowerUrl.includes("placeholder") ||
+                        lowerUrl.includes("datacamp") ||
+                        lowerUrl.includes("coursera") ||
+                        lowerUrl.includes("udemy") ||
+                        lowerUrl.includes("pluralsight") ||
                         !lowerUrl.startsWith("http");
 
     if (!isSuspicious) {
@@ -534,6 +538,11 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
     }
 
     const mappings = [
+      { keys: ["preprocessing", "scikit-learn", "sklearn"], fallback: "https://scikit-learn.org/stable/modules/preprocessing.html" },
+      { keys: ["spark", "pyspark"], fallback: "https://spark.apache.org/docs/latest/" },
+      { keys: ["pandas", "dataframe"], fallback: "https://pandas.pydata.org/pandas-docs/stable/" },
+      { keys: ["numpy"], fallback: "https://numpy.org/doc/stable/" },
+      { keys: ["data science", "data cleaning", "data collection"], fallback: "https://docs.python.org/3/library/index.html" },
       { keys: ["react"], fallback: "https://react.dev" },
       { keys: ["next.js", "nextjs"], fallback: "https://nextjs.org/docs" },
       { keys: ["typescript", "tsc"], fallback: "https://www.typescriptlang.org/docs/" },

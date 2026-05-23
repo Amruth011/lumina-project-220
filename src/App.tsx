@@ -37,9 +37,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         >
           <div className="w-16 h-16 rounded-full border-2 border-primary/20 border-t-primary" />
           <img 
-            src="/favicon.png" 
+            src="/logo.png" 
             alt="Lumina" 
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 animate-pulse" 
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-auto opacity-80 animate-pulse" 
           />
         </motion.div>
         <div className="space-y-1 text-center">

@@ -323,15 +323,15 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                         className="w-full mx-auto space-y-8"
                       >
                         {/* Branded Control Bar */}
-                        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 rounded-[2rem] border border-white/10 bg-slate-900/40 backdrop-blur-md shadow-lg">
+                        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 rounded-[2rem] border border-slate-200/80 bg-white shadow-lg">
                           {/* Engine Indicator */}
                           <div className="flex items-center gap-3 pl-3">
                             <div className="w-8 h-8 rounded-xl bg-lumina-teal/10 border border-lumina-teal/20 flex items-center justify-center">
                               <Shield size={16} className={engineMode === "heuristic" ? "text-amber-500 animate-pulse" : "text-lumina-teal"} />
                             </div>
                             <div className="text-left">
-                              <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">Forensic Engine Active</span>
-                              <span className="text-[11px] font-bold text-foreground">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500/80 block">Forensic Engine Active</span>
+                              <span className="text-[11px] font-extrabold text-slate-900">
                                 {engineMode === "default" ? "Total Server Cloud" : engineMode === "custom" ? `Direct Browser (${customProvider})` : "Sandbox Heuristic (Offline)"}
                               </span>
                             </div>
@@ -344,7 +344,7 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                                 generateUnifiedReport(results, gapResult);
                                 toast.success("Intelligence Report Exported");
                               }}
-                              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-lumina-teal/20 bg-lumina-teal/10 hover:bg-lumina-teal/20 text-[10px] font-black uppercase tracking-widest text-lumina-teal hover:text-emerald-400 transition-all shadow-sm"
+                              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:text-slate-900 transition-all shadow-sm"
                             >
                               <Download size={10} />
                               <span>Export Report</span>
@@ -352,7 +352,7 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
 
                             <button
                               onClick={handleReset}
-                              className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-white text-black hover:bg-white/90 text-[10px] font-black uppercase tracking-widest transition-all shadow-md"
+                              className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-lumina-teal hover:bg-lumina-teal/90 text-white text-[10px] font-black uppercase tracking-widest transition-all shadow-md"
                             >
                               <span>Scan New JD</span>
                               <ArrowRight size={10} className="stroke-[3px]" />

@@ -1063,9 +1063,9 @@ RETURN JSON FORMAT ONLY:
             <div className="relative">
               <div className="w-16 h-16 rounded-full border-4 border-lumina-teal/30 border-t-lumina-teal animate-spin" />
               <img 
-                src="/favicon.png" 
+                src="/logo.png" 
                 alt="Lumina" 
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 animate-pulse" 
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-auto animate-pulse" 
               />
             </div>
             <div className="space-y-2">
@@ -1157,7 +1157,7 @@ RETURN JSON FORMAT ONLY:
 
           <div className="flex-1 space-y-6 relative z-10 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary">
-              <img src="/favicon.png" alt="" className="w-3 h-3 animate-pulse" />
+              <img src="/logo.png" alt="" className="w-5 h-auto object-contain animate-pulse" />
               <span className="text-[9px] font-black uppercase tracking-[0.2em]">Zero-Effort Architecture</span>
             </div>
 
@@ -1206,9 +1206,9 @@ RETURN JSON FORMAT ONLY:
               </div>
               <div className="absolute -bottom-4 -right-4 p-4 rounded-xl bg-primary shadow-xl">
                 <img 
-                  src="/favicon.png" 
+                  src="/logo.png" 
                   alt="" 
-                  className="w-6 h-6 object-contain brightness-0 invert" 
+                  className="w-10 h-auto object-contain brightness-0 invert" 
                 />
               </div>
             </div>
