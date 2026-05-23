@@ -12,7 +12,7 @@ import { getCachedResumeAnalysis, setCachedResumeAnalysis } from "@/lib/resumeAn
 import { MatchHero } from "./gap-analysis/MatchHero";
 import { ComparisonMatrix } from "./gap-analysis/ComparisonMatrix";
 import { GapRecommendations } from "./gap-analysis/GapRecommendations";
-import { DashboardSkeleton } from "./dashboard/DashboardSkeleton";
+import { GapAnalyzerSkeleton } from "./gap-analysis/GapAnalyzerSkeleton";
 import jsPDF from "jspdf";
 
 interface ResumeGapAnalyzerProps {
@@ -414,7 +414,7 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
 
             {isAnalyzing && (
               <div className="mt-12">
-                <DashboardSkeleton />
+                <GapAnalyzerSkeleton />
               </div>
             )}
 

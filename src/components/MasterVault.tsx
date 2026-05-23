@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { UsageMeter } from "./ui/UsageMeter";
 import { useUsage } from "@/hooks/useUsage";
 import type { VaultItem, VaultItemType, UserProfileWithVault } from "@/types/jd";
+import { VaultSkeleton } from "./dashboard/VaultSkeleton";
 import { generateAndStoreEmbedding, batchGenerateEmbeddings } from "@/lib/embeddingClient";
 
 const getFieldLabels = (type?: VaultItemType) => {
@@ -1051,18 +1052,27 @@ RETURN JSON FORMAT ONLY:
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center p-24 text-center space-y-8 min-h-[60vh] animate-in fade-in duration-700">
-        <div className="relative">
-          <div className="w-16 h-16 rounded-full border-2 border-primary/10 border-t-primary animate-spin" />
-          <img 
-            src="/favicon.png" 
-            alt="Lumina" 
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 animate-pulse" 
-          />
+      <div className="relative w-full min-h-[60vh] p-4 sm:p-6 md:p-8 animate-in fade-in duration-700">
+        {/* Pulsing vault outline under blur */}
+        <div className="opacity-35 blur-[2px] pointer-events-none select-none">
+          <VaultSkeleton />
         </div>
-        <div className="space-y-2">
-          <h3 className="text-xl font-serif italic text-foreground">Initializing Tactical Library...</h3>
-          <p className="text-muted-foreground text-[10px] uppercase font-black tracking-widest">Securing Career Intelligence Signal</p>
+        {/* Central glass loading card */}
+        <div className="absolute inset-0 flex items-center justify-center z-20">
+          <div className="backdrop-blur-md bg-white/70 border border-white/40 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl flex flex-col items-center justify-center space-y-6 max-w-sm text-center">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border-4 border-lumina-teal/30 border-t-lumina-teal animate-spin" />
+              <img 
+                src="/favicon.png" 
+                alt="Lumina" 
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 animate-pulse" 
+              />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-sm font-display font-black uppercase tracking-[0.2em] text-[#1E2A3A]">Initializing Tactical Library</h3>
+              <p className="text-[10px] font-semibold text-[#1E2A3A]/50 uppercase tracking-widest">Securing Career Intelligence Signal...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -2110,192 +2120,6 @@ RETURN JSON FORMAT ONLY:
           </div>
         );
       })()}
-      {/* ── SECTION: ENGINE CONFIGURATIONS (RELOCATED) ── */}
-      <div className="max-w-7xl mx-auto px-6 pb-24 border-t border-white/5 pt-12 mt-12">
-        <div className="flex items-center gap-4 mb-8">
-          <BrainCircuit size={20} className="text-lumina-teal animate-pulse" />
-          <div>
-            <h3 className="text-sm font-black uppercase tracking-[0.3em] text-white">Lumina Engine Configurations</h3>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">Diagnostics & Credential Management Matrix</p>
-          </div>
-        </div>
-
-        <div className="premium-card p-8 lg:p-10 bg-slate-950/60 backdrop-blur-md border border-white/10 rounded-[3rem] shadow-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-left">
-            <div className="space-y-6">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 flex items-center gap-1.5">
-                <Zap size={11} className="text-lumina-teal" /> Active Intelligence Mode
-              </h4>
-              
-              <div className="space-y-3">
-                {/* Mode: Default */}
-                <button
-                  onClick={() => handleEngineModeChange("default")}
-                  className={`w-full p-5 rounded-2xl border text-left transition-all ${
-                    engineMode === "default" 
-                      ? "border-lumina-teal/40 bg-teal-950/20 text-white shadow-lg shadow-teal-500/5" 
-                      : "border-white/5 bg-white/[0.01] hover:bg-white/5 text-muted-foreground"
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="text-[11px] font-bold text-white">Default Server-Side Engine</span>
-                    <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-white/10 font-bold">Standard</span>
-                  </div>
-                  <p className="text-[10px] mt-1 text-muted-foreground/80 leading-relaxed font-medium">
-                    Invokes cloud-based Supabase Edge Functions with a secondary Vercel proxy. Relies on developer backend environment variables.
-                  </p>
-                </button>
-
-                {/* Mode: Custom */}
-                <button
-                  onClick={() => handleEngineModeChange("custom")}
-                  className={`w-full p-5 rounded-2xl border text-left transition-all ${
-                    engineMode === "custom" 
-                      ? "border-cyan-500/40 bg-cyan-950/20 text-white shadow-lg shadow-cyan-500/5" 
-                      : "border-white/5 bg-white/[0.01] hover:bg-white/5 text-muted-foreground"
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="text-[11px] font-bold text-white">Direct Browser Engine (User Key)</span>
-                    <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-bold">Developer</span>
-                  </div>
-                  <p className="text-[10px] mt-1 text-muted-foreground/80 leading-relaxed font-medium">
-                    Executes LLM completions directly from your browser. Input your custom key below. Saved strictly local in your browser memory.
-                  </p>
-                </button>
-
-                {/* Mode: Heuristic */}
-                <button
-                  onClick={() => handleEngineModeChange("heuristic")}
-                  className={`w-full p-5 rounded-2xl border text-left transition-all ${
-                    engineMode === "heuristic" 
-                      ? "border-amber-500/40 bg-amber-950/20 text-white shadow-lg shadow-amber-500/5" 
-                      : "border-white/5 bg-white/[0.01] hover:bg-white/5 text-muted-foreground"
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="text-[11px] font-bold text-white">Sandbox Heuristic Engine (Offline)</span>
-                    <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">Fail-Safe</span>
-                  </div>
-                  <p className="text-[10px] mt-1 text-muted-foreground/80 leading-relaxed font-medium">
-                    Runs a sophisticated local semantic pattern matching parser in native JavaScript. 100% offline, keyless, and guaranteed to work forever.
-                  </p>
-                </button>
-              </div>
-            </div>
-
-            {/* Right Column: Connection Diagnostics and API Inputs */}
-            <div className="space-y-6">
-              {engineMode === "custom" && (
-                <div className="space-y-3 p-5 rounded-2xl border border-white/5 bg-white/[0.01]">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">
-                    Browser Key Configuration
-                  </h4>
-                  
-                  <div className="space-y-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleCustomProviderChange("groq")}
-                        className={`flex-1 py-2.5 rounded-xl text-[10px] font-bold border transition-all ${
-                          customProvider === "groq"
-                            ? "border-lumina-teal/40 bg-lumina-teal/10 text-white"
-                            : "border-white/5 bg-transparent text-muted-foreground hover:bg-white/5"
-                        }`}
-                      >
-                        Groq (Llama 3.3)
-                      </button>
-                      <button
-                        onClick={() => handleCustomProviderChange("openai")}
-                        className={`flex-1 py-2.5 rounded-xl text-[10px] font-bold border transition-all ${
-                          customProvider === "openai"
-                            ? "border-cyan-500/40 bg-cyan-500/10 text-white"
-                            : "border-white/5 bg-transparent text-muted-foreground hover:bg-white/5"
-                        }`}
-                      >
-                        OpenAI (GPT-4o)
-                      </button>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">
-                        {customProvider === "groq" ? "GROQ API Key" : "OpenAI API Key"}
-                      </label>
-                      <input
-                        type="password"
-                        value={customKey}
-                        onChange={(e) => handleCustomKeyChange(e.target.value)}
-                        placeholder={customProvider === "groq" ? "gsk_..." : "sk-proj-..."}
-                        className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-black/40 text-[11px] font-mono text-white focus:outline-none focus:border-lumina-teal/50 transition-all placeholder:text-white/20"
-                      />
-                      <span className="text-[8px] text-muted-foreground/50 block leading-tight font-medium">
-                        Keys are stored in your `localStorage` and never sent to any server other than the direct API completion endpoints.
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 flex items-center gap-1.5">
-                    <ShieldCheck size={12} className="text-lumina-teal" /> Cloud Connection Diagnostics
-                  </h4>
-                  <button
-                    onClick={runDiagnosticsTest}
-                    disabled={testingDiagnostics}
-                    className="text-[9px] font-black uppercase tracking-widest text-lumina-teal hover:text-teal-400 disabled:text-muted-foreground transition-all flex items-center gap-1"
-                  >
-                    {testingDiagnostics ? (
-                      <>
-                        <Loader2 size={10} className="animate-spin" /> Checking...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw size={10} /> Run Diagnostics
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <div className="space-y-2">
-                  {/* Supabase status row */}
-                  <div className="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 text-[11px]">
-                    <span className="text-white font-medium flex items-center gap-2">
-                      <span className={`w-1.5 h-1.5 rounded-full ${diagnosticStatus.supabase === "OK" ? "bg-emerald-500 shadow-md shadow-emerald-500/20" : diagnosticStatus.supabase === "checking" ? "bg-amber-500 animate-pulse" : diagnosticStatus.supabase === "idle" ? "bg-white/20" : "bg-red-500 shadow-md shadow-red-500/20"}`} />
-                      Supabase Client Endpoint
-                    </span>
-                    <span className="font-mono text-[9px] font-bold text-muted-foreground">
-                      {diagnosticStatus.supabase}
-                    </span>
-                  </div>
-
-                  {/* Vercel status row */}
-                  <div className="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 text-[11px]">
-                    <span className="text-white font-medium flex items-center gap-2">
-                      <span className={`w-1.5 h-1.5 rounded-full ${diagnosticStatus.vercel === "OK" ? "bg-emerald-500 shadow-md shadow-emerald-500/20" : diagnosticStatus.vercel === "checking" ? "bg-amber-500 animate-pulse" : diagnosticStatus.vercel === "idle" ? "bg-white/20" : "bg-red-500 shadow-md shadow-red-500/20"}`} />
-                      Vercel Serverless Gateway
-                    </span>
-                    <span className="font-mono text-[9px] font-bold text-muted-foreground">
-                      {diagnosticStatus.vercel}
-                    </span>
-                  </div>
-
-                  {/* Groq credential status row */}
-                  <div className="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 text-[11px]">
-                    <span className="text-white font-medium flex items-center gap-2">
-                      <span className={`w-1.5 h-1.5 rounded-full ${diagnosticStatus.groq === "OK" || diagnosticStatus.groq === "KEY_SET" ? "bg-emerald-500 shadow-md shadow-emerald-500/20" : diagnosticStatus.groq === "checking" ? "bg-amber-500 animate-pulse" : diagnosticStatus.groq === "idle" ? "bg-white/20" : "bg-red-500 shadow-md shadow-red-500/20"}`} />
-                      Server-Side API Authentication
-                    </span>
-                    <span className="font-mono text-[9px] font-bold text-muted-foreground truncate max-w-[120px]">
-                      {diagnosticStatus.groq}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

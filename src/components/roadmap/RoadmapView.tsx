@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import type { RoadmapData, RoadmapItem, RoadmapTask } from "@/types/roadmap";
 import type { DecodeResult } from "@/types/jd";
 import confetti from "canvas-confetti";
+import { RoadmapSkeleton } from "./RoadmapSkeleton";
 
 interface RoadmapViewProps {
   results: DecodeResult | null;
@@ -517,9 +518,21 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
   const healResourceUrl = (url: string, title: string): string => {
     if (!url) return `https://www.google.com/search?q=${encodeURIComponent(title + " official documentation")}`;
     
-    const cleanUrl = url.trim().toLowerCase();
+    const cleanUrl = url.trim();
+    const lowerUrl = cleanUrl.toLowerCase();
     const cleanTitle = title.trim().toLowerCase();
     
+    const isSuspicious = lowerUrl.includes("fictional") || 
+                        lowerUrl.includes("example.com") || 
+                        lowerUrl.includes("localhost") || 
+                        lowerUrl.includes("todo") ||
+                        lowerUrl.includes("placeholder") ||
+                        !lowerUrl.startsWith("http");
+
+    if (!isSuspicious) {
+      return cleanUrl;
+    }
+
     const mappings = [
       { keys: ["react"], fallback: "https://react.dev" },
       { keys: ["next.js", "nextjs"], fallback: "https://nextjs.org/docs" },
@@ -543,71 +556,67 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       { keys: ["spring", "java"], fallback: "https://docs.spring.io" }
     ];
 
-    const isSuspicious = cleanUrl.includes("fictional") || 
-                        cleanUrl.includes("example.com") || 
-                        cleanUrl.includes("localhost") || 
-                        cleanUrl.includes("todo") ||
-                        cleanUrl.includes("placeholder") ||
-                        !cleanUrl.startsWith("http");
-
     for (const mapping of mappings) {
-      if (mapping.keys.some(k => cleanUrl.includes(k) || cleanTitle.includes(k))) {
-        if (isSuspicious || cleanUrl.split("/").length > 4) {
-          return mapping.fallback;
-        }
+      if (mapping.keys.some(k => lowerUrl.includes(k) || cleanTitle.includes(k))) {
+        return mapping.fallback;
       }
     }
 
-    if (isSuspicious) {
-      return `https://www.google.com/search?q=${encodeURIComponent(title + " official documentation")}`;
-    }
-
-    return url;
+    return `https://www.google.com/search?q=${encodeURIComponent(title + " official documentation")}`;
   };
 
   // Loading Screen
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[500px] space-y-8 p-12 bg-white border border-slate-100 rounded-[3rem] shadow-xl shadow-slate-100/50">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          className="relative w-24 h-24"
-        >
-          {/* Inner ring */}
-          <div className="absolute inset-2 rounded-full border-2 border-dashed border-lumina-teal/30 border-t-lumina-teal animate-spin" style={{ animationDuration: '6s' }} />
-          {/* Outer ring */}
-          <div className="absolute inset-0 rounded-full border-4 border-slate-100 border-t-lumina-teal animate-spin" />
-          <Compass className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-lumina-teal animate-pulse" />
-        </motion.div>
-        
-        <div className="space-y-3 text-center max-w-md">
-          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-lumina-teal">Tactical AI Engine Working</p>
-          <AnimatePresence mode="wait">
-            <motion.h4
-              key={loadingStep}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.4 }}
-              className="text-base font-display font-bold text-slate-800 tracking-tight h-6"
-            >
-              {loadingSteps[loadingStep]}
-            </motion.h4>
-          </AnimatePresence>
-          <p className="text-[12px] text-slate-500 leading-relaxed">
-            Synthesizing master vault analytics against Job requirements to formulate a customized training regimen. This can take up to 45 seconds.
-          </p>
+      <div className="relative min-h-[600px] w-full">
+        {/* Background pulsing skeleton */}
+        <div className="absolute inset-0 filter blur-[2px] opacity-35 pointer-events-none transition-all duration-500">
+          <RoadmapSkeleton />
         </div>
+        {/* Centered Glass floating loading panel */}
+        <div className="absolute inset-0 flex items-center justify-center z-20 backdrop-blur-[1px] p-6">
+          <div className="flex flex-col items-center justify-center space-y-8 p-12 bg-white/80 backdrop-blur-md border border-slate-100 rounded-[3rem] shadow-2xl shadow-slate-100/50 max-w-lg w-full text-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              className="relative w-24 h-24"
+            >
+              {/* Inner ring */}
+              <div className="absolute inset-2 rounded-full border-2 border-dashed border-lumina-teal/30 border-t-lumina-teal animate-spin" style={{ animationDuration: '6s' }} />
+              {/* Outer ring */}
+              <div className="absolute inset-0 rounded-full border-4 border-slate-100 border-t-lumina-teal animate-spin" />
+              <Compass className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-lumina-teal animate-pulse" />
+            </motion.div>
+            
+            <div className="space-y-3 text-center max-w-md w-full">
+              <p className="text-[11px] font-black uppercase tracking-[0.3em] text-lumina-teal">Tactical AI Engine Working</p>
+              <AnimatePresence mode="wait">
+                <motion.h4
+                  key={loadingStep}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.4 }}
+                  className="text-base font-display font-bold text-slate-800 tracking-tight h-6"
+                >
+                  {loadingSteps[loadingStep]}
+                </motion.h4>
+              </AnimatePresence>
+              <p className="text-[12px] text-slate-500 leading-relaxed">
+                Synthesizing master vault analytics against Job requirements to formulate a customized training regimen. This can take up to 45 seconds.
+              </p>
+            </div>
 
-        {/* Progress bar */}
-        <div className="w-64 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-          <motion.div 
-            className="h-full bg-lumina-teal shadow-[0_0_8px_#10B981]"
-            initial={{ width: "0%" }}
-            animate={{ width: `${((loadingStep + 1) / loadingSteps.length) * 100}%` }}
-            transition={{ duration: 0.5 }}
-          />
+            {/* Progress bar */}
+            <div className="w-64 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+              <motion.div 
+                className="h-full bg-lumina-teal shadow-[0_0_8px_#10B981]"
+                initial={{ width: "0%" }}
+                animate={{ width: `${((loadingStep + 1) / loadingSteps.length) * 100}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+          </div>
         </div>
       </div>
     );

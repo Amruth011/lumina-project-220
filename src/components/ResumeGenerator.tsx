@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Skill, VaultItem, UserProfileWithVault, GeneratedResume } from "@/types/jd";
 import jsPDF from "jspdf";
 import { ResumePreview } from "./resume-tailor/ResumePreview";
+import { GeneratorSkeleton } from "./resume-tailor/GeneratorSkeleton";
 import { matchVaultItems, type VaultMatchResult } from "@/lib/embeddingClient";
 
 const sanitizePdfText = (text: string): string => {
@@ -2898,13 +2899,24 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
       const content = `
         <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
         <head><meta charset='utf-8'><title>Cover Letter</title></head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.5; margin: 1in;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h2 style="margin-bottom: 5px;">${editableHeader.fullName}</h2>
-            <p>${editableHeader.location} | ${editableHeader.phone} | ${editableHeader.email}</p>
+        <body style="font-family: Arial, sans-serif; line-height: 1.5; margin: 1in; color: #1E2A3A;">
+          <div style="text-align: right; margin-bottom: 24px;">
+            <h2 style="margin: 0 0 4px 0; font-size: 14pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">${editableHeader.fullName}</h2>
+            ${editableHeader.location ? `<p style="margin: 0 0 2px 0; color: rgba(30,42,58,0.7); font-size: 10pt;">${editableHeader.location}</p>` : ''}
+            ${editableHeader.email ? `<p style="margin: 0 0 2px 0; color: rgba(30,42,58,0.7); font-size: 10pt;">${editableHeader.email}</p>` : ''}
+            ${editableHeader.phone ? `<p style="margin: 0 0 2px 0; color: rgba(30,42,58,0.7); font-size: 10pt;">${editableHeader.phone}</p>` : ''}
+            ${editableHeader.linkedin ? `<p style="margin: 0; color: #2563eb; font-size: 10pt;">${editableHeader.linkedin}</p>` : ''}
           </div>
-          <p>${new Date().toLocaleDateString()}</p>
-          <div style="white-space: pre-wrap;">${coverLetter}</div>
+          <div style="margin-bottom: 24px; text-align: left;">
+            ${companyName ? `<p style="margin: 0 0 2px 0; font-size: 11pt; font-weight: bold;">${companyName}</p>` : ''}
+          </div>
+          ${jdTitle ? `<p style="font-weight: bold; margin-bottom: 24px; font-size: 11pt; color: #000000;">Application for ${jdTitle}</p>` : ''}
+          <p style="font-size: 11pt; margin-bottom: 20px;">Dear Hiring Manager,</p>
+          <div style="white-space: pre-wrap; text-align: justify; font-size: 11pt; line-height: 1.6; color: rgba(30,42,58,0.9); margin-bottom: 28px;">${coverLetter}</div>
+          <div style="margin-top: 20px;">
+            <p style="font-size: 11pt; margin-bottom: 16px;">Sincerely,</p>
+            <p style="font-size: 11pt; font-weight: bold; margin: 0;">${editableHeader.fullName || profile?.full_name || "Your Name"}</p>
+          </div>
         </body>
         </html>
       `;
@@ -2927,21 +2939,62 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
       const pageHeight = pdf.internal.pageSize.height;
       const lineHeight = 6.0;
       
-      // Header
-      pdf.setFontSize(16);
+      // Header (Right Aligned)
+      pdf.setFontSize(14);
       pdf.setFont("helvetica", "bold");
-      pdf.text(editableHeader.fullName, pageWidth/2, y, { align: "center" });
-      y += 8;
+      const name = (editableHeader.fullName || profile?.full_name || "Your Name").toUpperCase();
+      pdf.text(name, pageWidth - margin, y, { align: "right" });
+      y += 6;
+      
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
-      pdf.text(`${editableHeader.location} | ${editableHeader.phone} | ${editableHeader.email}`, pageWidth/2, y, { align: "center" });
-      y += 15;
+      pdf.setTextColor(80, 80, 80);
+      if (editableHeader.location) {
+        pdf.text(editableHeader.location, pageWidth - margin, y, { align: "right" });
+        y += 5;
+      }
+      if (editableHeader.email) {
+        pdf.text(editableHeader.email.toLowerCase(), pageWidth - margin, y, { align: "right" });
+        y += 5;
+      }
+      if (editableHeader.phone) {
+        pdf.text(editableHeader.phone, pageWidth - margin, y, { align: "right" });
+        y += 5;
+      }
+      if (editableHeader.linkedin) {
+        pdf.setTextColor(37, 99, 235);
+        pdf.text(editableHeader.linkedin, pageWidth - margin, y, { align: "right" });
+        y += 5;
+      }
       
-      pdf.text(new Date().toLocaleDateString(), margin, y);
+      pdf.setTextColor(30, 42, 58);
+      y += 10;
+      
+      // Recipient Company (Prepverse)
+      if (companyName) {
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(11);
+        pdf.text(companyName, margin, y);
+        y += 8;
+      }
+      
+      // Subject (Application for ...)
+      if (jdTitle) {
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(11);
+        pdf.text(`Application for ${jdTitle}`, margin, y);
+        y += 10;
+      }
+      
+      // Salutation
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(11);
+      pdf.text("Dear Hiring Manager,", margin, y);
       y += 10;
       
       // Body (Wrap-aware and multi-page proof)
       const lines = pdf.splitTextToSize(coverLetter, pageWidth - (margin * 2));
+      pdf.setTextColor(40, 40, 40);
       for (let i = 0; i < lines.length; i++) {
         if (y + lineHeight > pageHeight - margin) {
           pdf.addPage();
@@ -2950,6 +3003,18 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
         pdf.text(lines[i], margin, y);
         y += lineHeight;
       }
+      
+      y += 10;
+      if (y + 30 > pageHeight - margin) {
+        pdf.addPage();
+        y = 20;
+      }
+      
+      pdf.setTextColor(30, 42, 58);
+      pdf.text("Sincerely,", margin, y);
+      y += 12;
+      pdf.setFont("helvetica", "bold");
+      pdf.text(editableHeader.fullName || profile?.full_name || "Your Name", margin, y);
       
       pdf.save(`Lumina-Cover-Letter-${safeName}.pdf`);
     }
@@ -3466,8 +3531,34 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
       </div>
 
       <AnimatePresence mode="wait">
-        {isOpen && (resume || coverLetter) && (
+        {isGenerating ? (
           <motion.div
+            key="generator-skeleton"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="mt-20 pt-20 border-t border-[#1E2A3A]/10 space-y-24"
+          >
+            <div className="relative">
+              {/* Blur-under overlay pattern: the skeleton renders at opacity-35/40 with animate-pulse and blur-[2px] in the background, while the active glass loading card floats centered on top */}
+              <div className="opacity-35 blur-[2px] pointer-events-none select-none">
+                <GeneratorSkeleton />
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center z-20">
+                <div className="backdrop-blur-md bg-white/70 border border-white/40 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl flex flex-col items-center justify-center space-y-6 max-w-sm text-center">
+                  <div className="w-16 h-16 rounded-full border-4 border-lumina-teal/30 border-t-lumina-teal animate-spin" />
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-display font-black uppercase tracking-[0.2em] text-[#1E2A3A]">Synthesizing Resume</h3>
+                    <p className="text-[10px] font-semibold text-[#1E2A3A]/50">Tailoring skills and experience to match the target job description perfectly...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ) : isOpen && (resume || coverLetter) ? (
+          <motion.div
+            key="generator-preview"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 40 }}
@@ -3525,7 +3616,7 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
               </button>
             </div>
           </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
     </div>
   );

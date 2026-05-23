@@ -19,19 +19,67 @@ import { MasterVault } from "@/components/MasterVault";
 import { ResumeGenerator } from "@/components/ResumeGenerator";
 import { ApplicationTracker } from "@/components/ApplicationTracker";
 import { RoadmapView } from "./roadmap/RoadmapView";
+import { GapAnalyzerSkeleton } from "./gap-analysis/GapAnalyzerSkeleton";
+import { GeneratorSkeleton } from "./resume-tailor/GeneratorSkeleton";
+import { RoadmapSkeleton } from "./roadmap/RoadmapSkeleton";
+import { VaultSkeleton } from "./dashboard/VaultSkeleton";
 
-const TabLoader = ({ message = "Calibrating Career Intelligence..." }: { message?: string }) => (
-  <div className="flex flex-col items-center justify-center p-12 min-h-[400px] text-center space-y-6 bg-slate-900/10 backdrop-blur-sm rounded-[3rem] border border-white/5 shadow-inner">
-    <div className="relative">
-      <div className="w-16 h-16 rounded-full border-2 border-lumina-teal/10 border-t-lumina-teal animate-spin" />
-      <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 text-lumina-teal animate-pulse" />
+const TabLoader = ({ 
+  message = "Calibrating Career Intelligence...", 
+  activeTab = "decode" 
+}: { 
+  message?: string;
+  activeTab?: string;
+}) => {
+  const renderSkeleton = () => {
+    switch (activeTab) {
+      case "decode":
+        return <SkeletonLoader />;
+      case "analysis":
+        return <GapAnalyzerSkeleton />;
+      case "generator":
+      case "cover-letter":
+        return <GeneratorSkeleton />;
+      case "roadmap":
+        return <RoadmapSkeleton />;
+      case "profile":
+      case "vault":
+        return <VaultSkeleton />;
+      default:
+        return <SkeletonLoader />;
+    }
+  };
+
+  return (
+    <div className="relative w-full min-h-[450px] animate-in fade-in duration-500">
+      {/* Pulse-under blur layout skeleton matching DOM shape */}
+      <div className="opacity-30 blur-[2px] pointer-events-none select-none">
+        {renderSkeleton()}
+      </div>
+
+      {/* Floating glassmorphic central loading spinner */}
+      <div className="absolute inset-0 flex items-center justify-center z-20">
+        <div className="backdrop-blur-md bg-white/70 border border-white/40 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl flex flex-col items-center justify-center space-y-6 max-w-sm text-center">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-full border-4 border-lumina-teal/30 border-t-lumina-teal animate-spin" />
+            <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 text-lumina-teal animate-pulse" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-sm font-display font-black uppercase tracking-[0.2em] text-[#1E2A3A]">
+              {activeTab === 'decode' ? 'Calibrating Decoder Workspace' : 
+               activeTab === 'analysis' ? 'Calibrating Analysis Panel' : 
+               activeTab === 'generator' ? 'Calibrating Resume Generator' : 
+               activeTab === 'cover-letter' ? 'Calibrating Cover Letter Builder' : 
+               activeTab === 'roadmap' ? 'Calibrating Adaptive Roadmap' : 
+               'Calibrating Tactical Profile'}
+            </h3>
+            <p className="text-[9px] font-semibold text-[#1E2A3A]/50 uppercase tracking-widest">{message}</p>
+          </div>
+        </div>
+      </div>
     </div>
-    <div className="space-y-1 text-center">
-      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-lumina-teal animate-pulse">{message}</p>
-      <p className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground/60">Securing Forensic Node</p>
-    </div>
-  </div>
-);
+  );
+};
 
 import { scavengeSkills } from "@/lib/skillScavenger";
 import { generateUnifiedReport } from "@/lib/pdfExporter";
@@ -39,6 +87,7 @@ import { HowItWorksSection } from "@/components/HowItWorksSection";
 import { EmptyState } from "./dashboard/EmptyState";
 import { ATSScoreWidget } from "./dashboard/ATSScoreWidget";
 import { LoadingSequence } from "./jd-decoder/LoadingSequence";
+import { SkeletonLoader } from "./jd-decoder/SkeletonLoader";
 import { StructuredOutput } from "./jd-decoder/StructuredOutput";
 import type { DecodeResult, ResumeGapResult } from "@/types/jd";
 
@@ -207,7 +256,7 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
   return (
     <div className={`w-full ${(activeTab === 'generator' || activeTab === 'cover-letter') ? 'max-w-[98%] xl:px-12' : 'max-w-7xl'} mx-auto px-4 md:px-8 pb-24`}>
       <ErrorBoundary>
-        <Suspense fallback={<TabLoader message={`Calibrating ${activeTab === 'decode' ? 'Decoder Workspace' : activeTab === 'analysis' ? 'Analysis Panel' : activeTab === 'generator' ? 'Resume Generator' : activeTab === 'cover-letter' ? 'Cover Letter Builder' : activeTab === 'roadmap' ? 'Adaptive Roadmap' : 'Tactical Profile'}...`} />}>
+        <Suspense fallback={<TabLoader activeTab={activeTab} message={`Calibrating ${activeTab === 'decode' ? 'Decoder Workspace' : activeTab === 'analysis' ? 'Analysis Panel' : activeTab === 'generator' ? 'Resume Generator' : activeTab === 'cover-letter' ? 'Cover Letter Builder' : activeTab === 'roadmap' ? 'Adaptive Roadmap' : 'Tactical Profile'}...`} />}>
           <AnimatePresence mode="wait">
             {activeTab === "decode" ? (
               <motion.div
@@ -219,7 +268,18 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
               >
                 {/* ── Input Section ── */}
                 {isScanning ? (
-                  <LoadingSequence />
+                  <div className="relative min-h-[600px] w-full">
+                    {/* The Background Skeleton Screen */}
+                    <div className="absolute inset-0 filter blur-[2px] opacity-40 pointer-events-none transition-all duration-500">
+                      <SkeletonLoader />
+                    </div>
+                    {/* The Floating Branded Console Loader Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center z-20 backdrop-blur-[2px]">
+                      <div className="w-full max-w-lg transform -translate-y-12">
+                        <LoadingSequence />
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <div className="space-y-6">
                     {/* ── Empty State Input View ── */}

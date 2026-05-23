@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Briefcase, Trash2, Pencil, Check, X, Loader2, Plus, TrendingUp, ArrowRight, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { useApplications, type TrackedApplication } from "@/hooks/useApplications";
+import { TrackerSkeleton } from "./dashboard/TrackerSkeleton";
 
 const STATUS_OPTIONS = ["Saved", "Applied", "Interview", "Assessment", "Offer", "Rejected"];
 
@@ -217,8 +218,21 @@ export const ApplicationTracker = () => {
         </AnimatePresence>
 
         {loading && apps.length === 0 ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-8 h-8 text-accent-blue animate-spin" />
+          <div className="relative w-full">
+            {/* Pulsing pipeline board outline under blur */}
+            <div className="opacity-35 blur-[2px] pointer-events-none select-none">
+              <TrackerSkeleton />
+            </div>
+            {/* Central glass loading card */}
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <div className="backdrop-blur-md bg-white/70 border border-white/40 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl flex flex-col items-center justify-center space-y-6 max-w-sm text-center">
+                <Loader2 className="w-12 h-12 text-accent-blue animate-spin" />
+                <div className="space-y-2">
+                  <h3 className="text-sm font-display font-black uppercase tracking-[0.2em] text-[#1E2A3A]">Syncing Executive Pipeline</h3>
+                  <p className="text-[10px] font-semibold text-[#1E2A3A]/50">Retrieving application states, interview stages, and offers from database...</p>
+                </div>
+              </div>
+            </div>
           </div>
         ) : apps.length === 0 ? (
           <motion.div

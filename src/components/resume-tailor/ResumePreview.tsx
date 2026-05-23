@@ -1904,34 +1904,83 @@ export const ResumePreview = ({
                   }}
                 >
                   {isGeneratingCL ? (
-                    <div className="flex flex-col items-center justify-center space-y-6" style={{ minHeight: '600px' }}>
-                      <RotateCcw size={48} className="animate-spin text-lumina-teal" />
-                      <p className="text-xs font-black uppercase tracking-[0.3em] text-[#1E2A3A]/40">Synthesizing Narrative...</p>
+                    <div className="relative w-full" style={{ minHeight: '600px' }}>
+                      {/* Pulsing Cover Letter Skeleton under blur */}
+                      <div className="opacity-35 blur-[2px] animate-pulse space-y-8 w-full pointer-events-none select-none">
+                        {/* Sender Info Block */}
+                        <div className="space-y-2">
+                          <div className="h-4 w-40 bg-slate-200 rounded" />
+                          <div className="h-3 w-48 bg-slate-100 rounded" />
+                          <div className="h-3 w-32 bg-slate-100 rounded" />
+                        </div>
+                        {/* Date */}
+                        <div className="h-4 w-24 bg-slate-200 rounded" />
+                        {/* Recipient Block */}
+                        <div className="space-y-2">
+                          <div className="h-4 w-36 bg-slate-200 rounded" />
+                          <div className="h-3 w-28 bg-slate-100 rounded" />
+                          <div className="h-3 w-40 bg-slate-100 rounded" />
+                        </div>
+                        {/* Salutation */}
+                        <div className="h-4 w-32 bg-slate-200 rounded" />
+                        {/* Paragraph 1 */}
+                        <div className="space-y-2">
+                          <div className="h-3 w-full bg-slate-100 rounded" />
+                          <div className="h-3 w-full bg-slate-100 rounded" />
+                          <div className="h-3 w-5/6 bg-slate-100 rounded" />
+                        </div>
+                        {/* Paragraph 2 */}
+                        <div className="space-y-2">
+                          <div className="h-3 w-full bg-slate-100 rounded" />
+                          <div className="h-3 w-full bg-slate-100 rounded" />
+                          <div className="h-3 w-4/5 bg-slate-100 rounded" />
+                        </div>
+                        {/* Paragraph 3 */}
+                        <div className="space-y-2">
+                          <div className="h-3 w-full bg-slate-100 rounded" />
+                          <div className="h-3 w-3/4 bg-slate-100 rounded" />
+                        </div>
+                      </div>
+
+                      {/* Central Glass Loading Card */}
+                      <div className="absolute inset-0 flex items-center justify-center z-20">
+                        <div className="backdrop-blur-md bg-white/70 border border-white/40 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl flex flex-col items-center justify-center space-y-6 max-w-sm text-center">
+                          <div className="w-16 h-16 rounded-full border-4 border-lumina-teal/30 border-t-lumina-teal animate-spin" />
+                          <div className="space-y-2">
+                            <h3 className="text-sm font-display font-black uppercase tracking-[0.2em] text-[#1E2A3A]">Synthesizing Narrative</h3>
+                            <p className="text-[10px] font-semibold text-[#1E2A3A]/50">Generating custom introduction and matching hooks for this opportunity...</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   ) : coverLetter ? (
                     <div className="space-y-0 relative z-10 flex flex-col" style={{ fontFamily: getHtmlFont(fontFamily) }}>
-                      {/* ── Sender Info Block ── */}
-                      <div style={{ marginBottom: '20px' }}>
-                        <p style={{ fontSize: fontSizes.body, fontWeight: 'bold', color: '#1E2A3A', margin: '0 0 2px 0', lineHeight: 1.4 }}>{localHeader.fullName}</p>
-                        {localHeader.location && <p style={{ fontSize: `calc(${fontSizes.body} - 1px)`, color: 'rgba(30,42,58,0.7)', margin: '0 0 1px 0', lineHeight: 1.4 }}>{localHeader.location}</p>}
-                        {localHeader.phone && <p style={{ fontSize: `calc(${fontSizes.body} - 1px)`, color: 'rgba(30,42,58,0.7)', margin: '0 0 1px 0', lineHeight: 1.4 }}>{localHeader.phone}</p>}
-                        {localHeader.email && <p style={{ fontSize: `calc(${fontSizes.body} - 1px)`, color: 'rgba(30,42,58,0.7)', margin: '0 0 1px 0', lineHeight: 1.4 }}>{localHeader.email}</p>}
+                      {/* ── Sender Info Block (Right-Aligned) ── */}
+                      <div style={{ marginBottom: '24px', textAlign: 'right' }}>
+                        <p style={{ fontSize: fontSizes.body, fontWeight: 'bold', color: '#1E2A3A', margin: '0 0 4px 0', lineHeight: 1.4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{localHeader.fullName}</p>
+                        {localHeader.location && <p style={{ fontSize: `calc(${fontSizes.body} - 1px)`, color: 'rgba(30,42,58,0.7)', margin: '0 0 2px 0', lineHeight: 1.4 }}>{localHeader.location}</p>}
+                        {localHeader.email && <p style={{ fontSize: `calc(${fontSizes.body} - 1px)`, color: 'rgba(30,42,58,0.7)', margin: '0 0 2px 0', lineHeight: 1.4 }}>{localHeader.email}</p>}
+                        {localHeader.phone && <p style={{ fontSize: `calc(${fontSizes.body} - 1px)`, color: 'rgba(30,42,58,0.7)', margin: '0 0 2px 0', lineHeight: 1.4 }}>{localHeader.phone}</p>}
                         {localHeader.linkedin && <p style={{ fontSize: `calc(${fontSizes.body} - 1px)`, color: '#2563eb', margin: '0', lineHeight: 1.4 }}>{localHeader.linkedin}</p>}
                       </div>
 
-                      {/* ── Date ── */}
-                      <p style={{ fontSize: fontSizes.body, color: '#1E2A3A', margin: '0 0 20px 0', lineHeight: 1.4 }}>{clDate}</p>
-
-                      {/* ── Recipient Block ── */}
-                      <div style={{ marginBottom: '20px' }}>
-                        {clRecipientName && <p style={{ fontSize: fontSizes.body, color: '#1E2A3A', margin: '0 0 1px 0', lineHeight: 1.4 }}>{clRecipientName}</p>}
-                        {clRecipientTitle && <p style={{ fontSize: fontSizes.body, color: 'rgba(30,42,58,0.7)', fontStyle: 'italic', margin: '0 0 1px 0', lineHeight: 1.4 }}>{clRecipientTitle}</p>}
-                        {clRecipientCompany && <p style={{ fontSize: fontSizes.body, color: '#1E2A3A', margin: '0 0 1px 0', lineHeight: 1.4 }}>{clRecipientCompany}</p>}
+                      {/* ── Recipient Block (Left-Aligned) ── */}
+                      <div style={{ marginBottom: '24px' }}>
+                        {clRecipientName && <p style={{ fontSize: fontSizes.body, color: '#1E2A3A', margin: '0 0 2px 0', lineHeight: 1.4 }}>{clRecipientName}</p>}
+                        {clRecipientTitle && <p style={{ fontSize: fontSizes.body, color: 'rgba(30,42,58,0.7)', fontStyle: 'italic', margin: '0 0 2px 0', lineHeight: 1.4 }}>{clRecipientTitle}</p>}
+                        {clRecipientCompany && <p style={{ fontSize: fontSizes.body, color: '#1E2A3A', margin: '0 0 2px 0', lineHeight: 1.4 }}>{clRecipientCompany}</p>}
                         {clRecipientAddress && <p style={{ fontSize: fontSizes.body, color: 'rgba(30,42,58,0.7)', margin: '0', lineHeight: 1.4 }}>{clRecipientAddress}</p>}
                       </div>
 
+                      {/* ── Subject / Application Line (Bold, left-aligned) ── */}
+                      {jdTitle && (
+                        <p style={{ fontSize: fontSizes.body, fontWeight: 'bold', color: '#000000', margin: '0 0 24px 0', lineHeight: 1.4 }}>
+                          Application for {jdTitle}
+                        </p>
+                      )}
+
                       {/* ── Salutation ── */}
-                      <p style={{ fontSize: fontSizes.body, color: '#1E2A3A', margin: '0 0 16px 0', lineHeight: 1.4 }}>
+                      <p style={{ fontSize: fontSizes.body, color: '#1E2A3A', margin: '0 0 20px 0', lineHeight: 1.4 }}>
                         Dear {clRecipientName || 'Hiring Manager'},
                       </p>
 
@@ -1940,11 +1989,11 @@ export const ResumePreview = ({
                         className="whitespace-pre-wrap flex-1"
                         style={{ 
                           fontSize: fontSizes.body, 
-                          color: 'rgba(30,42,58,0.85)', 
+                          color: 'rgba(30,42,58,0.9)', 
                           lineHeight: lineSpacing + 0.45,
                           textAlign: 'justify',
                           textAlignLast: 'left',
-                          margin: '0 0 24px 0',
+                          margin: '0 0 28px 0',
                           fontFamily: getHtmlFont(fontFamily)
                         }}
                       >
@@ -1952,12 +2001,9 @@ export const ResumePreview = ({
                       </div>
 
                       {/* ── Closing & Signature ── */}
-                      <div style={{ marginTop: '8px' }}>
-                        <p style={{ fontSize: fontSizes.body, color: '#1E2A3A', margin: '0 0 24px 0', lineHeight: 1.4 }}>Sincerely,</p>
-                        <p style={{ fontSize: '16px', fontWeight: 600, color: '#1E2A3A', fontStyle: 'italic', fontFamily: '"Brush Script MT", "Segoe Script", cursive', margin: '0 0 4px 0' }}>
-                          {clSignatureName || localHeader.fullName}
-                        </p>
-                        <p style={{ fontSize: fontSizes.body, fontWeight: 500, color: '#1E2A3A', margin: 0 }}>{clSignatureName || localHeader.fullName}</p>
+                      <div style={{ marginTop: '16px' }}>
+                        <p style={{ fontSize: fontSizes.body, color: '#1E2A3A', margin: '0 0 16px 0', lineHeight: 1.4 }}>Sincerely,</p>
+                        <p style={{ fontSize: fontSizes.body, fontWeight: 'bold', color: '#1E2A3A', margin: 0 }}>{clSignatureName || localHeader.fullName}</p>
                       </div>
                     </div>
                   ) : (
