@@ -49,8 +49,11 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
         {/* The Brand Pill Backdrop */}
         <div className="absolute inset-0 rounded-full bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border/10 -z-10" />
         
-          <Link to="/" className="flex items-center group pl-4 transition-transform hover:scale-105">
+          <Link to="/" className="flex items-center gap-1.5 group pl-4 transition-transform hover:scale-105">
             <LuminaLogo size={120} className="object-contain" />
+            <span className="px-2 py-0.5 rounded-full bg-lumina-teal/10 border border-lumina-teal/20 text-[9px] font-black tracking-widest text-lumina-teal uppercase select-none">
+              Beta
+            </span>
           </Link>
 
         {/* Global Tactical Tabs */}

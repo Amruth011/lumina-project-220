@@ -23,7 +23,7 @@ const features = [
     icon: <Edit3 className="w-8 h-8 text-lumina-teal" />,
   },
   {
-    title: 'Market Insights',
+    title: 'Market Insights (Coming Soon)',
     description: 'Strategic calibration using live industry intelligence. Know your worth and your competition.',
     icon: <Globe className="w-8 h-8 text-lumina-teal" />,
   }
