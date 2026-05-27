@@ -80,10 +80,15 @@ export const Hero = () => {
             className="tracking-tight leading-[1.05] max-w-5xl mx-auto"
           >
             <span className="block font-display font-black text-5xl md:text-7xl lg:text-[76px] text-white tracking-tight">
-              The job market is brutal
+              The Job Market is Brutal
             </span>
-            <span className="block font-serif italic font-light text-5xl md:text-7xl lg:text-[84px] text-emerald-300 mt-4 tracking-normal drop-shadow-[0_2px_15px_rgba(16,185,129,0.25)]">
-              We Built the Cheat Code.
+            <span className="block font-serif italic font-light text-5xl md:text-7xl lg:text-[84px] mt-4 tracking-normal drop-shadow-[0_2px_15px_rgba(16,185,129,0.25)]">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-300 via-teal-200 to-emerald-300">
+                We Built the{" "}
+              </span>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-slate-200">
+                Cheat Code.
+              </span>
             </span>
           </motion.h1>
 
