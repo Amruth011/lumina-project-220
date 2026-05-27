@@ -57,7 +57,7 @@ const features = [
 
 export const Hero = () => {
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-between bg-gradient-to-b from-[#022c22] via-lumina-teal to-[#f4f5f7] overflow-hidden pt-32 pb-24 text-white">
+    <section className="relative min-h-screen flex flex-col items-center justify-between bg-gradient-to-b from-lumina-teal-dark via-lumina-teal to-[#f4f5f7] overflow-hidden pt-32 pb-24 text-white">
       {/* Emerald/Cyan ambient glows for extra wow factor */}
       <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-emerald-300/10 blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/3 right-1/4 translate-x-1/2 translate-y-1/2 w-[500px] h-[500px] rounded-full bg-teal-300/10 blur-[120px] pointer-events-none" />
@@ -73,10 +73,10 @@ export const Hero = () => {
             transition={{ duration: 0.8, type: "spring", stiffness: 80 }}
             className="tracking-tight leading-[1.05] max-w-5xl mx-auto"
           >
-            <span className="block font-display font-black text-5xl md:text-7xl lg:text-[76px] text-white uppercase tracking-tight">
+            <span className="block font-display font-black text-3xl md:text-5xl lg:text-[54px] text-white uppercase tracking-tight lg:whitespace-nowrap">
               We Know the Job Market is Brutal.
             </span>
-            <span className="block font-serif italic font-light text-5xl md:text-7xl lg:text-[84px] text-emerald-300 mt-4 tracking-normal drop-shadow-[0_2px_15px_rgba(16,185,129,0.25)]">
+            <span className="block font-serif italic font-light text-3xl md:text-5xl lg:text-[62px] text-emerald-300 mt-4 tracking-normal drop-shadow-[0_2px_15px_rgba(16,185,129,0.25)] lg:whitespace-nowrap">
               So We Leveled the Playing Field.
             </span>
           </motion.h1>
@@ -85,9 +85,9 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
-            className="text-lg md:text-xl text-white/80 font-body max-w-3xl mx-auto leading-relaxed"
+            className="text-lg md:text-xl text-white/90 font-body max-w-4xl mx-auto leading-relaxed font-semibold drop-shadow-[0_1px_5px_rgba(0,0,0,0.1)]"
           >
-            Stop wasting time on corporate black holes. Lumina JD hands you an AI-powered tactical advantage to decode descriptions, generate flawlessness, and dominate the application pool.
+            Stop wasting time on corporate black holes. Lumina JD is the ultimate three-in-one AI career toolkit: instantly dissect hidden recruiter filters, architect elite resumes optimized to score 99+ on ATS algorithms, and deploy an autonomous AI agent that automatically matches and submits applications on your behalf in real-time.
           </motion.p>
         </div>
 
