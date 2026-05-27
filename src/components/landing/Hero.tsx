@@ -36,20 +36,26 @@ const companies = [
 
 const features = [
   {
-    title: "Deep JD Decoding",
-    description: "Instantly dissect complex job requirements, mapping critical target keywords and hidden recruiter filters.",
+    title: "JD Decoding & Resume Analysis",
+    description: "Instantly scan any job description to uncover hidden keywords and map your precise skills gap.",
     icon: <Search className="w-5 h-5" />,
     comingSoon: false
   },
   {
-    title: "Instant Resume Architect",
-    description: "Generate a highly targeted, single-page professional resume tailored specifically to bypass corporate ATS algorithms.",
+    title: "Resume & Cover Letter Generation",
+    description: "Automatically generate an elite, single-page resume and a tailored cover letter optimized to clear corporate filters.",
     icon: <FileText className="w-5 h-5" />,
     comingSoon: false
   },
   {
-    title: "Autonomous Job Agent",
-    description: "Deploy a dedicated AI agent to automatically discover, match, and submit optimized applications on your behalf.",
+    title: "Career Roadmap Generation",
+    description: "Get a step-by-step technical preparation playbook customized exactly to the role's requirements.",
+    icon: <Compass className="w-5 h-5" />,
+    comingSoon: false
+  },
+  {
+    title: "Autonomous Job Application",
+    description: "An AI Agent layer designed to automatically discover and submit optimized applications on your behalf.",
     icon: <Bot className="w-5 h-5" />,
     comingSoon: true
   }
@@ -73,11 +79,11 @@ export const Hero = () => {
             transition={{ duration: 0.8, type: "spring", stiffness: 80 }}
             className="tracking-tight leading-[1.05] max-w-5xl mx-auto"
           >
-            <span className="block font-display font-black text-3xl md:text-5xl lg:text-[54px] text-white uppercase tracking-tight lg:whitespace-nowrap">
-              We Know the Job Market is Brutal.
+            <span className="block font-display font-black text-5xl md:text-7xl lg:text-[76px] text-white uppercase tracking-tight">
+              The Job Market is Brutal.
             </span>
-            <span className="block font-serif italic font-light text-3xl md:text-5xl lg:text-[62px] text-emerald-300 mt-4 tracking-normal drop-shadow-[0_2px_15px_rgba(16,185,129,0.25)] lg:whitespace-nowrap">
-              So We Leveled the Playing Field.
+            <span className="block font-serif italic font-light text-5xl md:text-7xl lg:text-[84px] text-emerald-300 mt-4 tracking-normal drop-shadow-[0_2px_15px_rgba(16,185,129,0.25)]">
+              We Built the Cheat Code.
             </span>
           </motion.h1>
 
@@ -85,9 +91,9 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
-            className="text-lg md:text-xl text-white/90 font-body max-w-4xl mx-auto leading-relaxed font-semibold drop-shadow-[0_1px_5px_rgba(0,0,0,0.1)]"
+            className="text-lg md:text-xl text-white/80 font-body max-w-3xl mx-auto leading-relaxed"
           >
-            Stop wasting time on corporate black holes. Lumina JD is the ultimate three-in-one AI career toolkit: instantly dissect hidden recruiter filters, architect elite resumes optimized to score 99+ on ATS algorithms, and deploy an autonomous AI agent that automatically matches and submits applications on your behalf in real-time.
+            Stop throwing blind applications into corporate black holes. Lumina JD decodes recruiter filters and builds a hyper-tailored, ATS-crushing toolkit for your target role in seconds. No tech skills required. Just paste, polish, and get hired.
           </motion.p>
         </div>
 
@@ -117,7 +123,7 @@ export const Hero = () => {
 
         {/* Feature Showcase Grid Section */}
         <div className="w-full pt-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
             {features.map((feature, i) => (
               <motion.div
                 key={i}
