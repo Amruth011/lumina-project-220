@@ -143,7 +143,7 @@ export const Hero = () => {
                 </div>
                 <div className="space-y-2 flex-1 z-10">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-display font-bold text-emerald-300 group-hover:text-emerald-200 transition-colors tracking-tight leading-snug">
+                    <h3 className="text-base font-display font-bold text-[#10B981] group-hover:text-emerald-500 transition-colors tracking-tight leading-snug">
                       {feature.title}
                     </h3>
                     {feature.comingSoon && (
@@ -152,7 +152,7 @@ export const Hero = () => {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs md:text-sm text-emerald-100/80 font-body leading-relaxed">
+                  <p className="text-xs md:text-sm text-[#10B981] font-body leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
