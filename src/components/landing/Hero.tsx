@@ -94,9 +94,9 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
-            className="text-[15.2px] md:text-[17.1px] text-white/80 font-body max-w-3xl mx-auto leading-relaxed"
+            className="text-[14.7px] md:text-[16.6px] text-white/80 font-body max-w-3xl mx-auto leading-relaxed"
           >
-            Stop begging corporate black holes for a chance. Lumina JD cracks recruiter algorithms instantly, exposing exactly what they look for and forging a flawless, ATS-crushing weapon engineered to command interviews. Paste the role, dominate the pool, and get hired.
+            Stop begging corporate black holes for a chance. Lumina cracks recruiter algorithms instantly, forging a flawless, ATS-crushing weapon engineered to command interviews.
           </motion.p>
         </div>
 
