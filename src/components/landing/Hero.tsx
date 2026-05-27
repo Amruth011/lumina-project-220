@@ -80,8 +80,8 @@ export const Hero = () => {
             className="tracking-tight leading-[1.05] max-w-5xl mx-auto"
           >
             <span 
-              className="block font-bold text-[50.4px] md:text-[75.6px] lg:text-[79.8px] text-white"
-              style={{ fontFamily: 'Helvetica, "Helvetica Neue", Arial, sans-serif', letterSpacing: '0.05em' }}
+              className="block font-bold text-[51.9px] md:text-[77.9px] lg:text-[82.2px] text-white"
+              style={{ fontFamily: 'Helvetica, "Helvetica Neue", Arial, sans-serif', letterSpacing: '0.03em' }}
             >
               The Job Market is Brutal
             </span>
