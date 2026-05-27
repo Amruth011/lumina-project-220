@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Mail, Compass } from "lucide-react";
+import { ArrowRight, Zap, Mail, Compass } from "lucide-react";
+
 
 interface JdActionCtaProps {
   onCheckResume: () => void;
@@ -32,7 +33,8 @@ export const JdActionCta = ({ onCheckResume, onGenerateResume, onGenerateCoverLe
             transition={{ delay: 0.2 }}
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border-2 border-white text-white"
           >
-            <Sparkles size={12} className="text-white" />
+            <Zap size={12} className="text-white fill-white" />
+
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Strategic Next Step</span>
           </motion.div>
           
@@ -63,7 +65,8 @@ export const JdActionCta = ({ onCheckResume, onGenerateResume, onGenerateCoverLe
             className="group flex items-center gap-4 px-10 py-4 rounded-full bg-lumina-teal border-2 border-white text-white text-[12px] font-black uppercase tracking-widest hover:bg-white hover:text-lumina-teal transition-all"
           >
             Tailor My Resume
-            <Sparkles size={16} className="group-hover:rotate-12 transition-transform" />
+            <Zap size={16} className="group-hover:rotate-12 transition-transform fill-current" />
+
           </motion.button>
 
           <motion.button
