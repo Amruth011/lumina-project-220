@@ -331,27 +331,30 @@ const restoreExactProfileData = (generated: GeneratedResume, vaultItems: VaultIt
   }
 
   // 5. Restore Education exact details
-  if (Array.isArray(restored.education)) {
+  const educationVaultItems = vaultItems.filter(v => v.type === 'education');
+
+  const buildEduString = (vItem: VaultItem): string => {
+    const deg = vItem.title || "Degree";
+    const sch = vItem.organization || "University";
+    const locMatch = (vItem.description || "").match(/Location:\s*([^|\n]+)/i);
+    const loc = locMatch ? locMatch[1].trim() : "";
+    const dt = vItem.period || "";
+    const schoolPart = loc ? `${sch} - ${loc}` : sch;
+    return `${deg} @ ${schoolPart}${dt ? ` | ${dt}` : ""}`;
+  };
+
+  if (Array.isArray(restored.education) && restored.education.length > 0) {
+    // AI generated education entries — restore exact vault data where possible
     restored.education = restored.education.map(genEdu => {
-      const match = vaultItems.find(vItem => {
-        if (vItem.type !== 'education') return false;
+      const match = educationVaultItems.find(vItem => {
         const org = (vItem.organization || "").trim().toLowerCase();
         return org && genEdu.toLowerCase().includes(org);
       });
-
-      if (match) {
-        const deg = match.title || "Degree";
-        const sch = match.organization || "University";
-        // Extract location from description (stored as "Location: ...") since VaultItem has no location field
-        const locMatch = (match.description || "").match(/Location:\s*([^|\n]+)/i);
-        const loc = locMatch ? locMatch[1].trim() : "";
-        const dt = match.period || "";
-        // Format: "Degree @ School - Location | Date" — use | to separate date so the renderer's split('|') works correctly
-        const schoolPart = loc ? `${sch} - ${loc}` : sch;
-        return `${deg} @ ${schoolPart}${dt ? ` | ${dt}` : ""}`;
-      }
-      return genEdu;
+      return match ? buildEduString(match) : genEdu;
     });
+  } else if (educationVaultItems.length > 0) {
+    // AI skipped the education section entirely — inject directly from vault
+    restored.education = educationVaultItems.map(buildEduString);
   }
 
   return restored;
