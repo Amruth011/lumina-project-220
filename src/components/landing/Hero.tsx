@@ -94,9 +94,9 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
-            className="text-base md:text-lg text-white/80 font-body max-w-3xl mx-auto leading-relaxed"
+            className="text-[15.2px] md:text-[17.1px] text-white/80 font-body max-w-3xl mx-auto leading-relaxed"
           >
-            Stop throwing blind applications into corporate black holes. Lumina JD decodes recruiter filters and builds a hyper-tailored, ATS-crushing toolkit for your target role in seconds. No tech skills required. Just paste, polish, and get hired.
+            Stop begging corporate black holes for a chance. Lumina JD cracks recruiter algorithms instantly, exposing exactly what they look for and forging a flawless, ATS-crushing weapon engineered to command interviews. Paste the role, dominate the pool, and get hired.
           </motion.p>
         </div>
 
