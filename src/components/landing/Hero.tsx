@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { Search, FileText, Compass, Bot } from 'lucide-react';
 
 const MagneticButton = ({ children }: { children: React.ReactNode }) => {
   const ref = React.useRef<HTMLDivElement>(null);
@@ -33,17 +34,146 @@ const companies = [
   "Microsoft", "Stripe", "Netflix", "Apple", "Uber", "Airbnb", "Goldman Sachs",
 ];
 
+const features = [
+  {
+    title: "JD Decoding & Resume Analysis",
+    description: "Instantly scan any job description to uncover hidden keywords and map your precise skills gap.",
+    icon: <Search className="w-5 h-5" />,
+    comingSoon: false
+  },
+  {
+    title: "Resume & Cover Letter Generation",
+    description: "Automatically generate an elite, single-page resume and a tailored cover letter optimized to clear corporate filters.",
+    icon: <FileText className="w-5 h-5" />,
+    comingSoon: false
+  },
+  {
+    title: "Career Roadmap Generation",
+    description: "Get a step-by-step technical preparation playbook customized exactly to the role's requirements.",
+    icon: <Compass className="w-5 h-5" />,
+    comingSoon: false
+  },
+  {
+    title: "Autonomous Job Application",
+    description: "An AI Agent layer designed to automatically discover and submit optimized applications on your behalf.",
+    icon: <Bot className="w-5 h-5" />,
+    comingSoon: true
+  }
+];
+
 export const Hero = () => {
   return (
-    <section className="relative min-h-[100dvh] flex flex-col items-center justify-center bg-background overflow-hidden pt-20">
-      {/* Teal radial glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.05),transparent_70%)]" />
+    <section className="relative min-h-screen flex flex-col items-center justify-between bg-gradient-to-b from-[#1b3cb3] via-[#2d56e8] to-[#F4F5F7] overflow-hidden pt-32 pb-24 text-white">
+      {/* Cyan/Teal ambient glows for extra wow factor */}
+      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-emerald-400/10 blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-1/3 right-1/4 translate-x-1/2 translate-y-1/2 w-[500px] h-[500px] rounded-full bg-blue-300/10 blur-[120px] pointer-events-none" />
+
+      {/* Main centered stacked content */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 text-center flex-1 flex flex-col justify-center items-center gap-12 w-full">
+        
+        {/* Signal Badge */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-[10px] font-display font-bold text-emerald-300 uppercase tracking-[0.2em] shadow-lg backdrop-blur-sm"
+        >
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          V3.0 Signal Live
+        </motion.div>
+
+        {/* Primary Headline & Subheadline block */}
+        <div className="space-y-6 max-w-5xl">
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, type: "spring", stiffness: 80 }}
+            className="text-5xl md:text-7xl lg:text-[84px] font-display font-black text-white tracking-tight leading-[1.05]"
+          >
+            The Job Market is Brutal. <br className="hidden md:block" />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-300 via-teal-200 to-white">
+              We Built the Cheat Code.
+            </span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+            className="text-lg md:text-xl text-white/80 font-body max-w-3xl mx-auto leading-relaxed"
+          >
+            Stop throwing blind applications into corporate black holes. Lumina JD decodes recruiter filters and builds a hyper-tailored, ATS-crushing toolkit for your target role in seconds. No tech skills required. Just paste, polish, and get hired.
+          </motion.p>
+        </div>
+
+        {/* Center CTA Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.8 }}
+          className="flex flex-col items-center gap-4 w-full"
+        >
+          <Link to="/dashboard">
+            <MagneticButton>
+              <motion.button
+                whileHover={{ scale: 1.05, translateY: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-10 py-5 bg-slate-900 hover:bg-slate-800 text-white font-bold font-display rounded-full text-xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all flex items-center gap-3 group border border-white/10"
+              >
+                Decode Your First JD
+                <span className="group-hover:translate-x-1.5 transition-transform duration-200">→</span>
+              </motion.button>
+            </MagneticButton>
+          </Link>
+          <span className="text-[11px] font-display font-semibold uppercase tracking-[0.25em] text-white/50">
+            Get Started Free · No Credit Card Required
+          </span>
+        </motion.div>
+
+        {/* Feature Showcase Grid Section */}
+        <div className="w-full pt-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+            {features.map((feature, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 + i * 0.1, duration: 0.8 }}
+                className="group relative bg-white/5 border border-white/10 hover:border-white/20 rounded-[2rem] p-8 backdrop-blur-md hover:bg-white/10 transition-all duration-300 flex flex-col gap-4 text-left h-full shadow-[0_8px_30px_rgb(0,0,0,0.05)]"
+              >
+                {/* Glow outline hover effect */}
+                <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-300 group-hover:scale-110 transition-transform duration-300 z-10">
+                  {feature.icon}
+                </div>
+                <div className="space-y-2 flex-1 z-10">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-display font-bold text-white tracking-tight leading-snug">
+                      {feature.title}
+                    </h3>
+                    {feature.comingSoon && (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-[9px] font-display font-bold text-emerald-300 uppercase tracking-wider">
+                        Soon
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs md:text-sm text-white/70 font-body leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+      </div>
 
       {/* ── Background company watermark marquee (absolute, bottom of hero) ── */}
-      <div className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]">
+      <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)] z-0">
         <div className="flex items-center h-full gap-16 whitespace-nowrap" style={{ animation: "hero-marquee 35s linear infinite" }}>
           {[...companies, ...companies].map((c, i) => (
-            <span key={i} className="text-[22px] font-serif font-medium text-foreground/[0.055] select-none">
+            <span key={i} className="text-[20px] font-serif font-medium text-white/[0.045] select-none">
               {c}
             </span>
           ))}
@@ -55,87 +185,6 @@ export const Hero = () => {
           }
         `}} />
       </div>
-
-      {/* Main content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 text-center space-y-10">
-        {/* Signal Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-lumina-teal/20 text-[10px] font-display font-bold text-lumina-teal uppercase tracking-[0.2em] shadow-sm mb-4"
-        >
-          <div className="w-2 h-2 rounded-full bg-lumina-teal animate-pulse" />
-          V3.0 Signal Live
-        </motion.div>
-
-        {/* Headline */}
-        <motion.h1 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, type: "spring", stiffness: 80 }}
-          className="text-6xl md:text-[110px] font-serif italic font-bold text-lumina-navy leading-[0.95] tracking-tight max-w-5xl mx-auto"
-        >
-          Land in the <span className="text-lumina-teal">top 0.1%</span>
-        </motion.h1>
-
-        {/* Subheadline */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="text-lg md:text-2xl text-lumina-navy/60 font-body max-w-3xl mx-auto leading-relaxed"
-        >
-          Paste a job description. Upload your resume. Get your exact match score, skill gaps, and a winning playbook — in seconds.
-        </motion.p>
-
-        {/* CTAs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8, duration: 0.8 }}
-          className="flex flex-col items-center gap-8"
-        >
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link to="/dashboard">
-              <MagneticButton>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-9 py-4 bg-[#10B981] text-white font-semibold font-body rounded-full text-lg shadow-[0_20px_50px_rgba(16,185,129,0.2)] transition-all flex items-center gap-2 group"
-                >
-                  Analyze My Resume Free <span className="group-hover:translate-x-1 transition-transform">→</span>
-                </motion.button>
-              </MagneticButton>
-            </Link>
-          </div>
-
-          {/* Social Proof Microtext */}
-          <p className="font-display text-[11px] md:text-[13px] text-[#1E2A3A]/40 flex flex-col md:flex-row items-center gap-2 md:gap-3">
-            <span className="whitespace-nowrap">94,000+ resumes analyzed</span>
-            <span className="hidden md:block w-1.5 h-1.5 rounded-full bg-[#10B981] animate-logo-pulse" />
-            <span className="whitespace-nowrap">3.2× avg interview rate</span>
-            <span className="hidden md:block w-1.5 h-1.5 rounded-full bg-[#10B981] animate-logo-pulse" />
-            <span className="whitespace-nowrap">Used at Google, Meta, Amazon</span>
-          </p>
-        </motion.div>
-      </div>
-
-      {/* Scroll Indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 3, duration: 1 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[#1E2A3A]/30 text-[10px] font-display tracking-[0.2em] uppercase"
-      >
-        <span>Scroll to explore</span>
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-          className="text-lumina-teal text-xl"
-        >
-          ↓
-        </motion.div>
-      </motion.div>
     </section>
   );
 };
