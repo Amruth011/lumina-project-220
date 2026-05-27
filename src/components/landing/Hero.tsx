@@ -79,7 +79,10 @@ export const Hero = () => {
             transition={{ duration: 0.8, type: "spring", stiffness: 80 }}
             className="tracking-tight leading-[1.05] max-w-5xl mx-auto"
           >
-            <span className="block font-display font-light text-5xl md:text-7xl lg:text-[76px] text-white tracking-tight">
+            <span 
+              className="block font-bold text-5xl md:text-7xl lg:text-[76px] text-white tracking-tight"
+              style={{ fontFamily: 'Helvetica, "Helvetica Neue", Arial, sans-serif' }}
+            >
               The Job Market is Brutal
             </span>
             <span className="block font-serif italic font-light text-5xl md:text-7xl lg:text-[84px] mt-4 tracking-normal drop-shadow-[0_2px_15px_rgba(16,185,129,0.25)] bg-clip-text text-transparent bg-gradient-to-r from-[#10b981] via-[#d1fae5] to-white">
