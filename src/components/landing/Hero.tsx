@@ -57,7 +57,7 @@ const features = [
     title: "Autonomous Job Application",
     description: "An AI Agent layer designed to automatically discover and submit optimized applications on your behalf.",
     icon: <Bot className="w-5 h-5" />,
-    comingSoon: true
+    comingSoon: false
   }
 ];
 
@@ -143,7 +143,7 @@ export const Hero = () => {
                 </div>
                 <div className="space-y-2 flex-1 z-10">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-display font-bold text-[#10B981] group-hover:text-emerald-500 transition-colors tracking-tight leading-snug">
+                    <h3 className="text-base font-display font-bold text-[#10B981] group-hover:text-[#10B981] transition-colors tracking-tight leading-snug">
                       {feature.title}
                     </h3>
                     {feature.comingSoon && (
