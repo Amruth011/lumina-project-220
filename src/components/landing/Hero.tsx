@@ -79,8 +79,8 @@ export const Hero = () => {
             transition={{ duration: 0.8, type: "spring", stiffness: 80 }}
             className="tracking-tight leading-[1.05] max-w-5xl mx-auto"
           >
-            <span className="block font-display font-black text-5xl md:text-7xl lg:text-[76px] text-white uppercase tracking-tight">
-              The Job Market is Brutal.
+            <span className="block font-display font-black text-5xl md:text-7xl lg:text-[76px] text-white tracking-tight">
+              The job market is brutal
             </span>
             <span className="block font-serif italic font-light text-5xl md:text-7xl lg:text-[84px] text-emerald-300 mt-4 tracking-normal drop-shadow-[0_2px_15px_rgba(16,185,129,0.25)]">
               We Built the Cheat Code.
