@@ -63,7 +63,7 @@ const features = [
 
 export const Hero = () => {
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-between bg-gradient-to-b from-[#10b981] to-white overflow-hidden pt-[18vh] pb-[12vh] text-white">
+    <section className="relative min-h-screen flex flex-col items-center justify-between bg-gradient-to-b from-[#10b981] to-[#F4F5F7] overflow-hidden pt-[18vh] pb-[12vh] text-white">
       {/* Emerald/Cyan ambient glows for extra wow factor */}
       <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-emerald-300/10 blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/3 right-1/4 translate-x-1/2 translate-y-1/2 w-[500px] h-[500px] rounded-full bg-teal-300/10 blur-[120px] pointer-events-none" />
@@ -71,58 +71,61 @@ export const Hero = () => {
       {/* Main centered stacked content */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 text-center flex-1 flex flex-col justify-center items-center gap-12 w-full">
 
-        {/* Primary Headline & Subheadline block */}
-        <div className="space-y-6 max-w-5xl">
-          <motion.h1 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, type: "spring", stiffness: 80 }}
-            className="tracking-tight leading-[1.05] max-w-5xl mx-auto"
-          >
-            <span 
-              className="block font-bold text-[52.4px] md:text-[78.6px] lg:text-[83.0px] text-white lg:whitespace-nowrap"
-              style={{ fontFamily: 'Helvetica, "Helvetica Neue", Arial, sans-serif', letterSpacing: '0.02em' }}
+        {/* Shunted down by 5% of viewport height using translate-y-[5vh] to place around center */}
+        <div className="flex flex-col items-center gap-12 w-full translate-y-[5vh]">
+          {/* Primary Headline & Subheadline block */}
+          <div className="space-y-6 max-w-5xl">
+            <motion.h1 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, type: "spring", stiffness: 80 }}
+              className="tracking-tight leading-[1.05] max-w-5xl mx-auto"
             >
-              The Job Market is Brutal
-            </span>
-            <span className="block font-serif italic font-light text-[49px] md:text-[73.4px] lg:text-[85.7px] text-white mt-4 tracking-normal drop-shadow-[0_2px_15px_rgba(16,185,129,0.25)]">
-              We Built the Cheat Code.
-            </span>
-          </motion.h1>
+              <span 
+                className="block font-bold text-[52.4px] md:text-[78.6px] lg:text-[83.0px] text-white lg:whitespace-nowrap"
+                style={{ fontFamily: 'Helvetica, "Helvetica Neue", Arial, sans-serif', letterSpacing: '0.02em' }}
+              >
+                The Job Market is Brutal
+              </span>
+              <span className="block font-serif italic font-light text-[49px] md:text-[73.4px] lg:text-[85.7px] text-white mt-4 tracking-normal drop-shadow-[0_2px_15px_rgba(16,185,129,0.25)]">
+                We Built the Cheat Code.
+              </span>
+            </motion.h1>
 
-          <motion.p
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.8 }}
+              className="text-[14.7px] md:text-[16.6px] text-white/80 font-body max-w-3xl mx-auto leading-relaxed"
+            >
+              Stop begging corporate black holes for a chance. Lumina cracks recruiter algorithms instantly, forging a flawless, ATS-crushing weapon engineered to command interviews.
+            </motion.p>
+          </div>
+
+          {/* Center CTA Button */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.8 }}
-            className="text-[14.7px] md:text-[16.6px] text-white/80 font-body max-w-3xl mx-auto leading-relaxed"
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="flex flex-col items-center gap-4 w-full"
           >
-            Stop begging corporate black holes for a chance. Lumina cracks recruiter algorithms instantly, forging a flawless, ATS-crushing weapon engineered to command interviews.
-          </motion.p>
+            <Link to="/dashboard">
+              <MagneticButton>
+                <motion.button
+                  whileHover={{ scale: 1.05, translateY: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="px-10 py-5 bg-slate-900 hover:bg-slate-800 text-white font-bold font-display rounded-full text-xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all flex items-center gap-3 group border border-white/10"
+                >
+                  Decode Your First JD
+                  <span className="group-hover:translate-x-1.5 transition-transform duration-200">→</span>
+                </motion.button>
+              </MagneticButton>
+            </Link>
+            <span className="text-[11px] font-display font-semibold uppercase tracking-[0.25em] text-white/50">
+              Get Started Free · No Credit Card Required
+            </span>
+          </motion.div>
         </div>
-
-        {/* Center CTA Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.8 }}
-          className="flex flex-col items-center gap-4 w-full"
-        >
-          <Link to="/dashboard">
-            <MagneticButton>
-              <motion.button
-                whileHover={{ scale: 1.05, translateY: -2 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-10 py-5 bg-slate-900 hover:bg-slate-800 text-white font-bold font-display rounded-full text-xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all flex items-center gap-3 group border border-white/10"
-              >
-                Decode Your First JD
-                <span className="group-hover:translate-x-1.5 transition-transform duration-200">→</span>
-              </motion.button>
-            </MagneticButton>
-          </Link>
-          <span className="text-[11px] font-display font-semibold uppercase tracking-[0.25em] text-white/50">
-            Get Started Free · No Credit Card Required
-          </span>
-        </motion.div>
 
         {/* Feature Showcase Grid Section */}
         <div className="w-full pt-8">

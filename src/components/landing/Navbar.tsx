@@ -15,10 +15,9 @@ export const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { name: "Features",     href: "#features" },
-    { name: "How it Works", href: "#how-it-works" },
-    { name: "Pricing",      href: "#pricing" },
-    { name: "Sign In",      href: "/auth" },
+    { name: "Feature",     href: "#features" },
+    { name: "Pricing",     href: "#pricing" },
+    { name: "Guide",       href: "#how-it-works" },
   ];
 
   return (
