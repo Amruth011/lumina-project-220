@@ -32,6 +32,7 @@ Lumina recently underwent a complete architectural overhaul...
 - **Glassmorphism 2.0:** Deep zinc backdrops, backdrop-blur saturation, and sub-pixel edge highlights.
 - **Editorial Typography:** A curated hierarchy of *Instrument Serif* for headings and *Inter* for surgical-grade body text.
 - **Compact UI/UX:** Responsive, dense, matrix-style data dashboards tuned for professional analytics.
+- **Premium Floating Interface:** High-contrast brand green-teal (#10B981) cards and text elements, a transparent floating navbar with white outline balloon/capsule button, and seamless background gradient transitions down the page.
 
 ### 🛠️ Strategic Modules
 
@@ -72,10 +73,10 @@ graph TD
 1. **Deployment URL:** [lumina.app](https://lumina.app/)
 2. **Local Setup:**
    ```bash
-   git clone https://github.com/Amruth011/lumina.git
-   npm install
-   npm run dev
-   ```
+    git clone https://github.com/Amruth011/lumina-jd-scanner.git
+    npm install
+    npm run dev
+    ```
 
 ---
 
