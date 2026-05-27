@@ -21,7 +21,7 @@ export const Navbar = () => {
   ];
 
   return (
-    <nav className="absolute top-0 left-0 right-0 z-50 px-6 pt-3 pb-0 w-full pointer-events-none">
+    <nav className="absolute top-0 left-0 right-0 z-50 px-6 pt-0 pb-0 w-full pointer-events-none">
       <div
         className="max-w-7xl mx-auto flex items-center justify-between pointer-events-auto py-0"
       >
