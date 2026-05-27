@@ -148,6 +148,8 @@ export const MasterVault = () => {
   const [expMode, setExpMode] = useState<string>("On-site");
   const [expLocation, setExpLocation] = useState<string>("");
   const [productStatus, setProductStatus] = useState<string>("Ongoing");
+  const [eduCgpa, setEduCgpa] = useState<string>("");
+  const [eduLocation, setEduLocation] = useState<string>("");
   
   // Duration selectors
   const [startMonth, setStartMonth] = useState<string>("January");
@@ -360,6 +362,25 @@ export const MasterVault = () => {
             cleanDesc = cleanDesc.substring("description:".length).trim();
           }
         }
+      }
+
+      if (item.type === 'education') {
+        // Extract GPA and Location from description into dedicated state fields
+        const rawDesc = item.description || "";
+        const gpaMatch = rawDesc.match(/GPA:\s*([^|\n]+)/i);
+        const locMatch = rawDesc.match(/Location:\s*([^|\n]+)/i);
+        setEduCgpa(gpaMatch ? gpaMatch[1].trim() : "");
+        setEduLocation(locMatch ? locMatch[1].trim() : "");
+        // Strip those metadata segments so they don't show in the Coursework textarea
+        cleanDesc = cleanDesc
+          .split('|')
+          .map(s => s.trim())
+          .filter(s => !/^(gpa:|location:)/i.test(s))
+          .join(' | ')
+          .trim();
+      } else {
+        setEduCgpa("");
+        setEduLocation("");
       }
 
       setExpMode(parsedMode);
@@ -952,6 +973,18 @@ RETURN JSON FORMAT ONLY:
           finalDesc = `Mode: ${expMode} (${expLocation})\n\n${finalDesc}`;
         } else {
           finalDesc = `Mode: ${expMode}\n\n${finalDesc}`;
+        }
+      }
+
+      if (editingItem.type === 'education') {
+        // Prepend GPA and Location metadata back to description before saving
+        const metaParts: string[] = [];
+        if (eduCgpa.trim()) metaParts.push(`GPA: ${eduCgpa.trim()}`);
+        if (eduLocation.trim()) metaParts.push(`Location: ${eduLocation.trim()}`);
+        if (metaParts.length > 0) {
+          finalDesc = finalDesc
+            ? `${metaParts.join(' | ')} | ${finalDesc}`
+            : metaParts.join(' | ');
         }
       }
 
@@ -1821,7 +1854,37 @@ RETURN JSON FORMAT ONLY:
                     onChange={(e) => setEditingItem({ ...editingItem, period: e.target.value })}
                     placeholder={getFieldLabels(editingItem.type).periodEx}
                   />
-                </div>
+                 </div>
+
+                {/* ── Education: Optional CGPA + Location ── */}
+                {editingItem.type === 'education' && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <label className="text-[10px] uppercase tracking-widest font-black text-muted-foreground ml-1">Academic Details</label>
+                      <span className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] font-bold text-primary uppercase tracking-widest">Optional</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground ml-1">CGPA / GPA Score</label>
+                        <input
+                          className="w-full bg-muted/20 border border-border/40 rounded-2xl px-5 py-4 text-sm focus:ring-2 ring-primary/20 transition-all outline-none"
+                          value={eduCgpa}
+                          onChange={(e) => setEduCgpa(e.target.value)}
+                          placeholder="e.g. 8.5/10 or 3.8/4.0"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground ml-1">Campus Location</label>
+                        <input
+                          className="w-full bg-muted/20 border border-border/40 rounded-2xl px-5 py-4 text-sm focus:ring-2 ring-primary/20 transition-all outline-none"
+                          value={eduLocation}
+                          onChange={(e) => setEduLocation(e.target.value)}
+                          placeholder="e.g. Bengaluru, India"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {(editingItem.type === 'professional' || editingItem.type === 'education') && (
                   <div className="space-y-3 bg-muted/10 p-5 rounded-2xl border border-white/5 animate-in fade-in duration-300">

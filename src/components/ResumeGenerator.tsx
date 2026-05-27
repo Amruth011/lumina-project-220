@@ -342,12 +342,13 @@ const restoreExactProfileData = (generated: GeneratedResume, vaultItems: VaultIt
       if (match) {
         const deg = match.title || "Degree";
         const sch = match.organization || "University";
-        const loc = match.location || "";
+        // Extract location from description (stored as "Location: ...") since VaultItem has no location field
+        const locMatch = (match.description || "").match(/Location:\s*([^|\n]+)/i);
+        const loc = locMatch ? locMatch[1].trim() : "";
         const dt = match.period || "";
-        const parts = [];
-        if (loc) parts.push(loc);
-        if (dt) parts.push(dt);
-        return `${deg} @ ${sch}${parts.length > 0 ? ` - ${parts.join(" | ")}` : ""}`;
+        // Format: "Degree @ School - Location | Date" — use | to separate date so the renderer's split('|') works correctly
+        const schoolPart = loc ? `${sch} - ${loc}` : sch;
+        return `${deg} @ ${schoolPart}${dt ? ` | ${dt}` : ""}`;
       }
       return genEdu;
     });
