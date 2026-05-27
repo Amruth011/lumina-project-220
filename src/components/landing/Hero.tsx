@@ -70,17 +70,6 @@ export const Hero = () => {
 
       {/* Main centered stacked content */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 text-center flex-1 flex flex-col justify-center items-center gap-12 w-full">
-        
-        {/* Signal Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-[10px] font-display font-bold text-emerald-300 uppercase tracking-[0.2em] shadow-lg backdrop-blur-sm"
-        >
-          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          V3.0 Signal Live
-        </motion.div>
 
         {/* Primary Headline & Subheadline block */}
         <div className="space-y-6 max-w-5xl">
@@ -88,10 +77,12 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, type: "spring", stiffness: 80 }}
-            className="text-5xl md:text-7xl lg:text-[84px] font-display font-black text-white tracking-tight leading-[1.05]"
+            className="tracking-tight leading-[1.05] max-w-5xl mx-auto"
           >
-            The Job Market is Brutal. <br className="hidden md:block" />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-300 via-teal-200 to-white">
+            <span className="block font-display font-black text-5xl md:text-7xl lg:text-[76px] text-white uppercase tracking-tight">
+              The Job Market is Brutal.
+            </span>
+            <span className="block font-serif italic font-light text-5xl md:text-7xl lg:text-[84px] text-emerald-300 mt-4 tracking-normal drop-shadow-[0_2px_15px_rgba(16,185,129,0.25)]">
               We Built the Cheat Code.
             </span>
           </motion.h1>
@@ -139,17 +130,17 @@ export const Hero = () => {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 + i * 0.1, duration: 0.8 }}
-                className="group relative bg-white/5 border border-white/10 hover:border-white/20 rounded-[2rem] p-8 backdrop-blur-md hover:bg-white/10 transition-all duration-300 flex flex-col gap-4 text-left h-full shadow-[0_8px_30px_rgb(0,0,0,0.05)]"
+                className="group relative bg-white/5 border border-white/10 hover:border-emerald-500/30 rounded-[2rem] p-8 backdrop-blur-md hover:bg-white/10 transition-all duration-300 flex flex-col gap-4 text-left h-full shadow-[0_8px_30px_rgb(0,0,0,0.05)]"
               >
                 {/* Glow outline hover effect */}
                 <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-300 group-hover:scale-110 transition-transform duration-300 z-10">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-white/20 transition-all duration-300 z-10">
                   {feature.icon}
                 </div>
                 <div className="space-y-2 flex-1 z-10">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-display font-bold text-white tracking-tight leading-snug">
+                    <h3 className="text-base font-display font-bold text-emerald-300 group-hover:text-emerald-200 transition-colors tracking-tight leading-snug">
                       {feature.title}
                     </h3>
                     {feature.comingSoon && (
@@ -158,7 +149,7 @@ export const Hero = () => {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs md:text-sm text-white/70 font-body leading-relaxed">
+                  <p className="text-xs md:text-sm text-emerald-100/80 font-body leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
