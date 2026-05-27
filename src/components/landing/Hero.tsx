@@ -94,7 +94,7 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
-            className="text-lg md:text-xl text-white/80 font-body max-w-3xl mx-auto leading-relaxed"
+            className="text-base md:text-lg text-white/80 font-body max-w-3xl mx-auto leading-relaxed"
           >
             Stop throwing blind applications into corporate black holes. Lumina JD decodes recruiter filters and builds a hyper-tailored, ATS-crushing toolkit for your target role in seconds. No tech skills required. Just paste, polish, and get hired.
           </motion.p>
