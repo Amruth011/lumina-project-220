@@ -79,16 +79,11 @@ export const Hero = () => {
             transition={{ duration: 0.8, type: "spring", stiffness: 80 }}
             className="tracking-tight leading-[1.05] max-w-5xl mx-auto"
           >
-            <span className="block font-display font-black text-5xl md:text-7xl lg:text-[76px] text-white tracking-tight">
+            <span className="block font-display font-light text-5xl md:text-7xl lg:text-[76px] text-white tracking-tight">
               The Job Market is Brutal
             </span>
-            <span className="block font-serif italic font-light text-5xl md:text-7xl lg:text-[84px] mt-4 tracking-normal drop-shadow-[0_2px_15px_rgba(16,185,129,0.25)]">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-300 via-teal-200 to-emerald-300">
-                We Built the{" "}
-              </span>
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-slate-200">
-                Cheat Code.
-              </span>
+            <span className="block font-serif italic font-light text-5xl md:text-7xl lg:text-[84px] mt-4 tracking-normal drop-shadow-[0_2px_15px_rgba(16,185,129,0.25)] bg-clip-text text-transparent bg-gradient-to-r from-[#10b981] via-[#d1fae5] to-white">
+              We Built the Cheat Code.
             </span>
           </motion.h1>
 
