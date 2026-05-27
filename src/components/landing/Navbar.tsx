@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { LuminaLogo } from "../LuminaLogo";
 
 export const Navbar = () => {
@@ -22,30 +22,25 @@ export const Navbar = () => {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 px-4 md:px-6 py-3 w-full pointer-events-none">
+    <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4 w-full pointer-events-none">
       <div
-        className={`h-[52px] rounded-full max-w-5xl mx-auto px-2 flex items-center justify-between pointer-events-auto relative overflow-hidden transition-all duration-300 ${
-          isScrolled
-            ? "shadow-[0_8px_30px_rgb(0,0,0,0.06)]"
-            : "shadow-[0_4px_20px_rgb(0,0,0,0.04)]"
+        className={`max-w-7xl mx-auto flex items-center justify-between pointer-events-auto transition-all duration-300 ${
+          isScrolled ? "py-2" : "py-4"
         }`}
       >
-        {/* White pill backdrop — matches GlobalNavbar exactly */}
-        <div className="absolute inset-0 rounded-full bg-white border border-border/10 -z-10" />
-
-        {/* Logo */}
-        <Link to="/" className="flex items-center pl-4 group transition-transform hover:scale-105">
-          <LuminaLogo size={120} className="object-contain" />
+        {/* Logo (inverted to white for transparent teal background integration) */}
+        <Link to="/" className="flex items-center group transition-transform hover:scale-105">
+          <LuminaLogo size={120} className="object-contain brightness-0 invert" />
         </Link>
 
-        {/* Desktop nav links */}
-        <div className="hidden md:flex items-center gap-1 bg-slate-50 p-1 rounded-full border border-border/10 shadow-inner">
+        {/* Desktop nav links (no background bar, floating white options) */}
+        <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) =>
             link.href.startsWith("#") ? (
               <a
                 key={link.name}
                 href={link.href}
-                className="px-5 py-2 rounded-full text-[12px] font-display font-bold text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-all duration-200 whitespace-nowrap"
+                className="text-[13px] font-display font-semibold text-white/95 hover:text-white transition-all duration-200 whitespace-nowrap"
               >
                 {link.name}
               </a>
@@ -53,7 +48,7 @@ export const Navbar = () => {
               <Link
                 key={link.name}
                 to={link.href}
-                className="px-5 py-2 rounded-full text-[12px] font-display font-bold text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-all duration-200 whitespace-nowrap"
+                className="text-[13px] font-display font-semibold text-white/95 hover:text-white transition-all duration-200 whitespace-nowrap"
               >
                 {link.name}
               </Link>
@@ -61,25 +56,22 @@ export const Navbar = () => {
           )}
         </div>
 
-        {/* Desktop CTA */}
-        <div className="hidden md:block pr-1">
+        {/* Desktop CTA (Balloon style outline white button) */}
+        <div className="hidden md:block">
           <Link to="/auth">
             <motion.button
-              whileHover={{ scale: 1.03 }}
+              whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 255, 255, 1)", color: "#10B981" }}
               whileTap={{ scale: 0.97 }}
-              className="group relative rounded-full px-7 py-2.5 bg-primary text-primary-foreground text-[11px] font-black uppercase tracking-widest transition-all overflow-hidden shadow-sm"
+              className="rounded-full px-6 py-2.5 border border-white text-white text-[11px] font-bold uppercase tracking-widest transition-all duration-200 bg-transparent"
             >
-              <span className="relative z-10 flex items-center gap-1.5">
-                Get Started <ArrowRight className="w-3 h-3" />
-              </span>
-              <div className="absolute inset-0 bg-lumina-teal-dark translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              Get Started
             </motion.button>
           </Link>
         </div>
 
-        {/* Mobile toggle */}
+        {/* Mobile toggle (white icons) */}
         <button
-          className="md:hidden mr-3 w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors text-foreground"
+          className="md:hidden w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
           {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -94,16 +86,22 @@ export const Navbar = () => {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-40 bg-white pointer-events-auto md:hidden"
+            className="fixed inset-0 z-40 bg-slate-900 pointer-events-auto md:hidden"
           >
-            <div className="flex flex-col h-full p-8 pt-24 gap-6">
+            <div className="flex flex-col h-full p-8 pt-24 gap-6 text-white bg-gradient-to-b from-lumina-teal-dark to-slate-950">
+              <button 
+                className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <X className="w-5 h-5" />
+              </button>
               {navLinks.map((link) =>
                 link.href.startsWith("#") ? (
                   <a
                     key={link.name}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-2xl font-serif font-bold text-foreground hover:text-primary transition-colors"
+                    className="text-2xl font-serif font-bold text-white hover:text-emerald-300 transition-colors"
                   >
                     {link.name}
                   </a>
@@ -112,7 +110,7 @@ export const Navbar = () => {
                     key={link.name}
                     to={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-2xl font-serif font-bold text-foreground hover:text-primary transition-colors"
+                    className="text-2xl font-serif font-bold text-white hover:text-emerald-300 transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -121,9 +119,9 @@ export const Navbar = () => {
               <Link
                 to="/auth"
                 onClick={() => setMobileMenuOpen(false)}
-                className="mt-4 px-8 py-4 bg-primary text-primary-foreground font-bold rounded-full text-center text-lg"
+                className="mt-4 px-8 py-4 border border-white text-white hover:bg-white hover:text-emerald-600 font-bold rounded-full text-center text-lg transition-all"
               >
-                Get Started →
+                Get Started
               </Link>
             </div>
           </motion.div>
