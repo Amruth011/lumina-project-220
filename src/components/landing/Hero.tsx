@@ -63,10 +63,10 @@ const features = [
 
 export const Hero = () => {
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-between bg-gradient-to-b from-[#1b3cb3] via-[#2d56e8] to-[#F4F5F7] overflow-hidden pt-32 pb-24 text-white">
-      {/* Cyan/Teal ambient glows for extra wow factor */}
-      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-emerald-400/10 blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-1/3 right-1/4 translate-x-1/2 translate-y-1/2 w-[500px] h-[500px] rounded-full bg-blue-300/10 blur-[120px] pointer-events-none" />
+    <section className="relative min-h-screen flex flex-col items-center justify-between bg-gradient-to-b from-[#064E3B] via-[#10B981] to-[#F4F5F7] overflow-hidden pt-32 pb-24 text-white">
+      {/* Emerald/Cyan ambient glows for extra wow factor */}
+      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-emerald-300/10 blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-1/3 right-1/4 translate-x-1/2 translate-y-1/2 w-[500px] h-[500px] rounded-full bg-teal-300/10 blur-[120px] pointer-events-none" />
 
       {/* Main centered stacked content */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 text-center flex-1 flex flex-col justify-center items-center gap-12 w-full">
