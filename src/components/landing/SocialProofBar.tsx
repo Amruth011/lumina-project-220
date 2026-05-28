@@ -7,11 +7,8 @@ export const SocialProofBar = () => {
   ];
 
   return (
-    <section className="bg-gradient-to-b from-[#F4F5F7] via-[#ECFDF5]/50 to-white py-14 overflow-hidden border-b border-black/[0.03]">
-      <div className="max-w-7xl mx-auto space-y-5">
-        <p className="text-center font-body text-[11px] font-bold text-muted-foreground/50 uppercase tracking-[0.25em]">
-          Trusted by professionals at
-        </p>
+    <section className="bg-gradient-to-b from-[#F4F5F7] via-[#ECFDF5]/50 to-[#F8FAFC] py-10 overflow-hidden">
+      <div className="max-w-7xl mx-auto">
 
         <div className="relative flex overflow-x-hidden group [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]">
           <div className="animate-marquee whitespace-nowrap flex items-center gap-16 py-4 group-hover:pause">
