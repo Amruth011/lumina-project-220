@@ -1,6 +1,7 @@
 import React from 'react';
 import Navbar from '@/components/landing/Navbar';
 import Hero from '@/components/landing/Hero';
+import SocialProofBar from '@/components/landing/SocialProofBar';
 import { ProductPreview } from '@/components/landing/ProductPreview';
 import ProblemSection from '@/components/landing/ProblemSection';
 import HowItWorks from '@/components/landing/HowItWorks';
@@ -17,6 +18,7 @@ const Index = () => {
     <main className="landing-page-root font-helvetica min-h-screen bg-background selection:bg-[#10B981]/30 selection:text-[#1E2A3A]">
       <Navbar />
       <Hero />
+      <SocialProofBar />
       <FeaturesGrid />
       <ProductPreview />
       <ProblemSection />

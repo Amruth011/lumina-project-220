@@ -7,7 +7,7 @@ export const SocialProofBar = () => {
   ];
 
   return (
-    <section className="bg-white border-y border-border/8 py-10 overflow-hidden">
+    <section className="bg-gradient-to-b from-[#F4F5F7] via-[#ECFDF5]/50 to-white py-14 overflow-hidden border-b border-black/[0.03]">
       <div className="max-w-7xl mx-auto space-y-5">
         <p className="text-center font-body text-[11px] font-bold text-muted-foreground/50 uppercase tracking-[0.25em]">
           Trusted by professionals at
