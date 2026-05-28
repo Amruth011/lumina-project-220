@@ -1,0 +1,80 @@
+{
+  "personal_info": {
+    "fullName": "Amruth Kumar M",
+    "email": "amruth.kumar.portfolio@gmail.com",
+    "phone": "+91 9148159827",
+    "location": "Bengaluru, Karnataka",
+    "links": {
+      "portfolio": "https://amruth.kumar.portfolio",
+      "linkedin": "https://linkedin.com/in/amruth-kumar",
+      "github": "https://github.com/amruth-kumar"
+    }
+  },
+  "professional_summary": "AI & Data Science Engineer specializing in deploying high-scale Generative AI models and forecasting pipelines at iStudio; built advanced RAG bilingual QA architectures and XGBoost models delivering 98.76% accuracy.",
+  "experience": [
+    {
+      "role": "Data Science Intern",
+      "company": "iStudio",
+      "location": "Bengaluru, India",
+      "period": "Feb 2026 – Present",
+      "bullets": [
+        "Developing machine learning models for sales forecasting and predictive analytics using Python.",
+        "Building data preprocessing and feature engineering pipelines to improve model training quality.",
+        "Evaluating model performance and communicating insights through Streamlit dashboards to stakeholders."
+      ]
+    }
+  ],
+  "academic_background": {
+    "degree": "B.Tech in Artificial Intelligence and Data Science",
+    "university": "REVA University",
+    "timeline": "2023 - 2026",
+    "location": "Bengaluru, India",
+    "gpa": "8.5/10"
+  },
+  "certifications_awards": [
+    "IBM Machine Learning Professional Certificate - Coursera",
+    "Google Advanced Data Analytics Professional Certificate - Coursera"
+  ],
+  "key_projects": [
+    {
+      "title": "Customer Churn Prediction & Retention ROI System",
+      "tech": "Python, XGBoost, SHAP, Streamlit, Docker",
+      "github": "https://github.com/amruth-kumar/customer-churn",
+      "live": "https://churn-roi.streamlit.app",
+      "bullets": [
+        "Applied statistical feature engineering and XGBoost modelling to predict customer churn, achieving AUC-ROC 0.9989 and 98.76% accuracy.",
+        "Performed cohort analysis and exploratory data analysis to identify 937 high-risk customers representing ₹47.4L revenue exposure, directly informing business retention strategy.",
+        "Built an interactive Streamlit dashboard with SHAP explainability, enabling non-technical stakeholders to interpret model decisions and simulate ROI outcomes."
+      ]
+    },
+    {
+      "title": "Multilingual Document QA System (Kannada RAG Agent)",
+      "tech": "Python, RAG, ChromaDB, Easy OCR, Sarvam AI, Streamlit",
+      "github": "https://github.com/amruth-kumar/multilingual-rag",
+      "live": "https://kannada-rag.streamlit.app",
+      "bullets": [
+        "Applied NLP techniques including text preprocessing, normalisation, and semantic chunking to process 346 pages of unstructured text into 687 retrievable knowledge chunks.",
+        "Built a Generative AI application using RAG architecture enabling context-aware bilingual QA — demonstrating applied GenAI innovation on complex, unstructured datasets.",
+        "Validated retrieval relevance through iterative testing, ensuring accuracy of AI-generated outputs."
+      ]
+    },
+    {
+      "title": "Social Media Sentiment Analysis — Distributed PySpark Pipeline",
+      "tech": "Python, PySpark, Delta Lake, Streamlit, Docker, GitHub Actions",
+      "github": "https://github.com/amruth-kumar/pyspark-sentiment",
+      "live": "https://sentiment-dashboard.streamlit.app",
+      "bullets": [
+        "Analysed large-scale social media datasets using distributed PySpark pipelines to uncover sentiment trends and engagement patterns driving business insights.",
+        "Implemented multi-stage data validation to ensure accuracy, completeness, and legitimacy of analytical outputs across the pipeline.",
+        "Designed a dashboard to communicate sentiment insights to technical and non-technical stakeholders."
+      ]
+    }
+  ],
+  "technical_skills": {
+    "Programming": ["Python", "SQL"],
+    "Statistical Modelling": ["EDA", "Hypothesis Testing", "Cohort Analysis", "A/B Testing", "Regression Analysis"],
+    "Machine Learning": ["Scikit-learn", "XGBoost", "Feature Engineering", "Model Evaluation"],
+    "Data & Big Data": ["PySpark", "Pandas", "NumPy", "Delta Lake"],
+    "Tools & Cloud": ["Streamlit", "Docker", "Git", "GitHub", "MySQL", "Azure"]
+  }
+}

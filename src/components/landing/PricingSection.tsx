@@ -1,140 +1,261 @@
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
-import { Check, X, ArrowRight } from "lucide-react";
+import { Check, Zap, ArrowRight, Sparkles } from "lucide-react";
+
+const plans = [
+  {
+    id: "starter",
+    tier: "Starter",
+    name: "Sovereign Free",
+    price: "$0",
+    period: "/ forever",
+    description:
+      "Perfect for final year students and active job seekers looking to clear baseline corporate ATS filters.",
+    cta: "Get Started Free",
+    ctaHref: "/auth",
+    popular: false,
+    features: [
+      "Unlimited Job Description Decoding",
+      "Instant Resume Analysis & Skill Gap Mapping",
+      "Elite Single-Page Resume Generation",
+      "Custom Tailored Cover Letters",
+      "Step-by-Step Technical Interview Roadmaps",
+      "Powered entirely by Antigravity Free-Tier Mesh",
+    ],
+  },
+  {
+    id: "pro",
+    tier: "Pro",
+    name: "Agentic Pro",
+    price: "$15",
+    period: "/ month",
+    description:
+      "Designed for hyper-active candidates demanding continuous, automated workflow execution.",
+    cta: "Upgrade to Pro",
+    ctaHref: "/auth",
+    popular: true,
+    features: [
+      "Everything in Sovereign Free Tier",
+      "Autonomous Job Agent Background Deployment",
+      "Continuous Multi-Board Scraping (LinkedIn, Indeed)",
+      "Automatic Custom Matching (Score > 85%)",
+      "Hands-free Form Completion and Submission",
+      "Priority Processing on Dedicated Server Clusters",
+    ],
+  },
+  {
+    id: "enterprise",
+    tier: "Enterprise",
+    name: "Custom Agency",
+    price: "Let's Talk",
+    period: "",
+    description:
+      "For training institutes and recruitment platforms scaling multi-user pipelines.",
+    cta: "Contact Team",
+    ctaHref: "mailto:team@lumina.ai",
+    popular: false,
+    features: [
+      "Everything in Agentic Pro Tier",
+      "Bulk Resume & Asset Processing API Access",
+      "White-labeled Generation Dashboards",
+      "Dedicated Model Finetuning Layers",
+      "Custom Integration via Webhooks & Supabase Edge",
+      "99.9% Uptime SLA Guarantee",
+    ],
+  },
+];
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.65,
+      delay: i * 0.12,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  }),
+};
 
 export const PricingSection = () => {
-  const [isAnnual, setIsAnnual] = useState(true);
-
-  const plans = [
-    {
-      name: "FREE",
-      price: "₹0",
-      description: "For exploratory job seekers",
-      features: [
-        { name: "3 JD analyses/mo", included: true },
-        { name: "1 resume tailoring", included: true },
-        { name: "Basic gap analysis", included: true },
-        { name: "PDF export", included: true },
-        { name: "DOCX export", included: false },
-        { name: "Market Insights", included: false }
-      ],
-      cta: "Start Free",
-      popular: false
-    },
-    {
-      name: "PRO",
-      price: isAnnual ? "₹1,499" : "₹1,999",
-      description: "Everything you need to land top 0.1% roles",
-      features: [
-        { name: "Unlimited JD analyses", included: true },
-        { name: "10 resume tailorings", included: true },
-        { name: "Full gap analysis", included: true },
-        { name: "Market Insights", included: true },
-        { name: "Priority AI Engine", included: true },
-        { name: "Download PDF + DOCX", included: true }
-      ],
-      cta: "Get Pro →",
-      popular: true
-    },
-    {
-      name: "TEAM",
-      price: isAnnual ? "₹3,499" : "₹4,999",
-      description: "For agencies and groups",
-      features: [
-        { name: "Everything in Pro", included: true },
-        { name: "5 team seats", included: true },
-        { name: "Shared resume library", included: true },
-        { name: "Team analytics", included: true },
-        { name: "API access", included: true },
-        { name: "Dedicated support", included: true }
-      ],
-      cta: "Start Team Trial",
-      popular: false
-    }
-  ];
-
   return (
-    <section id="pricing" className="bg-background py-32 px-6">
-      <div className="max-w-7xl mx-auto space-y-20">
-        <div className="text-center space-y-6 max-w-2xl mx-auto">
-          <h2 className="text-5xl md:text-7xl font-helvetica font-bold text-[#1E2A3A]">
-            Simple, transparent <br /> <span className="italic text-[#10B981]">pricing.</span>
-          </h2>
-          
-          <div className="flex items-center justify-center gap-4">
-            <span className={`text-sm font-display font-bold ${!isAnnual ? 'text-[#1E2A3A]' : 'text-[#1E2A3A]/40'}`}>Monthly</span>
-            <button 
-              onClick={() => setIsAnnual(!isAnnual)}
-              className="w-14 h-8 rounded-full bg-muted p-1 flex items-center transition-all duration-300 border border-border/10"
-            >
-              <motion.div 
-                animate={{ x: isAnnual ? 24 : 0 }}
-                className="w-6 h-6 rounded-full bg-[#10B981]"
-              />
-            </button>
-            <span className={`text-sm font-display font-bold ${isAnnual ? 'text-[#1E2A3A]' : 'text-[#1E2A3A]/40'}`}>
-              Annual <span className="text-[#10B981] ml-1">(save 20%)</span>
+    <section
+      id="pricing"
+      className="relative py-32 px-6 bg-white border-t border-black/[0.03] overflow-hidden"
+    >
+      {/* Ambient glows */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-emerald-500/[0.04] rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-slate-200/40 rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10 space-y-16">
+        {/* ── Header ── */}
+        <div className="text-center space-y-5 max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100/60">
+            <Sparkles size={11} className="text-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-600">
+              Pricing
             </span>
           </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-800 tracking-tight leading-tight">
+            Transparent Plans for
+            <br />
+            <span className="text-emerald-500">Ambitious Builders</span>
+          </h2>
+          <p className="text-base md:text-lg text-slate-500 font-medium leading-relaxed">
+            Deploy elite career automation tools instantly. Start scaling your
+            applications for free.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`relative flex flex-col p-8 rounded-[2.5rem] transition-all duration-500 ${
-                plan.popular 
-                  ? "bg-lumina-teal text-white shadow-[0_40px_100px_-20px_rgba(16,185,129,0.35)] scale-[1.05] z-10 border border-lumina-teal" 
-                  : "bg-white border border-border/10 text-foreground hover:border-lumina-teal/20 shadow-sm hover:shadow-md"
+        {/* ── 3-Card Grid ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch max-w-6xl mx-auto">
+          {plans.map((plan, i) => (
+            <motion.div
+              key={plan.id}
+              custom={i}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-60px" }}
+              variants={cardVariants}
+              className={`relative flex flex-col rounded-[2rem] transition-all duration-500 ${
+                plan.popular
+                  ? "bg-[#0F1E1A] text-white shadow-[0_40px_100px_-15px_rgba(16,185,129,0.25)] z-10 lg:scale-[1.04] border border-emerald-900/40"
+                  : "bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 text-slate-800"
               }`}
             >
+              {/* Most Popular Badge */}
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-[#10B981] text-[#1E2A3A] text-[10px] font-display font-bold rounded-full uppercase tracking-widest shadow-lg">
-                  Most Popular
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
+                  <div className="flex items-center gap-1.5 bg-emerald-500 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg shadow-emerald-500/25">
+                    <Zap size={10} className="fill-white" />
+                    Most Popular
+                  </div>
                 </div>
               )}
 
-              <div className="mb-8 space-y-2">
-                <p className={`text-[12px] font-display font-bold uppercase tracking-widest ${plan.popular ? 'text-white/70' : 'text-muted-foreground/50'}`}>
-                  {plan.name}
-                </p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-helvetica font-bold">{plan.price}</span>
-                  <span className={`text-sm font-body ${plan.popular ? 'text-white/70' : 'text-muted-foreground/60'}`}>/ month</span>
+              {/* Card Inner Content */}
+              <div className="flex flex-col flex-1 p-8 md:p-10 space-y-8">
+                {/* Tier + Name */}
+                <div className="space-y-1">
+                  <span
+                    className={`text-[10px] font-black uppercase tracking-[0.3em] ${
+                      plan.popular ? "text-emerald-400" : "text-slate-400"
+                    }`}
+                  >
+                    {plan.tier}
+                  </span>
+                  <h3
+                    className={`text-xl font-bold tracking-tight ${
+                      plan.popular ? "text-white" : "text-slate-800"
+                    }`}
+                  >
+                    {plan.name}
+                  </h3>
                 </div>
-                <p className={`text-sm font-body leading-relaxed ${plan.popular ? 'text-white/75' : 'text-muted-foreground/60'}`}>
-                  {plan.description}
-                </p>
-              </div>
 
-              <div className="flex-1 space-y-5 mb-10">
-                {plan.features.map((feature) => (
-                  <div key={feature.name} className="flex items-center gap-3">
-                    {feature.included ? (
-                      <Check className={`w-5 h-5 ${plan.popular ? 'text-[#10B981]' : 'text-[#10B981]'}`} />
-                    ) : (
-                      <X className="w-5 h-5 text-red-500/30" />
-                    )}
-                    <span className={`text-[14px] font-body ${feature.included ? plan.popular ? 'text-white' : '' : 'text-muted-foreground/40'}`}>
-                      {feature.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <a href="/auth" className="block w-full">
-                <button
-                  className={`w-full py-4 px-6 rounded-full font-display font-bold transition-all ${
-                    plan.popular
-                      ? "bg-white text-lumina-teal hover:scale-[1.02] shadow-sm"
-                      : "border border-lumina-teal text-lumina-teal hover:bg-lumina-teal/5"
+                {/* Price */}
+                <div
+                  className={`pb-8 border-b ${
+                    plan.popular ? "border-white/10" : "border-slate-100"
                   }`}
                 >
-                  {plan.cta}
-                </button>
-              </a>
-            </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span
+                      className={`text-4xl md:text-5xl font-bold tracking-tight ${
+                        plan.popular ? "text-white" : "text-slate-800"
+                      }`}
+                    >
+                      {plan.price}
+                    </span>
+                    {plan.period && (
+                      <span
+                        className={`text-sm font-medium ${
+                          plan.popular ? "text-emerald-400/80" : "text-slate-400"
+                        }`}
+                      >
+                        {plan.period}
+                      </span>
+                    )}
+                  </div>
+                  <p
+                    className={`mt-3 text-sm leading-relaxed ${
+                      plan.popular ? "text-white/60" : "text-slate-500"
+                    }`}
+                  >
+                    {plan.description}
+                  </p>
+                </div>
+
+                {/* Features */}
+                <div className="flex-1 space-y-4">
+                  <p
+                    className={`text-[10px] font-black uppercase tracking-[0.25em] ${
+                      plan.popular ? "text-white/40" : "text-slate-400"
+                    }`}
+                  >
+                    What's included
+                  </p>
+                  <ul className="space-y-3.5">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-3">
+                        <div
+                          className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${
+                            plan.popular
+                              ? "bg-emerald-500/20 border border-emerald-500/30"
+                              : "bg-emerald-50 border border-emerald-100"
+                          }`}
+                        >
+                          <Check
+                            size={10}
+                            className={
+                              plan.popular ? "text-emerald-400" : "text-emerald-600"
+                            }
+                            strokeWidth={3}
+                          />
+                        </div>
+                        <span
+                          className={`text-[13px] font-medium leading-snug ${
+                            plan.popular ? "text-white/75" : "text-slate-600"
+                          }`}
+                        >
+                          {feature}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* CTA Button */}
+                <a href={plan.ctaHref} className="block mt-auto pt-4">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`w-full py-4 px-6 rounded-2xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 transition-all duration-300 ${
+                      plan.popular
+                        ? "bg-emerald-500 text-white hover:bg-emerald-400 shadow-lg shadow-emerald-500/20"
+                        : plan.id === "enterprise"
+                        ? "bg-slate-800 text-white hover:bg-slate-700"
+                        : "bg-slate-900 text-white hover:bg-slate-700"
+                    }`}
+                  >
+                    {plan.cta}
+                    <ArrowRight size={14} />
+                  </motion.button>
+                </a>
+              </div>
+            </motion.div>
           ))}
+        </div>
+
+        {/* ── Footer Note ── */}
+        <div className="text-center pt-4">
+          <p className="text-xs text-slate-400 font-medium">
+            No credit card required to get started.{" "}
+            <span className="text-emerald-600 font-semibold">
+              Cancel or upgrade anytime.
+            </span>
+          </p>
         </div>
       </div>
     </section>
