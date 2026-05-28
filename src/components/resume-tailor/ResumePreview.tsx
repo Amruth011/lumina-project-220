@@ -28,7 +28,9 @@ import {
   Calendar,
   Edit3,
   PenTool,
-  Building2
+  Building2,
+  Loader2,
+  ArrowRight
 } from "lucide-react";
 import { GeneratedResume, VaultItem } from "@/types/jd";
 import { toast } from "sonner";
@@ -118,6 +120,291 @@ const limitBullets = (bullets: string[], maxBullets: number): string[] => {
   if (!bullets) return [];
   return bullets.slice(0, maxBullets);
 };
+
+const restoreExactProfileData = (generated: GeneratedResume, vaultItems: VaultItem[]): GeneratedResume => {
+  if (!generated || !vaultItems || vaultItems.length === 0) return generated;
+
+  // Clone to avoid side effects
+  const restored = { ...generated };
+
+  // 1. Restore Professional Experience dates
+  if (Array.isArray(restored.experience)) {
+    restored.experience = restored.experience.map(genItem => {
+      const match = vaultItems.find(vItem => {
+        if (vItem.type !== 'professional') return false;
+        
+        const org = (vItem.organization || "").trim().toLowerCase();
+        const title = (vItem.title || "").trim().toLowerCase();
+        const heading = (genItem.heading || "").trim().toLowerCase();
+        
+        if (!org) return false;
+        
+        if (title) {
+          return heading.includes(org) && heading.includes(title);
+        }
+        return heading.includes(org);
+      });
+
+      if (match) {
+        return {
+          ...genItem,
+          content: match.period || genItem.content
+        };
+      }
+      return genItem;
+    });
+  }
+
+  // 2. Restore Products details, status, and links
+  if (Array.isArray(restored.products)) {
+    restored.products = restored.products.map(genItem => {
+      const match = vaultItems.find(vItem => {
+        if (vItem.type !== 'product') return false;
+        const title = (vItem.title || "").trim().toLowerCase();
+        const heading = (genItem.heading || "").trim().toLowerCase();
+        return title && heading.includes(title);
+      });
+
+      if (match) {
+        const links = [match.github_link, match.live_link].filter(Boolean);
+        const newContent = [match.period, ...links].filter(Boolean).join(" | ");
+        
+        const headingParts = (genItem.heading || "").split(/\s+[-–—]\s+/);
+        const techStack = headingParts.slice(1).join(" - ");
+        const newHeading = techStack ? `${match.title} - ${techStack}` : match.title || genItem.heading;
+
+        return {
+          ...genItem,
+          heading: newHeading,
+          content: newContent || genItem.content
+        };
+      }
+      return genItem;
+    });
+  }
+
+  // 3. Restore Projects details, status, and links
+  if (Array.isArray(restored.projects)) {
+    restored.projects = restored.projects.map(genItem => {
+      const match = vaultItems.find(vItem => {
+        if (vItem.type !== 'project') return false;
+        const title = (vItem.title || "").trim().toLowerCase();
+        const heading = (genItem.heading || "").trim().toLowerCase();
+        return title && heading.includes(title);
+      });
+
+      if (match) {
+        const links = [match.github_link, match.live_link].filter(Boolean);
+        const newContent = [match.period, ...links].filter(Boolean).join(" | ");
+
+        const headingParts = (genItem.heading || "").split(/\s+[-–—]\s+/);
+        const techStack = headingParts.slice(1).join(" - ");
+        const newHeading = techStack ? `${match.title} - ${techStack}` : match.title || genItem.heading;
+
+        return {
+          ...genItem,
+          heading: newHeading,
+          content: newContent || genItem.content
+        };
+      }
+      return genItem;
+    });
+  }
+
+  // 4. Restore Leadership dates
+  if (Array.isArray(restored.leadership)) {
+    restored.leadership = restored.leadership.map(genItem => {
+      const match = vaultItems.find(vItem => {
+        if (vItem.type !== 'leadership') return false;
+        const org = (vItem.organization || "").trim().toLowerCase();
+        const title = (vItem.title || "").trim().toLowerCase();
+        const heading = (genItem.heading || "").trim().toLowerCase();
+        
+        if (org && title) {
+          return heading.includes(org) && heading.includes(title);
+        }
+        return (org && heading.includes(org)) || (title && heading.includes(title));
+      });
+
+      if (match) {
+        return {
+          ...genItem,
+          content: match.period || genItem.content
+        };
+      }
+      return genItem;
+    });
+  }
+
+  // 5. Restore Education exact details
+  const educationVaultItems = vaultItems.filter(v => v.type === 'education');
+
+  const buildEduString = (vItem: VaultItem): string => {
+    const deg = vItem.title || "Degree";
+    const sch = vItem.organization || "University";
+    const locMatch = (vItem.description || "").match(/Location:\s*([^|\n]+)/i);
+    const loc = locMatch ? locMatch[1].trim() : "";
+    const dt = vItem.period || "";
+    const schoolPart = loc ? `${sch} - ${loc}` : sch;
+    return `${deg} @ ${schoolPart}${dt ? ` | ${dt}` : ""}`;
+  };
+
+  if (Array.isArray(restored.education) && restored.education.length > 0) {
+    // AI generated education entries — restore exact vault data where possible
+    restored.education = restored.education.map(genEdu => {
+      const match = educationVaultItems.find(vItem => {
+        const org = (vItem.organization || "").trim().toLowerCase();
+        return org && genEdu.toLowerCase().includes(org);
+      });
+      return match ? buildEduString(match) : genEdu;
+    });
+  } else if (educationVaultItems.length > 0) {
+    // AI skipped the education section entirely — inject directly from vault
+    restored.education = educationVaultItems.map(buildEduString);
+  }
+
+  return restored;
+};
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3, experienceBullets = 3, projectLines = 3, productLines = 3): GeneratedResume => {
+  if (!data || typeof data !== "object") {
+    return {
+      professional_summary: "",
+      skills_section: [],
+      experience: [],
+      education: [],
+      certifications: [],
+      awards: [],
+      products: [],
+      projects: [],
+      leadership: []
+    };
+  }
+
+  const ensureArray = (arr: any): any[] => Array.isArray(arr) ? arr : [];
+
+  let summary = "";
+  if (typeof data.professional_summary === "string") {
+    summary = data.professional_summary;
+  } else if (data.professional_summary) {
+    summary = String(data.professional_summary);
+  }
+
+  if (summary) {
+    // Normalise smart punctuation and missing spacing
+    const normalized = summary
+      .replace(/([a-zA-Z])\.([A-Za-z])/g, '$1. $2')
+      .replace(/([a-zA-Z])!([A-Za-z])/g, '$1! $2')
+      .replace(/([a-zA-Z])\?([A-Za-z])/g, '$1? $2')
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u2013\u2014]/g, "-")
+      .replace(/\u20B9/g, "Rs. ")
+      .replace(/\u00B9/g, "1")
+      .replace(/\u00B2/g, "2")
+      .replace(/\u00B3/g, "3")
+      .replace(/\u00A0/g, " ");
+
+    const sentences = normalized.match(/[^.!?]+[.!?]+(\s|$)/g) || [normalized];
+    const cleanedSentences = sentences.map(s => s.trim()).filter(Boolean);
+
+    const finalSentences = cleanedSentences.slice(0, targetSummaryLines).map(s => {
+      let clean = s.trim();
+      if (!clean.endsWith(".") && !clean.endsWith("!") && !clean.endsWith("?")) {
+        clean += ".";
+      }
+      return clean.charAt(0).toUpperCase() + clean.slice(1);
+    });
+
+    summary = finalSentences.join(" ");
+  }
+
+  let skills: string[] = [];
+  if (Array.isArray(data.skills_section)) {
+    skills = data.skills_section.map(s => typeof s === "string" ? s : String(s || ""));
+  } else if (data.skills_section && typeof data.skills_section === "object") {
+    skills = Object.entries(data.skills_section).map(([key, val]) => {
+      const valStr = Array.isArray(val) ? val.join(", ") : String(val || "");
+      return `${key}: ${valStr}`;
+    });
+  } else if (typeof data.skills_section === "string") {
+    skills = [data.skills_section];
+  }
+
+  let education: string[] = [];
+  if (Array.isArray(data.education)) {
+    education = data.education.map(edu => {
+      if (typeof edu === "string") return edu;
+      if (edu && typeof edu === "object") {
+        const deg = edu.degree || edu.title || "Degree";
+        const sch = edu.school || edu.organization || edu.institution || "University";
+        const loc = edu.location || "";
+        const dt = edu.date || edu.period || edu.expected || "Expected 2027";
+        const gpaVal = edu.gpa || "";
+        const parts = [];
+        if (loc) parts.push(loc);
+        if (dt) parts.push(dt);
+        if (gpaVal) parts.push(`GPA: ${gpaVal}`);
+        return `${deg} @ ${sch}${parts.length > 0 ? ` - ${parts.join(" | ")}` : ""}`;
+      }
+      return String(edu || "");
+    });
+  } else if (typeof data.education === "string") {
+    education = [data.education];
+  }
+
+  const cleanSections = (sectionsArr: any, limit?: number): GeneratedResumeSection[] => {
+    return ensureArray(sectionsArr).map(item => {
+      if (!item || typeof item !== "object") {
+        return { heading: String(item || ""), content: "", bullets: [] };
+      }
+      
+      const rawBullets = Array.isArray(item.bullets) 
+        ? item.bullets.map((b: any) => typeof b === "string" ? b : String(b || ""))
+        : (typeof item.bullets === "string" ? [item.bullets] : []);
+
+      const cleanedBullets = rawBullets
+        .map(b => {
+          let clean = b.trim();
+          clean = clean.replace(/^[•\-*\s]+/, "");
+          return clean;
+        })
+        .filter(Boolean);
+
+      const finalBullets = limit && limit > 0 
+        ? cleanedBullets.slice(0, limit)
+        : cleanedBullets;
+
+      return {
+        heading: typeof item.heading === "string" ? item.heading : String(item.heading || item.title || ""),
+        content: typeof item.content === "string" ? item.content : String(item.content || item.period || item.date || ""),
+        bullets: finalBullets
+      };
+    });
+  };
+
+  return {
+    professional_summary: summary,
+    skills_section: skills,
+    experience: cleanSections(data.experience, experienceBullets),
+    education: education,
+    products: cleanSections(data.products, productLines),
+    projects: cleanSections(data.projects, projectLines).sort((a, b) => {
+      const getYear = (str: string): number => {
+        const raw = (str || "").toLowerCase();
+        if (raw.includes("ongoing") || raw.includes("present")) return 3000;
+        const match = raw.match(/\b(20\d{2})\b/);
+        return match ? parseInt(match[1], 10) : 0;
+      };
+      return getYear(b.content) - getYear(a.content);
+    }),
+    leadership: cleanSections(data.leadership),
+    certifications: ensureArray(data.certifications).map(c => typeof c === "string" ? c : String(c || "")),
+    awards: ensureArray(data.awards).map(a => typeof a === "string" ? a : String(a || ""))
+  };
+};
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 
 const renderSubHeaderWithLinks = (
@@ -322,6 +609,112 @@ export const ResumePreview = ({
   useEffect(() => {
     if (companyName) setClRecipientCompany(companyName);
   }, [companyName]);
+
+  // ── AI Copilot State ──
+  const [leftPanelTab, setLeftPanelTab] = useState<'editor' | 'copilot'>("editor");
+  const [copilotPrompt, setCopilotPrompt] = useState("");
+  const [isCopilotLoading, setIsCopilotLoading] = useState(false);
+  const [copilotMessages, setCopilotMessages] = useState<Array<{ sender: 'user' | 'system' | 'assistant'; text: string }>>([
+    {
+      sender: 'assistant',
+      text: `Greetings. I am your executive career co-pilot. I have scanned your resume blueprint. How would you like me to refine it today?
+
+Try asking me to:
+• "Make the summary punchier"
+• "Apply Google 'XYZ' format to my roles"
+• "Focus my projects on full-stack React and state management"`
+    }
+  ]);
+
+  const handleCopilotSubmit = async (e?: React.FormEvent, customPrompt?: string) => {
+    if (e) e.preventDefault();
+    const promptText = customPrompt || copilotPrompt;
+    if (!promptText.trim()) return;
+
+    const userMessage = { sender: 'user' as const, text: promptText };
+    setCopilotMessages(prev => [...prev, userMessage]);
+    if (!customPrompt) setCopilotPrompt("");
+    setIsCopilotLoading(true);
+
+    const systemPrompt = `You are an elite executive resume consultant and high-impact editor.
+Your objective is to modify the candidate's active JSON resume structure according to the user's request.
+
+### MANDATES:
+1. STRICT FACTUAL ALIGNMENT: Do not invent any new job roles, companies, projects, dates, or contact links. Only edit and rephrase the existing content in the candidate's resume to better match the user's request.
+2. ZERO HALLUCINATION: Never add fake metrics or fabricate numbers out of thin air. Focus on technical depth, tooling, execution scope, and high-impact rephrasing of the facts already present in the resume.
+3. OUTPUT FORMAT: You must return ONLY a JSON object that matches the exact structure of the input resume. Do not output any chat prose or explanations before or after the JSON.
+4. ANDREW VU RECRUITER STYLE: Apply modern, elite developer phrasing: active voice, strong verbs, modern tech terminology, and standard professional context.
+5. STRICT CHARACTER LINE LIMITS: If re-writing bullets, ensure each bullet point falls strictly within standard visual character character length ranges (including spaces) so they beautifully and fully fill visual lines on a standard A4 PDF page without creating awkward visual orphans/hanging words:
+   - 1 line: EXACTLY 110 to 125 characters.
+   - 2 lines: EXACTLY 220 to 250 characters.
+   - 3 lines: EXACTLY 330 to 375 characters.
+   Do not generate bullet lengths between 126 and 219 characters, or less than 110. Adjust wording, technical detail, or scope description dynamically to hit these exact target ranges perfectly.
+
+### INPUTS:
+- Target Job Title: ${jdTitle || "Target Role"}
+- Target Company: ${companyName || "Target Company"}
+- Target Skills: ${(jdSkills || []).map(s => s.skill).join(", ") || "None"}
+- User's Specific Edit Request: "${promptText}"
+
+### CURRENT RESUME JSON:
+${JSON.stringify(localResume, null, 2)}
+
+Return ONLY the complete updated JSON object matching the input structure.`;
+
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [{ role: "user", content: systemPrompt }],
+          temperature: 0.3,
+          response_format: { type: "json_object" },
+          max_tokens: 4000
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+
+      const rawData = await response.json();
+      if (rawData.choices?.[0]?.message?.content) {
+        const content = rawData.choices[0].message.content.trim();
+        const parsed = JSON.parse(content);
+        
+        const sanitized = sanitizeGeneratedResume(
+          parsed,
+          summaryLines,
+          experienceBullets,
+          projectLines,
+          productLines
+        );
+        
+        const restored = restoreExactProfileData(sanitized, vaultItems);
+
+        setLocalResume(restored);
+        onUpdate(restored, localHeader);
+
+        setCopilotMessages(prev => [...prev, {
+          sender: 'assistant' as const,
+          text: `Success! I have updated your resume to reflect your request. You can see the revisions (such as re-formatted bullets, punchier keywords, or specialized tone changes) live in the A4 visual preview on the right.`
+        }]);
+        toast.success("Resume updated by AI Copilot!");
+      } else {
+        throw new Error("Invalid response format");
+      }
+    } catch (err) {
+      console.error(err);
+      setCopilotMessages(prev => [...prev, {
+        sender: 'system' as const,
+        text: "Error: I encountered a connection issue while communicating with the AI engines. Please try again or simplify your request."
+      }]);
+      toast.error("Failed to apply AI Copilot edits.");
+    } finally {
+      setIsCopilotLoading(false);
+    }
+  };
 
   const resumeRef = useRef<HTMLDivElement>(null);
   const [pageCount, setPageCount] = useState(1);
@@ -570,8 +963,37 @@ export const ResumePreview = ({
           >
             {/* ── LEFT PANEL: EDITORS ── */}
             <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-4 space-y-6 h-auto">
-              <CollapsibleSection 
-                title="Profile Identity" 
+              <div className="flex bg-slate-100/80 p-1 rounded-2xl border border-slate-200/50 shadow-inner mb-2">
+                <button
+                  type="button"
+                  onClick={() => setLeftPanelTab("editor")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all duration-300 ${
+                    leftPanelTab === "editor"
+                      ? "bg-white text-[#1E2A3A] shadow-sm scale-[1.02]"
+                      : "text-[#1E2A3A]/40 hover:text-[#1E2A3A]"
+                  }`}
+                >
+                  <PenTool size={11} />
+                  Manual Editor
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLeftPanelTab("copilot")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all duration-300 ${
+                    leftPanelTab === "copilot"
+                      ? "bg-white text-[#1E2A3A] shadow-sm scale-[1.02]"
+                      : "text-[#1E2A3A]/40 hover:text-[#1E2A3A]"
+                  }`}
+                >
+                  <Sparkles size={11} className="text-lumina-teal animate-pulse" />
+                  AI Copilot
+                </button>
+              </div>
+
+              {leftPanelTab === "editor" ? (
+                <div className="space-y-6">
+                  <CollapsibleSection 
+                    title="Profile Identity" 
                 icon={User} 
                 isOpen={openSection === "profile"} 
                 onToggle={() => setOpenSection(openSection === "profile" ? null : "profile")}
@@ -1384,6 +1806,108 @@ export const ResumePreview = ({
                   <button onClick={() => updateResumeState({...localResume, awards: [...(localResume.awards || []), "Hackathon Winner (Google Cloud) - 2024"]})} className="text-[8px] font-bold text-lumina-teal flex items-center gap-1 uppercase tracking-widest pt-2"><Plus size={10} /> Add Award</button>
                 </div>
               </CollapsibleSection>
+                </div>
+              ) : (
+                <div className="glass-panel p-6 rounded-[2.5rem] bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200/50 space-y-6 flex flex-col min-h-[550px]">
+                  {/* Copilot Header */}
+                  <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div className="p-2 rounded-xl bg-lumina-teal/10 border border-lumina-teal/20 text-lumina-teal">
+                      <Sparkles size={16} className="animate-pulse" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-[#1E2A3A] flex items-center gap-1.5 font-display italic">
+                        Lumina Copilot
+                      </h4>
+                      <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">Real-Time Resume refining</p>
+                    </div>
+                  </div>
+
+                  {/* Messages Viewport */}
+                  <div className="flex-1 overflow-y-auto max-h-[360px] pr-1 space-y-4 scrollbar-thin scrollbar-thumb-slate-100">
+                    {copilotMessages.map((msg, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                      >
+                        <div
+                          className={`px-4 py-3 rounded-2xl text-[11px] leading-relaxed max-w-[90%] whitespace-pre-line shadow-sm border ${
+                            msg.sender === 'user'
+                              ? 'bg-[#1E2A3A] text-white border-transparent rounded-tr-sm font-semibold shadow-md'
+                              : msg.sender === 'system'
+                              ? 'bg-red-50 border-red-100 text-red-600 rounded-tl-sm font-semibold'
+                              : 'bg-slate-50 border-slate-100 text-[#1E2A3A] rounded-tl-sm font-medium'
+                          }`}
+                        >
+                          {msg.text}
+                        </div>
+                      </div>
+                    ))}
+                    {isCopilotLoading && (
+                      <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 text-slate-400 text-[11px] rounded-tl-sm w-[90%] shadow-sm">
+                        <Loader2 size={12} className="animate-spin text-lumina-teal" />
+                        <span className="font-bold uppercase tracking-wider text-[9px] animate-pulse">Lumina is refining your blueprint...</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Optimization Suggestion Chips */}
+                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 block mb-1">Refinement Presets</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => handleCopilotSubmit(e, "Make the professional summary punchier and more direct.")}
+                        disabled={isCopilotLoading}
+                        className="py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[9px] font-black uppercase tracking-wider text-[#1E2A3A]/70 hover:text-[#1E2A3A] text-left transition-colors truncate"
+                      >
+                        ✨ Punchy Summary
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => handleCopilotSubmit(e, "Apply the Google 'XYZ' format to my professional experience bullet points where metrics are present.")}
+                        disabled={isCopilotLoading}
+                        className="py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[9px] font-black uppercase tracking-wider text-[#1E2A3A]/70 hover:text-[#1E2A3A] text-left transition-colors truncate"
+                      >
+                        📊 Apply Google XYZ
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => handleCopilotSubmit(e, "Optimize skills and bullets to maximize ATS keyword density for this role.")}
+                        disabled={isCopilotLoading}
+                        className="py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[9px] font-black uppercase tracking-wider text-[#1E2A3A]/70 hover:text-[#1E2A3A] text-left transition-colors truncate"
+                      >
+                        🎯 ATS Optimization
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => handleCopilotSubmit(e, "Slightly trim and compress summaries and bullet lengths so they perfectly fit visual line budgets.")}
+                        disabled={isCopilotLoading}
+                        className="py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[9px] font-black uppercase tracking-wider text-[#1E2A3A]/70 hover:text-[#1E2A3A] text-left transition-colors truncate"
+                      >
+                        ✂️ Page-Fitting Trim
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Input form */}
+                  <form onSubmit={handleCopilotSubmit} className="flex gap-2 relative">
+                    <input
+                      value={copilotPrompt}
+                      onChange={(e) => setCopilotPrompt(e.target.value)}
+                      disabled={isCopilotLoading}
+                      placeholder="Ask copilot to refine your resume..."
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-medium outline-none focus:border-lumina-teal/30 focus:ring-0 disabled:opacity-50 text-slate-800"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isCopilotLoading || !copilotPrompt.trim()}
+                      className="px-4 py-2.5 rounded-xl bg-[#1E2A3A] hover:bg-[#1E2A3A]/90 text-white shadow-lg transition-colors flex items-center justify-center disabled:opacity-50"
+                    >
+                      <ArrowRight size={14} className="stroke-[3px]" />
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
 
             {/* ── RIGHT PANEL: PREVIEW ── */}
