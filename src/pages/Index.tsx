@@ -5,7 +5,7 @@ import { ProductPreview } from '@/components/landing/ProductPreview';
 import ProblemSection from '@/components/landing/ProblemSection';
 import HowItWorks from '@/components/landing/HowItWorks';
 import FeaturesGrid from '@/components/landing/FeaturesGrid';
-import LiveDemoStrip from '@/components/landing/LiveDemoStrip';
+
 import Testimonials from '@/components/landing/Testimonials';
 import StatsSection from '@/components/landing/StatsSection';
 import PricingSection from '@/components/landing/PricingSection';
@@ -21,7 +21,7 @@ const Index = () => {
       <ProductPreview />
       <ProblemSection />
       <HowItWorks />
-      <LiveDemoStrip />
+
       <Testimonials />
       <StatsSection />
       <PricingSection />
