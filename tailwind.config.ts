@@ -73,7 +73,7 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        serif: ["Instrument Serif", "serif"],
+        serif: ["Helvetica", "Helvetica Neue", "Arial", "sans-serif"],
         body: ["Inter", "sans-serif"],
         display: ["Outfit", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
