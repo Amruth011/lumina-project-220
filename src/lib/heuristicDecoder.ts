@@ -26,41 +26,115 @@ const COMMON_TITLES = [
 export const decodeJDHeuristic = (jdText: string): DecodeResult => {
   const jdLower = jdText.toLowerCase();
   
-  // 1. Job Title Extraction Heuristic
+  // ── DETECT SENIORITY LEVEL ──
+  // Check for experience levels, years, fresher status, etc.
+  const isFresher = /fresher|freshers|intern|internship|trainee|campus|graduate|on-campus|entry\s*-?\s*level/i.test(jdLower) ||
+                    jdLower.includes("2026 batch") || jdLower.includes("2025 batch") || jdLower.includes("2024 batch") ||
+                    jdLower.includes("no experience") || jdLower.includes("0 years") || jdLower.includes("0-1 years") || 
+                    jdLower.includes("0-2 years") || jdLower.includes("0 to 2 years") || jdLower.includes("0 to 1 years");
+
+  const isJunior = !isFresher && (/junior|jr|1-2 years|1-3 years|2-3 years|1 to 3 years|1 to 2 years/i.test(jdLower));
+
+  const isSenior = /senior|sr|lead|principal|staff|architect|manager|director|head|vp|executive/i.test(jdLower);
+
+  // ── 1. Job Title Extraction Heuristic ──
   let extractedTitle = "";
-  for (const item of COMMON_TITLES) {
-    if (item.keywords.some(kw => jdLower.includes(kw))) {
-      extractedTitle = item.title;
+  
+  // A. Direct label extraction (e.g., Designation: Software Engineer)
+  const titleRegexes = [
+    /(?:designation|job title|role|position|title)\s*:\s*([^\n\r]+)/i,
+    /(?:hiring for|looking for a)\s+([a-zA-Z\s]+(?:engineer|developer|architect|designer|manager|analyst|specialist|intern|associate))/i
+  ];
+  
+  for (const regex of titleRegexes) {
+    const match = jdText.match(regex);
+    if (match && match[1] && match[1].trim().length > 3 && match[1].trim().length < 80) {
+      extractedTitle = match[1].replace(/^[#\-*\s]+|[#\-*\s]+$/g, "").trim();
       break;
     }
   }
 
-  // Fallback: search for first short line of text under 80 characters
+  // B. Fallback to dictionary matching
   if (!extractedTitle) {
-    const lines = jdText.split("\n").map(l => l.trim()).filter(l => l.length > 5 && l.length < 80);
-    if (lines.length > 0) {
-      // Look for lines containing "engineer", "developer", "architect", "manager", "specialist", etc.
-      const match = lines.find(l => /engineer|developer|architect|manager|lead|specialist|officer|analyst/i.test(l));
-      extractedTitle = match || lines[0];
-    } else {
-      extractedTitle = "Technical Systems Specialist";
+    for (const item of COMMON_TITLES) {
+      if (item.keywords.some(kw => jdLower.includes(kw))) {
+        extractedTitle = item.title;
+        break;
+      }
     }
   }
 
-  // Ensure title is formatted nicely
+  // C. Generic Fallback
+  if (!extractedTitle) {
+    const lines = jdText.split("\n").map(l => l.trim()).filter(l => l.length > 5 && l.length < 80);
+    if (lines.length > 0) {
+      const match = lines.find(l => /engineer|developer|architect|manager|lead|specialist|officer|analyst/i.test(l));
+      extractedTitle = match || lines[0];
+    } else {
+      extractedTitle = isFresher ? "Software Engineer" : "Technical Systems Specialist";
+    }
+  }
+
+  // D. Adjust Title Prefix based on seniority
   extractedTitle = extractedTitle.replace(/^[#\-*\s]+|[#\-*\s]+$/g, "").trim();
+  if (isFresher || isJunior) {
+    // Strip "Senior", "Lead", "Principal", "Staff", etc.
+    extractedTitle = extractedTitle
+      .replace(/\b(senior|lead|principal|staff|sr\.?|lead|chief)\b/gi, "")
+      .replace(/\barchitect\b/gi, "Engineer")
+      .replace(/\s+/g, " ")
+      .trim();
+    
+    // Capitalize properly
+    extractedTitle = extractedTitle.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    
+    if (isFresher && !extractedTitle.toLowerCase().includes("fresher") && !extractedTitle.toLowerCase().includes("intern") && !extractedTitle.toLowerCase().includes("junior") && !extractedTitle.toLowerCase().includes("entry")) {
+      extractedTitle = `${extractedTitle} (Entry Level / Fresher)`;
+    } else if (isJunior && !extractedTitle.toLowerCase().includes("junior") && !extractedTitle.toLowerCase().includes("entry")) {
+      extractedTitle = `${extractedTitle} (Junior)`;
+    }
+  }
 
   // 2. Skills Scavenging using scavengeSkills
   const detectedSkills = scavengeSkills([], null, jdText);
   
-  // Ensure we have a premium list of skills
-  const fallbackSkills: Skill[] = [
-    { skill: "Strategic Architecture", importance: 92, category: "Technical" },
-    { skill: "System Decomposition", importance: 88, category: "Technical" },
-    { skill: "Cross-Functional Sync", importance: 85, category: "Foundations" },
-    { skill: "Agile Development", importance: 80, category: "Preferred" },
-    { skill: "Root Cause Forensics", importance: 90, category: "Technical" }
-  ];
+  // Make fallbacks seniority-calibrated so freshers do not get "Strategic Architecture"
+  let fallbackSkills: Skill[] = [];
+  if (isFresher || isJunior) {
+    if (/frontend|react|ui|ux|web/i.test(extractedTitle)) {
+      fallbackSkills = [
+        { skill: "JavaScript Core & DOM", importance: 90, category: "Technical" },
+        { skill: "HTML5 & CSS3 Responsive Layouts", importance: 88, category: "Technical" },
+        { skill: "React Basics & Components", importance: 85, category: "Technical" },
+        { skill: "Git & Version Control", importance: 80, category: "Foundations" },
+        { skill: "Clean Code & Debugging", importance: 82, category: "Foundations" }
+      ];
+    } else if (/backend|node|python|java|api/i.test(extractedTitle)) {
+      fallbackSkills = [
+        { skill: "Core Programming Logic", importance: 90, category: "Technical" },
+        { skill: "Basic SQL & Databases", importance: 88, category: "Technical" },
+        { skill: "REST API Principles", importance: 85, category: "Technical" },
+        { skill: "Git & GitHub Workflow", importance: 80, category: "Foundations" },
+        { skill: "Data Structures & Algorithms", importance: 82, category: "Foundations" }
+      ];
+    } else {
+      fallbackSkills = [
+        { skill: "Core Data Structures & Algorithms", importance: 92, category: "Technical" },
+        { skill: "Object-Oriented Programming (OOP)", importance: 88, category: "Technical" },
+        { skill: "Web Fundamentals (HTML/CSS/JS)", importance: 85, category: "Technical" },
+        { skill: "Git & Version Control", importance: 80, category: "Foundations" },
+        { skill: "Basic Testing & Debugging", importance: 82, category: "Foundations" }
+      ];
+    }
+  } else {
+    fallbackSkills = [
+      { skill: "Strategic Architecture", importance: 92, category: "Technical" },
+      { skill: "System Decomposition", importance: 88, category: "Technical" },
+      { skill: "Cross-Functional Sync", importance: 85, category: "Foundations" },
+      { skill: "Agile Development", importance: 80, category: "Preferred" },
+      { skill: "Root Cause Forensics", importance: 90, category: "Technical" }
+    ];
+  }
 
   const finalSkills = detectedSkills.length >= 3 ? detectedSkills : [...detectedSkills, ...fallbackSkills];
 
@@ -77,7 +151,7 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
     remoteFriendly = "partial";
     officePresence = "occasional";
     remoteNote = "Hybrid configuration (typically 2-3 days office presence).";
-  } else if (jdLower.includes("onsite") || jdLower.includes("on-site") || jdLower.includes("in-office") || jdLower.includes("office mandatory")) {
+  } else if (jdLower.includes("onsite") || jdLower.includes("on-site") || jdLower.includes("in-office") || jdLower.includes("office mandatory") || jdLower.includes("wfo")) {
     remoteFriendly = "no";
     officePresence = "full";
     remoteNote = "100% In-Office mandatory presence required.";
@@ -100,32 +174,44 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
     isEstimate = false;
     salaryNote = "Explicit compensation package detected in JD text.";
   } else {
-    // Check for INR/Lakhs patterns
-    const inrRegex = /(?:rs|inr|₹)?\s*(\d{1,2})\s*(?:-|to)\s*(\d{1,2})\s*(?:lakh|lacs|lac|lpa)/i;
+    // Check for INR/Lakhs patterns or LPA
+    const inrRegex = /(?:rs|inr|₹)?\s*(\d{1,2}(?:\.\d+)?)\s*(?:-|to)?\s*(\d{1,2}(?:\.\d+)?)\s*(?:lakh|lacs|lac|lpa)/i;
     const matchInr = jdText.match(inrRegex);
     if (matchInr) {
-      minSalary = parseInt(matchInr[1]) * 100000;
-      maxSalary = parseInt(matchInr[2]) * 100000;
+      minSalary = Math.round(parseFloat(matchInr[1]) * 100000);
+      maxSalary = Math.round(parseFloat(matchInr[2]) * 100000);
       currency = "INR";
       isEstimate = false;
       salaryNote = "Explicit Indian National Rupee salary scale extracted from source.";
     } else {
-      // Dynamic fallbacks based on Job Title
+      // Dynamic fallbacks based on Job Title & Seniority
       const isAI = /ai|ml|machine|llm|agent/i.test(extractedTitle);
-      const isLead = /lead|principal|architect|manager/i.test(extractedTitle);
-      const isIndia = jdLower.includes("india") || jdLower.includes("bangalore") || jdLower.includes("bengaluru") || jdLower.includes("hyderabad") || jdLower.includes("mumbai");
+      const isIndia = jdLower.includes("india") || jdLower.includes("bangalore") || jdLower.includes("bengaluru") || jdLower.includes("hyderabad") || jdLower.includes("mumbai") || jdLower.includes("lpa") || jdLower.includes("lakh");
 
       if (isIndia) {
         currency = "INR";
-        minSalary = isAI ? (isLead ? 2800000 : 1800000) : (isLead ? 2200000 : 1200000);
-        maxSalary = isAI ? (isLead ? 5500000 : 3800000) : (isLead ? 4200000 : 2500000);
+        if (isFresher) {
+          minSalary = 300000;
+          maxSalary = 600000;
+        } else if (isJunior) {
+          minSalary = 600000;
+          maxSalary = 1200000;
+        } else {
+          minSalary = isAI ? (isSenior ? 2800000 : 1800000) : (isSenior ? 2200000 : 1200000);
+          maxSalary = isAI ? (isSenior ? 5500000 : 3800000) : (isSenior ? 4200000 : 2500000);
+        }
       } else {
         currency = "USD";
-        minSalary = isAI ? (isLead ? 1600000 : 1250000) : (isLead ? 1400000 : 100000);
-        maxSalary = isAI ? (isLead ? 2600000 : 1900000) : (isLead ? 2200000 : 150000);
-        // Ensure values match K scale
-        if (minSalary < 1000) minSalary *= 1000;
-        if (maxSalary < 1000) maxSalary *= 1000;
+        if (isFresher) {
+          minSalary = 50000;
+          maxSalary = 80000;
+        } else if (isJunior) {
+          minSalary = 75000;
+          maxSalary = 105000;
+        } else {
+          minSalary = isAI ? (isSenior ? 160000 : 125000) : (isSenior ? 140000 : 100000);
+          maxSalary = isAI ? (isSenior ? 260000 : 190000) : (isSenior ? 220000 : 150000);
+        }
       }
     }
   }
@@ -202,7 +288,12 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
   let primaryFocus = "Execution & Reliability";
   let primaryTool = "Enterprise Stack";
 
-  if (/ai|ml|machine|llm|agent/i.test(extractedTitle)) {
+  if (isFresher || isJunior) {
+    archetypeLabel = "Junior Systems Engineer";
+    archetypeDesc = "A motivated entry-level developer focusing on mastering core technical execution, coding fundamentals, and expanding skills under guidance.";
+    primaryFocus = "Learning & Core Delivery";
+    primaryTool = "IDE / Git Workflow";
+  } else if (/ai|ml|machine|llm|agent/i.test(extractedTitle)) {
     archetypeLabel = "AI Forensic Systems Alchemist";
     archetypeDesc = "Elite architect focused on deploying deep neural pipelines, token optimization, and intelligent agentic loops.";
     primaryFocus = "Cognitive System Design";
@@ -225,8 +316,8 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
   }
 
   // 8. Experience Requirements Heuristic
-  let expText = "5+ years of elite industry experience.";
-  const expMatch = jdText.match(/(\d+)\+?\s*years/i);
+  let expText = isFresher ? "Entry Level (Freshers Welcome)" : (isJunior ? "1-3 years of programming experience." : "5+ years of elite industry experience.");
+  const expMatch = jdText.match(/(\d+)\+?\s*years?/i);
   if (expMatch) {
     expText = `${expMatch[1]}+ years of industry engineering experience.`;
   }
@@ -240,17 +331,19 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
     title: extractedTitle,
     skills: finalSkills,
     requirements: {
-      education: jdLower.includes("degree") || jdLower.includes("bachelor") 
-        ? ["Bachelor's or Master's degree in Computer Science, engineering, or related field."] 
-        : ["Proven portfolio demonstrating elite systems execution in production, bypassing traditional degrees."],
+      education: jdLower.includes("degree") || jdLower.includes("bachelor") || jdLower.includes("b.e") || jdLower.includes("btech") 
+        ? ["Bachelor's or Master's degree in Computer Science, MCA, B.E., B.Tech, or related field."] 
+        : ["Proven portfolio demonstrating core systems execution in production, bypassing traditional degrees."],
       experience: expText,
-      soft_skills: ["Strategic System Architecture", "Extreme Ambiguity Ownership", "Crisis Communication"],
+      soft_skills: isFresher || isJunior
+        ? ["Proactive Learning", "Active Collaboration", "Logical Problem Solving"]
+        : ["Strategic System Architecture", "Extreme Ambiguity Ownership", "Crisis Communication"],
       agreements: jdLower.includes("nda") || jdLower.includes("background check") ? ["Candidate must pass background check and sign proprietary NDA."] : []
     },
     grade: {
       score: isDetailedJd ? 86 : 74,
       letter: isDetailedJd ? "A" : "B",
-      summary: `Forensic scan of ${extractedTitle} is active. Role demonstrates high tactical momentum and a strong technological stack, with moderate red flags related to release velocity.`,
+      summary: `Forensic scan of ${extractedTitle} is active. Role demonstrates high tactical momentum and a strong technological stack, calibrated for ${isFresher ? "freshers/entry-level" : (isJunior ? "juniors" : "seniors")}.`,
       breakdown: {
         clarity: isDetailedJd ? 18 : 12,      // /20
         realistic: skillsCount > 10 ? 11 : 14, // /15
@@ -263,8 +356,12 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
       },
       plain_english_summary: [
         `Highly dynamic ${extractedTitle} deployment needing immediate operational autonomy.`,
-        "Primary emphasis sits on rapid feature scaling and complex technology integrations.",
-        "Onboarding support is thin; candidate must be highly self-driven from day one.",
+        isFresher 
+          ? "Primary emphasis sits on solid fundamental coding, git workflows, and rapid learning."
+          : "Primary emphasis sits on rapid feature scaling and complex technology integrations.",
+        isFresher
+          ? "Campus hires and entry-level grads are welcome; mentoring will be provided by senior engineers."
+          : "Onboarding support is thin; candidate must be highly self-driven from day one.",
         `Expected salary scale maps to ${currency} ${minSalary.toLocaleString()} - ${maxSalary.toLocaleString()} based on forensic markers.`,
         "High context switching is typical due to rapid market pivots and client requirements."
       ]
@@ -274,13 +371,13 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
     qualifiers: {
       must_have_percent: Math.min(85, Math.max(50, finalSkills.filter(s => s.importance > 85).length * 10 + 40)),
       nice_to_have_percent: 60,
-      seniority_level: /lead|principal|architect|manager/i.test(extractedTitle) ? 90 : (/senior/i.test(extractedTitle) ? 75 : 45),
+      seniority_level: isFresher ? 15 : (isJunior ? 40 : (/senior/i.test(extractedTitle) ? 75 : 85)),
       experience: {
-        professional: expMatch ? parseInt(expMatch[1]) : 5,
+        professional: expMatch ? parseInt(expMatch[1]) : (isFresher ? 0 : 3),
         project_proof: 85
       },
       education: {
-        degree_required: jdLower.includes("degree") || jdLower.includes("b.s.") || jdLower.includes("bs") || jdLower.includes("bachelor"),
+        degree_required: jdLower.includes("degree") || jdLower.includes("b.s.") || jdLower.includes("bs") || jdLower.includes("bachelor") || jdLower.includes("b.e") || jdLower.includes("btech"),
         skills_first_percent: 78
       }
     },
@@ -297,11 +394,17 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
         office_presence: officePresence,
         flexible_hours: !jdLower.includes("strict core hours")
       },
-      responsibility_mix: [
-        { label: "Core Feature Engineering", percent: 50 },
-        { label: "Architectural Mapping & Scalability", percent: 30 },
-        { label: "Collaboration & Recruiter Sync", percent: 20 }
-      ],
+      responsibility_mix: isFresher || isJunior
+        ? [
+            { label: "Core Feature Coding", percent: 70 },
+            { label: "Testing & Bug Fixing", percent: 20 },
+            { label: "Sprint Learning & Sync", percent: 10 }
+          ]
+        : [
+            { label: "Core Feature Engineering", percent: 50 },
+            { label: "Architectural Mapping & Scalability", percent: 30 },
+            { label: "Collaboration & Recruiter Sync", percent: 20 }
+          ],
       archetype: {
         label: archetypeLabel,
         description: archetypeDesc,
@@ -315,30 +418,48 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
       }
     },
     role_reality: {
-      iceberg_above: [
-        `Build and optimize the core ${extractedTitle} features.`,
-        "Deploy stable pipelines and manage technical debt."
-      ],
-      iceberg_below: [
-        "Shielding key modules from constant scope changes in mid-sprint.",
-        "Managing historical legacy hacks introduced by early founders.",
-        "Coordinating with cross-functional stakeholders who lack engineering context."
-      ],
+      iceberg_above: isFresher || isJunior
+        ? [
+            "Learn the codebase rapidly and master environment tools.",
+            "Implement features cleanly using core standards."
+          ]
+        : [
+            `Build and optimize the core ${extractedTitle} features.`,
+            "Deploy stable pipelines and manage technical debt."
+          ],
+      iceberg_below: isFresher || isJunior
+        ? [
+            "Adapting to large production codebases with high complexity.",
+            "Navigating undocumented modules and legacy setup quirks.",
+            "Translating academic concepts to real-world deployment patterns."
+          ]
+        : [
+            "Shielding key modules from constant scope changes in mid-sprint.",
+            "Managing historical legacy hacks introduced by early founders.",
+            "Coordinating with cross-functional stakeholders who lack engineering context."
+          ],
       dimensions: {
-        technical_depth: 85,
-        research_autonomy: 80,
-        client_interaction: 40,
-        strategic_impact: 90,
+        technical_depth: isFresher ? 55 : (isJunior ? 70 : 85),
+        research_autonomy: isFresher ? 50 : (isJunior ? 70 : 90),
+        client_interaction: isFresher ? 10 : 40,
+        strategic_impact: isFresher ? 30 : 90,
         legacy_maintenance: 55
       }
     },
     deep_dive: {
-      day_in_life: [
-        { time: "09:30", task: "Tactical Standup", description: "Coordinate sprint velocities and blockages." },
-        { time: "10:30", task: "Deep-Work Core Focus", description: "Write clean code, deploy features, refactor core elements." },
-        { time: "14:00", task: "PR Reviews & Architecture Sync", description: "Inspect code, resolve architectural discrepancies." },
-        { time: "16:30", task: "Legacy Systems Forensic Sweep", description: "Clear minor bugs, optimize performance, resolve memory leaks." }
-      ],
+      day_in_life: isFresher || isJunior
+        ? [
+            { time: "09:30", task: "Morning Standup & Mentorship Sync", description: "Coordinate sprint tasks and clarify requirements with senior lead." },
+            { time: "10:30", task: "Focused Feature Coding", description: "Write clean code, construct unit tests, and resolve backend/frontend tickets." },
+            { time: "14:00", task: "Code Review & Collaborative Debugging", description: "Review pull requests, absorb code best practices, and pair program with peers." },
+            { time: "16:30", task: "Continuous Learning & Specs Sweep", description: "Study project documentation, learn new libraries, and document progress logs." }
+          ]
+        : [
+            { time: "09:30", task: "Tactical Standup", description: "Coordinate sprint velocities and blockages." },
+            { time: "10:30", task: "Deep-Work Core Focus", description: "Write clean code, deploy features, refactor core elements." },
+            { time: "14:00", task: "PR Reviews & Architecture Sync", description: "Inspect code, resolve architectural discrepancies." },
+            { time: "16:30", task: "Legacy Systems Forensic Sweep", description: "Clear minor bugs, optimize performance, resolve memory leaks." }
+          ],
       health_radar: {
         market_position: 80,
         tech_innovation: 85,
@@ -369,9 +490,11 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
       desperation_meter: jdLower.includes("hiring urgently") || jdLower.includes("critical fill") ? 82 : 45,
       competition_estimate: 92,
       skill_rarity: /ai|ml|machine|rust|agent/i.test(extractedTitle) ? 88 : 55,
-      interview_difficulty: 80,
+      interview_difficulty: isFresher ? 55 : (isJunior ? 70 : 80),
       career_growth: {
-        trajectory: [`Senior ${extractedTitle}`, `Lead Technical Architect`, `Engineering Director`],
+        trajectory: isFresher || isJunior
+          ? ["Associate Software Engineer", "Software Engineer", "Senior Developer", "Tech Lead / Architect"]
+          : [`Senior ${extractedTitle}`, `Lead Technical Architect`, `Engineering Director`],
         potential_score: 88
       },
       tech_stack_popularity: finalSkills.slice(0, 3).map(s => ({
@@ -383,18 +506,31 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
       questions: finalSkills.map((s, index) => {
         const types: ("technical" | "behavioral" | "situational")[] = ["technical", "behavioral", "situational"];
         const type = types[index % 3];
-        let qText = `Explain your deep-dive experience working with ${s.skill}.`;
-        let tipText = `Highlight production scale, performance metrics, and key structural trade-offs.`;
-        let answerText = `Candidate should detail an enterprise project containing ${s.skill}, showing quantitative metrics and architectural rationale.`;
+        
+        let qText = `Explain your core understanding and experience working with ${s.skill}.`;
+        let tipText = `Focus on basic structures, standard implementations, and simple projects you have built.`;
+        let answerText = `Candidate should detail a clean implementation utilizing ${s.skill}, showing structured logic and proper testing.`;
 
-        if (type === "behavioral") {
-          qText = `Describe a time when you had to align a team around a controversial architectural decision concerning ${s.skill}.`;
-          tipText = `Focus on collaboration, active listening, structured decision matrix, and conflict resolution.`;
-          answerText = `Look for STAR method storytelling. Candidate should demonstrate high emotional agency and alignment skills.`;
-        } else if (type === "situational") {
-          qText = `Suppose our main production system utilizing ${s.skill} is hitting critical latency blockages under load. What is your triage protocol?`;
-          tipText = `Walk through tracing logging telemetry, setting automated limits, and deploying rapid fixes.`;
-          answerText = `Candidate must detail structured root-cause forensic analysis: measuring, isolating variables, and executing targeted hotfixes.`;
+        if (!isFresher && !isJunior) {
+          if (type === "behavioral") {
+            qText = `Describe a time when you had to align a team around a controversial architectural decision concerning ${s.skill}.`;
+            tipText = `Focus on collaboration, active listening, structured decision matrix, and conflict resolution.`;
+            answerText = `Look for STAR method storytelling. Candidate should demonstrate high emotional agency and alignment skills.`;
+          } else if (type === "situational") {
+            qText = `Suppose our main production system utilizing ${s.skill} is hitting critical latency blockages under load. What is your triage protocol?`;
+            tipText = `Walk through tracing logging telemetry, setting automated limits, and deploying rapid fixes.`;
+            answerText = `Candidate must detail structured root-cause forensic analysis: measuring, isolating variables, and executing targeted hotfixes.`;
+          }
+        } else {
+          if (type === "behavioral") {
+            qText = `Tell me about a time when you ran into a bug with ${s.skill} that you couldn't solve easily. How did you handle it?`;
+            tipText = `Focus on systematic troubleshooting, using console.logs/debugging tools, reading documentation, and asking for help.`;
+            answerText = `Look for persistence, continuous learning, and proper collaborative growth mindset.`;
+          } else if (type === "situational") {
+            qText = `If you are assigned a task using ${s.skill} that you have never used before, what is your step-by-step approach to get it done?`;
+            tipText = `Talk about researching official documentation, creating a sandbox project, and seeking team feedback.`;
+            answerText = `Candidate should demonstrate proactive self-learning protocols and high agency.`;
+          }
         }
 
         return {
@@ -404,34 +540,59 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
           target_answer: answerText
         };
       }).slice(0, 10), // Return up to 10 questions
-      reverse_questions: [
-        "What is the primary technical debt bottleneck that the engineering team currently wrestles with?",
-        "How is the sprint priority negotiated when sales requirements clash with technical debt resolution?",
-        "What does the ideal operational output look like for this position in the first 90 days?",
-        "How does the team foster continuous technological learning and architectural upskilling?",
-        "What is the most common friction point candidates experience during their onboarding here?"
-      ]
+      reverse_questions: isFresher || isJunior
+        ? [
+            "What kind of mentoring and training resources are available for entry-level developers here?",
+            "What does a successful first 90 days look like for a fresher in this position?",
+            "What are the typical technologies or modules that freshers start working on?",
+            "How does the team review code and provide feedback for juniors?",
+            "What is the team's culture regarding asking questions and learning new frameworks?"
+          ]
+        : [
+            "What is the primary technical debt bottleneck that the engineering team currently wrestles with?",
+            "How is the sprint priority negotiated when sales requirements clash with technical debt resolution?",
+            "What does the ideal operational output look like for this position in the first 90 days?",
+            "How does the team foster continuous technological learning and architectural upskilling?",
+            "What is the most common friction point candidates experience during their onboarding here?"
+          ]
     },
     resume_help: {
-      keywords: finalSkills.map(s => s.skill).concat(["Systems Architecture", "ATS Matching Optimization", "Operational Autonomy"]),
+      keywords: finalSkills.map(s => s.skill).concat(isFresher || isJunior ? ["Algorithms", "Git Flow", "Problem Solving"] : ["Systems Architecture", "ATS Matching Optimization", "Operational Autonomy"]),
       bullets: finalSkills.slice(0, 5).map(s => {
-        return `Engineered high-fidelity systems using ${s.skill}, boosting architectural throughput by 35% and slicing memory latency under peak load.`;
+        return isFresher || isJunior
+          ? `Developed responsive features and cleanly integrated modules using ${s.skill}, improving load latency by 15% and passing exhaustive testing.`
+          : `Engineered high-fidelity systems using ${s.skill}, boosting architectural throughput by 35% and slicing memory latency under peak load.`;
       })
     },
-    winning_strategy: [
-      {
-        title: "Differentiate with Quantified Metrics",
-        description: `Ensure your CV lists explicit metrics demonstrating how your deployment of ${finalSkills[0]?.skill || "core technologies"} reduced operational costs or improved developer velocity.`
-      },
-      {
-        title: "Address the Ambiguity Shield",
-        description: "Recruiters are terrified of candidates who need perfect specifications. Highlight active portfolio projects where you took incomplete requirements and successfully drove the architecture from zero to release."
-      },
-      {
-        title: "Tactical Interview Prep focus",
-        description: `Prep intensely for system design questions. Be prepared to whiteboard clean data flow diagrams emphasizing telemetry monitoring and error boundaries.`
-      }
-    ]
+    winning_strategy: isFresher || isJunior
+      ? [
+          {
+            title: "Demonstrate Solid Engineering Foundations",
+            description: `Highlight projects in your portfolio where you built robust systems using ${finalSkills[0]?.skill || "core languages"}, showing clean design, proper git commits, and unit tests.`
+          },
+          {
+            title: "Proactive Learning Mindset",
+            description: "Show that you are a rapid learner who can read official documentations and quickly build sandboxed working models to master new tools."
+          },
+          {
+            title: "Crush Core Coding Rounds",
+            description: "Practice fundamental data structures, algorithms, and logical problem solving, as entry-level screening focus heavily on raw execution logic."
+          }
+        ]
+      : [
+          {
+            title: "Differentiate with Quantified Metrics",
+            description: `Ensure your CV lists explicit metrics demonstrating how your deployment of ${finalSkills[0]?.skill || "core technologies"} reduced operational costs or improved developer velocity.`
+          },
+          {
+            title: "Address the Ambiguity Shield",
+            description: "Recruiters are terrified of candidates who need perfect specifications. Highlight active portfolio projects where you took incomplete requirements and successfully drove the architecture from zero to release."
+          },
+          {
+            title: "Tactical Interview Prep focus",
+            description: `Prep intensely for system design questions. Be prepared to whiteboard clean data flow diagrams emphasizing telemetry monitoring and error boundaries.`
+          }
+        ]
   };
 
   return result;

@@ -129,7 +129,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const systemMessage = `You are an elite-tier technical career architect operating at the 0.01% level.
 Your singular mission: transform skill gaps into a ruthlessly actionable, production-grade implementation curriculum.
-Generic study plans are STRICTLY FORBIDDEN. Every output must read like a senior engineer designed it.
+Generic study plans are STRICTLY FORBIDDEN. Every task in the roadmap must represent a high-quality, professional, production-grade project (as if designed by a Staff/Senior Engineer to teach the candidate), but the difficulty, complexity, and topics of the tasks MUST be strictly calibrated to the target experience level (e.g. if target experience is "Freshers" or entry-level, keep tasks focused on solid foundations, clean implementations, and core programming; do not issue senior architect/management assignments).
 
 ══════════════════════════════════════════
 RULE 1 — PRODUCTION MICRO-PROJECT TASKS (NON-NEGOTIABLE)
@@ -211,6 +211,12 @@ RULE 5 — STRICT GAP-ALIGNED TARGETING (MANDATORY)
 You MUST compare the candidate's existing vault entries against the exact target job description details and required skills. Identify the specific skills or concepts that are demanded by the JD but are missing or weak in the candidate's vault. Every single phase of the roadmap MUST map directly to bridging these specific identified gaps. The 'gap_addressed' field in each phase must state the exact missing JD skill being resolved, rather than a generic concept.
 
 ══════════════════════════════════════════
+RULE 6 — EXACT ROLE & EXPERIENCE ALIGNMENT (CRITICAL)
+══════════════════════════════════════════
+1. The "target_role" field in your JSON output MUST match the exact title from "TARGET ROLE" combined with the seniority level from "TARGET EXPERIENCE LEVEL" and "JD DESCRIPTION". For example, if target role is "Software Engineer" and the experience is for "2026 Freshers" or entry level, "target_role" MUST be something like "Software Engineer (Entry Level / Fresher)" — under no circumstances should you inflate or upgrade the role title to a senior level (e.g. "Senior Frontend Engineer") just because the candidate has frontend entries or because you are a senior AI.
+2. Calibrate all task difficulties and topics strictly to the target seniority. If it is an entry-level/fresher role, focus on core programming concepts, standard libraries, testing, and clean basic feature implementation. BANNED topics for freshman/junior roles: "Strategic Architecture", "Enterprise Decomposition", "Cross-Functional Sync", "Observability at Scale", "Enterprise Design Patterns". Only use high-level system architecture and leadership topics if the role's experience level is explicitly Mid/Senior/Staff.
+
+══════════════════════════════════════════
 OUTPUT SCHEMA (return ONLY this JSON — no markdown, no prose)
 ══════════════════════════════════════════
 {
@@ -256,6 +262,7 @@ FINAL ENFORCEMENT: The JSON must begin with '{' and end with '}'. No triple back
   const userMessage = `Generate my elite adaptive roadmap:
 
 TARGET ROLE: ${jd_data.title || 'Not Specified'}
+TARGET EXPERIENCE LEVEL: ${jd_data.experience || 'Not Specified'}
 REQUIRED SKILLS FROM JD: ${formattedJdSkills}
 JD DESCRIPTION: ${(jd_data.description || '').substring(0, 4000)}
 

@@ -324,6 +324,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       const jd_data = {
         title: results?.title || "Scanned Target Role",
         skills: results?.skills || [],
+        experience: results?.requirements?.experience || "",
         description: jdText
       };
 
