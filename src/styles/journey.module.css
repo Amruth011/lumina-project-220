@@ -28,7 +28,7 @@
 }
 
 .headline {
-  font-family: 'Helvetica', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: 'Instrument Serif', serif;
   font-size: clamp(2.5rem, 8vw, 4.5rem);
   color: #ffffff;
   margin: 0;
@@ -94,7 +94,7 @@
 }
 
 .panelTitle {
-  font-family: 'Helvetica', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: 'Instrument Serif', serif;
   font-size: 38px;
   color: #ffffff;
   margin: 0 0 1rem 0;
@@ -231,7 +231,7 @@
 }
 
 .resumeScore {
-  font-family: 'Helvetica', 'Helvetica Neue', 'Arial', sans-serif;
+  font-family: 'Instrument Serif', serif;
   font-size: 72px;
   color: #10b981;
   text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);

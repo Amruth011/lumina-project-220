@@ -73,7 +73,8 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        serif: ["Helvetica", "Helvetica Neue", "Arial", "sans-serif"],
+        serif: ["Instrument Serif", "serif"],
+        helvetica: ["Helvetica", "Helvetica Neue", "Arial", "sans-serif"],
         body: ["Inter", "sans-serif"],
         display: ["Outfit", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],

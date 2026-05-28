@@ -10,7 +10,7 @@ export const tokens = {
     muted: '#6B7280',
   },
   fonts: {
-    heading: 'Helvetica, "Helvetica Neue", Arial, sans-serif',
+    heading: 'Instrument Serif, serif',
     body: 'Inter, sans-serif',
     badges: 'Outfit, sans-serif',
     data: 'JetBrains Mono, monospace',

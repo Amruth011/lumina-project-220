@@ -69,9 +69,9 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Helvetica', 'Helvetica Neue', 'Arial', sans-serif;
-    letter-spacing: -0.015em;
-    font-weight: 700;
+    font-family: 'Instrument Serif', serif;
+    letter-spacing: -0.02em;
+    font-weight: 500;
   }
 
   .font-display {
