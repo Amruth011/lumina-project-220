@@ -62,7 +62,7 @@ export const ProductPreview = () => {
             <div className="flex-1 p-10 space-y-10 overflow-y-auto">
               <div className="flex justify-between items-start">
                 <div className="space-y-2">
-                  <h3 className="text-3xl font-serif font-bold text-[#1E2A3A]">Senior React Engineer</h3>
+                  <h3 className="text-3xl font-helvetica font-bold text-[#1E2A3A]">Senior React Engineer</h3>
                   <p className="text-[#1E2A3A]/40 font-body">Meta · Menlo Park, CA (Remote)</p>
                 </div>
                 <div className="relative w-32 h-32 flex items-center justify-center">
@@ -92,7 +92,7 @@ export const ProductPreview = () => {
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-serif font-bold text-[#10B981]">87%</span>
+                    <span className="text-3xl font-helvetica font-bold text-[#10B981]">87%</span>
                     <span className="text-[9px] font-display font-bold text-[#1E2A3A]/40 uppercase tracking-widest">Match Score</span>
                   </div>
                 </div>

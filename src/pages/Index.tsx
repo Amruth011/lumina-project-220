@@ -14,13 +14,13 @@ import Footer from '@/components/landing/Footer';
 
 const Index = () => {
   return (
-    <main className="min-h-screen bg-background selection:bg-[#10B981]/30 selection:text-[#1E2A3A]">
+    <main className="landing-page-root font-helvetica min-h-screen bg-background selection:bg-[#10B981]/30 selection:text-[#1E2A3A]">
       <Navbar />
       <Hero />
+      <FeaturesGrid />
       <ProductPreview />
       <ProblemSection />
       <HowItWorks />
-      <FeaturesGrid />
       <LiveDemoStrip />
       <Testimonials />
       <StatsSection />

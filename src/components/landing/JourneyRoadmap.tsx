@@ -121,7 +121,7 @@ const JourneyRoadmap: React.FC = () => {
 
       {/* Mobile Fallback - Static SVG */}
       <div className={styles.mobileRoadmap}>
-        <h2 className="text-3xl font-serif text-white text-center mb-8">Your Journey</h2>
+        <h2 className="text-3xl font-helvetica text-white text-center mb-8">Your Journey</h2>
         <div className="space-y-12 relative">
           <div className="absolute left-4 top-0 bottom-0 w-1 bg-[#10B981]/20" />
           {journeyNodes.map((node, i) => (
@@ -131,7 +131,7 @@ const JourneyRoadmap: React.FC = () => {
               </div>
               <div>
                 <h4 className="text-[#10B981] font-mono text-xs mb-1">{node.step}</h4>
-                <h3 className="text-xl text-white font-serif">{node.title}</h3>
+                <h3 className="text-xl text-white font-helvetica">{node.title}</h3>
                 <p className="text-white/60 text-sm mt-1">{node.description}</p>
               </div>
             </div>

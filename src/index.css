@@ -256,3 +256,19 @@
   animation: logo-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* ── Landing Page Typography overrides ── */
+.landing-page-root {
+  font-family: 'Helvetica', 'Helvetica Neue', Arial, sans-serif !important;
+}
+
+.landing-page-root h1,
+.landing-page-root h2,
+.landing-page-root h3,
+.landing-page-root h4,
+.landing-page-root h5,
+.landing-page-root h6 {
+  font-family: 'Helvetica', 'Helvetica Neue', Arial, sans-serif !important;
+  letter-spacing: -0.02em;
+}
+
+

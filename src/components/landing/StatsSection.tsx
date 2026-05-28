@@ -22,7 +22,7 @@ export const StatsSection = () => {
             key={i}
             className="text-center space-y-2 lg:border-r last:border-0 border-border/10 px-4"
           >
-            <div className="text-5xl md:text-7xl font-serif font-bold text-lumina-teal">
+            <div className="text-5xl md:text-7xl font-helvetica font-bold text-lumina-teal">
               {inView ? (
                 <>
                   {stat.prefix}

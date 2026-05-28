@@ -184,7 +184,7 @@ export const HowItWorks = () => {
             >
               <div className="space-y-6">
                 <span className="inline-block text-lumina-teal font-display font-bold text-xs uppercase tracking-widest bg-lumina-teal/10 px-3 py-1 rounded-full w-fit">Chapter {i + 1}</span>
-                <h3 className="text-4xl md:text-5xl font-serif font-bold leading-tight text-lumina-navy">{chapter.title}</h3>
+                <h3 className="text-4xl md:text-5xl font-helvetica font-bold leading-tight text-lumina-navy">{chapter.title}</h3>
                 <p className="text-lg text-lumina-navy/50 font-body leading-relaxed max-w-md">
                   {chapter.description}
                 </p>

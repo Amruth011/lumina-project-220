@@ -16,7 +16,7 @@ const StatCard = ({ value, suffix, label, prefix = "" }: { value: number, suffix
       transition={{ duration: 0.8, ease: "easeOut" }}
       className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-lumina-teal/5 flex flex-col gap-2"
     >
-      <div className="text-5xl md:text-6xl font-serif font-bold text-lumina-teal">
+      <div className="text-5xl md:text-6xl font-helvetica font-bold text-lumina-teal">
         {inView ? (
           <>
             {prefix}
@@ -37,7 +37,7 @@ export const ProblemSection = () => {
         {/* Left Column: Stats */}
         <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
-            <h2 className="text-5xl md:text-7xl font-serif italic font-bold text-lumina-navy leading-tight mb-8">
+            <h2 className="text-5xl md:text-7xl font-helvetica font-bold text-lumina-navy leading-tight mb-8">
               The ATS Black Hole <br /> <span className="text-lumina-teal">Is Real.</span>
             </h2>
           </div>
@@ -64,7 +64,7 @@ export const ProblemSection = () => {
               Not because you're unqualified — because your resume didn't speak the machine's language. 
             </p>
             <div className="h-px w-20 bg-lumina-teal" />
-            <p className="text-3xl md:text-4xl font-serif font-bold text-lumina-navy">
+            <p className="text-3xl md:text-4xl font-helvetica font-bold text-lumina-navy">
               Lumina does.
             </p>
           </motion.div>

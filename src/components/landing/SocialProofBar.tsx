@@ -18,7 +18,7 @@ export const SocialProofBar = () => {
             {companies.map((company, i) => (
               <span
                 key={i}
-                className="text-[18px] md:text-[22px] font-serif font-medium text-foreground/25 hover:text-primary transition-colors cursor-default"
+                className="text-[18px] md:text-[22px] font-helvetica font-medium text-foreground/25 hover:text-primary transition-colors cursor-default"
               >
                 {company}
               </span>
@@ -29,7 +29,7 @@ export const SocialProofBar = () => {
             {companies.map((company, i) => (
               <span
                 key={`clone-${i}`}
-                className="text-[18px] md:text-[22px] font-serif font-medium text-foreground/25 hover:text-primary transition-colors cursor-default"
+                className="text-[18px] md:text-[22px] font-helvetica font-medium text-foreground/25 hover:text-primary transition-colors cursor-default"
               >
                 {company}
               </span>

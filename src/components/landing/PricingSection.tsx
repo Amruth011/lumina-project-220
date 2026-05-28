@@ -57,7 +57,7 @@ export const PricingSection = () => {
     <section id="pricing" className="bg-background py-32 px-6">
       <div className="max-w-7xl mx-auto space-y-20">
         <div className="text-center space-y-6 max-w-2xl mx-auto">
-          <h2 className="text-5xl md:text-7xl font-serif font-bold text-[#1E2A3A]">
+          <h2 className="text-5xl md:text-7xl font-helvetica font-bold text-[#1E2A3A]">
             Simple, transparent <br /> <span className="italic text-[#10B981]">pricing.</span>
           </h2>
           
@@ -99,7 +99,7 @@ export const PricingSection = () => {
                   {plan.name}
                 </p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-serif font-bold">{plan.price}</span>
+                  <span className="text-5xl font-helvetica font-bold">{plan.price}</span>
                   <span className={`text-sm font-body ${plan.popular ? 'text-white/70' : 'text-muted-foreground/60'}`}>/ month</span>
                 </div>
                 <p className={`text-sm font-body leading-relaxed ${plan.popular ? 'text-white/75' : 'text-muted-foreground/60'}`}>

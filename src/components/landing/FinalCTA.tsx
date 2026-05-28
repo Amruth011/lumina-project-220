@@ -32,7 +32,7 @@ export const FinalCTA = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1 }}
-          className="text-6xl md:text-[100px] font-serif font-bold text-lumina-navy leading-tight tracking-tight"
+          className="text-6xl md:text-[100px] font-helvetica font-bold text-lumina-navy leading-tight tracking-tight"
         >
           Your Next Offer <br />
           <span className="italic text-lumina-teal">Starts Here.</span>

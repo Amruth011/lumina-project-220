@@ -98,7 +98,7 @@ export const Navbar = () => {
                     key={link.name}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-2xl font-serif font-bold text-white hover:text-emerald-300 transition-colors"
+                    className="text-2xl font-helvetica font-bold text-white hover:text-emerald-300 transition-colors"
                   >
                     {link.name}
                   </a>
@@ -107,7 +107,7 @@ export const Navbar = () => {
                     key={link.name}
                     to={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-2xl font-serif font-bold text-white hover:text-emerald-300 transition-colors"
+                    className="text-2xl font-helvetica font-bold text-white hover:text-emerald-300 transition-colors"
                   >
                     {link.name}
                   </Link>

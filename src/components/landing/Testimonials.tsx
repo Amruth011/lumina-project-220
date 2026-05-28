@@ -36,7 +36,7 @@ export const Testimonials = () => {
       <div className="max-w-7xl mx-auto px-6 mb-20 flex flex-col md:flex-row items-end justify-between gap-8">
         <div className="space-y-4">
           <span className="text-lumina-teal font-display font-bold text-xs uppercase tracking-[0.3em]">Success Stories</span>
-          <h2 className="text-5xl md:text-7xl font-serif font-bold text-lumina-navy">The <span className="italic text-lumina-teal">0.1% Speaks.</span></h2>
+          <h2 className="text-5xl md:text-7xl font-helvetica font-bold text-lumina-navy">The <span className="italic text-lumina-teal">0.1% Speaks.</span></h2>
         </div>
         <p className="text-lumina-navy/40 font-body max-w-sm">
           Join 94,000+ elite engineers who stopped playing the numbers game and started winning.
@@ -50,8 +50,8 @@ export const Testimonials = () => {
             whileHover={{ y: -10, rotateZ: 1 }}
             className="flex-shrink-0 w-80 md:w-[450px] bg-lumina-navy/5 backdrop-blur-xl border border-lumina-navy/10 rounded-[2.5rem] p-10 md:p-12 space-y-8 relative group transition-all hover:border-lumina-teal/30"
           >
-            <div className="text-lumina-teal text-6xl font-serif opacity-20 absolute top-8 left-8 select-none">“</div>
-            <p className="text-xl md:text-2xl font-serif italic text-lumina-navy/90 leading-relaxed relative z-10">
+            <div className="text-lumina-teal text-6xl font-helvetica opacity-20 absolute top-8 left-8 select-none">“</div>
+            <p className="text-xl md:text-2xl font-helvetica italic text-lumina-navy/90 leading-relaxed relative z-10">
               {t.quote}
             </p>
             <div className="pt-4 border-t border-lumina-navy/10 flex items-center gap-4">

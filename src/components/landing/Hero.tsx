@@ -170,7 +170,7 @@ export const Hero = () => {
       <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)] z-0">
         <div className="flex items-center h-full gap-16 whitespace-nowrap" style={{ animation: "hero-marquee 35s linear infinite" }}>
           {[...companies, ...companies].map((c, i) => (
-            <span key={i} className="text-[20px] font-serif font-medium text-white/[0.045] select-none">
+            <span key={i} className="text-[20px] font-helvetica font-medium text-white/[0.045] select-none">
               {c}
             </span>
           ))}
