@@ -206,6 +206,11 @@ Every URL provided in the "deep_dive_resources" MUST be a 100% real, active, ver
 If the technology is not listed here, use its official verified main documentation home page. All URLs must start with https://.
 
 ══════════════════════════════════════════
+RULE 5 — STRICT GAP-ALIGNED TARGETING (MANDATORY)
+══════════════════════════════════════════
+You MUST compare the candidate's existing vault entries against the exact target job description details and required skills. Identify the specific skills or concepts that are demanded by the JD but are missing or weak in the candidate's vault. Every single phase of the roadmap MUST map directly to bridging these specific identified gaps. The 'gap_addressed' field in each phase must state the exact missing JD skill being resolved, rather than a generic concept.
+
+══════════════════════════════════════════
 OUTPUT SCHEMA (return ONLY this JSON — no markdown, no prose)
 ══════════════════════════════════════════
 {
@@ -241,10 +246,17 @@ OUTPUT SCHEMA (return ONLY this JSON — no markdown, no prose)
 
 FINAL ENFORCEMENT: The JSON must begin with '{' and end with '}'. No triple backticks. No commentary. Only parseable JSON.`;
 
+  const formattedJdSkills = Array.isArray(jd_data.skills)
+    ? jd_data.skills.map((s: { skill?: string; name?: string; importance?: number }) => {
+        if (!s) return "";
+        return `${s.skill || s.name || ""} (Importance: ${s.importance || 50})`;
+      }).filter(Boolean).join(", ")
+    : "Not Specified";
+
   const userMessage = `Generate my elite adaptive roadmap:
 
 TARGET ROLE: ${jd_data.title || 'Not Specified'}
-REQUIRED SKILLS FROM JD: ${Array.isArray(jd_data.skills) ? jd_data.skills.join(', ') : 'Not Specified'}
+REQUIRED SKILLS FROM JD: ${formattedJdSkills}
 JD DESCRIPTION: ${(jd_data.description || '').substring(0, 4000)}
 
 CANDIDATE VAULT PROFILE:
