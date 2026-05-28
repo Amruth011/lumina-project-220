@@ -9,6 +9,7 @@ import jsPDF from "jspdf";
 import { ResumePreview } from "./resume-tailor/ResumePreview";
 import { GeneratorSkeleton } from "./resume-tailor/GeneratorSkeleton";
 import { matchVaultItems, type VaultMatchResult } from "@/lib/embeddingClient";
+import { buildVaultItemsFromProfileJson, buildResumeFromProfileJson } from "@/lib/profileSeed";
 
 const sanitizePdfText = (text: string): string => {
   if (!text) return "";
@@ -706,7 +707,10 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     const { data: profileData } = await supabase.from("profiles").select("*").eq("id", user?.id).single();
     const { data: vaultData } = await supabase.from("master_vault").select("*").eq("user_id", user?.id);
     setProfile(profileData as UserProfileWithVault);
-    setVaultItems(vaultData as VaultItem[] || []);
+    const loadedItems = (vaultData as VaultItem[]) || [];
+    setVaultItems(loadedItems);
+
+    // ── Supabase profile header ────────────────────────────────────────────
     if (profileData) {
       // Email: prefer profiles table, fall back to auth user email (it lives in supabase.auth.users not profiles)
       const authEmail = user?.email || "";
@@ -723,6 +727,42 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     } else if (user?.email) {
       // Profile row doesn't exist yet — at minimum pre-fill the email
       setEditableHeader(prev => ({ ...prev, email: user.email!.toLowerCase() }));
+    }
+
+    // ── Full Profile Integration: seed vault + resume from user_profile.json ──
+    // When master_vault has no entries, fetch /public/user_profile.json and:
+    //   1. Populate VaultItems (education, certifications, projects, experience)
+    //   2. Build a production-grade GeneratedResume for immediate preview display
+    //   3. Pre-fill the header from the JSON if Supabase has no profile row
+    // This ensures Academic Background, Certifications & Awards, and Key Projects
+    // all contribute to the ATS_MATCH_SCORE calculation via their keywords.
+    if (loadedItems.length === 0) {
+      try {
+        const res = await fetch('/user_profile.json');
+        if (res.ok) {
+          const profileJson = await res.json();
+          const seedItems = buildVaultItemsFromProfileJson(profileJson);
+          const defaultResume = buildResumeFromProfileJson(profileJson);
+          setVaultItems(seedItems);
+          setResume(defaultResume);
+          setEditableResume(defaultResume);
+          setIsOpen(true);
+          // Only override header from JSON when Supabase has no profile data
+          if (!profileData) {
+            setEditableHeader({
+              fullName: profileJson.personal_info?.fullName || "",
+              email: profileJson.personal_info?.email || user?.email || "",
+              phone: profileJson.personal_info?.phone || "",
+              location: profileJson.personal_info?.location || "",
+              linkedin: profileJson.personal_info?.links?.linkedin || "",
+              portfolio: profileJson.personal_info?.links?.portfolio || "",
+              github: profileJson.personal_info?.links?.github || "",
+            });
+          }
+        }
+      } catch {
+        // Silent fallback — no profile seed available, proceed normally
+      }
     }
   };
 

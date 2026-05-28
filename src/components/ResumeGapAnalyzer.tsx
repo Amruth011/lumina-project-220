@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { saveApplication, type TrackedApplication } from "@/hooks/useApplications";
 import type { Skill, ResumeGapResult, ResumeDeduction } from "@/types/jd";
 import { computeDeterministicScore } from "@/lib/deterministicScorer";
+import { buildResumeTextFromProfileJson } from "@/lib/profileSeed";
 import { getCachedResumeAnalysis, setCachedResumeAnalysis } from "@/lib/resumeAnalysisCache";
 import { MatchHero } from "./gap-analysis/MatchHero";
 import { ComparisonMatrix } from "./gap-analysis/ComparisonMatrix";
@@ -62,6 +63,26 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
   const [lastAnalyzedText, setLastAnalyzedText] = useState("");
   const [showReplaceDialog, setShowReplaceDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  // ── Pre-seed from user_profile.json for ATS score demonstration ──────────
+  // Loads Academic Background, Certifications & Awards, and Key Projects into
+  // the resume text box so computeDeterministicScore() immediately indexes them,
+  // contributing all profile keywords to the ATS_MATCH_SCORE calculation.
+  useEffect(() => {
+    fetch('/user_profile.json')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((profile) => {
+        if (profile) {
+          const text = buildResumeTextFromProfileJson(profile);
+          setResumeText((prev) => (prev.length === 0 ? text : prev));
+          setFileName((prev) =>
+            prev.length === 0 ? `${profile.personal_info?.fullName?.replace(/\s+/g, '_') || 'Profile'}_Resume.txt` : prev
+          );
+        }
+      })
+      .catch(() => { /* silent — no profile seed */ });
+   
+  }, []);
 
   const handleExportPDF = async () => {
     if (!result) return;
