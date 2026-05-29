@@ -52,8 +52,18 @@ export interface ProfileJsonProject {
   bullets: string[];
 }
 
+export interface ProfileJsonJobPreferences {
+  generative_ai_experience_years?: number;
+  machine_learning_experience_years?: number;
+  current_ctc?: number;
+  expected_ctc?: number;
+  notice_period_days?: number;
+  is_immediate_joiner?: boolean;
+}
+
 export interface UserProfileJson {
   personal_info: ProfileJsonPersonalInfo;
+  job_application_preferences?: ProfileJsonJobPreferences;
   professional_summary: string;
   experience: ProfileJsonExperience[];
   academic_background: ProfileJsonAcademic;

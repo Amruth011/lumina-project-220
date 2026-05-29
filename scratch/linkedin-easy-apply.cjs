@@ -2,6 +2,20 @@ const { chromium } = require('@playwright/test');
 const path = require('path');
 const fs = require('fs');
 
+// Load User Profile Data
+let profile = null;
+const profilePath = path.join(__dirname, '..', 'public', 'user_profile.json');
+try {
+  if (fs.existsSync(profilePath)) {
+    profile = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
+    console.log(`[Lumina Profile Sync] Loaded user profile: "${profile.personal_info?.fullName}"`);
+  } else {
+    console.log("Warning: public/user_profile.json not found. Using script fallbacks.");
+  }
+} catch (e) {
+  console.error("Error reading user profile:", e);
+}
+
 // Target LinkedIn Job URL
 const targetUrl = process.argv[2] || "https://www.linkedin.com/jobs/view/4409245353/";
 
@@ -215,50 +229,55 @@ async function fillFormInputs(page) {
 
       if (input) {
         const currentValue = await input.inputValue();
+        const prefs = profile?.job_application_preferences || {};
+        const genAiExp = prefs.generative_ai_experience_years !== undefined ? String(prefs.generative_ai_experience_years) : "0";
+        const mlExp = prefs.machine_learning_experience_years !== undefined ? String(prefs.machine_learning_experience_years) : "0";
+        const expectedCtc = prefs.expected_ctc !== undefined ? String(prefs.expected_ctc) : "5.0";
+        const noticePeriod = prefs.notice_period_days !== undefined ? String(prefs.notice_period_days) : "0";
         
         // Optimize Generative AI Years
         if (label.includes("generative ai") || label.includes("genai") || label.includes("gen ai")) {
-          console.log(`[Injecting] "${rawLabel.trim()}" -> "2"`);
+          console.log(`[Injecting] "${rawLabel.trim()}" -> "${genAiExp}"`);
           await input.focus();
           await input.fill("");
-          await input.type("2");
+          await input.type(genAiExp);
           continue;
         }
 
         // Optimize Machine Learning Years
         if (label.includes("machine learning") || label.includes("ml")) {
-          console.log(`[Injecting] "${rawLabel.trim()}" -> "2"`);
+          console.log(`[Injecting] "${rawLabel.trim()}" -> "${mlExp}"`);
           await input.focus();
           await input.fill("");
-          await input.type("2");
+          await input.type(mlExp);
           continue;
         }
 
         // Optimize CTC
         if (label.includes("ctc") || label.includes("salary") || label.includes("compensation")) {
-          console.log(`[Injecting] "${rawLabel.trim()}" -> "5.0"`);
+          console.log(`[Injecting] "${rawLabel.trim()}" -> "${expectedCtc}"`);
           await input.focus();
           await input.fill("");
-          await input.type("5.0");
+          await input.type(expectedCtc);
           continue;
         }
 
         // Optimize Notice Period / Immediate Joiner (in days)
         if (label.includes("notice period") || label.includes("notice") || label.includes("immediate joiner") || label.includes("remaining days") || label.includes("serving")) {
-          console.log(`[Injecting] "${rawLabel.trim()}" -> "0"`);
+          console.log(`[Injecting] "${rawLabel.trim()}" -> "${noticePeriod}"`);
           await input.focus();
           await input.fill("");
-          await input.type("0");
+          await input.type(noticePeriod);
           continue;
         }
 
         // Fallbacks for empty text inputs
         if (currentValue === "" || currentValue === "0") {
           if (label.includes("experience") || label.includes("years")) {
-            console.log(`[Injecting Fallback] "${rawLabel.trim()}" -> "2"`);
+            console.log(`[Injecting Fallback] "${rawLabel.trim()}" -> "0"`);
             await input.focus();
             await input.fill("");
-            await input.type("2");
+            await input.type("0");
           }
         }
       }

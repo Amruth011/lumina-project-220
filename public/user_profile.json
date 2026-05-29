@@ -10,6 +10,14 @@
       "github": "https://github.com/amruth-kumar"
     }
   },
+  "job_application_preferences": {
+    "generative_ai_experience_years": 0,
+    "machine_learning_experience_years": 0,
+    "current_ctc": 0.0,
+    "expected_ctc": 5.0,
+    "notice_period_days": 0,
+    "is_immediate_joiner": true
+  },
   "professional_summary": "AI & Data Science Engineer specializing in deploying high-scale Generative AI models and forecasting pipelines at iStudio; built advanced RAG bilingual QA architectures and XGBoost models delivering 98.76% accuracy.",
   "experience": [
     {

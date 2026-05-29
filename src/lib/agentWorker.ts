@@ -121,10 +121,10 @@ function resolveValue(template: string, resume: SavedAgentResume): string {
     "{{summary}}": r.professional_summary?.slice(0, 300) ?? "",
     "{{experience}}": r.experience?.map((e) => `${e.heading}: ${e.content}`).join("\n") ?? "",
     "{{skills}}": r.skills_section?.slice(0, 15).join(", ") ?? "",
-    "{{genAIYears}}": "2 years (Custom Agentic AI & LLM Orchestration)",
-    "{{mlYears}}": "2 years (B.Tech AI & DS + Internships)",
-    "{{ctc}}": "Negotiable (As per market standard / competitive package)",
-    "{{noticePeriod}}": "Immediate Joiner (0 days notice)",
+    "{{genAIYears}}": (r.experience?.some(e => !e.heading.toLowerCase().includes("intern")) ? "2" : "0"),
+    "{{mlYears}}": (r.experience?.some(e => !e.heading.toLowerCase().includes("intern")) ? "2" : "0"),
+    "{{ctc}}": "5.0",
+    "{{noticePeriod}}": "0",
   };
 
   let resolved = template;
