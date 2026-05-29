@@ -194,8 +194,9 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
       return;
     }
     console.log("Decoding started for Lumina 2.0...");
+    resetResults();
     await decodeJD(jdText);
-  }, [user, navigate, decodeJD, jdText]);
+  }, [user, navigate, decodeJD, resetResults, jdText]);
 
   const handleReset = useCallback(() => {
     resetResults();

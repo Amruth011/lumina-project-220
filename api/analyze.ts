@@ -36,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (groqKey) {
     const groqModels = req.body.model 
       ? [req.body.model] 
-      : ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
+      : ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile'];
     for (const model of groqModels) {
       fallbackConfigs.push({
         url: 'https://api.groq.com/openai/v1/chat/completions',

@@ -226,7 +226,7 @@ RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
+                model: "llama-3.1-8b-instant",
                 messages: [
                   { role: "system", content: systemPrompt },
                   { role: "user", content: `ACT ON THIS JD:\n###\n${jdText.substring(0, 10000)}\n###\n\nRETURN ONLY RAW JSON MATCHING SCHEMA.` }
@@ -273,15 +273,8 @@ RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
         }
       }
 
-      // ── RESILIENT DEGRADATION: Automatically use Heuristic Parser on total LLM failure ──
       if (error || !data) {
-        console.warn("── TOTAL SERVER/CLIENT LLM FAILURES ── Gracefully degrading to Premium Offline Heuristic Fallback Engine.");
-        data = decodeJDHeuristic(jdText);
-        error = null;
-        toast.info("Active: Heuristic Fallback Scan", {
-          description: "Local forensic pattern engine activated due to server API connection failure. Open settings to configure your credentials.",
-          duration: 9000
-        });
+        throw new Error("Lumina Engine Failed: Unable to generate intelligence report. Both primary and secondary LLM engines failed.");
       }
 
       // ── JD SIGNAL VALIDATION ──
@@ -617,32 +610,10 @@ RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
         window.dispatchEvent(new Event("lumina_scan_crashed"));
       }
 
-      // ── EXTREME LIFETIME RESILIENT FALLBACK ──
-      try {
-        console.warn("── CATCH FALLBACK INITIATED ── Gracefully degrading to Sandbox Heuristic Engine due to:", errMsg);
-        const fallbackResult = decodeJDHeuristic(jdText);
-        await setCachedDecode(jdText, fallbackResult);
-        clearResumeAnalysisCache();
-        
-        if (typeof window !== "undefined" && window.sessionStorage) {
-          sessionStorage.removeItem("current_roadmap_id");
-          sessionStorage.removeItem("current_roadmap_jd_title");
-        }
-
-        setResults(fallbackResult);
-        setWasCached(false);
-        
-        toast.info("Active: Heuristic Fallback Scan", {
-          description: `Offline Forensic engine activated (${fallbackResult.title}) due to network or server authentication fault. Open API Settings to configure.`,
-          duration: 9000
-        });
-      } catch (fallbackErr) {
-        console.error("Critical fallback engine crash:", fallbackErr);
-        toast.error("Forensic Engine Fault", { 
-          description: "A critical offline parser fault occurred. Workspace reset recommended.", 
-          duration: 9000 
-        });
-      }
+      toast.error(errMsg, {
+        duration: 7000
+      });
+      setIsScanning(false);
     } finally {
       setIsScanning(false);
     }

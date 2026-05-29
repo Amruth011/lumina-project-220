@@ -62,8 +62,8 @@ NativeDeno.serve(async (req: Request) => {
 
     const safeJD = jdText.substring(0, 15000); 
     const fallbackModels = [
-      "llama-3.3-70b-versatile",
-      "llama-3.1-8b-instant"
+      "llama-3.1-8b-instant",
+      "llama-3.3-70b-versatile"
     ];
 
     let resultText = "";
@@ -105,7 +105,7 @@ NativeDeno.serve(async (req: Request) => {
         try {
             console.log(`Lumina Engine: Activating Forensic Scan with ${model}...`);
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8-second strict timeout
+            const timeoutId = setTimeout(() => controller.abort(), 25000); // 25-second strict timeout
 
             const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                 method: "POST",

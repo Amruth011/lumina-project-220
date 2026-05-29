@@ -14,6 +14,7 @@ import { MatchHero } from "./gap-analysis/MatchHero";
 import { ComparisonMatrix } from "./gap-analysis/ComparisonMatrix";
 import { GapRecommendations } from "./gap-analysis/GapRecommendations";
 import { GapAnalyzerSkeleton } from "./gap-analysis/GapAnalyzerSkeleton";
+import { getAgentResumes } from "@/lib/agentStorage";
 import jsPDF from "jspdf";
 
 interface ResumeGapAnalyzerProps {
@@ -64,25 +65,39 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
   const [showReplaceDialog, setShowReplaceDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
-  // ── Pre-seed from user_profile.json for ATS score demonstration ──────────
-  // Loads Academic Background, Certifications & Awards, and Key Projects into
-  // the resume text box so computeDeterministicScore() immediately indexes them,
-  // contributing all profile keywords to the ATS_MATCH_SCORE calculation.
-  useEffect(() => {
+  // ── Auto-Load Latest Generated Resume or Pre-seed from user_profile.json ──
+  const loadResumeSource = useCallback(() => {
+    // 1. Try to load the most recently generated resume from the Job Agent Vault
+    const agentVault = getAgentResumes();
+    const generatedForThisJd = agentVault.find(r => r.jdTitle === jobTitle || r.jdTitle === "Target Role") || agentVault[0];
+    
+    if (generatedForThisJd && generatedForThisJd.resumeText) {
+      setResumeText(generatedForThisJd.resumeText);
+      setFileName(`${jobTitle?.replace(/\s+/g, '_') || 'Generated'}_Resume.txt`);
+      return;
+    }
+
+    // 2. Fallback to base user profile
     fetch('/user_profile.json')
       .then((r) => (r.ok ? r.json() : null))
       .then((profile) => {
         if (profile) {
           const text = buildResumeTextFromProfileJson(profile);
-          setResumeText((prev) => (prev.length === 0 ? text : prev));
-          setFileName((prev) =>
-            prev.length === 0 ? `${profile.personal_info?.fullName?.replace(/\s+/g, '_') || 'Profile'}_Resume.txt` : prev
-          );
+          setResumeText(text);
+          setFileName(`${profile.personal_info?.fullName?.replace(/\s+/g, '_') || 'Profile'}_Resume.txt`);
         }
       })
       .catch(() => { /* silent — no profile seed */ });
-   
-  }, []);
+  }, [jobTitle]);
+
+  useEffect(() => {
+    loadResumeSource();
+    
+    // Listen for new resume generations to immediately update the Gap Analyzer
+    const handleVaultUpdate = () => loadResumeSource();
+    window.addEventListener("lumina_agent_vault_updated", handleVaultUpdate);
+    return () => window.removeEventListener("lumina_agent_vault_updated", handleVaultUpdate);
+  }, [loadResumeSource]);
 
   const handleExportPDF = async () => {
     if (!result) return;
