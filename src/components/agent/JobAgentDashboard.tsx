@@ -124,9 +124,16 @@ export const JobAgentDashboard: React.FC = () => {
     setIsRunning(true);
 
     try {
+      // Open the target portal in a popup window to simulate the agent taking over
+      const agentWindow = window.open(
+        portalUrl,
+        "LuminaAgentPortal",
+        "width=1024,height=800,left=100,top=100,noopener,noreferrer"
+      );
+
       const finalResult = await runAgentJob(selected, portalUrl, (entry) => {
         setLogs((prev) => [...prev, entry]);
-      });
+      }, agentWindow);
       setResult(finalResult);
 
       if (finalResult.status === "applied") {

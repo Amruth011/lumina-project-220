@@ -139,7 +139,8 @@ function resolveValue(template: string, resume: SavedAgentResume): string {
 export async function runAgentJob(
   resume: SavedAgentResume,
   portalUrl: string,
-  onLog: (entry: AgentLogEntry) => void
+  onLog: (entry: AgentLogEntry) => void,
+  agentWindow?: Window | null
 ): Promise<AgentRunResult> {
   const logs: AgentLogEntry[] = [];
 
@@ -285,8 +286,18 @@ Candidate Profile Summary:
   }
 
   log(makeLog("success", `Application submitted successfully. Confirmation captured.`));
-  await sleep(300);
-  log(makeLog("success", `Reference ID generated: ${ref}`));
+  await sleep(600);
+  log(makeLog("info", `Reference ID generated: ${ref}`));
+
+  if (agentWindow) {
+      log(makeLog("info", `Closing agent browser window...`));
+      await sleep(1000);
+      try {
+          agentWindow.close();
+      } catch (e) {
+          // ignore
+      }
+  }
 
   return {
     status: "applied",
