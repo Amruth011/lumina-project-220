@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { LogOut, User, Search, ShieldCheck, Zap, Info, Mail, Compass } from "lucide-react";
+import { LogOut, User, Search, ShieldCheck, Zap, Info, Mail, Compass, Bot } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -40,8 +40,9 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
     { key: "generator" as Tab, icon: Zap, label: "Generator" },
     { key: "cover-letter" as Tab, icon: Mail, label: "Cover Letter" },
     { key: "roadmap" as Tab, icon: Compass, label: "Roadmap" },
+    { key: "agent" as Tab, icon: Bot, label: "Job Agent", badge: true },
     { key: "guide" as Tab, icon: Info, label: "Guide" },
-  ];
+  ] as { key: Tab; icon: React.ElementType; label: string; badge?: boolean }[];
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-[100] px-6 py-2 w-full pointer-events-none">
@@ -75,6 +76,9 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
               <span className="relative z-10 flex items-center gap-2">
                 <tab.icon size={14} className={activeTab === tab.key ? 'text-white' : 'text-primary/40'} />
                 <span className="tracking-tight">{tab.label}</span>
+                {tab.badge && activeTab !== tab.key && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                )}
               </span>
             </button>
           ))}

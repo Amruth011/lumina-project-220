@@ -1,0 +1,488 @@
+"use client";
+
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Bot,
+  ChevronDown,
+  Trash2,
+  Link2,
+  AlertCircle,
+  Rocket,
+  Clock,
+  FileText,
+  Cpu,
+  RefreshCw,
+  ShieldCheck,
+  Zap,
+  Info,
+} from "lucide-react";
+import { toast } from "sonner";
+
+import { getAgentResumes, deleteAgentResume } from "@/lib/agentStorage";
+import { runAgentJob } from "@/lib/agentWorker";
+import { AgentExecutionLog } from "./AgentExecutionLog";
+
+import type { SavedAgentResume } from "@/types/agent";
+import type { AgentLogEntry, AgentRunResult } from "@/types/agent";
+
+// ── URL Validation ─────────────────────────────────────────────────────────
+
+function isValidUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
+
+export const JobAgentDashboard: React.FC = () => {
+  const [savedResumes, setSavedResumes] = useState<SavedAgentResume[]>([]);
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [portalUrl, setPortalUrl] = useState("");
+  const [urlError, setUrlError] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [logs, setLogs] = useState<AgentLogEntry[]>([]);
+  const [result, setResult] = useState<AgentRunResult | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // ── Load vault ─────────────────────────────────────────────────────────
+  const loadVault = useCallback(() => {
+    const resumes = getAgentResumes();
+    setSavedResumes(resumes);
+    if (resumes.length > 0 && !selectedId) {
+      setSelectedId(resumes[0].id);
+    }
+  }, [selectedId]);
+
+  useEffect(() => {
+    loadVault();
+    const handle = () => loadVault();
+    window.addEventListener("lumina_agent_vault_updated", handle);
+    return () => window.removeEventListener("lumina_agent_vault_updated", handle);
+  }, [loadVault]);
+
+  // ── Close dropdown on outside click ───────────────────────────────────
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const selected = savedResumes.find((r) => r.id === selectedId) ?? null;
+
+  // ── Delete resume ──────────────────────────────────────────────────────
+  const handleDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteAgentResume(id);
+    if (selectedId === id) setSelectedId("");
+    loadVault();
+    toast.success("Resume removed from Agent Vault.");
+  };
+
+  // ── URL validation ─────────────────────────────────────────────────────
+  const handleUrlChange = (v: string) => {
+    setPortalUrl(v);
+    if (v && !isValidUrl(v)) {
+      setUrlError("Please enter a valid URL starting with https://");
+    } else {
+      setUrlError("");
+    }
+  };
+
+  // ── Launch Agent ───────────────────────────────────────────────────────
+  const handleLaunch = async () => {
+    if (!selected) {
+      toast.error("No resume selected. Please generate a resume first.");
+      return;
+    }
+    if (!portalUrl.trim()) {
+      setUrlError("Job Portal URL is required to launch the agent.");
+      return;
+    }
+    if (!isValidUrl(portalUrl)) {
+      setUrlError("Please enter a valid URL starting with https://");
+      return;
+    }
+
+    setUrlError("");
+    setLogs([]);
+    setResult(null);
+    setIsRunning(true);
+
+    try {
+      const finalResult = await runAgentJob(selected, portalUrl, (entry) => {
+        setLogs((prev) => [...prev, entry]);
+      });
+      setResult(finalResult);
+
+      if (finalResult.status === "applied") {
+        toast.success("Application submitted successfully!", {
+          description: `Ref: ${finalResult.applicationRef}`,
+        });
+      } else {
+        toast.warning("Agent halted — manual action required.", {
+          description: finalResult.haltReason,
+        });
+      }
+    } catch (err) {
+      console.error("Agent worker error:", err);
+      toast.error("Agent encountered an unexpected error.");
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  // ── Empty vault state ──────────────────────────────────────────────────
+  const isEmpty = savedResumes.length === 0;
+
+  return (
+    <div className="w-full max-w-6xl mx-auto space-y-10 py-8">
+
+      {/* ── Header ── */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+            <Bot size={18} className="text-emerald-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
+              Autonomous Job Agent
+            </h1>
+            <p className="text-[12px] font-medium text-slate-500">
+              AI-powered form injection & passive application submission
+            </p>
+          </div>
+          <div className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-black uppercase tracking-widest text-blue-600">
+            <Zap size={10} className="animate-pulse" />
+            Llama-3.1-8B
+          </div>
+        </div>
+
+        {/* Info banner */}
+        <div className="flex items-start gap-2.5 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3">
+          <Info size={13} className="text-slate-400 mt-0.5 shrink-0" />
+          <p className="text-[11px] font-medium text-slate-500 leading-relaxed">
+            The Job Agent reads your saved resume, maps fields from the target job portal using
+            Llama-3.1-8B intelligence, and streams a real-time injection log. A verified proof-of-submission
+            card is rendered upon completion.
+          </p>
+        </div>
+      </div>
+
+      {/* ── 3-Panel Grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        {/* ══ Panel A: Resume Selector ══ */}
+        <div className="lg:col-span-4 space-y-4">
+          <div className="bg-white border border-slate-100 rounded-[2rem] p-6 space-y-5 shadow-sm">
+            <div className="flex items-center gap-2">
+              <FileText size={14} className="text-emerald-600" />
+              <span className="text-[11px] font-black uppercase tracking-widest text-slate-600">
+                Saved Resume Profile
+              </span>
+            </div>
+
+            {/* Dropdown */}
+            {isEmpty ? (
+              <div className="space-y-3 py-2">
+                <div className="text-center py-6 space-y-2">
+                  <FileText size={28} className="mx-auto text-slate-200" />
+                  <p className="text-[12px] font-bold text-slate-400">No resumes saved yet</p>
+                  <p className="text-[11px] text-slate-400 max-w-[200px] mx-auto">
+                    Generate a resume in the Generator tab to populate the Agent Vault.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Custom dropdown */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setDropdownOpen((o) => !o)}
+                    className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-slate-50 border border-slate-200 hover:border-emerald-400 rounded-2xl text-left transition-all duration-200 group"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText size={12} className="text-emerald-500 shrink-0" />
+                      <span className="text-[12px] font-bold text-slate-800 truncate">
+                        {selected?.label ?? "Select a saved resume"}
+                      </span>
+                    </div>
+                    <ChevronDown
+                      size={14}
+                      className={`text-slate-400 shrink-0 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+
+                  <AnimatePresence>
+                    {dropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden max-h-60 overflow-y-auto"
+                      >
+                        {savedResumes.map((r) => (
+                          <div
+                            key={r.id}
+                            onClick={() => {
+                              setSelectedId(r.id);
+                              setDropdownOpen(false);
+                            }}
+                            className={`flex items-center justify-between gap-2 px-4 py-3 cursor-pointer hover:bg-emerald-50 transition-colors border-b border-slate-100 last:border-0 ${
+                              r.id === selectedId ? "bg-emerald-50" : ""
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              {r.id === selectedId && (
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                              )}
+                              <div className="min-w-0">
+                                <p className="text-[11px] font-bold text-slate-800 truncate">
+                                  {r.jdTitle}
+                                </p>
+                                <p className="text-[9px] text-slate-400 font-medium">
+                                  {new Date(r.savedAt).toLocaleDateString("en-IN", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={(e) => handleDelete(r.id, e)}
+                              className="w-6 h-6 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center transition-colors shrink-0"
+                            >
+                              <Trash2 size={9} className="text-red-400" />
+                            </button>
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Refresh button */}
+                <button
+                  onClick={loadVault}
+                  className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-emerald-600 transition-colors"
+                >
+                  <RefreshCw size={10} />
+                  Refresh Vault
+                </button>
+              </div>
+            )}
+
+            {/* Selected resume metadata */}
+            <AnimatePresence>
+              {selected && (
+                <motion.div
+                  key={selected.id}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-3 border-t border-slate-100 pt-4"
+                >
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                    Linked JD Context
+                  </p>
+                  <div className="bg-slate-50 rounded-xl p-3 space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <FileText size={9} className="text-emerald-500" />
+                      <span className="text-[10px] font-bold text-slate-700 truncate">
+                        {selected.jdTitle}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={9} className="text-slate-400" />
+                      <span className="text-[9px] text-slate-500">
+                        {new Date(selected.savedAt).toLocaleString("en-IN", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <ShieldCheck size={9} className="text-emerald-500" />
+                      <span className="text-[9px] text-slate-500">
+                        {selected.jdSkills.length} skills · {selected.resume.experience?.length ?? 0} experience entries
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Top skills pills */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {selected.jdSkills.slice(0, 6).map((s) => (
+                      <span
+                        key={s.skill}
+                        className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[9px] font-bold text-emerald-700"
+                      >
+                        {s.skill}
+                      </span>
+                    ))}
+                    {selected.jdSkills.length > 6 && (
+                      <span className="text-[9px] text-slate-400 font-bold">
+                        +{selected.jdSkills.length - 6} more
+                      </span>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* ══ Panel B: URL Input + Launch ══ */}
+        <div className="lg:col-span-8 space-y-4">
+          <div className="bg-white border border-slate-100 rounded-[2rem] p-6 space-y-6 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Link2 size={14} className="text-emerald-600" />
+              <span className="text-[11px] font-black uppercase tracking-widest text-slate-600">
+                Target Job Portal
+              </span>
+              <span className="ml-1 text-[9px] font-black uppercase tracking-widest text-red-500 bg-red-50 border border-red-100 px-2 py-0.5 rounded-full">
+                Required
+              </span>
+            </div>
+
+            {/* URL Input */}
+            <div className="space-y-2">
+              <div
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all duration-200 ${
+                  urlError
+                    ? "border-red-300 bg-red-50"
+                    : portalUrl && isValidUrl(portalUrl)
+                    ? "border-emerald-300 bg-emerald-50"
+                    : "border-slate-200 bg-slate-50 focus-within:border-emerald-400 focus-within:bg-white"
+                }`}
+              >
+                <Link2
+                  size={14}
+                  className={urlError ? "text-red-400" : "text-slate-400"}
+                />
+                <input
+                  type="url"
+                  value={portalUrl}
+                  onChange={(e) => handleUrlChange(e.target.value)}
+                  placeholder="https://jobs.company.com/apply/senior-engineer"
+                  className="flex-1 bg-transparent text-[13px] font-medium text-slate-800 placeholder:text-slate-400 outline-none"
+                />
+                {portalUrl && isValidUrl(portalUrl) && !urlError && (
+                  <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
+                )}
+              </div>
+
+              <AnimatePresence>
+                {urlError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="flex items-center gap-1.5 text-[11px] font-bold text-red-500"
+                  >
+                    <AlertCircle size={11} />
+                    {urlError}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <p className="text-[10px] text-slate-400 font-medium px-1">
+                Paste the direct application URL. The agent will navigate, parse form fields, and inject your data automatically.
+              </p>
+            </div>
+
+            {/* Agent configuration summary */}
+            {selected && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  { label: "Agent Model", value: "Llama-3.1-8B", icon: <Cpu size={10} /> },
+                  { label: "Contact Info", value: selected.contactInfo.fullName || "Loaded", icon: <ShieldCheck size={10} /> },
+                  { label: "Email", value: selected.contactInfo.email || "—", icon: <ShieldCheck size={10} /> },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-1"
+                  >
+                    <div className="flex items-center gap-1 text-slate-400">
+                      {item.icon}
+                      <span className="text-[8px] font-black uppercase tracking-widest">
+                        {item.label}
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-bold text-slate-700 truncate" title={item.value}>
+                      {item.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Launch Button */}
+            <motion.button
+              onClick={handleLaunch}
+              disabled={isRunning || isEmpty || !selected}
+              whileHover={!isRunning && !isEmpty ? { scale: 1.02 } : {}}
+              whileTap={!isRunning && !isEmpty ? { scale: 0.98 } : {}}
+              className={`w-full py-4 px-6 rounded-2xl font-black text-[13px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 ${
+                isRunning
+                  ? "bg-blue-500 text-white cursor-not-allowed"
+                  : isEmpty
+                  ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                  : "bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/20"
+              }`}
+            >
+              {isRunning ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                  Agent Running...
+                </>
+              ) : (
+                <>
+                  <Rocket size={16} className="animate-pulse" />
+                  Launch Agent
+                </>
+              )}
+            </motion.button>
+          </div>
+
+          {/* ══ Panel C: Execution Log ══ */}
+          <AnimatePresence>
+            {(logs.length > 0 || isRunning) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm"
+              >
+                <div className="flex items-center gap-2 mb-5">
+                  <Cpu size={14} className="text-emerald-600" />
+                  <span className="text-[11px] font-black uppercase tracking-widest text-slate-600">
+                    Real-time Execution Log
+                  </span>
+                </div>
+                <AgentExecutionLog
+                  logs={logs}
+                  result={result}
+                  isRunning={isRunning}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default JobAgentDashboard;

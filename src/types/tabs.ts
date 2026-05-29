@@ -1,1 +1,2 @@
-export type Tab = "decode" | "analysis" | "profile" | "generator" | "guide" | "cover-letter" | "roadmap";
+export type Tab = "decode" | "analysis" | "profile" | "generator" | "guide" | "cover-letter" | "roadmap" | "agent";
+

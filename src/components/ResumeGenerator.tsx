@@ -10,6 +10,7 @@ import { ResumePreview } from "./resume-tailor/ResumePreview";
 import { GeneratorSkeleton } from "./resume-tailor/GeneratorSkeleton";
 import { matchVaultItems, type VaultMatchResult } from "@/lib/embeddingClient";
 import { buildVaultItemsFromProfileJson, buildResumeFromProfileJson } from "@/lib/profileSeed";
+import { saveAgentResume, buildResumeTextForAgent } from "@/lib/agentStorage";
 
 const sanitizePdfText = (text: string): string => {
   if (!text) return "";
@@ -1146,6 +1147,30 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
       setEditableResume(fullyRestoredData);
       setIsOpen(true);
       toast.success("Silicon Valley Modern resume generated!");
+
+      // ── Auto-save to Job Agent Vault ─────────────────────────────────────
+      // Silently persists the generated resume so the Job Agent tab can
+      // immediately select it without any manual export step.
+      try {
+        saveAgentResume({
+          resume: fullyRestoredData,
+          jdTitle: jdTitle || "Target Role",
+          jdText: "",
+          jdSkills: jdSkills || [],
+          resumeText: buildResumeTextForAgent(fullyRestoredData),
+          contactInfo: {
+            fullName: editableHeader.fullName,
+            email: editableHeader.email,
+            phone: editableHeader.phone,
+            location: editableHeader.location,
+            linkedin: editableHeader.linkedin,
+            github: editableHeader.github,
+            website: editableHeader.portfolio,
+          },
+        });
+      } catch {
+        // Non-critical — agent vault save failure does not block resume display
+      }
     } catch (err: unknown) {
       console.error("Generation process failed:", err);
       const errorMessage = err instanceof Error ? err.message : String(err);

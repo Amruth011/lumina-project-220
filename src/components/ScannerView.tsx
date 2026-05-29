@@ -19,6 +19,7 @@ import { MasterVault } from "@/components/MasterVault";
 import { ResumeGenerator } from "@/components/ResumeGenerator";
 import { ApplicationTracker } from "@/components/ApplicationTracker";
 import { RoadmapView } from "./roadmap/RoadmapView";
+import { JobAgentDashboard } from "@/components/agent/JobAgentDashboard";
 import { GapAnalyzerSkeleton } from "./gap-analysis/GapAnalyzerSkeleton";
 import { GeneratorSkeleton } from "./resume-tailor/GeneratorSkeleton";
 import { RoadmapSkeleton } from "./roadmap/RoadmapSkeleton";
@@ -511,6 +512,15 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                 <div className="glass-panel p-6 lg:p-10 rounded-[4rem] border-foreground/10 bg-white/[0.02]">
                   <HowItWorksSection />
                 </div>
+              </motion.div>
+            ) : activeTab === "agent" ? (
+              <motion.div
+                key="agent"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+              >
+                <JobAgentDashboard />
               </motion.div>
             ) : null}
           </AnimatePresence>
