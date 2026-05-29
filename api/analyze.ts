@@ -34,9 +34,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const fallbackConfigs: Array<{ url: string; key: string; model: string }> = [];
 
   if (groqKey) {
-    const groqModels = req.body.model 
-      ? [req.body.model] 
-      : ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile'];
+    const requested = req.body.model;
+    const groqModels = requested
+      ? [requested, 'llama-3.1-8b-instant'].filter((v, i, a) => a.indexOf(v) === i)
+      : ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
     for (const model of groqModels) {
       fallbackConfigs.push({
         url: 'https://api.groq.com/openai/v1/chat/completions',
@@ -64,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { messages, temperature, response_format } = req.body;
 
     for (const config of fallbackConfigs) {
-      let retries = 2; // Reduced retries to save time
+      let retries = config.model.includes("8b") || config.model.includes("mini") ? 1 : 2; // Fewer retries for fast/highly-available models
       let delay = 1000;
       let success = false;
 
@@ -73,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           console.log(`API_PROXY: Attempting with ${config.model} on ${config.url}... (Retries left: ${retries})`);
           
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 45000); // 45-second timeout for large JSON payload Generation
+          const timeoutId = setTimeout(() => controller.abort(), 20000); // 20-second timeout for much faster recovery
 
           // OpenAI doesn't always support the exact same response_format params as Groq, but type: "json_object" is safe
           const groqResponse = await fetch(config.url, {
@@ -109,8 +110,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           lastError = lastErrorDetails || groqResponse.statusText;
           console.warn(`API_PROXY: ${config.model} failed with status ${groqResponse.status}: ${lastError}`);
 
-          if (groqResponse.status === 429 || groqResponse.status >= 500) {
-            console.log(`API_PROXY: Rate limit or server error hit. Waiting ${delay}ms...`);
+          if (groqResponse.status === 429) {
+            console.log(`API_PROXY: Rate limit (429) hit for ${config.model}. Instantly falling back to next engine without slow sleep retries.`);
+            break; // Immediately break retry loop and proceed to next fallback model to save user's time
+          }
+
+          if (groqResponse.status >= 500) {
+            console.log(`API_PROXY: Server error hit. Waiting ${delay}ms...`);
             await sleep(delay);
             delay *= 2; // Exponential backoff
             retries--;

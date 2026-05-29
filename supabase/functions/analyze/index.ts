@@ -73,8 +73,7 @@ serve(async (req: Request) => {
         console.warn(`Lumina Analyze: Model ${model} failed with status ${groqResponse.status}: ${lastError}`);
 
         if (groqResponse.status === 429) {
-          console.log("Lumina Analyze: Rate limit hit. Waiting 1500ms...");
-          await sleep(1500);
+          console.log(`Lumina Analyze: Rate limit (429) hit for ${model}. Instantly falling back to next engine without delay.`);
         }
       } catch (err) {
         lastError = err instanceof Error ? err.message : String(err);
