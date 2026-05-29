@@ -797,14 +797,14 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     let summarySchemaRule = "";
 
     if (summaryLines === 1) {
-      summaryPromptRule = `You MUST synthesize a high-impact, elite, value-first professional summary of EXACTLY 1 sentence. Avoid empty buzzwords. Follow this formula: [Specialist Title] specializing in [Core Tech Stack/Methodologies] with a proven track record of [High-Level Quantitative Career Impact]. Keep it strictly around 100-115 characters including spaces.`;
-      summarySchemaRule = `Ensure there is exactly 1 substantial sentence (around 100-115 characters including spaces).`;
+      summaryPromptRule = `You MUST synthesize a high-impact, elite, value-first professional summary of EXACTLY 1 powerful sentence. Avoid empty buzzwords. Follow this formula: [Specialist Title] specializing in [Core Tech Stack/Methodologies] with a proven track record of [High-Level Quantitative Career Impact]. Make it compelling and rich in detail.`;
+      summarySchemaRule = `Ensure there is exactly 1 substantial sentence.`;
     } else if (summaryLines === 2) {
-      summaryPromptRule = `You MUST synthesize a high-impact, elite, value-first professional summary of EXACTLY 2 sentences. Do NOT use empty buzzwords like 'passionate self-starter'. Follow this formula: Sentence 1: [Specialist Title] specializing in [Core Tech Stack/Methodologies] with a proven track record of [High-Level Quantitative Career Impact]. Sentence 2: Connect your core expertise directly to the target JD's key requirements. Keep the entire professional summary strictly around 200-230 characters including spaces.`;
-      summarySchemaRule = `Ensure there are exactly 2 sentences (strictly 200-230 characters in total across both sentences) separated by a period and space.`;
+      summaryPromptRule = `You MUST synthesize a high-impact, elite, value-first professional summary of EXACTLY 2 powerful sentences. Do NOT use empty buzzwords like 'passionate self-starter'. Follow this formula: Sentence 1: [Specialist Title] specializing in [Core Tech Stack/Methodologies] with a proven track record of [High-Level Quantitative Career Impact]. Sentence 2: Connect your core expertise directly to the target JD's key requirements.`;
+      summarySchemaRule = `Ensure there are exactly 2 sentences separated by a period and space.`;
     } else {
-      summaryPromptRule = `You MUST synthesize a high-impact, elite, value-first professional summary of EXACTLY ${summaryLines} sentences. Do NOT use empty buzzwords. Focus on specialization, core domain expertise, and high-level quantifiable outcomes. Keep the entire summary strictly around 300-340 characters including spaces.`;
-      summarySchemaRule = `Ensure there are exactly ${summaryLines} sentences (strictly 300-340 characters in total across all sentences) separated by periods and spaces.`;
+      summaryPromptRule = `You MUST synthesize a high-impact, elite, value-first professional summary of EXACTLY ${summaryLines} powerful sentences. Do NOT use empty buzzwords. Focus on specialization, core domain expertise, and high-level quantifiable outcomes. Make the sentences flow naturally and powerfully to capture the recruiter's attention.`;
+      summarySchemaRule = `Ensure there are exactly ${summaryLines} sentences separated by periods and spaces.`;
     }
 
     const experienceItems = vaultItems.filter(item => item.type === 'professional');
@@ -1786,32 +1786,10 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
           if (!summaryText) return "";
           // Split by sentence boundaries, handling abbreviations safely
           const sentences = summaryText.split(/\.\s+/).filter(Boolean);
-          const sliced = sentences
+          return sentences
             .slice(0, maxSentences)
             .map(s => s.trim() + (s.trim().endsWith(".") ? "" : "."))
             .join(" ");
-            
-          // Enforce strict character budget matching lines
-          const budget = maxSentences === 1 ? 115 : maxSentences === 2 ? 230 : maxSentences * 115;
-          if (sliced.length > budget + 15) {
-            let current = "";
-            for (const sent of sentences.slice(0, maxSentences)) {
-              const candidate = current ? current + " " + sent : sent;
-              if (candidate.length > budget + 10) {
-                if (current.length > 50) {
-                  break;
-                }
-                let truncated = candidate.slice(0, budget - 3).trim();
-                const lastSpace = truncated.lastIndexOf(" ");
-                if (lastSpace > 0) truncated = truncated.slice(0, lastSpace);
-                current = truncated + "...";
-                break;
-              }
-              current = candidate;
-            }
-            return current;
-          }
-          return sliced;
         };
 
         const limitBullets = (bullets: string[], maxBullets: number): string[] => {
@@ -2396,32 +2374,10 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
         if (!summaryText) return "";
         // Split by sentence boundaries, handling abbreviations safely
         const sentences = summaryText.split(/\.\s+/).filter(Boolean);
-        const sliced = sentences
+        return sentences
           .slice(0, maxSentences)
           .map(s => s.trim() + (s.trim().endsWith(".") ? "" : "."))
           .join(" ");
-          
-        // Enforce strict character budget matching lines
-        const budget = maxSentences === 1 ? 115 : maxSentences === 2 ? 230 : maxSentences * 115;
-        if (sliced.length > budget + 15) {
-          let current = "";
-          for (const sent of sentences.slice(0, maxSentences)) {
-            const candidate = current ? current + " " + sent : sent;
-            if (candidate.length > budget + 10) {
-              if (current.length > 50) {
-                break;
-              }
-              let truncated = candidate.slice(0, budget - 3).trim();
-              const lastSpace = truncated.lastIndexOf(" ");
-              if (lastSpace > 0) truncated = truncated.slice(0, lastSpace);
-              current = truncated + "...";
-              break;
-            }
-            current = candidate;
-          }
-          return current;
-        }
-        return sliced;
       };
 
       const headerMeta = [
