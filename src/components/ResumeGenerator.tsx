@@ -808,14 +808,30 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     } else if (summaryLines === 2) {
       summaryPromptRule = `Write EXACTLY 2 distinct sentences for the professional summary. Each sentence MUST end with a period. Sentence 1: "[Role Title] specializing in [Core Tech Stack] with [Quantified Career Impact]." Sentence 2: "[Specific connection to the target JD's requirements, naming 2-3 exact skills from the JD]." Do NOT merge them with commas or conjunctions — they must be two separate sentences ending with periods.`;
       summarySchemaRule = `Exactly 2 sentences. Each ends with a period. Together they read as: Who you are → What you bring to THIS role.`;
-    } else {
-      summaryPromptRule = `Write EXACTLY ${summaryLines} distinct, powerful sentences for the professional summary. Each sentence MUST end with a period. DO NOT merge all ideas into one long comma-separated sentence. Structure:
-- Sentence 1: Who you are — your exact title and core technical specialization from the vault.
-- Sentence 2: What you've done — your highest-impact accomplishments grounded in actual project/experience data from the vault.
-${summaryLines >= 3 ? `- Sentence 3: Why you for THIS role — connect your specific skills directly to the target JD keywords and requirements.` : ""}
-${summaryLines >= 4 ? `- Sentence 4: Add a forward-looking or domain-leadership statement that elevates the candidate above competitors.` : ""}
+    } else if (summaryLines === 3) {
+      summaryPromptRule = `Write EXACTLY 3 distinct, powerful sentences for the professional summary. Each sentence MUST end with a period. DO NOT merge all ideas into one long comma-separated sentence. Structure:
+- Sentence 1 (Executive Hook): Your professional identity, core specialization, and years of experience tailored to match the target job title ("${targetJdTitle}") and company ("${targetCompany}") perfectly.
+- Sentence 2 (Technical Execution): Highlight your highest-impact accomplishments, core technical stack, and scale managed, grounded in actual vault items.
+- Sentence 3 (Direct Value Prop): A direct connection of your unique capabilities to the target JD's key requirements, highlighting how you solve the team's immediate problems.
 Avoid generic buzzwords. Every sentence must be grounded in real profile facts.`;
-      summarySchemaRule = `Exactly ${summaryLines} separate sentences, each ending with a period. Count the periods — there must be exactly ${summaryLines}.`;
+      summarySchemaRule = `Exactly 3 separate sentences, each ending with a period. There must be exactly 3 periods.`;
+    } else if (summaryLines === 4) {
+      summaryPromptRule = `Write EXACTLY 4 distinct, powerful sentences for the professional summary. Each sentence MUST end with a period. DO NOT merge all ideas into one long comma-separated sentence. Structure:
+- Sentence 1 (Executive Hook): Your professional identity, core specialization, and years of experience tailored to match the target job title ("${targetJdTitle}") and company ("${targetCompany}") perfectly.
+- Sentence 2 (Technical Execution): Highlight your highest-impact accomplishments, core technical stack, and scale managed, grounded in actual vault items.
+- Sentence 3 (Direct Value Prop): A direct connection of your unique capabilities to the target JD's key requirements, highlighting how you solve the team's immediate problems.
+- Sentence 4 (Methodology & Standards): Add a strong statement about your engineering standards, architecture methodologies (e.g., CI/CD, system design, monitoring), or domain leadership that sets you apart.
+Avoid generic buzzwords. Every sentence must be grounded in real profile facts.`;
+      summarySchemaRule = `Exactly 4 separate sentences, each ending with a period. There must be exactly 4 periods.`;
+    } else {
+      summaryPromptRule = `Write EXACTLY 5 distinct, powerful sentences for the professional summary. Each sentence MUST end with a period. DO NOT merge all ideas into one long comma-separated sentence. Structure:
+- Sentence 1 (Executive Hook): Your professional identity, core specialization, and years of experience tailored to match the target job title ("${targetJdTitle}") and company ("${targetCompany}") perfectly.
+- Sentence 2 (Technical Execution): Highlight your highest-impact accomplishments, core technical stack, and scale managed, grounded in actual vault items.
+- Sentence 3 (Scale & Architecture): Showcase a secondary competency or project-scale expertise (e.g., cloud platforms, data engineering pipelines, system design) from your vault.
+- Sentence 4 (Direct Value Prop): A direct connection of your unique capabilities to the target JD's key requirements, highlighting how you solve the team's immediate problems.
+- Sentence 5 (Visionary Mindset): A forward-looking statement on engineering standards, collaborative velocity, or business-aligned execution that elevates the candidate above competitors.
+Avoid generic buzzwords. Every sentence must be grounded in real profile facts.`;
+      summarySchemaRule = `Exactly 5 separate sentences, each ending with a period. There must be exactly 5 periods.`;
     }
 
     const experienceItems = vaultItems.filter(item => item.type === 'professional');

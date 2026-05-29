@@ -88,32 +88,10 @@ const limitSummarySentences = (summaryText: string, maxSentences: number): strin
   if (!summaryText) return "";
   // Split by sentence boundaries, handling abbreviations safely
   const sentences = summaryText.split(/\.\s+/).filter(Boolean);
-  const sliced = sentences
+  return sentences
     .slice(0, maxSentences)
     .map(s => s.trim() + (s.trim().endsWith(".") ? "" : "."))
     .join(" ");
-    
-  // Enforce a strict visual line budget of approximately 115 characters per line
-  const budget = maxSentences === 1 ? 115 : maxSentences === 2 ? 230 : maxSentences * 115;
-  if (sliced.length > budget + 15) {
-    let current = "";
-    for (const sent of sentences.slice(0, maxSentences)) {
-      const candidate = current ? current + " " + sent : sent;
-      if (candidate.length > budget + 10) {
-        if (current.length > 50) {
-          break; // Stop adding more sentences to protect the line count
-        }
-        let truncated = candidate.slice(0, budget - 3).trim();
-        const lastSpace = truncated.lastIndexOf(" ");
-        if (lastSpace > 0) truncated = truncated.slice(0, lastSpace);
-        current = truncated + "...";
-        break;
-      }
-      current = candidate;
-    }
-    return current;
-  }
-  return sliced;
 };
 
 const limitBullets = (bullets: string[], maxBullets: number): string[] => {
