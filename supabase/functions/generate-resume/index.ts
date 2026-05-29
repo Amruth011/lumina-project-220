@@ -31,7 +31,7 @@ serve(async (req) => {
       throw new Error("Missing GROQ_API_KEY");
     }
     
-    const fallbackModels = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+    const fallbackModels = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"];
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
     let lastError = "";
     let resultData = null;
