@@ -239,6 +239,26 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
     }
   }, [loading, user, results, isScanning, handleDecode, jdText]);
 
+  // ── NEW: Auto-clear stale dashboard when user pastes a new JD ────────────
+  // When the jdText changes AFTER results are already rendered, reset
+  // everything so the user sees the fresh input view instead of the old one.
+  const prevJdTextRef = useRef("");
+  useEffect(() => {
+    const prev = prevJdTextRef.current;
+    prevJdTextRef.current = jdText;
+
+    // Only act when jdText changes meaningfully (not on initial mount)
+    if (prev === jdText || prev === "") return;
+
+    if (results) {
+      // New JD text detected while old dashboard is showing — clear it
+      resetResults();
+      setGapResult(null);
+      setSavedJdId(null);
+      restorationStarted.current = false;
+    }
+  }, [jdText]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // v2.9 Persistence: Save jdText to localStorage
   useEffect(() => {
     localStorage.setItem("lumina_last_jd", jdText);
