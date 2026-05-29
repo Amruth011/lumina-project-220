@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, FileText, CheckCircle2, Terminal, ArrowRight, User, Mail, Globe } from "lucide-react";
+import { Wand2, FileText, CheckCircle2, Terminal, ArrowRight, User, Mail, Globe } from "lucide-react";
 
 interface RolePreset {
   id: string;
@@ -145,7 +145,7 @@ export const ProductPreview = () => {
         {/* ── Centralized Section Header ── */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100/50">
-            <Sparkles size={11} className="text-emerald-500 animate-pulse" />
+            <Wand2 size={11} className="text-emerald-500 animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">The ATS Morphing Engine</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold text-slate-800 tracking-tight">

@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, Shield, Zap } from 'lucide-react';
+import { ArrowRight, Brain, Shield, Zap } from 'lucide-react';
 
 export const FinalCTA = () => {
   return (
@@ -23,7 +23,7 @@ export const FinalCTA = () => {
           viewport={{ once: true }}
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-lumina-teal/10 border border-lumina-teal/20 text-[10px] font-display font-bold text-lumina-teal uppercase tracking-[0.2em]"
         >
-          <Sparkles className="w-3 h-3" />
+          <Brain className="w-3 h-3 text-lumina-teal" />
           Intelligence Engine Ready
         </motion.div>
 

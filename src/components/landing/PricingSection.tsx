@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Check, Zap, ArrowRight, Sparkles } from "lucide-react";
+import { Check, Zap, ArrowRight, Coins } from "lucide-react";
 
 const plans = [
   {
@@ -92,7 +92,7 @@ export const PricingSection = () => {
         {/* ── Header ── */}
         <div className="text-center space-y-5 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100/60">
-            <Sparkles size={11} className="text-emerald-500 animate-pulse" />
+            <Coins size={11} className="text-emerald-500 animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-600">
               Pricing
             </span>
