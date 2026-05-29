@@ -57,7 +57,13 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
   // B. Fallback to dictionary matching
   if (!extractedTitle) {
     for (const item of COMMON_TITLES) {
-      if (item.keywords.some(kw => jdLower.includes(kw))) {
+      if (item.keywords.some(kw => {
+        if (kw.length <= 3) {
+          const regex = new RegExp(`\\b${kw}\\b`, 'i');
+          return regex.test(jdText);
+        }
+        return jdLower.includes(kw);
+      })) {
         extractedTitle = item.title;
         break;
       }
