@@ -73,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           console.log(`API_PROXY: Attempting with ${config.model} on ${config.url}... (Retries left: ${retries})`);
           
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 6000); // 6-second strict timeout
+          const timeoutId = setTimeout(() => controller.abort(), 45000); // 45-second timeout for large JSON payload Generation
 
           // OpenAI doesn't always support the exact same response_format params as Groq, but type: "json_object" is safe
           const groqResponse = await fetch(config.url, {

@@ -104,7 +104,40 @@ export const useDecodeJD = () => {
         const model = customProvider === "openai" ? "gpt-4o-mini" : "llama-3.3-70b-versatile";
         console.log(`API_DIRECT: Initiating client-side direct request with ${model} on ${url}...`);
 
-        const systemPrompt = `You are the Lumina Forensic Intelligence Architect. 
+
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${customKey.trim()}`
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: `ACT ON THIS JD:\n###\n${jdText.substring(0, 10000)}\n###\n\nRETURN ONLY RAW JSON MATCHING SCHEMA.` }
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.3
+          })
+        });
+
+        if (!response.ok) {
+          const errorBody = await response.text();
+          throw new Error(`Direct connection key error (${response.status}): ${errorBody.substring(0, 150)}`);
+        }
+
+        const resJson = await response.json();
+        const contentText = resJson.choices?.[0]?.message?.content;
+        if (!contentText) throw new Error("Direct API returned empty text choices.");
+
+        const startIdx = contentText.indexOf('{');
+        const endIdx = contentText.lastIndexOf('}');
+        return JSON.parse(contentText.substring(startIdx, endIdx + 1));
+      };
+
+      const systemPrompt = `You are the Lumina Forensic Intelligence Architect. 
 Your goal is to deconstruct JDs into hyper-accurate data structures.
 
 MANDATORY RULES:
@@ -149,37 +182,6 @@ RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
   "resume_help": {"keywords": ["string"], "bullets": ["string"]}
 }`;
 
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${customKey.trim()}`
-          },
-          body: JSON.stringify({
-            model: model,
-            messages: [
-              { role: "system", content: "You are the Lumina Forensic Intelligence Architect." },
-              { role: "user", content: `ACT ON THIS JD:\n###\n${jdText.substring(0, 10000)}\n###\n\nRETURN ONLY RAW JSON MATCHING SCHEMA.` }
-            ],
-            response_format: { type: "json_object" },
-            temperature: 0.3
-          })
-        });
-
-        if (!response.ok) {
-          const errorBody = await response.text();
-          throw new Error(`Direct connection key error (${response.status}): ${errorBody.substring(0, 150)}`);
-        }
-
-        const resJson = await response.json();
-        const contentText = resJson.choices?.[0]?.message?.content;
-        if (!contentText) throw new Error("Direct API returned empty text choices.");
-
-        const startIdx = contentText.indexOf('{');
-        const endIdx = contentText.lastIndexOf('}');
-        return JSON.parse(contentText.substring(startIdx, endIdx + 1));
-      };
-
       if (engineMode === "custom") {
         if (!customKey.trim()) {
           throw new Error("Lumina Auth Error: Custom API Key is missing. Click the API Configuration settings (gear icon) to input your key or switch to Sandbox Mode.");
@@ -200,7 +202,7 @@ RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
           });
           
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Timeout: Supabase function took too long")), 12000)
+            setTimeout(() => reject(new Error("Timeout: Supabase function took too long")), 45000)
           );
 
           const response = await Promise.race([invokePromise, timeoutPromise]) as { data: Record<string, unknown> | null; error: { message?: string; status?: number } | null };
@@ -225,26 +227,10 @@ RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 model: "llama-3.3-70b-versatile",
-                messages: [{ 
-                  role: "user", 
-                  content: `You are the Lumina Forensic Intelligence Architect. 
-                  Task: Decode this Job Description and return a structured forensic report.
-                  JD Text: ${jdText.substring(0, 8000)}
-                  
-                  Requirements for JSON:
-                  - grade: { score: number, letter: string, summary: string, breakdown: object, plain_english_summary: string[] }
-                  - title: string
-                  - skills: { skill: string, importance: number, category: string }[]
-                  - red_flags: { phrase: string, intensity: number, note: string }[]
-                  - recruiter_lens: { jargon: string, reality: string }[]
-                  - logistics: { salary_range: object, work_arrangement: object, responsibility_mix: object[], archetype: object }
-                  - deep_dive: { day_in_life: object[], health_radar: object, bias_analysis: object, culture_radar: object }
-                  - role_reality: object
-                  - bonus_pulse: object
-                  - interview_kit: object
-                  - resume_help: object
-                  - winning_strategy: object` 
-                }],
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: `ACT ON THIS JD:\n###\n${jdText.substring(0, 10000)}\n###\n\nRETURN ONLY RAW JSON MATCHING SCHEMA.` }
+                ],
                 response_format: { type: "json_object" }
               })
             });

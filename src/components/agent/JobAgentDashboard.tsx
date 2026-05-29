@@ -51,17 +51,22 @@ export const JobAgentDashboard: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // ── Load vault ─────────────────────────────────────────────────────────
-  const loadVault = useCallback(() => {
+  const loadVault = useCallback((forceId?: string) => {
     const resumes = getAgentResumes();
     setSavedResumes(resumes);
-    if (resumes.length > 0 && !selectedId) {
+    if (forceId) {
+      setSelectedId(forceId);
+    } else if (resumes.length > 0 && !selectedId) {
       setSelectedId(resumes[0].id);
     }
   }, [selectedId]);
 
   useEffect(() => {
     loadVault();
-    const handle = () => loadVault();
+    const handle = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      loadVault(customEvent.detail?.id);
+    };
     window.addEventListener("lumina_agent_vault_updated", handle);
     return () => window.removeEventListener("lumina_agent_vault_updated", handle);
   }, [loadVault]);

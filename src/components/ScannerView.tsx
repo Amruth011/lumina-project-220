@@ -139,7 +139,10 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
     }
   }, [activeTab]);
 
-  useEffect(() => { setSavedJdId(null); }, [results]);
+  useEffect(() => { 
+    setSavedJdId(null); 
+    setGapResult(null);
+  }, [results]);
 
   useEffect(() => {
     if (gapResult) {
