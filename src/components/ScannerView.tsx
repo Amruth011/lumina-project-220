@@ -24,6 +24,16 @@ import { GapAnalyzerSkeleton } from "./gap-analysis/GapAnalyzerSkeleton";
 import { GeneratorSkeleton } from "./resume-tailor/GeneratorSkeleton";
 import { RoadmapSkeleton } from "./roadmap/RoadmapSkeleton";
 import { VaultSkeleton } from "./dashboard/VaultSkeleton";
+import { scavengeSkills } from "@/lib/skillScavenger";
+import { generateUnifiedReport } from "@/lib/pdfExporter";
+import { HowItWorksSection } from "@/components/HowItWorksSection";
+import { EmptyState } from "./dashboard/EmptyState";
+import { ATSScoreWidget } from "./dashboard/ATSScoreWidget";
+import { LoadingSequence } from "./jd-decoder/LoadingSequence";
+import { SkeletonLoader } from "./jd-decoder/SkeletonLoader";
+import { StructuredOutput } from "./jd-decoder/StructuredOutput";
+import type { DecodeResult, ResumeGapResult } from "@/types/jd";
+import type { Tab } from "@/types/tabs";
 
 const TabLoader = ({ 
   message = "Calibrating Career Intelligence...", 
@@ -81,20 +91,6 @@ const TabLoader = ({
     </div>
   );
 };
-
-import { scavengeSkills } from "@/lib/skillScavenger";
-import { generateUnifiedReport } from "@/lib/pdfExporter";
-import { HowItWorksSection } from "@/components/HowItWorksSection";
-import { EmptyState } from "./dashboard/EmptyState";
-import { ATSScoreWidget } from "./dashboard/ATSScoreWidget";
-import { LoadingSequence } from "./jd-decoder/LoadingSequence";
-import { SkeletonLoader } from "./jd-decoder/SkeletonLoader";
-import { StructuredOutput } from "./jd-decoder/StructuredOutput";
-import type { DecodeResult, ResumeGapResult } from "@/types/jd";
-
-
-
-import type { Tab } from "@/types/tabs";
 
 interface ScannerViewProps {
   activeTab?: Tab;
