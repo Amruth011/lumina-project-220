@@ -7,6 +7,7 @@ import HowItWorks from '@/components/landing/HowItWorks';
 import FeaturesGrid from '@/components/landing/FeaturesGrid';
 
 import Testimonials from '@/components/landing/Testimonials';
+import FAQSection from '@/components/landing/FAQSection';
 import StatsSection from '@/components/landing/StatsSection';
 import PricingSection from '@/components/landing/PricingSection';
 import FinalCTA from '@/components/landing/FinalCTA';
@@ -23,6 +24,7 @@ const Index = () => {
       <HowItWorks />
 
       <Testimonials />
+      <FAQSection />
       <StatsSection />
       <PricingSection />
       <FinalCTA />
