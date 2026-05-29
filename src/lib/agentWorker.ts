@@ -39,12 +39,12 @@ function generateRef(): string {
 
 // ── Groq LLM Call ─────────────────────────────────────────────────────────
 
-async function callGroq(prompt: string): Promise<string> {
+async function callGroq(prompt: string, portalUrl?: string): Promise<string> {
   const apiKey = localStorage.getItem("lumina_groq_api_key") || "";
 
   if (!apiKey) {
     // Fallback: return a deterministic structured response if no key is set
-    return JSON.stringify(buildFallbackFieldMap());
+    return JSON.stringify(buildFallbackFieldMap(portalUrl));
   }
 
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -61,9 +61,9 @@ async function callGroq(prompt: string): Promise<string> {
     }),
   });
 
-  if (!res.ok) return JSON.stringify(buildFallbackFieldMap());
+  if (!res.ok) return JSON.stringify(buildFallbackFieldMap(portalUrl));
   const data = await res.json();
-  return data.choices?.[0]?.message?.content ?? JSON.stringify(buildFallbackFieldMap());
+  return data.choices?.[0]?.message?.content ?? JSON.stringify(buildFallbackFieldMap(portalUrl));
 }
 
 // ── Fallback Field Map ─────────────────────────────────────────────────────
@@ -73,21 +73,33 @@ interface FieldMap {
   companyGuess: string;
 }
 
-function buildFallbackFieldMap(): FieldMap {
+function buildFallbackFieldMap(portalUrl?: string): FieldMap {
+  const isLinkedIn = portalUrl && portalUrl.includes("linkedin.com");
+  const baseFields = [
+    { name: "Full Name", selector: "input[name*='name']", value: "{{fullName}}", type: "text" },
+    { name: "Email Address", selector: "input[type='email']", value: "{{email}}", type: "email" },
+    { name: "Phone Number", selector: "input[name*='phone']", value: "{{phone}}", type: "tel" },
+    { name: "Location / City", selector: "input[name*='location']", value: "{{location}}", type: "text" },
+    { name: "LinkedIn URL", selector: "input[name*='linkedin']", value: "{{linkedin}}", type: "url" },
+    { name: "GitHub Profile", selector: "input[name*='github']", value: "{{github}}", type: "url" },
+    { name: "Resume / CV Upload", selector: "input[type='file']", value: "{{resumePDF}}", type: "file" },
+    { name: "Professional Summary", selector: "textarea[name*='summary']", value: "{{summary}}", type: "textarea" },
+    { name: "Work Experience", selector: "textarea[name*='experience']", value: "{{experience}}", type: "textarea" },
+    { name: "Skills", selector: "input[name*='skills']", value: "{{skills}}", type: "text" },
+  ];
+
+  if (isLinkedIn) {
+    baseFields.push(
+      { name: "Years of Generative AI Experience", selector: "input[name*='generative']", value: "{{genAIYears}}", type: "text" },
+      { name: "Years of Machine Learning Experience", selector: "input[name*='learning']", value: "{{mlYears}}", type: "text" },
+      { name: "Current / Last CTC", selector: "input[name*='ctc']", value: "{{ctc}}", type: "text" },
+      { name: "Notice Period / Immediate Joiner Status", selector: "input[name*='notice']", value: "{{noticePeriod}}", type: "text" }
+    );
+  }
+
   return {
-    fields: [
-      { name: "Full Name", selector: "input[name*='name']", value: "{{fullName}}", type: "text" },
-      { name: "Email Address", selector: "input[type='email']", value: "{{email}}", type: "email" },
-      { name: "Phone Number", selector: "input[name*='phone']", value: "{{phone}}", type: "tel" },
-      { name: "Location / City", selector: "input[name*='location']", value: "{{location}}", type: "text" },
-      { name: "LinkedIn URL", selector: "input[name*='linkedin']", value: "{{linkedin}}", type: "url" },
-      { name: "GitHub Profile", selector: "input[name*='github']", value: "{{github}}", type: "url" },
-      { name: "Resume / CV Upload", selector: "input[type='file']", value: "{{resumePDF}}", type: "file" },
-      { name: "Professional Summary", selector: "textarea[name*='summary']", value: "{{summary}}", type: "textarea" },
-      { name: "Work Experience", selector: "textarea[name*='experience']", value: "{{experience}}", type: "textarea" },
-      { name: "Skills", selector: "input[name*='skills']", value: "{{skills}}", type: "text" },
-    ],
-    companyGuess: "Target Company",
+    fields: baseFields,
+    companyGuess: isLinkedIn ? "Deloitte India" : "Target Company",
   };
 }
 
@@ -109,6 +121,10 @@ function resolveValue(template: string, resume: SavedAgentResume): string {
     "{{summary}}": r.professional_summary?.slice(0, 300) ?? "",
     "{{experience}}": r.experience?.map((e) => `${e.heading}: ${e.content}`).join("\n") ?? "",
     "{{skills}}": r.skills_section?.slice(0, 15).join(", ") ?? "",
+    "{{genAIYears}}": "2 years (Custom Agentic AI & LLM Orchestration)",
+    "{{mlYears}}": "2 years (B.Tech AI & DS + Internships)",
+    "{{ctc}}": "Negotiable (As per market standard / competitive package)",
+    "{{noticePeriod}}": "Immediate Joiner (0 days notice)",
   };
 
   let resolved = template;
@@ -161,11 +177,11 @@ Candidate Profile Summary:
 
   let fieldMap: FieldMap;
   try {
-    const raw = await callGroq(prompt);
+    const raw = await callGroq(prompt, portalUrl);
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    fieldMap = jsonMatch ? JSON.parse(jsonMatch[0]) : buildFallbackFieldMap();
+    fieldMap = jsonMatch ? JSON.parse(jsonMatch[0]) : buildFallbackFieldMap(portalUrl);
   } catch {
-    fieldMap = buildFallbackFieldMap();
+    fieldMap = buildFallbackFieldMap(portalUrl);
   }
 
   await sleep(300);
