@@ -128,16 +128,6 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
   const [jdUrl, setJdUrl] = useState("");
 
   // ── Engine Configuration States ──
-  const [engineMode, setEngineMode] = useState(() => localStorage.getItem("lumina_engine_mode") || "default");
-  const [customProvider, setCustomProvider] = useState(() => localStorage.getItem("lumina_custom_provider") || "groq");
-
-  // Keep engineMode and customProvider updated when tab is active
-  useEffect(() => {
-    if (activeTab === "decode") {
-      setEngineMode(localStorage.getItem("lumina_engine_mode") || "default");
-      setCustomProvider(localStorage.getItem("lumina_custom_provider") || "groq");
-    }
-  }, [activeTab]);
 
   useEffect(() => { 
     setSavedJdId(null); 
@@ -335,12 +325,12 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                           {/* Engine Indicator */}
                           <div className="flex items-center gap-3 pl-3">
                             <div className="w-8 h-8 rounded-xl bg-lumina-teal/10 border border-lumina-teal/20 flex items-center justify-center">
-                              <Shield size={16} className={engineMode === "heuristic" ? "text-amber-500 animate-pulse" : "text-lumina-teal"} />
+                              <Shield size={16} className="text-lumina-teal" />
                             </div>
                             <div className="text-left">
                               <span className="text-[9px] font-black uppercase tracking-widest text-slate-500/80 block">Forensic Engine Active</span>
                               <span className="text-[11px] font-extrabold text-slate-900">
-                                {engineMode === "default" ? "Total Server Cloud" : engineMode === "custom" ? `Direct Browser (${customProvider})` : "Sandbox Heuristic (Offline)"}
+                                Total Server Cloud
                               </span>
                             </div>
                           </div>

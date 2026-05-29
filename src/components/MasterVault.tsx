@@ -161,9 +161,6 @@ export const MasterVault = () => {
   const userId = user?.id;
 
   // ── Engine Configuration States ──
-  const [engineMode, setEngineMode] = useState(() => localStorage.getItem("lumina_engine_mode") || "default");
-  const [customProvider, setCustomProvider] = useState(() => localStorage.getItem("lumina_custom_provider") || "groq");
-  const [customKey, setCustomKey] = useState(() => localStorage.getItem("lumina_custom_key") || "");
   const [testingDiagnostics, setTestingDiagnostics] = useState(false);
   const [diagnosticStatus, setDiagnosticStatus] = useState({
     supabase: "idle",
@@ -171,25 +168,8 @@ export const MasterVault = () => {
     groq: "idle"
   });
 
-  const handleEngineModeChange = (mode: string) => {
-    localStorage.setItem("lumina_engine_mode", mode);
-    setEngineMode(mode);
-    toast.success(`Engine changed: ${mode === "default" ? "Server Cloud" : mode === "custom" ? "Browser Custom Key" : "Sandbox Heuristic"}`);
-  };
-
-  const handleCustomProviderChange = (provider: string) => {
-    localStorage.setItem("lumina_custom_provider", provider);
-    setCustomProvider(provider);
-  };
-
-  const handleCustomKeyChange = (key: string) => {
-    localStorage.setItem("lumina_custom_key", key);
-    setCustomKey(key);
-  };
-
   const runDiagnosticsTest = async () => {
     setTestingDiagnostics(true);
-    setDiagnosticStatus({ supabase: "checking", vercel: "checking", groq: "checking" });
     
     // 1. Supabase Check
     let sbStatus = "ERROR";

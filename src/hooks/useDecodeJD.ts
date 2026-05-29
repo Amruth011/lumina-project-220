@@ -66,7 +66,7 @@ export const useDecodeJD = () => {
 
     try {
       // ── READ CONFIGURATION SETTINGS ──
-      const engineMode = localStorage.getItem("lumina_engine_mode") || "default";
+      const engineMode = "default";
       const customProvider = localStorage.getItem("lumina_custom_provider") || "groq";
       const customKey = localStorage.getItem("lumina_custom_key") || "";
 
