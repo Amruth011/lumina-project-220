@@ -984,16 +984,16 @@ ${ragContext}${careerPivotDirective}
 ### SECTION MANDATES:
 - TONE STRATEGY: Adhere strictly to the ${tone} tone guidelines.
 - PROFESSIONAL SUMMARY: ${summaryPromptRule} Focus on the candidate's actual documented expertise and direct alignment with the target JD. Avoid generic puffery.
-- SKILLS SECTION (CRITICAL — ATS PRIORITY): This is the most ATS-critical section. You MUST follow these rules:
-  1. ANALYZE the target JD's Key Skills & Keywords list (provided above) FIRST. Extract every technical skill, tool, language, platform, and methodology explicitly mentioned in the JD.
-  2. CROSS-REFERENCE with the candidate's vault. Only include skills that exist in the candidate's actual profile.
-  3. CATEGORIES must match the JD's domain — do NOT use generic hardcoded categories. Derive category names from the JD's focus:
-     - If JD is about Data Engineering/Production Support → use: "Languages", "Data Engineering & Pipelines", "Production Support & DevOps", "Monitoring & Tools"
-     - If JD is about ML/AI → use: "Languages", "AI & Machine Learning", "Cloud & MLOps", "Tools & Frameworks"
-     - If JD is about Full Stack → use: "Languages", "Frontend", "Backend & APIs", "Cloud & DevOps"
-     - Otherwise derive categories organically from the JD's emphasis.
-  4. JD keywords MUST appear first in each category list. Profile-only skills that are NOT in the JD should appear last or be omitted if space is tight.
-  5. NEVER include skills that have zero relevance to the JD (e.g., do not list LangChain/ChromaDB for a Production Support JD).
+- SKILLS SECTION (CRITICAL — 100% ATS OPTIMIZED): This is the highest-priority ATS section. You MUST follow these rules:
+  1. GENERATE skills PURELY from the target JD's Key Skills & Keywords. The JD is the single source of truth for what appears here. Extract EVERY technical skill, tool, language, platform, framework, and methodology mentioned in the JD — explicitly or implied.
+  2. DO NOT restrict skills to only what exists in the candidate's vault. The goal is 100% ATS keyword match with the JD. Include all JD-required skills regardless of vault content.
+  3. CATEGORIES must be derived dynamically from the JD's domain — NEVER use hardcoded generic categories:
+     - Data Engineering / Production Support JD → "Languages", "Data Engineering & Pipelines", "Production Support & DevOps", "Monitoring & Tools"
+     - ML / AI JD → "Languages", "AI & Machine Learning", "Cloud & MLOps", "Frameworks & Tools"
+     - Full Stack JD → "Languages", "Frontend", "Backend & APIs", "Cloud & DevOps"
+     - For any other domain → derive 3-4 category names organically from the JD's emphasis and keywords.
+  4. ORDERING within each category: JD-explicit keywords appear FIRST. Then add closely adjacent skills from the candidate's vault that support the JD domain.
+  5. NEVER include skills irrelevant to the JD (e.g., do not list LangChain/EasyOCR for a Production Support JD, do not list React for a Data Science JD).
 - EXPERIENCE/PROJECTS/PRODUCTS: Each item MUST contain EXACTLY the requested number of bullets (${experienceBullets} for experience, ${projectLines} for projects, ${productLines} for products). You must distill and distribute the available data points across exactly this number of bullets, ensuring they are rich, distinct, and completely free of filler or duplication. Focus on technical execution, system context, and scope of responsibility to achieve the exact bullet count without fabricating metrics or inventing facts.
 - STRICT BULLET POINT LINE LENGTH MANDATE: Every generated bullet point (for Experience, Projects, Products, and Leadership sections) MUST fall strictly into one of the following perfect-line character length ranges (including spaces) so they beautifully and fully fill visual lines on a standard A4 PDF page without creating awkward visual orphans/hanging words:
   * For 1 full line: EXACTLY 110 to 125 characters.
