@@ -116,7 +116,14 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
   const [savingJd, setSavingJd] = useState(false);
   const [savedJdId, setSavedJdId] = useState<string | null>(null);
   const [userResumeText, setUserResumeText] = useState("");
-  const [gapResult, setGapResult] = useState<ResumeGapResult | null>(null);
+  const [gapResult, setGapResult] = useState<ResumeGapResult | null>(() => {
+    try {
+      const stored = localStorage.getItem("lumina_last_gap_result");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
   const [inputMode, setInputMode] = useState<"text" | "url">("text");
   const [jdUrl, setJdUrl] = useState("");
 
@@ -133,8 +140,14 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
   }, [activeTab]);
 
   useEffect(() => { setSavedJdId(null); }, [results]);
-  
-  const restorationStarted = useRef(false);
+
+  useEffect(() => {
+    if (gapResult) {
+      localStorage.setItem("lumina_last_gap_result", JSON.stringify(gapResult));
+    } else {
+      localStorage.removeItem("lumina_last_gap_result");
+    }
+  }, [gapResult]);
 
   const handleSaveJd = async () => {
     if (!user) { toast.info("Sign in to save your decoded JDs."); navigate("/auth"); return; }
@@ -194,6 +207,8 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
   const handleReset = useCallback(() => {
     resetResults();
     localStorage.removeItem("lumina_last_jd");
+    localStorage.removeItem("lumina_last_results");
+    localStorage.removeItem("lumina_last_gap_result");
     setJdText("");
     setSavedJdId(null);
     setGapResult(null);
@@ -227,37 +242,6 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
     localStorage.setItem("lumina_history", JSON.stringify(history));
     window.dispatchEvent(new Event("lumina_history_updated"));
   };
-
-  // v2.9 Persistence: Restore results on mount if jdText exists
-  useEffect(() => {
-    if (!loading && user && jdText.trim().length >= 20 && !results && !isScanning && !restorationStarted.current) {
-      restorationStarted.current = true;
-      const timer = setTimeout(() => {
-        handleDecode();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [loading, user, results, isScanning, handleDecode, jdText]);
-
-  // ── NEW: Auto-clear stale dashboard when user pastes a new JD ────────────
-  // When the jdText changes AFTER results are already rendered, reset
-  // everything so the user sees the fresh input view instead of the old one.
-  const prevJdTextRef = useRef("");
-  useEffect(() => {
-    const prev = prevJdTextRef.current;
-    prevJdTextRef.current = jdText;
-
-    // Only act when jdText changes meaningfully (not on initial mount)
-    if (prev === jdText || prev === "") return;
-
-    if (results) {
-      // New JD text detected while old dashboard is showing — clear it
-      resetResults();
-      setGapResult(null);
-      setSavedJdId(null);
-      restorationStarted.current = false;
-    }
-  }, [jdText]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // v2.9 Persistence: Save jdText to localStorage
   useEffect(() => {

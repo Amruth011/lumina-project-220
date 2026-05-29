@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { DecodeResult } from "@/types/jd";
@@ -8,8 +8,23 @@ import { decodeJDHeuristic } from "@/lib/heuristicDecoder";
 
 export const useDecodeJD = () => {
   const [isScanning, setIsScanning] = useState(false);
-  const [results, setResults] = useState<DecodeResult | null>(null);
+  const [results, setResults] = useState<DecodeResult | null>(() => {
+    try {
+      const stored = localStorage.getItem("lumina_last_results");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
   const [wasCached, setWasCached] = useState(false);
+
+  useEffect(() => {
+    if (results) {
+      localStorage.setItem("lumina_last_results", JSON.stringify(results));
+    } else {
+      localStorage.removeItem("lumina_last_results");
+    }
+  }, [results]);
 
   const resetResults = () => setResults(null);
 
@@ -30,6 +45,24 @@ export const useDecodeJD = () => {
     setIsScanning(true);
     setResults(null);
     setWasCached(false);
+
+    // ── CHECK LOCAL STORAGE CACHE FIRST ──
+    if (!forceRefresh) {
+      try {
+        const cached = await getCachedDecode(jdText);
+        if (cached) {
+          setResults(cached);
+          setWasCached(true);
+          setIsScanning(false);
+          toast.success(`Forensic Intelligence Active: ${cached.title} (Loaded from cache)`, {
+            duration: 3000
+          });
+          return;
+        }
+      } catch (err) {
+        console.warn("Lumina Cache Read Exception:", err);
+      }
+    }
 
     try {
       // ── READ CONFIGURATION SETTINGS ──
