@@ -140,11 +140,14 @@ const targetUrl = process.argv[2] || "https://www.linkedin.com/jobs/view/4409245
     // 2. Process and Fill custom questions INSIDE the modal dialog
     await fillFormInputs(modal);
 
-    // 3. Look for operational buttons INSIDE the modal dialog
-    const nextBtn = await modal.$('button:has-text("Next"), button[aria-label*="Next"]');
-    const reviewBtn = await modal.$('button:has-text("Review"), button[aria-label*="Review"]');
-    const submitBtn = await modal.$('button:has-text("Submit application"), button[aria-label*="Submit application"]');
-    const doneBtn = await modal.$('button:has-text("Done"), button[aria-label*="Dismiss"]');
+    // 3. Look for operational buttons INSIDE the modal footer (or action bar)
+    const footer = await modal.$('footer, .jobs-easy-apply-modal__footer, .artdeco-modal__actionbar');
+    const btnContainer = footer || modal;
+
+    const nextBtn = await btnContainer.$('button:has-text("Next"), button[aria-label*="Next"]');
+    const reviewBtn = await btnContainer.$('button:has-text("Review"), button[aria-label*="Review"]');
+    const submitBtn = await btnContainer.$('button:has-text("Submit application"), button[aria-label*="Submit application"]');
+    const doneBtn = await btnContainer.$('button:has-text("Done"), button[aria-label*="Dismiss"]');
 
     if (submitBtn) {
       console.log("DETECTED: 'Submit application' button inside modal. Triggering final submission...");
@@ -233,10 +236,10 @@ async function fillFormInputs(page) {
 
         // Optimize CTC
         if (label.includes("ctc") || label.includes("salary") || label.includes("compensation")) {
-          console.log(`[Injecting] "${rawLabel.trim()}" -> "Negotiable"`);
+          console.log(`[Injecting] "${rawLabel.trim()}" -> "5.0"`);
           await input.focus();
           await input.fill("");
-          await input.type("Negotiable");
+          await input.type("5.0");
           continue;
         }
 
