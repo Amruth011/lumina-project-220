@@ -406,7 +406,13 @@ const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3, experienceBu
     const sentences = normalized.match(/[^.!?]+[.!?]+(\s|$)/g) || [normalized];
     const cleanedSentences = sentences.map(s => s.trim()).filter(Boolean);
 
-    const finalSentences = cleanedSentences.slice(0, targetSummaryLines).map(s => {
+    // If LLM returned fewer sentences than requested, keep ALL of them (don't discard content)
+    // Only slice if we have MORE than requested
+    const toUse = cleanedSentences.length > targetSummaryLines
+      ? cleanedSentences.slice(0, targetSummaryLines)
+      : cleanedSentences;
+
+    const finalSentences = toUse.map(s => {
       let clean = s.trim();
       if (!clean.endsWith(".") && !clean.endsWith("!") && !clean.endsWith("?")) {
         clean += ".";
@@ -797,14 +803,19 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     let summarySchemaRule = "";
 
     if (summaryLines === 1) {
-      summaryPromptRule = `You MUST synthesize a high-impact, elite, value-first professional summary of EXACTLY 1 powerful sentence. Avoid empty buzzwords. Follow this formula: [Specialist Title] specializing in [Core Tech Stack/Methodologies] with a proven track record of [High-Level Quantitative Career Impact]. Make it compelling and rich in detail.`;
-      summarySchemaRule = `Ensure there is exactly 1 substantial sentence.`;
+      summaryPromptRule = `Write EXACTLY 1 powerful, elite professional summary sentence using this formula: "[Role Title] specializing in [Tech/Methods] with a proven track record of [Quantified Impact]." Do NOT use buzzwords like 'passionate', 'versatile', 'driven'. Reference the target JD's exact requirements.`;
+      summarySchemaRule = `Write exactly 1 sentence ending with a period. No sub-clauses that read as separate sentences.`;
     } else if (summaryLines === 2) {
-      summaryPromptRule = `You MUST synthesize a high-impact, elite, value-first professional summary of EXACTLY 2 powerful sentences. Do NOT use empty buzzwords like 'passionate self-starter'. Follow this formula: Sentence 1: [Specialist Title] specializing in [Core Tech Stack/Methodologies] with a proven track record of [High-Level Quantitative Career Impact]. Sentence 2: Connect your core expertise directly to the target JD's key requirements.`;
-      summarySchemaRule = `Ensure there are exactly 2 sentences separated by a period and space.`;
+      summaryPromptRule = `Write EXACTLY 2 distinct sentences for the professional summary. Each sentence MUST end with a period. Sentence 1: "[Role Title] specializing in [Core Tech Stack] with [Quantified Career Impact]." Sentence 2: "[Specific connection to the target JD's requirements, naming 2-3 exact skills from the JD]." Do NOT merge them with commas or conjunctions — they must be two separate sentences ending with periods.`;
+      summarySchemaRule = `Exactly 2 sentences. Each ends with a period. Together they read as: Who you are → What you bring to THIS role.`;
     } else {
-      summaryPromptRule = `You MUST synthesize a high-impact, elite, value-first professional summary of EXACTLY ${summaryLines} powerful sentences. Do NOT use empty buzzwords. Focus on specialization, core domain expertise, and high-level quantifiable outcomes. Make the sentences flow naturally and powerfully to capture the recruiter's attention.`;
-      summarySchemaRule = `Ensure there are exactly ${summaryLines} sentences separated by periods and spaces.`;
+      summaryPromptRule = `Write EXACTLY ${summaryLines} distinct, powerful sentences for the professional summary. Each sentence MUST end with a period. DO NOT merge all ideas into one long comma-separated sentence. Structure:
+- Sentence 1: Who you are — your exact title and core technical specialization from the vault.
+- Sentence 2: What you've done — your highest-impact accomplishments grounded in actual project/experience data from the vault.
+${summaryLines >= 3 ? `- Sentence 3: Why you for THIS role — connect your specific skills directly to the target JD keywords and requirements.` : ""}
+${summaryLines >= 4 ? `- Sentence 4: Add a forward-looking or domain-leadership statement that elevates the candidate above competitors.` : ""}
+Avoid generic buzzwords. Every sentence must be grounded in real profile facts.`;
+      summarySchemaRule = `Exactly ${summaryLines} separate sentences, each ending with a period. Count the periods — there must be exactly ${summaryLines}.`;
     }
 
     const experienceItems = vaultItems.filter(item => item.type === 'professional');
