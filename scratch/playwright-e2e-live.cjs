@@ -32,8 +32,8 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // E2E Test Configurations
 const TEST_EMAIL = 'tester.lumina@gmail.com';
 const TEST_PASSWORD = 'TestPassword123!';
-const LIVE_URL = 'https://lumina-jd-scanner.vercel.app';
-const ARTIFACTS_DIR = 'C:/Users/shara/.gemini/antigravity/brain/bafae9e6-7523-4cb0-acfb-65b2618d5805';
+const LIVE_URL = 'http://localhost:8080';
+const ARTIFACTS_DIR = 'C:/Users/shara/.gemini/antigravity/brain/a994a244-9a5a-4d17-8608-1fe027183070';
 
 // Mock JD to decode
 const MOCK_JD = `We are looking for a Senior Full Stack Engineer to join our team.
