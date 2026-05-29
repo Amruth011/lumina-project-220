@@ -118,13 +118,6 @@ export const JobAgentDashboard: React.FC = () => {
     setResult(null);
     setIsRunning(true);
 
-    // Automatically open the target application portal in a new tab
-    try {
-      window.open(portalUrl, "_blank");
-    } catch (err) {
-      console.warn("Popup blocked by browser. Opening page inline or proceeding with simulation.", err);
-    }
-
     try {
       const finalResult = await runAgentJob(selected, portalUrl, (entry) => {
         setLogs((prev) => [...prev, entry]);
