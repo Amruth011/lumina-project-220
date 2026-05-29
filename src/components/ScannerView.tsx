@@ -122,6 +122,7 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
   });
   const [inputMode, setInputMode] = useState<"text" | "url">("text");
   const [jdUrl, setJdUrl] = useState("");
+  const [bypassCache, setBypassCache] = useState(false);
 
   // ── Engine Configuration States ──
 
@@ -191,8 +192,8 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
     }
     console.log("Decoding started for Lumina 2.0...");
     resetResults();
-    await decodeJD(jdText);
-  }, [user, navigate, decodeJD, resetResults, jdText]);
+    await decodeJD(jdText, bypassCache);
+  }, [user, navigate, decodeJD, resetResults, jdText, bypassCache]);
 
   const handleReset = useCallback(() => {
     resetResults();
@@ -202,6 +203,7 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
     setJdText("");
     setSavedJdId(null);
     setGapResult(null);
+    setBypassCache(false);
     toast.success("Forensic workspace reset successfully.");
   }, [resetResults]);
 
@@ -281,16 +283,29 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                     {!results && (
                       <div className="space-y-4">
                         <GlassTextArea value={jdText} onChange={setJdText} isScanning={isScanning} />
-                        <div className="flex justify-between items-center px-4">
-                          <span className={`text-[10px] font-black uppercase tracking-widest ${jdText.length > 15000 ? 'text-red-500' : 'text-muted-foreground/40'}`}>
-                            {jdText.length.toLocaleString()} / 15,000 Characters
-                          </span>
-                          {jdText.length > 15000 && (
-                            <span className="text-[10px] font-black uppercase tracking-widest text-red-500 animate-pulse">
-                              Limit Crossed
-                            </span>
-                          )}
-                        </div>
+                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-4">
+                           <span className={`text-[10px] font-black uppercase tracking-widest ${jdText.length > 15000 ? 'text-red-500' : 'text-muted-foreground/40'}`}>
+                             {jdText.length.toLocaleString()} / 15,000 Characters
+                           </span>
+
+                           <label className="flex items-center gap-2 cursor-pointer select-none group">
+                             <input 
+                               type="checkbox"
+                               checked={bypassCache}
+                               onChange={(e) => setBypassCache(e.target.checked)}
+                               className="w-3.5 h-3.5 rounded border-slate-300 text-lumina-teal focus:ring-lumina-teal/20 cursor-pointer accent-lumina-teal"
+                             />
+                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600 transition-colors">
+                               🔄 Force Fresh Decode (Skip Cache)
+                             </span>
+                           </label>
+
+                           {jdText.length > 15000 && (
+                             <span className="text-[10px] font-black uppercase tracking-widest text-red-500 animate-pulse">
+                               Limit Crossed
+                             </span>
+                           )}
+                         </div>
 
                         <motion.div
                           initial={{ opacity: 0 }}

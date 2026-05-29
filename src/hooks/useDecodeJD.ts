@@ -202,7 +202,7 @@ RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
           });
           
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Timeout: Supabase function took too long")), 45000)
+            setTimeout(() => reject(new Error("Timeout: Supabase function took too long")), 12000)
           );
 
           const response = await Promise.race([invokePromise, timeoutPromise]) as { data: Record<string, unknown> | null; error: { message?: string; status?: number } | null };
@@ -222,9 +222,13 @@ RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
           const errMsg = (error as { message?: string })?.message || '';
           console.warn("Lumina Engine: Edge Function error. Switching to Vercel API Proxy...", errMsg);
           try {
+            const apiController = new AbortController();
+            const apiTimeoutId = setTimeout(() => apiController.abort(), 15000); // 15s timeout for Vercel proxy fallback
+
             const apiResponse = await fetch("/api/analyze", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
+              signal: apiController.signal,
               body: JSON.stringify({
                 model: "llama-3.1-8b-instant",
                 messages: [
@@ -234,6 +238,7 @@ RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
                 response_format: { type: "json_object" }
               })
             });
+            clearTimeout(apiTimeoutId);
             if (apiResponse.ok) {
               const fallbackData = await apiResponse.json();
               if (fallbackData?.choices?.[0]?.message?.content) {
@@ -605,14 +610,29 @@ RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
       const errMsg = err instanceof Error ? err.message : String(err);
       console.error("── LUMINA FORENSIC CRASH DETECTED ──", errMsg);
       
-      // Proactively notify UI to display the connection settings & diagnostics panel
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("lumina_scan_crashed"));
-      }
+      try {
+        console.log("── TRIGGERING AUTOMATIC RESILIENCE FALLBACK TO SANDBOX ENGINE ──");
+        const result = decodeJDHeuristic(jdText);
+        
+        await setCachedDecode(jdText, result);
+        clearResumeAnalysisCache();
+        
+        if (typeof window !== "undefined" && window.sessionStorage) {
+          sessionStorage.removeItem("current_roadmap_id");
+          sessionStorage.removeItem("current_roadmap_jd_title");
+        }
 
-      toast.error(errMsg, {
-        duration: 7000
-      });
+        setResults(result);
+        setWasCached(false);
+        
+        toast.warning("AI connection busy. Loaded offline forensic intelligence instead.", {
+          description: "This allows you to continue working with zero friction.",
+          duration: 7000
+        });
+      } catch (fallbackErr) {
+        console.error("Resilience Sandbox fallback failed as well:", fallbackErr);
+        toast.error("Lumina Forensic Crash: " + errMsg, { duration: 7000 });
+      }
       setIsScanning(false);
     } finally {
       setIsScanning(false);
