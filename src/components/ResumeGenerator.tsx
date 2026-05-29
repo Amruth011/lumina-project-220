@@ -984,6 +984,16 @@ ${ragContext}${careerPivotDirective}
 ### SECTION MANDATES:
 - TONE STRATEGY: Adhere strictly to the ${tone} tone guidelines.
 - PROFESSIONAL SUMMARY: ${summaryPromptRule} Focus on the candidate's actual documented expertise and direct alignment with the target JD. Avoid generic puffery.
+- SKILLS SECTION (CRITICAL — ATS PRIORITY): This is the most ATS-critical section. You MUST follow these rules:
+  1. ANALYZE the target JD's Key Skills & Keywords list (provided above) FIRST. Extract every technical skill, tool, language, platform, and methodology explicitly mentioned in the JD.
+  2. CROSS-REFERENCE with the candidate's vault. Only include skills that exist in the candidate's actual profile.
+  3. CATEGORIES must match the JD's domain — do NOT use generic hardcoded categories. Derive category names from the JD's focus:
+     - If JD is about Data Engineering/Production Support → use: "Languages", "Data Engineering & Pipelines", "Production Support & DevOps", "Monitoring & Tools"
+     - If JD is about ML/AI → use: "Languages", "AI & Machine Learning", "Cloud & MLOps", "Tools & Frameworks"
+     - If JD is about Full Stack → use: "Languages", "Frontend", "Backend & APIs", "Cloud & DevOps"
+     - Otherwise derive categories organically from the JD's emphasis.
+  4. JD keywords MUST appear first in each category list. Profile-only skills that are NOT in the JD should appear last or be omitted if space is tight.
+  5. NEVER include skills that have zero relevance to the JD (e.g., do not list LangChain/ChromaDB for a Production Support JD).
 - EXPERIENCE/PROJECTS/PRODUCTS: Each item MUST contain EXACTLY the requested number of bullets (${experienceBullets} for experience, ${projectLines} for projects, ${productLines} for products). You must distill and distribute the available data points across exactly this number of bullets, ensuring they are rich, distinct, and completely free of filler or duplication. Focus on technical execution, system context, and scope of responsibility to achieve the exact bullet count without fabricating metrics or inventing facts.
 - STRICT BULLET POINT LINE LENGTH MANDATE: Every generated bullet point (for Experience, Projects, Products, and Leadership sections) MUST fall strictly into one of the following perfect-line character length ranges (including spaces) so they beautifully and fully fill visual lines on a standard A4 PDF page without creating awkward visual orphans/hanging words:
   * For 1 full line: EXACTLY 110 to 125 characters.
@@ -998,7 +1008,7 @@ Synthesize the resume following this sequence of enabled sections: ${enabledSect
 Return ONLY a JSON object matching this exact schema:
 {
   "professional_summary": "[Synthesize summary based on facts. ${summarySchemaRule}]",
-  "skills_section": ["Languages: list...", "AI & Machine Learning: list...", "Cloud & Tools: list..."],
+  "skills_section": ["[JD-derived Category 1]: [JD keywords first, then profile skills]", "[JD-derived Category 2]: [JD keywords first, then profile skills]", "[JD-derived Category 3]: [JD keywords first, then profile skills]"],
   "experience": [{"heading": "Role @ Company - Mode (Location) [or Role @ Company - Remote]", "content": "Start Date – End Date", "bullets": ["..."]}],
   "products": [{"heading": "Product/Startup Name - Tech Stack", "content": "Year or Status | Link(s)", "bullets": ["..."]}],
   "projects": [{"heading": "Project Name - Tech Stack", "content": "Year or Status | Link(s)", "bullets": ["..."]}],
