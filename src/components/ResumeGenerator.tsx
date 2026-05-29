@@ -214,6 +214,7 @@ interface ArchiveRecord {
     experienceBullets?: number;
     projectLines?: number;
     productLines?: number;
+    tailorEngine?: string;
   };
 }
 
@@ -549,6 +550,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     github: ""
   });
   const [tone, setTone] = useState<"Professional" | "Modern" | "Aggressive">("Modern");
+  const [tailorEngine, setTailorEngine] = useState<"speed" | "quality">("speed");
   const [clFocus, setClFocus] = useState<"Technical" | "Leadership" | "Cultural">("Technical");
   const [clLength, setClLength] = useState<"Concise" | "Detailed">("Concise");
   const [addingSection, setAddingSection] = useState<'experience' | 'projects' | 'education' | 'certifications' | null>(null);
@@ -636,7 +638,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     try {
       const { data, error } = await supabase
         .from("generated_resumes")
-        .select("id, job_title, status, updated_at, content, header_data")
+        .select("id, job_title, status, updated_at, content, header_data, settings")
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
 
@@ -688,6 +690,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
       if (record.settings.experienceBullets) setExperienceBullets(Number(record.settings.experienceBullets));
       if (record.settings.projectLines) setProjectLines(Number(record.settings.projectLines));
       if (record.settings.productLines) setProductLines(Number(record.settings.productLines));
+      if (record.settings.tailorEngine) setTailorEngine(record.settings.tailorEngine as "speed" | "quality");
     }
     
     setIsOpen(true);
@@ -1038,10 +1041,9 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
 
       const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
       let resultText = "";
-      const models = [
-        "llama-3.3-70b-versatile",    // High intelligence (Standard / Primary)
-        "llama-3.1-8b-instant"        // Instant baseline fallback
-      ];
+      const models = tailorEngine === "speed"
+        ? ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"]
+        : ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
       let lastError = "";
 
       for (let i = 0; i < models.length; i++) {
@@ -1666,7 +1668,8 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
           summaryLines,
           experienceBullets,
           projectLines,
-          productLines
+          productLines,
+          tailorEngine
         }
       } as any, { onConflict: 'user_id,job_title' }).select("id"); // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -3168,6 +3171,28 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
                         <input type="number" min="7" max="14" value={bodyFontSize} onChange={e => setBodyFontSize(Number(e.target.value))} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-black shadow-sm focus:ring-2 ring-lumina-teal/20 transition-all outline-none" />
                       </div>
                     </div>
+                  </div>
+
+                  <div className="space-y-2 mb-4 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
+                      <span>Tailoring Engine</span>
+                      <span className="px-1.5 py-0.5 rounded bg-lumina-teal/10 text-lumina-teal text-[8px] font-black uppercase">
+                        {tailorEngine === "speed" ? "Fast" : "Deep"}
+                      </span>
+                    </label>
+                    <select 
+                      value={tailorEngine} 
+                      onChange={(e) => setTailorEngine(e.target.value as "speed" | "quality")}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 ring-lumina-teal/20 transition-all cursor-pointer shadow-sm text-slate-800"
+                    >
+                      <option value="speed">⚡ Blazing Fast Mode (Llama-3.1-8B)</option>
+                      <option value="quality">🧠 Deep Intelligence Mode (Llama-3.3-70B)</option>
+                    </select>
+                    <p className="text-[9px] text-slate-400 leading-relaxed px-1">
+                      {tailorEngine === "speed" 
+                        ? "Optimized for speed. Generates customized resume in ~2-3 seconds with high reliability." 
+                        : "Optimized for maximum accuracy and rich vocabulary. Takes ~15-20 seconds."}
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-6">
