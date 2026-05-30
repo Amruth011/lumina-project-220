@@ -800,6 +800,10 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
       });
       return;
     }
+    const targetJdTitle = jdTitle || "Target Role";
+    const targetJdSkills = (jdSkills || []).map(s => `${s.skill} (Importance: ${s.importance})`).join(', ') || "None specified.";
+    const targetCompany = companyName || "Target Company";
+
     setIsGenerating(true);
 
     let summaryPromptRule = "";
@@ -865,10 +869,6 @@ Avoid generic buzzwords. Every sentence must be grounded in real profile facts.`
         return parts.join('\n');
       }).join('\n\n');
     };
-
-    const targetJdTitle = jdTitle || "Target Role";
-    const targetJdSkills = (jdSkills || []).map(s => `${s.skill} (Importance: ${s.importance})`).join(', ') || "None specified.";
-    const targetCompany = companyName || "Target Company";
 
     // ── RAG PHASE: Semantic Vault Matching & Career Pivot Detection ──
     let ragContext = "";
