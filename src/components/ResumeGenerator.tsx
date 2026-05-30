@@ -1013,7 +1013,7 @@ ${serializeVaultItems(awardItems)}
 Title: ${targetJdTitle} | Company: ${targetCompany}
 Skills: ${targetJdSkills}
 
-Return ONLY valid JSON. No markdown, no comments.`;
+Return ONLY valid JSON. No markdown, no comments.`
 
       const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
       let resultText = "";
@@ -1030,7 +1030,7 @@ Return ONLY valid JSON. No markdown, no comments.`;
           if (i > 0) toast.loading(`Switching to fallback engine: ${model}...`, { id: "gen-toast" });
 
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 35000); // 35-second client-side timeout
+          const timeoutId = setTimeout(() => controller.abort(), 55000); // 55-second client-side timeout for 70B + 8192 tokens
 
           let rawData = null;
           let invokeError = null;
@@ -1040,9 +1040,8 @@ Return ONLY valid JSON. No markdown, no comments.`;
               body: {
                 model: model,
                 messages: [{ role: "user", content: prompt }],
-                temperature: 0.3,
-                response_format: { type: "json_object" },
-                 max_tokens: 8000
+                temperature: 0.5,
+                max_tokens: 8192
                   },
                   signal: controller.signal
             });
@@ -1065,9 +1064,8 @@ Return ONLY valid JSON. No markdown, no comments.`;
                 body: JSON.stringify({
                   model: model,
                   messages: [{ role: "user", content: prompt }],
-                  temperature: 0.3,
-                  response_format: { type: "json_object" },
-                   max_tokens: 8000
+                  temperature: 0.5,
+                  max_tokens: 8192
                   })
               });
               
