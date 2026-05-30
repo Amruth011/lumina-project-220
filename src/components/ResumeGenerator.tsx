@@ -225,7 +225,7 @@ const restoreExactProfileData = (generated: GeneratedResume, vaultItems: VaultIt
   // Clone to avoid side effects
   const restored = { ...generated };
 
-  // 1. Restore Professional Experience dates
+  // 1. Restore Professional Experience dates and headings
   if (Array.isArray(restored.experience)) {
     restored.experience = restored.experience.map(genItem => {
       const match = vaultItems.find(vItem => {
@@ -236,16 +236,19 @@ const restoreExactProfileData = (generated: GeneratedResume, vaultItems: VaultIt
         const heading = (genItem.heading || "").trim().toLowerCase();
         
         if (!org) return false;
-        
-        if (title) {
-          return heading.includes(org) && heading.includes(title);
-        }
+        if (title) return heading.includes(title);
         return heading.includes(org);
       });
 
       if (match) {
+        const headingParts = (genItem.heading || "").split("@");
+        const role = headingParts[0]?.trim() || match.title || "";
+        const afterOrg = headingParts[1] || "";
+        const modeOrLoc = afterOrg.split(/\s*[-–—]\s*/).slice(1).join(" - ").trim();
+        const locSuffix = modeOrLoc ? ` - ${modeOrLoc}` : "";
         return {
           ...genItem,
+          heading: `${role} @ ${match.organization}${locSuffix}`,
           content: match.period || genItem.content
         };
       }
@@ -538,8 +541,26 @@ const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3, experienceBu
       return getYear(b.content) - getYear(a.content);
     }),
     leadership: cleanSections(data.leadership),
-    certifications: ensureArray(data.certifications).map(c => typeof c === "string" ? c : String(c || "")),
-    awards: ensureArray(data.awards).map(a => typeof a === "string" ? a : String(a || ""))
+    certifications: ensureArray(data.certifications).map(c => {
+      if (typeof c === "string") return c;
+      if (c && typeof c === "object") {
+        const name = c.name || c.title || c.certification || "";
+        const issuer = c.issuer || c.organization || c.provider || "";
+        const year = c.year || c.date || "";
+        return [name, issuer ? `(${issuer})` : "", year ? `- ${year}` : ""].filter(Boolean).join(" ");
+      }
+      return String(c || "");
+    }),
+    awards: ensureArray(data.awards).map(a => {
+      if (typeof a === "string") return a;
+      if (a && typeof a === "object") {
+        const name = a.name || a.title || a.award || "";
+        const issuer = a.issuer || a.organization || "";
+        const year = a.year || a.date || "";
+        return [name, issuer ? `(${issuer})` : "", year ? `- ${year}` : ""].filter(Boolean).join(" ");
+      }
+      return String(a || "");
+    })
   };
 };
 
@@ -848,23 +869,18 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     const awardItems = vaultItems.filter(item => item.type === 'award');
 
     const serializeVaultItems = (items: VaultItem[]) => {
-      if (items.length === 0) return "None provided in this category.";
+      if (items.length === 0) return "None provided.";
       return items.map((item, idx) => {
-        const parts = [];
-        parts.push(`  [Item #${idx + 1}]`);
-        if (item.title) parts.push(`  Title/Role: ${item.title}`);
-        if (item.organization) parts.push(`  Organization/Company: ${item.organization}`);
-        if (item.period) parts.push(`  Period/Dates: ${item.period}`);
-        if (item.bullets && item.bullets.length > 0) {
-          parts.push(`  Bullets:\n${item.bullets.map(b => `    - ${b}`).join('\n')}`);
-        }
-        if (item.skills && item.skills.length > 0) {
-          parts.push(`  Associated Skills: ${item.skills.join(', ')}`);
-        }
-        if (item.github_link) parts.push(`  GitHub Link: ${item.github_link}`);
-        if (item.live_link) parts.push(`  Live Link: ${item.live_link}`);
-        return parts.join('\n');
-      }).join('\n\n');
+        const lines = [`Item ${idx + 1}:`];
+        if (item.title) lines.push(`  Title: ${item.title}`);
+        if (item.organization) lines.push(`  Org: ${item.organization}`);
+        if (item.period) lines.push(`  Period: ${item.period}`);
+        if (item.bullets?.length) lines.push(`  Bullets: ${item.bullets.map(b => `"${b}"`).join("; ")}`);
+        if (item.skills?.length) lines.push(`  Skills: ${item.skills.join(", ")}`);
+        if (item.github_link) lines.push(`  GitHub: ${item.github_link}`);
+        if (item.live_link) lines.push(`  Live: ${item.live_link}`);
+        return lines.join("\n");
+      }).join("\n\n");
     };
 
     // ── RAG PHASE: Semantic Vault Matching & Career Pivot Detection ──
@@ -925,49 +941,21 @@ CRITICAL: Do NOT fabricate experience or skills. Only reframe and emphasize exis
       const enabledSections = sectionOrder.filter(sec => visibleSections[sec]);
       const disabledSections = sectionOrder.filter(sec => !visibleSections[sec]);
 
-      const prompt = `You are an elite ATS optimization specialist using the career-ops methodology. Generate a one-page, ATS-optimized resume as JSON. 90+ ATS score is mandatory.
+      const prompt = `Generate an ATS-optimized resume JSON. Target: ${targetCompany} - ${targetJdTitle}.
 
-### CAREER-OPS METHODOLOGY:
-1. **Extract 15-20 keywords from the JD** below — these are your ATS target terms.
-2. **Rewrite each bullet point** using JD vocabulary. NEVER invent experience or metrics. Only rephrase real achievements using exact JD terminology. Examples:
-   - JD says "RAG pipelines" and vault says "LLM workflows with retrieval" → rewrite as "RAG pipeline design and LLM orchestration workflows"
-   - JD says "MLOps" and vault says "observability, evals" → rewrite as "MLOps and observability: evals, error handling"
-   - JD says "stakeholder management" and vault says "collaborated with team" → rewrite as "stakeholder management across engineering and operations"
-3. **Reorder bullets** within each experience/project so the most JD-relevant bullet comes FIRST.
-4. **Select projects most relevant** to this JD. If you need to choose, pick the ones that best match the JD keywords. ${projectLines} max.
-5. **Build a Core Competencies grid** of 6-8 keyword phrases from the JD (put this as the first skill line: "Core Competencies: keyword1, keyword2, ...").
-6. **Inject keywords across ALL sections** — summary, every bullet, skills, competencies, certifications — naturally and without forced phrasing.
-
-### CRITICAL VIOLATIONS (will fail the ATS):
-- "Target Company" placeholder — use "${targetCompany}" EXACTLY
-- "Tech Stack" literally in headings — use actual skills from vault data
-- Omitting ANY JD keyword from Skills section — see mandatory list below
-- Generic filler: "Utilizing [tool]", "Collaborating", "Applying [technique]" — ZERO TOLERANCE
-- Hallucinated metrics or skills — NEVER
-
-### HEADING FORMAT:
-- experience: "Exact Role @ Exact Company — Remote/Location"
-- products: "Exact Vault Title — Skill1, Skill2, Skill3..."
-- projects: "Exact Vault Title — Skill1, Skill2, Skill3..."
-
-### BULLET GENERATION:
-- User configured: ${experienceBullets} bullets/experience, ${projectLines} bullets/project, ${productLines} bullets/product
-- Use vault bullets as SOURCE MATERIAL. Rewrite them using JD terminology per career-ops rules above.
-- If vault has fewer bullets than requested, generate additional bullets by describing the SAME work using different JD keywords — never invent new tasks.
-- Each bullet must: use active verbs, reference specific technologies from the item, and include at least one JD keyword.
-- FIRST bullet of each item must be the MOST relevant to the JD.
-
-### SKILLS SECTION — MANDATORY JD KEYWORDS:
-Group into 3-4 categories. EVERY keyword below MUST appear (the JD explicitly requires these):
-Python, SQL, TensorFlow or PyTorch, Scikit-learn, Pandas, NumPy, Docker, AWS or Azure or GCP, Git, LLM, NLP, LangChain, Hugging Face, ChromaDB or vector databases, MLflow or Kubeflow or Airflow, CI/CD, Machine Learning, Deep Learning, Data Preprocessing, Feature Engineering, Model Deployment, APIs.
-
-First line MUST be "Core Competencies: [6-8 keyword phrases from JD]".
-
-### PROFESSIONAL SUMMARY:
-Exactly ${summaryLines} sentence(s). MUST mention "${targetCompany}" and "${targetJdTitle}" by name. Each sentence must state a specific, verifiable fact from vault data that aligns with a JD requirement. Inject 2-3 JD keywords per sentence naturally.
+### CAREER-OPS RULES (follow strictly):
+1. REWRITE every bullet using JD keywords. Never invent. Example: vault says "LLM workflows" → JD says "RAG" → output "RAG pipeline design".
+2. REORDER bullets: put most JD-relevant bullet first in each item.
+3. INJECT JD keywords into summary, every bullet, skills, headings. Include: Python, SQL, TensorFlow/PyTorch, Scikit-learn, Pandas, NumPy, Docker, AWS/Azure/GCP, Git, LLM, NLP, LangChain, HuggingFace, ChromaDB, MLflow/Kubeflow/Airflow, CI/CD, ML, DL, Data Preprocessing, Feature Engineering, Model Deployment.
+4. SKILLS first line: "Core Competencies: [6-8 keyword phrases from JD]". Group rest into 3-4 categories. Include ALL keywords above.
+5. SUMMARY: ${summaryLines} sentences. Must name "${targetCompany}" and "${targetJdTitle}". Each sentence = specific vault fact + JD keyword.
+6. HEADINGS: experience = "Role @ Company — Location". products/projects = "Title — Tech1, Tech2..." (NEVER write "Tech Stack" literally).
+7. Bullets per item: experience=${experienceBullets}, projects=${projectLines}, products=${productLines}. If vault has fewer, generate more by rewording same work with different JD keywords.
+8. FORBIDDEN: "Utilizing [tool]", "Collaborating", "Applying [technique]", "Ensuring [quality]", "Target Company", "Tech Stack" literal, fake metrics.
+9. Certifications format: "Name (Issuer) - Year" as plain strings.
 
 ### SECTIONS:
-Enabled: ${enabledSections.join(" → ")}. Disabled (leave empty): ${disabledSections.length > 0 ? disabledSections.join(", ") : "None"}.
+Enabled: ${enabledSections.join(" → ")}. Disabled (return empty): ${disabledSections.length > 0 ? disabledSections.join(", ") : "None"}.
 
 #### EDUCATION
 ${serializeVaultItems(educationItems)}
@@ -1023,9 +1011,9 @@ Return ONLY valid JSON. No markdown, no comments.`;
                 messages: [{ role: "user", content: prompt }],
                 temperature: 0.3,
                 response_format: { type: "json_object" },
-                max_tokens: 4000
-              },
-              signal: controller.signal
+                 max_tokens: 8000
+                  },
+                  signal: controller.signal
             });
             rawData = response.data;
             invokeError = response.error;
@@ -1048,8 +1036,8 @@ Return ONLY valid JSON. No markdown, no comments.`;
                   messages: [{ role: "user", content: prompt }],
                   temperature: 0.3,
                   response_format: { type: "json_object" },
-                  max_tokens: 4000
-                })
+                   max_tokens: 8000
+                  })
               });
               
               if (apiResponse.ok) {
