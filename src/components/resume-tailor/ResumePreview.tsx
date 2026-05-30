@@ -56,7 +56,6 @@ interface ResumePreviewProps {
   onUpdate: (updatedResume: GeneratedResume, updatedHeader: ResumeHeader) => void;
   onRegenerate: () => void;
   onDownloadPDF: () => void;
-  onDownloadATSPDF?: () => void;
   onDownloadDOC: () => void;
   isGenerating: boolean;
   initialTab?: 'resume' | 'cover-letter';
@@ -516,7 +515,6 @@ export const ResumePreview = ({
   onUpdate, 
   onRegenerate, 
   onDownloadPDF,
-  onDownloadATSPDF,
   onDownloadDOC,
   isGenerating,
   fontFamily,
@@ -924,12 +922,6 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                 <Download size={18} />
                 <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">Export PDF</span>
               </button>
-              {onDownloadATSPDF && (
-                <button onClick={onDownloadATSPDF} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 transition-all hover:scale-105 group">
-                  <FileText size={18} />
-                  <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">ATS PDF</span>
-                </button>
-              )}
               <button onClick={onDownloadDOC} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white border border-[#1E2A3A]/10 text-[#1E2A3A] shadow-lg shadow-slate-100 transition-all hover:scale-105 group">
                 <FileText size={18} />
                 <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">Export Word</span>
