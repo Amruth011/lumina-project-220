@@ -927,7 +927,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                 <Save size={18} />
               </button>
               <div className="h-8 w-px bg-slate-200 mx-2" />
-              <button onClick={() => window.print()} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-[#1E2A3A] text-white shadow-lg shadow-[#1E2A3A]/20 transition-all hover:scale-105 group">
+              <button onClick={onDownloadPDF} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-[#1E2A3A] text-white shadow-lg shadow-[#1E2A3A]/20 transition-all hover:scale-105 group">
                 <Download size={18} />
                 <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">Export PDF</span>
               </button>
