@@ -1018,7 +1018,7 @@ Return ONLY valid JSON. No markdown, no comments.`;
       const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
       let resultText = "";
       const models = tailorEngine === "speed"
-        ? ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"]
+        ? ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
         : ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
       let lastError = "";
 
@@ -1173,6 +1173,22 @@ Return ONLY valid JSON. No markdown, no comments.`;
       );
 
       const fullyRestoredData = restoreExactProfileData(hydratedData, vaultItems);
+
+      // ── Fallback: fill missing summary/skills if LLM skipped them ──
+      if (!fullyRestoredData.professional_summary) {
+        const fallbackSummary = `${editableHeader.fullName || "Candidate"} is an AI professional targeting the ${targetJdTitle} role at ${targetCompany}. Skilled in Python, LLMs, NLP, and machine learning, with hands-on experience building ML pipelines, RAG systems, and AI agents. Seeking to apply expertise in ${(jdSkills || []).slice(0, 3).map(s => s.skill).join(", ")} to drive impact at ${targetCompany}.`;
+        fullyRestoredData.professional_summary = fallbackSummary;
+      }
+      if (!fullyRestoredData.skills_section || fullyRestoredData.skills_section.length === 0) {
+        const jdSkillNames = (jdSkills || []).map(s => s.skill);
+        const coreCompetencies = jdSkillNames.slice(0, 8).join(", ");
+        fullyRestoredData.skills_section = [
+          `Core Competencies: ${coreCompetencies}`,
+          `Languages: Python, SQL, TypeScript`,
+          `AI & Machine Learning: LLMs, NLP, TensorFlow, PyTorch, Scikit-learn, XGBoost, Hugging Face, LangChain`,
+          `Cloud & MLOps: Docker, AWS, Git, CI/CD, MLflow`,
+        ];
+      }
 
       setResume(fullyRestoredData);
       setEditableResume(fullyRestoredData);
