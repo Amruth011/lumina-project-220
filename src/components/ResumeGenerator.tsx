@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Download, Sparkles, Copy, X, Wand2, FileText, CheckCircle2, AlertCircle, ArrowRight, Github, Linkedin, Mail, MapPin, Plus, Minus, Archive, ArrowUp, ArrowDown, Type, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import jsPDF from "jspdf";
 import { ResumePreview } from "./resume-tailor/ResumePreview";
 import { GeneratorSkeleton } from "./resume-tailor/GeneratorSkeleton";
