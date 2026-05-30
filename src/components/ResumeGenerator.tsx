@@ -941,79 +941,39 @@ CRITICAL: Do NOT fabricate experience or skills. Only reframe and emphasize exis
       const enabledSections = sectionOrder.filter(sec => visibleSections[sec]);
       const disabledSections = sectionOrder.filter(sec => !visibleSections[sec]);
 
-      const prompt = `Generate an ATS-optimized resume JSON for ${targetCompany} - ${targetJdTitle}. Follow this exact section sequence and format:
+      const prompt = `You are an ATS resume expert. Generate a resume JSON for ${targetJdTitle} at ${targetCompany}. Return EXACTLY this structure:
 
-### FORMAT PER SECTION (top to bottom):
+{
+  "professional_summary": "${summaryLines} sentences naming company + role, each sentence = vault fact + JD keyword",
+  "education": ["Degree @ School — Location | Dates"],
+  "experience": [{"heading": "Role @ Company", "content": "dates", "bullets": ["verb + tech + JD keyword"]}],
+  "products": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
+  "projects": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
+  "certifications": ["Name (Issuer) - Year"],
+  "skills_section": ["Core Competencies: [6-8 JD keyword phrases]", "Languages: ...", "AI & ML: ...", "Cloud & MLOps: ..."],
+  "awards": [],
+  "leadership": []
+}
 
-**1. SUMMARY** (${summaryLines} sentences)
-- Must name "${targetCompany}" and "${targetJdTitle}"
-- Each sentence = specific vault fact rewritten with a JD keyword
-- Inject 2-3 JD keywords per sentence naturally
+CAREER-OPS RULES:
+- Rewrite each bullet with a JD keyword: active verb + tool + domain term
+- Reorder bullets: most JD-relevant FIRST per section
+- NEVER: Utilizing/Utilized, Collaborating, Applying/Applied, Ensuring, "Tech Stack" as heading text
+- Skills first line MUST be "Core Competencies:" followed by 6-8 JD keyword phrases
+- Certifications sorted by JD relevance, format: "Name (Issuer) - Year"
 
-**2. EDUCATION** (from vault data, keep verbatim)
-- Format: "Degree @ School — Location | Dates"
+VAULT DATA TO USE:
+${enabledSections.includes('EDUCATION') ? `\nEDUCATION:\n${serializeVaultItems(educationItems)}` : ''}
+${enabledSections.includes('EXPERIENCE') ? `\nEXPERIENCE:\n${serializeVaultItems(experienceItems)}` : ''}
+${enabledSections.includes('PRODUCTS') ? `\nPRODUCTS:\n${serializeVaultItems(productItems)}` : ''}
+${enabledSections.includes('PROJECTS') ? `\nPROJECTS:\n${serializeVaultItems(projectItems)}` : ''}
+${enabledSections.includes('LEADERSHIP') ? `\nLEADERSHIP:\n${serializeVaultItems(leadershipItems)}` : ''}
+${enabledSections.includes('CERTIFICATIONS') ? `\nCERTIFICATIONS:\n${serializeVaultItems(certificationItems)}` : ''}
+${enabledSections.includes('AWARDS') ? `\nAWARDS:\n${serializeVaultItems(awardItems)}` : ''}
 
-**3. EXPERIENCE** (${experienceBullets} bullets each)
-- Heading: "Role @ Company — Remote/Location"
-- Rewrite vault bullets using JD keywords. Never invent.
-- Reorder: most JD-relevant bullet FIRST
-- Each bullet = active verb + specific tech + JD keyword
+TARGET JD: ${targetJdTitle} at ${targetCompany}. Skills: ${targetJdSkills}
 
-**4. PRODUCTS** (${productLines} bullets each)
-- Heading: "Exact Title — Tech1, Tech2, Tech3..." (NEVER write "Tech Stack" literally)
-- Content: "Status | GitHub | Live" using exact vault links
-- Rewrite bullets ATS-friendly, most relevant first
-
-**5. PROJECTS** (${projectLines} bullets each)
-- Heading: "Exact Title — Tech1, Tech2, Tech3..." (NEVER write "Tech Stack" literally)
-- Content: "Year | GitHub | Live" using exact vault links
-- Rewrite bullets ATS-friendly, most relevant first
-
-**6. SKILLS** (CRITICAL — highest ATS value)
-- First line MUST be: "Core Competencies: [6-8 keyword phrases from JD]"
-- Then group remaining into 3-4 categories
-- ALL these JD keywords MUST appear: Python, SQL, TensorFlow/PyTorch, Scikit-learn, Pandas, NumPy, Docker, AWS/Azure/GCP, Git, LLM, NLP, LangChain, HuggingFace, ChromaDB, MLflow/Kubeflow/Airflow, CI/CD, ML, DL, Data Preprocessing, Feature Engineering, Model Deployment
-
-**7. CERTIFICATIONS** (ordered by JD relevance — most ATS-relevant FIRST)
-- Format: "Name (Issuer) - Year" as plain strings
-- Sort so certifications matching JD keywords appear top
-
-### GLOBAL RULES:
-- NEVER write "Target Company" — use "${targetCompany}"
-- NEVER write "Tech Stack" literally in headings
-- NEVER "Utilizing [tool]", "Collaborating", "Applying [technique]", "Ensuring [quality]"
-- NEVER fabricate metrics or skills
-- Use exact links from vault data
-
-### SECTIONS:
-Enabled: ${enabledSections.join(" → ")}. Disabled (return empty): ${disabledSections.length > 0 ? disabledSections.join(", ") : "None"}.
-
-#### EDUCATION
-${serializeVaultItems(educationItems)}
-
-#### PROFESSIONAL EXPERIENCE
-${serializeVaultItems(experienceItems)}
-
-#### PRODUCTS & VENTURES
-${serializeVaultItems(productItems)}
-
-#### PROJECTS
-${serializeVaultItems(projectItems)}
-
-#### LEADERSHIP
-${serializeVaultItems(leadershipItems)}
-
-#### CERTIFICATIONS
-${serializeVaultItems(certificationItems)}
-
-#### HONORS & AWARDS
-${serializeVaultItems(awardItems)}
-
-### TARGET JD
-Title: ${targetJdTitle} | Company: ${targetCompany}
-Skills: ${targetJdSkills}
-
-Return ONLY valid JSON. No markdown, no comments.`
+Return ONLY the JSON. No markdown, no comments.`
 
       const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
       let resultText = "";
@@ -1172,7 +1132,7 @@ Return ONLY valid JSON. No markdown, no comments.`
 
       const fullyRestoredData = restoreExactProfileData(hydratedData, vaultItems);
 
-      // ── Fallback: fill missing summary/skills if LLM skipped them ──
+      // ── Fallback: fill missing sections from vault items if LLM skipped them ──
       if (!fullyRestoredData.professional_summary) {
         const fallbackSummary = `${editableHeader.fullName || "Candidate"} is an AI professional targeting the ${targetJdTitle} role at ${targetCompany}. Skilled in Python, LLMs, NLP, and machine learning, with hands-on experience building ML pipelines, RAG systems, and AI agents. Seeking to apply expertise in ${(jdSkills || []).slice(0, 3).map(s => s.skill).join(", ")} to drive impact at ${targetCompany}.`;
         fullyRestoredData.professional_summary = fallbackSummary;
@@ -1186,6 +1146,39 @@ Return ONLY valid JSON. No markdown, no comments.`
           `AI & Machine Learning: LLMs, NLP, TensorFlow, PyTorch, Scikit-learn, XGBoost, Hugging Face, LangChain`,
           `Cloud & MLOps: Docker, AWS, Git, CI/CD, MLflow`,
         ];
+      }
+      if ((!fullyRestoredData.experience || fullyRestoredData.experience.length === 0)) {
+        fullyRestoredData.experience = vaultItems.filter(v => v.type === 'professional').map(v => ({
+          heading: `${v.title || "Role"} @ ${v.organization || ""}`,
+          content: v.period || "",
+          bullets: v.bullets?.length ? v.bullets : []
+        }));
+      }
+      if ((!fullyRestoredData.products || fullyRestoredData.products.length === 0)) {
+        fullyRestoredData.products = vaultItems.filter(v => v.type === 'product').map(v => {
+          const links = [v.github_link, v.live_link].filter(Boolean).join(" | ");
+          return {
+            heading: v.title || "",
+            content: [v.period, links].filter(Boolean).join(" | "),
+            bullets: v.bullets?.length ? v.bullets : []
+          };
+        });
+      }
+      if ((!fullyRestoredData.projects || fullyRestoredData.projects.length === 0)) {
+        fullyRestoredData.projects = vaultItems.filter(v => v.type === 'project').map(v => {
+          const links = [v.github_link, v.live_link].filter(Boolean).join(" | ");
+          return {
+            heading: v.title || "",
+            content: [v.period, links].filter(Boolean).join(" | "),
+            bullets: v.bullets?.length ? v.bullets : []
+          };
+        });
+      }
+      if (!fullyRestoredData.certifications || fullyRestoredData.certifications.length === 0) {
+        fullyRestoredData.certifications = vaultItems.filter(v => v.type === 'certification').map(v => {
+          const suffix = v.organization ? ` (${v.organization})` : "";
+          return `${v.title}${suffix}`;
+        });
       }
 
       setResume(fullyRestoredData);
