@@ -5,30 +5,40 @@
     "phone": "+91 9148159827",
     "location": "Bengaluru, Karnataka",
     "links": {
-      "portfolio": "https://amruth.kumar.portfolio",
-      "linkedin": "https://linkedin.com/in/amruth-kumar",
-      "github": "https://github.com/amruth-kumar"
+      "portfolio": "https://amruthportfolio.me",
+      "linkedin": "https://www.linkedin.com/in/amruth-kumar-m/",
+      "github": "https://github.com/Amruth011"
     }
   },
   "job_application_preferences": {
     "generative_ai_experience_years": 0,
     "machine_learning_experience_years": 0,
     "current_ctc": 0.0,
-    "expected_ctc": 5.0,
+    "expected_ctc": 8.0,
     "notice_period_days": 0,
     "is_immediate_joiner": true
   },
-  "professional_summary": "AI & Data Science Engineer specializing in deploying high-scale Generative AI models and forecasting pipelines at iStudio; built advanced RAG bilingual QA architectures and XGBoost models delivering 98.76% accuracy.",
+  "professional_summary": "AI Engineer with hands-on experience building production-grade ML systems, RAG architectures, and AI agents. Skilled in Python, LangChain, LangGraph, PyTorch, and scalable data pipelines. Founder of AssuredTechFuture. Proven track record delivering high-accuracy ML solutions and full-stack AI applications.",
   "experience": [
     {
       "role": "Data Science Intern",
-      "company": "iStudio",
+      "company": "iStudio Technologies",
       "location": "Bengaluru, India",
-      "period": "Feb 2026 – Present",
+      "period": "Internship",
       "bullets": [
-        "Developing machine learning models for sales forecasting and predictive analytics using Python.",
-        "Building data preprocessing and feature engineering pipelines to improve model training quality.",
-        "Evaluating model performance and communicating insights through Streamlit dashboards to stakeholders."
+        "Developed production-ready Data Science and ML pipelines for real-world applications.",
+        "Built data preprocessing and feature engineering pipelines to improve model training quality.",
+        "Evaluated model performance and communicated insights through Streamlit dashboards to stakeholders."
+      ]
+    },
+    {
+      "role": "Founder",
+      "company": "AssuredTechFuture",
+      "location": "Bengaluru, India",
+      "period": "Present",
+      "bullets": [
+        "Building AI-powered solutions and tools for career and skill development.",
+        "Developing end-to-end AI systems using LLMs, RAG, and agent architectures."
       ]
     }
   ],
@@ -41,48 +51,71 @@
   },
   "certifications_awards": [
     "IBM Machine Learning Professional Certificate - Coursera",
-    "Google Advanced Data Analytics Professional Certificate - Coursera"
+    "Google Advanced Data Analytics Professional Certificate - Coursera",
+    "Industry simulations: Accenture, BCG, Deloitte, Tata iQ"
   ],
   "key_projects": [
     {
-      "title": "Customer Churn Prediction & Retention ROI System",
+      "title": "Customer Churn Prediction & Retention ROI",
       "tech": "Python, XGBoost, SHAP, Streamlit, Docker",
-      "github": "https://github.com/amruth-kumar/customer-churn",
-      "live": "https://churn-roi.streamlit.app",
+      "github": "https://github.com/Amruth011/customer-churn-prediction-retention-roi",
+      "live": "https://customer-churn-prediction-retention-roi-9gkae6bppwug3sjpykbcgd.streamlit.app/",
       "bullets": [
         "Applied statistical feature engineering and XGBoost modelling to predict customer churn, achieving AUC-ROC 0.9989 and 98.76% accuracy.",
         "Performed cohort analysis and exploratory data analysis to identify 937 high-risk customers representing ₹47.4L revenue exposure, directly informing business retention strategy.",
-        "Built an interactive Streamlit dashboard with SHAP explainability, enabling non-technical stakeholders to interpret model decisions and simulate ROI outcomes."
+        "Built an interactive Streamlit dashboard with SHAP explainability, enabling non-technical stakeholders to interpret model decisions and simulate ROI outcomes achieving 224% proven ROI."
       ]
     },
     {
-      "title": "Multilingual Document QA System (Kannada RAG Agent)",
-      "tech": "Python, RAG, ChromaDB, Easy OCR, Sarvam AI, Streamlit",
-      "github": "https://github.com/amruth-kumar/multilingual-rag",
-      "live": "https://kannada-rag.streamlit.app",
+      "title": "Kannada RAG Agent",
+      "tech": "Python, Gemini, Groq, ChromaDB, EasyOCR, Streamlit",
+      "github": "https://github.com/Amruth011/kannada-rag-agent",
+      "live": "https://kannada-rag-agent-hqvwhfejguymb9ijrvz4hd.streamlit.app/",
       "bullets": [
-        "Applied NLP techniques including text preprocessing, normalisation, and semantic chunking to process 346 pages of unstructured text into 687 retrievable knowledge chunks.",
-        "Built a Generative AI application using RAG architecture enabling context-aware bilingual QA — demonstrating applied GenAI innovation on complex, unstructured datasets.",
-        "Validated retrieval relevance through iterative testing, ensuring accuracy of AI-generated outputs."
+        "Built a RAG chatbot for a 346-page Kannada novel with full OCR pipeline using EasyOCR, processing unstructured text into 687 retrievable chunks in ChromaDB.",
+        "Implemented dual-brain LLM architecture (Gemini 1.5 Flash + Groq Llama 3.3) with smart query routing across 4 retrieval strategies for bilingual Q&A in Kannada and English.",
+        "Integrated Text-to-Speech via Sarvam AI and built a glassmorphism Streamlit UI with feedback system, deployed on Vercel API + Streamlit Cloud."
       ]
     },
     {
-      "title": "Social Media Sentiment Analysis — Distributed PySpark Pipeline",
+      "title": "Lumina JD Scanner",
+      "tech": "TypeScript, React, Groq, Tailwind CSS, Vite, Supabase",
+      "github": "https://github.com/Amruth011/lumina-jd-scanner",
+      "live": "https://lumina-jd-scanner.vercel.app/",
+      "bullets": [
+        "Architected an AI career engine that decodes job descriptions, analyzes resumes with multi-vector semantic comparison, and finds skill gaps.",
+        "Powered by Groq LPU (llama-3.3-70b-versatile) for ultra-low-latency client-side inference with strict JSON output enforcement.",
+        "Generates tailored ATS-ready PDFs using structured JSON output from LLM, with Supabase for auth and data sync."
+      ]
+    },
+    {
+      "title": "MargApply SaaS",
+      "tech": "Python, LangGraph, Playwright, FastAPI, Next.js",
+      "github": "https://github.com/Amruth011/margapply-saas",
+      "live": "https://margapply-saas.vercel.app/",
+      "bullets": [
+        "Built an autonomous job application system using LangGraph state machine with 6-stage workflow: Search, Ingestion, Strategy, Tailoring, Execution.",
+        "Integrated Playwright browser automation for autonomous form submissions through job portals with real-time WebSocket streaming to Next.js frontend.",
+        "Implemented interactive Strategy Gate and Auto-Pilot mode with FastAPI backend and deployed on Railway + Vercel."
+      ]
+    },
+    {
+      "title": "Social Media Sentiment Analysis",
       "tech": "Python, PySpark, Delta Lake, Streamlit, Docker, GitHub Actions",
-      "github": "https://github.com/amruth-kumar/pyspark-sentiment",
-      "live": "https://sentiment-dashboard.streamlit.app",
+      "github": "https://github.com/Amruth011/Social_Media_Sentiment_Analysis",
+      "live": "https://socialmediasentimentanalysis-9hj7cfkcjjsdky5xwbmzzr.streamlit.app/",
       "bullets": [
-        "Analysed large-scale social media datasets using distributed PySpark pipelines to uncover sentiment trends and engagement patterns driving business insights.",
-        "Implemented multi-stage data validation to ensure accuracy, completeness, and legitimacy of analytical outputs across the pipeline.",
-        "Designed a dashboard to communicate sentiment insights to technical and non-technical stakeholders."
+        "Built an enterprise-grade PySpark sentiment analysis pipeline with ACID-compliant Delta Lake architecture for distributed processing.",
+        "Implemented 5 distributed analysis jobs covering top sentiments, sentiment distribution, country analysis, hourly trends, and platform engagement.",
+        "Deployed with Docker, GitHub Actions CI/CD, and interactive Streamlit dashboard."
       ]
     }
   ],
   "technical_skills": {
-    "Programming": ["Python", "SQL"],
-    "Statistical Modelling": ["EDA", "Hypothesis Testing", "Cohort Analysis", "A/B Testing", "Regression Analysis"],
-    "Machine Learning": ["Scikit-learn", "XGBoost", "Feature Engineering", "Model Evaluation"],
-    "Data & Big Data": ["PySpark", "Pandas", "NumPy", "Delta Lake"],
-    "Tools & Cloud": ["Streamlit", "Docker", "Git", "GitHub", "MySQL", "Azure"]
+    "Languages": ["Python", "SQL", "TypeScript", "JavaScript"],
+    "AI & Machine Learning": ["Generative AI", "LLMs", "RAG", "NLP", "Agentic AI", "XGBoost", "PyTorch", "HuggingFace", "Scikit-Learn"],
+    "Frameworks & Tools": ["LangChain", "LangGraph", "LangGraph", "Streamlit", "Docker", "Git"],
+    "Data Engineering": ["PySpark", "Pandas", "Delta Lake", "Power BI", "ChromaDB"],
+    "APIs & Platforms": ["REST APIs", "Groq", "Gemini", "Supabase", "Vercel", "Playwright"]
   }
 }

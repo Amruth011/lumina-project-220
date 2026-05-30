@@ -11,6 +11,7 @@ import { GeneratorSkeleton } from "./resume-tailor/GeneratorSkeleton";
 import { matchVaultItems, type VaultMatchResult } from "@/lib/embeddingClient";
 import { buildVaultItemsFromProfileJson, buildResumeFromProfileJson } from "@/lib/profileSeed";
 import { saveAgentResume, buildResumeTextForAgent } from "@/lib/agentStorage";
+import { exportResumeAsHtmlPdf, buildResumeHtml, type GeneratedResumeData, type HeaderData } from "@/lib/htmlPdfExporter";
 
 const sanitizePdfText = (text: string): string => {
   if (!text) return "";
@@ -1046,11 +1047,7 @@ ${ragContext}${careerPivotDirective}
   5. NEVER include skills irrelevant to the JD (e.g., do not list LangChain/EasyOCR for a Production Support JD, do not list React for a Data Science JD).
   6. NO SKILL DUPLICATION: A specific skill, language, or tool MUST appear in EXACTLY ONE category. Do not repeat skills (e.g. if 'Python' or 'SQL' appears in 'Languages', do NOT repeat it in 'Data Engineering & Pipelines' or 'Production Support & DevOps'). Keep each category's skills entirely unique.
 - EXPERIENCE/PROJECTS/PRODUCTS: Each item MUST contain EXACTLY the requested number of bullets (${experienceBullets} for experience, ${projectLines} for projects, ${productLines} for products). You must distill and distribute the available data points across exactly this number of bullets, ensuring they are rich, distinct, and completely free of filler or duplication. Focus on technical execution, system context, and scope of responsibility to achieve the exact bullet count without fabricating metrics or inventing facts.
-- STRICT BULLET POINT LINE LENGTH MANDATE: Every generated bullet point (for Experience, Projects, Products, and Leadership sections) MUST fall strictly into one of the following perfect-line character length ranges (including spaces) so they beautifully and fully fill visual lines on a standard A4 PDF page without creating awkward visual orphans/hanging words:
-  * For 1 full line: EXACTLY 110 to 125 characters.
-  * For 2 full lines: EXACTLY 220 to 250 characters.
-  * For 3 full lines: EXACTLY 330 to 375 characters.
-  DO NOT generate any bullet point that falls outside these ranges (e.g., do not generate bullets between 126 and 219 characters, or between 251 and 329 characters, or less than 110 characters). Adjust wording, technical detail, or scope description dynamically to hit these exact target ranges perfectly. Maintain 100% truth/fidelity to facts; do not fabricate fake metrics to pad lengths—instead, describe existing tasks, technologies, or responsibilities with more or less descriptive, precise detail.
+- BULLET POINT QUALITY: Each bullet point should be concise (1-2 lines) and focus on specific technical actions, outcomes, or responsibilities. Prioritize content relevance over character count. Use active verbs and concrete details from the candidate's profile. Never add fabricated metrics.
 - NO HALLUCINATIONS: Do NOT invent jobs, skills, or projects. Only map the content provided in the Candidate Profile. If no items exist in a specific Master Vault category, return an empty array for that section in the JSON (e.g., "certifications": [], "awards": [], "products": [], "projects": [], "leadership": []). Do NOT invent default or fake certifications/awards.
 
 ### STRUCTURE:
@@ -1738,6 +1735,17 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
       const message = (err as { message?: string })?.message || (typeof err === 'string' ? err : "Unknown process error");
       toast.error(`Save crashed: ${message}`);
     }
+  };
+
+  const handleDownloadATSPDF = () => {
+    if (!resume) return;
+    const filename = `${(editableHeader.fullName || "resume").replace(/\s+/g, "_")}_${(jdTitle || "role").replace(/\s+/g, "_")}.pdf`;
+    exportResumeAsHtmlPdf(
+      resume as GeneratedResumeData,
+      editableHeader as HeaderData,
+      filename,
+    );
+    toast.success("ATS-optimized PDF preview opened. Use Ctrl+P / Cmd+P → Save as PDF.");
   };
 
   const handleDownloadPDF = () => {
@@ -3715,6 +3723,7 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
               }}
               onRegenerate={executeTacticalSynthesis}
               onDownloadPDF={handleDownloadPDF}
+              onDownloadATSPDF={handleDownloadATSPDF}
               onDownloadDOC={handleDownloadDOC}
               onSave={handleSaveDraft}
               coverLetter={coverLetter}
