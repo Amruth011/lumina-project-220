@@ -1011,8 +1011,10 @@ ${ragContext}${careerPivotDirective}
      - ML / AI JD → "Languages", "AI & Machine Learning", "Cloud & MLOps", "Frameworks & Tools"
      - Full Stack JD → "Languages", "Frontend", "Backend & APIs", "Cloud & DevOps"
      - For any other domain → derive 3-4 category names organically from the JD's emphasis and keywords.
+     - Note: Always ensure "Languages" is one of the categories if programming languages are required.
   4. ORDERING within each category: JD-explicit keywords appear FIRST. Then add closely adjacent skills from the candidate's vault that support the JD domain.
   5. NEVER include skills irrelevant to the JD (e.g., do not list LangChain/EasyOCR for a Production Support JD, do not list React for a Data Science JD).
+  6. NO SKILL DUPLICATION: A specific skill, language, or tool MUST appear in EXACTLY ONE category. Do not repeat skills (e.g. if 'Python' or 'SQL' appears in 'Languages', do NOT repeat it in 'Data Engineering & Pipelines' or 'Production Support & DevOps'). Keep each category's skills entirely unique.
 - EXPERIENCE/PROJECTS/PRODUCTS: Each item MUST contain EXACTLY the requested number of bullets (${experienceBullets} for experience, ${projectLines} for projects, ${productLines} for products). You must distill and distribute the available data points across exactly this number of bullets, ensuring they are rich, distinct, and completely free of filler or duplication. Focus on technical execution, system context, and scope of responsibility to achieve the exact bullet count without fabricating metrics or inventing facts.
 - STRICT BULLET POINT LINE LENGTH MANDATE: Every generated bullet point (for Experience, Projects, Products, and Leadership sections) MUST fall strictly into one of the following perfect-line character length ranges (including spaces) so they beautifully and fully fill visual lines on a standard A4 PDF page without creating awkward visual orphans/hanging words:
   * For 1 full line: EXACTLY 110 to 125 characters.
