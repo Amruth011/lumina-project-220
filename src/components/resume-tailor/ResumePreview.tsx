@@ -516,6 +516,7 @@ export const ResumePreview = ({
   onUpdate, 
   onRegenerate, 
   onDownloadPDF,
+  onDownloadATSPDF,
   onDownloadDOC,
   isGenerating,
   fontFamily,
