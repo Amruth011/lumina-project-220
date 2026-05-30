@@ -81,6 +81,18 @@ const buildExperienceHtml = (items: ExperienceItem[]): string => {
     .join("\n");
 };
 
+const buildProductsHtml = (items: ExperienceItem[]): string => {
+  if (!items || items.length === 0) return "";
+  return items
+    .map(item => {
+      const heading = escapeHtml(item.heading);
+      const content = item.content ? `<div class="item-sub">${escapeHtml(item.content)}</div>` : "";
+      const bullets = buildBulletsHtml(item.bullets);
+      return `<div class="item">\n<div class="item-header">${heading}</div>\n${content}\n${bullets}\n</div>`;
+    })
+    .join("\n");
+};
+
 const buildProjectsHtml = (items: ExperienceItem[]): string => {
   if (!items || items.length === 0) return "";
   return items
@@ -129,78 +141,101 @@ const buildCompetenciesHtml = (skills: string[]): string => {
  * Build a complete HTML document from resume data.
  * Uses the ats-cv-template.html as base structure.
  */
+const renderEducation = (edu: string): string => {
+  const parts = edu.split(" @ ");
+  const degree = parts[0]?.trim() || "";
+  const rest = parts.slice(1).join(" @ ");
+  const dashParts = rest.split(" — ");
+  const school = dashParts[0]?.trim() || rest;
+  const extra = dashParts.slice(1).join(" — ");
+  const extraParts = extra.split(" | ");
+  const loc = extraParts.slice(0, -1).join(" | ");
+  const dates = extraParts[extraParts.length - 1] || "";
+  return `<div class="edu-block"><div class="edu-degree">${escapeHtml(degree)}</div><div class="edu-school">${escapeHtml(school)}</div>${dates ? `<div class="edu-dates">${escapeHtml(dates)}</div>` : ""}${loc ? `<div class="edu-loc">${escapeHtml(loc)}</div>` : ""}</div>`;
+};
+
 export const buildResumeHtml = (
   data: GeneratedResumeData,
   header: HeaderData,
 ): string => {
-  const competenciesHtml = buildCompetenciesHtml(data.skills_section || []);
   const skillsHtml = buildSkillsHtml(data.skills_section || []);
   const experienceHtml = buildExperienceHtml(data.experience || []);
+  const productsHtml = buildProductsHtml(data.products || []);
   const projectsHtml = buildProjectsHtml(data.projects || []);
-  const educationHtml = buildEducationHtml(data.education || []);
-
-  const summarySection = data.professional_summary
-    ? `<div class="section"><div class="section-title">Professional Summary</div><div class="summary-text">${escapeHtml(data.professional_summary)}</div></div>`
+  const leadershipHtml = buildExperienceHtml(data.leadership || []);
+  const certHtml = data.certifications?.length
+    ? data.certifications.map(c => `<div class="cert-item">• ${escapeHtml(c)}</div>`).join("\n")
+    : "";
+  const awardsHtml = data.awards?.length
+    ? data.awards.map(a => `<div class="cert-item">${escapeHtml(a)}</div>`).join("\n")
     : "";
 
-  const competenciesSection = competenciesHtml
-    ? `<div class="section"><div class="section-title">Core Competencies</div><div class="comp-grid">${competenciesHtml}</div></div>`
-    : "";
+  const sections: string[] = [];
 
-  const experienceSection = experienceHtml
-    ? `<div class="section"><div class="section-title">Experience</div>${experienceHtml}</div>`
-    : "";
-
-  const projectsSection = projectsHtml
-    ? `<div class="section"><div class="section-title">Projects</div>${projectsHtml}</div>`
-    : "";
-
-  const educationSection = educationHtml
-    ? `<div class="section"><div class="section-title">Education</div>${educationHtml}</div>`
-    : "";
-
-  const skillsSection = skillsHtml
-    ? `<div class="section"><div class="section-title">Technical Skills</div>${skillsHtml}</div>`
-    : "";
+  if (data.professional_summary) {
+    sections.push(`<div class="section"><div class="section-title">Professional Summary</div><div class="summary-text">${escapeHtml(data.professional_summary)}</div></div>`);
+  }
+  if (data.education?.length) {
+    sections.push(`<div class="section"><div class="section-title">Education</div>${data.education.map(renderEducation).join("\n")}</div>`);
+  }
+  if (experienceHtml) {
+    sections.push(`<div class="section"><div class="section-title">Experience</div>${experienceHtml}</div>`);
+  }
+  if (productsHtml) {
+    sections.push(`<div class="section"><div class="section-title">Products &amp; Ventures</div>${productsHtml}</div>`);
+  }
+  if (projectsHtml) {
+    sections.push(`<div class="section"><div class="section-title">Projects</div>${projectsHtml}</div>`);
+  }
+  if (leadershipHtml) {
+    sections.push(`<div class="section"><div class="section-title">Leadership</div>${leadershipHtml}</div>`);
+  }
+  if (skillsHtml) {
+    sections.push(`<div class="section"><div class="section-title">Skills</div>${skillsHtml}</div>`);
+  }
+  if (certHtml) {
+    sections.push(`<div class="section"><div class="section-title">Certifications</div>${certHtml}</div>`);
+  }
+  if (awardsHtml) {
+    sections.push(`<div class="section"><div class="section-title">Awards</div>${awardsHtml}</div>`);
+  }
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 11px; line-height: 1.5; color: #1a1a2e; background: #fff; padding: 12mm 10mm; }
-  .header { margin-bottom: 12px; }
-  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
-  .header-line { height: 2px; background: #222; margin-bottom: 5px; }
-  .contact { font-size: 9.5px; color: #555; display: flex; flex-wrap: wrap; gap: 3px 10px; }
-  .contact a { color: #2a5c8a; text-decoration: none; }
-  .section { margin-bottom: 10px; }
-  .section-title { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #ccc; padding-bottom: 2px; margin-bottom: 5px; }
-  .summary-text { font-size: 10px; line-height: 1.5; color: #222; }
-  .comp-grid { display: flex; flex-wrap: wrap; gap: 4px 6px; }
-  .comp-tag { font-size: 9px; background: #f0f0f0; padding: 2px 6px; border-radius: 2px; color: #333; }
-  .item { margin-bottom: 6px; }
-  .item-header { font-weight: 700; font-size: 10.5px; }
-  .item-sub { font-size: 9.5px; color: #555; }
-  .item ul { padding-left: 15px; margin-top: 2px; }
-  .item li { font-size: 9.5px; line-height: 1.45; margin-bottom: 2px; }
-  .skills-line { font-size: 9.5px; margin-bottom: 1px; }
+  body { font-family: 'Inter', 'Helvetica', 'Arial', sans-serif; font-size: 10px; line-height: 1.15; color: #1E2A3A; background: #fff; padding: 0.5in; }
+  .header { text-align: center; margin-bottom: 10px; }
+  .header h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; text-transform: uppercase; color: #1E2A3A; margin-bottom: 4px; }
+  .contact { font-size: 8.5px; color: #1E2A3A; font-weight: 500; display: flex; flex-wrap: wrap; justify-content: center; gap: 1px 6px; }
+  .contact a { color: #2563eb; text-decoration: underline; }
+  .section { margin-bottom: 6px; }
+  .section-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #1E2A3A; padding-bottom: 1px; margin-bottom: 4px; color: #1E2A3A; }
+  .summary-text { font-size: 9px; line-height: 1.5; color: #1E2A3A; text-align: justify; }
+  .item { margin-bottom: 5px; }
+  .item-header { font-weight: 700; font-size: 9.5px; color: #1E2A3A; }
+  .item-sub { font-size: 8.5px; color: #555; }
+  .item ul { padding-left: 14px; margin-top: 1px; list-style: disc; }
+  .item li { font-size: 8.5px; line-height: 1.4; margin-bottom: 1px; color: #1E2A3A; }
+  .edu-block { margin-bottom: 4px; }
+  .edu-degree { font-weight: 700; font-size: 9px; }
+  .edu-school { font-size: 8.5px; }
+  .edu-dates { font-size: 8px; color: #555; }
+  .edu-loc { font-size: 8px; color: #555; }
+  .skills-line { font-size: 8.5px; margin-bottom: 1px; }
+  .cert-item { font-size: 8.5px; margin-bottom: 1px; color: #1E2A3A; }
   @media print { body { padding: 0; } }
 </style>
 </head>
 <body>
   <div class="header">
-    <h1>${escapeHtml(header.fullName).toUpperCase()}</h1>
-    <div class="header-line"></div>
+    <h1>${escapeHtml(header.fullName)}</h1>
     <div class="contact">${buildContactHtml(header)}</div>
   </div>
-  ${summarySection}
-  ${competenciesSection}
-  ${experienceSection}
-  ${projectsSection}
-  ${educationSection}
-  ${skillsSection}
+  ${sections.join("\n")}
   <script>window.onload = function() { window.print(); };</script>
 </body>
 </html>`;
