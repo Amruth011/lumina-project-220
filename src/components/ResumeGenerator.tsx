@@ -436,6 +436,36 @@ const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3, experienceBu
     skills = [data.skills_section];
   }
 
+  // Programmatically deduplicate skill keywords across categories to ensure strict reliability
+  const seenSkills = new Set<string>();
+  skills = skills.map(line => {
+    if (!line.includes(':')) {
+      const skillsPart = line.split(',');
+      const uniqueSkills = skillsPart
+        .map(s => s.trim())
+        .filter(s => {
+          if (!s) return false;
+          const key = s.toLowerCase();
+          if (seenSkills.has(key)) return false;
+          seenSkills.add(key);
+          return true;
+        });
+      return uniqueSkills.join(', ');
+    }
+    const colonIndex = line.indexOf(':');
+    const category = line.slice(0, colonIndex).trim();
+    const skillsPart = line.slice(colonIndex + 1);
+    const skillsList = skillsPart.split(',').map(s => s.trim());
+    const uniqueSkills = skillsList.filter(s => {
+      if (!s) return false;
+      const key = s.toLowerCase();
+      if (seenSkills.has(key)) return false;
+      seenSkills.add(key);
+      return true;
+    });
+    return uniqueSkills.length > 0 ? `${category}: ${uniqueSkills.join(', ')}` : "";
+  }).filter(Boolean);
+
   let education: string[] = [];
   if (Array.isArray(data.education)) {
     education = data.education.map(edu => {
