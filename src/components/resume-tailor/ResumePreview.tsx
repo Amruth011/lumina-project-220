@@ -1548,6 +1548,65 @@ Return ONLY the complete updated JSON object matching the input structure.`;
               </CollapsibleSection>
 
               <CollapsibleSection 
+                title="Technical Skills" 
+                icon={Cpu} 
+                isOpen={openSection === "skills"} 
+                onToggle={() => setOpenSection(openSection === "skills" ? null : "skills")}
+              >
+                <div className="space-y-4 pt-2">
+                  {(localResume.skills_section || []).map((skillLine, i) => {
+                    const colonIndex = skillLine.indexOf(':');
+                    const category = colonIndex !== -1 ? skillLine.slice(0, colonIndex).trim() : "Category";
+                    const skillsStr = colonIndex !== -1 ? skillLine.slice(colonIndex + 1).trim() : skillLine.trim();
+
+                    const handleUpdate = (newCategory: string, newSkills: string) => {
+                      const newSkillsSection = [...(localResume.skills_section || [])];
+                      newSkillsSection[i] = `${newCategory}: ${newSkills}`;
+                      updateResumeState({ ...localResume, skills_section: newSkillsSection });
+                    };
+
+                    return (
+                      <div key={i} className="bg-slate-50/50 border border-slate-200/50 rounded-2xl p-3.5 space-y-2 relative group/skill">
+                        <div className="flex items-center gap-2">
+                          <input 
+                            value={category} 
+                            onChange={(e) => handleUpdate(e.target.value, skillsStr)}
+                            className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#1E2A3A] outline-none w-1/3"
+                            placeholder="Category"
+                          />
+                          <span className="text-[10px] font-bold text-slate-400">:</span>
+                          <input 
+                            value={skillsStr} 
+                            onChange={(e) => handleUpdate(category, e.target.value)}
+                            className="flex-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-[10px] font-medium outline-none"
+                            placeholder="Skill 1, Skill 2, Skill 3"
+                          />
+                          <button 
+                            onClick={() => {
+                              const newSkillsSection = (localResume.skills_section || []).filter((_, idx) => idx !== i);
+                              updateResumeState({ ...localResume, skills_section: newSkillsSection });
+                            }} 
+                            className="p-1 text-red-400 hover:text-red-600 transition-colors"
+                          >
+                            <Minus size={12}/>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <button 
+                    onClick={() => updateResumeState({
+                      ...localResume, 
+                      skills_section: [...(localResume.skills_section || []), "New Category: Skill 1, Skill 2"]
+                    })} 
+                    className="text-[9px] font-bold text-lumina-teal flex items-center gap-1.5 uppercase tracking-widest pt-3 border-t border-slate-100 mt-2 w-full justify-center hover:text-slate-800 transition-colors"
+                  >
+                    <Plus size={12} /> Add Skill Category
+                  </button>
+                </div>
+              </CollapsibleSection>
+
+              <CollapsibleSection 
                 title="Education" 
                 icon={GraduationCap} 
                 isOpen={openSection === "education"} 
