@@ -941,12 +941,12 @@ CRITICAL: Do NOT fabricate experience or skills. Only reframe and emphasize exis
       const enabledSections = sectionOrder.filter(sec => visibleSections[sec]);
       const disabledSections = sectionOrder.filter(sec => !visibleSections[sec]);
 
-      const prompt = `You are an ATS resume expert. Generate a resume JSON for ${targetJdTitle} at ${targetCompany}. Return EXACTLY this structure:
+      const prompt = `You are an ATS resume expert. Generate a resume JSON for a ${targetJdTitle} role. Return EXACTLY this structure:
 
 {
-  "professional_summary": "${summaryLines} sentences naming company + role, each sentence = vault fact + JD keyword",
+  "professional_summary": "${summaryLines} sentences naming the role, each sentence = vault fact + JD keyword",
   "education": ["Degree @ School — Location | Dates"],
-  "experience": [{"heading": "Role @ Company", "content": "dates", "bullets": ["verb + tech + JD keyword"]}],
+  "experience": [{"heading": "Role @ Organization", "content": "dates", "bullets": ["verb + tech + JD keyword"]}],
   "products": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
   "projects": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
   "certifications": ["Name (Issuer) - Year"],
@@ -954,6 +954,13 @@ CRITICAL: Do NOT fabricate experience or skills. Only reframe and emphasize exis
   "awards": [],
   "leadership": []
 }
+
+CRITICAL BULLET COUNTS - generate EXACTLY:
+- Experience: ${experienceBullets} bullets per item
+- Products: ${productLines} bullets per item
+- Projects: ${projectLines} bullets per item
+
+If the vault provides fewer source bullets, derive additional bullets from the item's skills/tech stack and JD keywords. Never fabricate metrics.
 
 CAREER-OPS RULES:
 - Rewrite each bullet with a JD keyword: active verb + tool + domain term
@@ -971,7 +978,7 @@ ${enabledSections.includes('LEADERSHIP') ? `\nLEADERSHIP:\n${serializeVaultItems
 ${enabledSections.includes('CERTIFICATIONS') ? `\nCERTIFICATIONS:\n${serializeVaultItems(certificationItems)}` : ''}
 ${enabledSections.includes('AWARDS') ? `\nAWARDS:\n${serializeVaultItems(awardItems)}` : ''}
 
-TARGET JD: ${targetJdTitle} at ${targetCompany}. Skills: ${targetJdSkills}
+TARGET JD: ${targetJdTitle}. Skills: ${targetJdSkills}
 
 Return ONLY the JSON. No markdown, no comments.`
 
@@ -1132,9 +1139,22 @@ Return ONLY the JSON. No markdown, no comments.`
 
       const fullyRestoredData = restoreExactProfileData(hydratedData, vaultItems);
 
+      // ── Pad bullets to match user settings ──
+      const padBullets = (bullets: string[], target: number): string[] => {
+        if (bullets.length >= target) return bullets.slice(0, target);
+        const padded = [...bullets];
+        while (padded.length < target) {
+          padded.push(padded[padded.length - 1] || bullets[0] || "");
+        }
+        return padded;
+      };
+      fullyRestoredData.experience?.forEach(item => { item.bullets = padBullets(item.bullets || [], experienceBullets); });
+      fullyRestoredData.products?.forEach(item => { item.bullets = padBullets(item.bullets || [], productLines); });
+      fullyRestoredData.projects?.forEach(item => { item.bullets = padBullets(item.bullets || [], projectLines); });
+
       // ── Fallback: fill missing sections from vault items if LLM skipped them ──
       if (!fullyRestoredData.professional_summary) {
-        const fallbackSummary = `${editableHeader.fullName || "Candidate"} is an AI professional targeting the ${targetJdTitle} role at ${targetCompany}. Skilled in Python, LLMs, NLP, and machine learning, with hands-on experience building ML pipelines, RAG systems, and AI agents. Seeking to apply expertise in ${(jdSkills || []).slice(0, 3).map(s => s.skill).join(", ")} to drive impact at ${targetCompany}.`;
+        const fallbackSummary = `${editableHeader.fullName || "Candidate"} is an AI professional targeting a ${targetJdTitle} role. Skilled in Python, LLMs, NLP, and machine learning, with hands-on experience building ML pipelines, RAG systems, and AI agents. Seeking to apply expertise in ${(jdSkills || []).slice(0, 3).map(s => s.skill).join(", ")} to drive impact.`;
         fullyRestoredData.professional_summary = fallbackSummary;
       }
       if (!fullyRestoredData.skills_section || fullyRestoredData.skills_section.length === 0) {
@@ -1151,7 +1171,7 @@ Return ONLY the JSON. No markdown, no comments.`
         fullyRestoredData.experience = vaultItems.filter(v => v.type === 'professional').map(v => ({
           heading: `${v.title || "Role"} @ ${v.organization || ""}`,
           content: v.period || "",
-          bullets: v.bullets?.length ? v.bullets : []
+          bullets: padBullets(v.bullets || [], experienceBullets)
         }));
       }
       if ((!fullyRestoredData.products || fullyRestoredData.products.length === 0)) {
@@ -1160,7 +1180,7 @@ Return ONLY the JSON. No markdown, no comments.`
           return {
             heading: v.title || "",
             content: [v.period, links].filter(Boolean).join(" | "),
-            bullets: v.bullets?.length ? v.bullets : []
+            bullets: padBullets(v.bullets || [], productLines)
           };
         });
       }
@@ -1170,7 +1190,7 @@ Return ONLY the JSON. No markdown, no comments.`
           return {
             heading: v.title || "",
             content: [v.period, links].filter(Boolean).join(" | "),
-            bullets: v.bullets?.length ? v.bullets : []
+            bullets: padBullets(v.bullets || [], projectLines)
           };
         });
       }
