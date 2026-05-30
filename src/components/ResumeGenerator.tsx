@@ -408,14 +408,15 @@ const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3, experienceBu
       .replace(/\u00B3/g, "3")
       .replace(/\u00A0/g, " ");
 
-    const sentences = normalized.match(/[^.!?]+[.!?]+(\s|$)/g) || [normalized];
+    let sentences = normalized.match(/[^.!?]+[.!?]+(\s|$)/g);
+    if (!sentences || sentences.length < targetSummaryLines) {
+      sentences = normalized.split(/\n+/).map(s => s.trim()).filter(Boolean);
+    }
+    if (!sentences || sentences.length < targetSummaryLines) {
+      sentences = [normalized];
+    }
     const cleanedSentences = sentences.map(s => s.trim()).filter(Boolean);
-
-    // If LLM returned fewer sentences than requested, keep ALL of them (don't discard content)
-    // Only slice if we have MORE than requested
-    const toUse = cleanedSentences.length > targetSummaryLines
-      ? cleanedSentences.slice(0, targetSummaryLines)
-      : cleanedSentences;
+    const toUse = cleanedSentences.slice(0, targetSummaryLines);
 
     const finalSentences = toUse.map(s => {
       let clean = s.trim();
@@ -1207,6 +1208,18 @@ Return ONLY the JSON. No markdown, no comments.`
           const suffix = v.organization ? ` (${v.organization})` : "";
           return `${v.title}${suffix}`;
         });
+      }
+
+      // ── Safety truncate summary to exact setting ──
+      if (fullyRestoredData.professional_summary) {
+        const lines = fullyRestoredData.professional_summary.split(/\n+/).map(s => s.trim()).filter(Boolean);
+        const dotSentences = fullyRestoredData.professional_summary.match(/[^.!?]+[.!?]+(\s|$)/g);
+        const parts = dotSentences && dotSentences.length >= summaryLines ? dotSentences : lines;
+        const cleanParts = parts.map(s => s.trim()).filter(Boolean);
+        if (cleanParts.length > summaryLines) {
+          fullyRestoredData.professional_summary = cleanParts.slice(0, summaryLines).join(" ");
+          if (!fullyRestoredData.professional_summary.endsWith(".")) fullyRestoredData.professional_summary += ".";
+        }
       }
 
       setResume(fullyRestoredData);
