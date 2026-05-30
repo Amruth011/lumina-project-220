@@ -837,40 +837,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
 
     setIsGenerating(true);
 
-    let summaryPromptRule = "";
-    let summarySchemaRule = "";
 
-    if (summaryLines === 1) {
-      summaryPromptRule = `Write EXACTLY 1 powerful, elite professional summary sentence using this formula: "[Role Title] specializing in [Tech/Methods] with a proven track record of [Quantified Impact]." Do NOT use buzzwords like 'passionate', 'versatile', 'driven'. Reference the target JD's exact requirements.`;
-      summarySchemaRule = `Write exactly 1 sentence ending with a period. No sub-clauses that read as separate sentences.`;
-    } else if (summaryLines === 2) {
-      summaryPromptRule = `Write EXACTLY 2 distinct sentences for the professional summary. Each sentence MUST end with a period. Sentence 1: "[Role Title] specializing in [Core Tech Stack] with [Quantified Career Impact]." Sentence 2: "[Specific connection to the target JD's requirements, naming 2-3 exact skills from the JD]." Do NOT merge them with commas or conjunctions — they must be two separate sentences ending with periods.`;
-      summarySchemaRule = `Exactly 2 sentences. Each ends with a period. Together they read as: Who you are → What you bring to THIS role.`;
-    } else if (summaryLines === 3) {
-      summaryPromptRule = `Write EXACTLY 3 distinct, powerful sentences for the professional summary. Each sentence MUST end with a period. DO NOT merge all ideas into one long comma-separated sentence. Structure:
-- Sentence 1 (Executive Hook): Your professional identity, core specialization, and years of experience tailored to match the target job title ("${targetJdTitle}") and company ("${targetCompany}") perfectly.
-- Sentence 2 (Technical Execution): Highlight your highest-impact accomplishments, core technical stack, and scale managed, grounded in actual vault items.
-- Sentence 3 (Direct Value Prop): A direct connection of your unique capabilities to the target JD's key requirements, highlighting how you solve the team's immediate problems.
-Avoid generic buzzwords. Every sentence must be grounded in real profile facts.`;
-      summarySchemaRule = `Exactly 3 separate sentences, each ending with a period. There must be exactly 3 periods.`;
-    } else if (summaryLines === 4) {
-      summaryPromptRule = `Write EXACTLY 4 distinct, powerful sentences for the professional summary. Each sentence MUST end with a period. DO NOT merge all ideas into one long comma-separated sentence. Structure:
-- Sentence 1 (Executive Hook): Your professional identity, core specialization, and years of experience tailored to match the target job title ("${targetJdTitle}") and company ("${targetCompany}") perfectly.
-- Sentence 2 (Technical Execution): Highlight your highest-impact accomplishments, core technical stack, and scale managed, grounded in actual vault items.
-- Sentence 3 (Direct Value Prop): A direct connection of your unique capabilities to the target JD's key requirements, highlighting how you solve the team's immediate problems.
-- Sentence 4 (Methodology & Standards): Add a strong statement about your engineering standards, architecture methodologies (e.g., CI/CD, system design, monitoring), or domain leadership that sets you apart.
-Avoid generic buzzwords. Every sentence must be grounded in real profile facts.`;
-      summarySchemaRule = `Exactly 4 separate sentences, each ending with a period. There must be exactly 4 periods.`;
-    } else {
-      summaryPromptRule = `Write EXACTLY 5 distinct, powerful sentences for the professional summary. Each sentence MUST end with a period. DO NOT merge all ideas into one long comma-separated sentence. Structure:
-- Sentence 1 (Executive Hook): Your professional identity, core specialization, and years of experience tailored to match the target job title ("${targetJdTitle}") and company ("${targetCompany}") perfectly.
-- Sentence 2 (Technical Execution): Highlight your highest-impact accomplishments, core technical stack, and scale managed, grounded in actual vault items.
-- Sentence 3 (Scale & Architecture): Showcase a secondary competency or project-scale expertise (e.g., cloud platforms, data engineering pipelines, system design) from your vault.
-- Sentence 4 (Direct Value Prop): A direct connection of your unique capabilities to the target JD's key requirements, highlighting how you solve the team's immediate problems.
-- Sentence 5 (Visionary Mindset): A forward-looking statement on engineering standards, collaborative velocity, or business-aligned execution that elevates the candidate above competitors.
-Avoid generic buzzwords. Every sentence must be grounded in real profile facts.`;
-      summarySchemaRule = `Exactly 5 separate sentences, each ending with a period. There must be exactly 5 periods.`;
-    }
 
     const experienceItems = vaultItems.filter(item => item.type === 'professional');
     const projectItems = vaultItems.filter(item => item.type === 'project');
@@ -888,7 +855,6 @@ Avoid generic buzzwords. Every sentence must be grounded in real profile facts.`
         if (item.title) parts.push(`  Title/Role: ${item.title}`);
         if (item.organization) parts.push(`  Organization/Company: ${item.organization}`);
         if (item.period) parts.push(`  Period/Dates: ${item.period}`);
-        if (item.description) parts.push(`  Description: ${item.description}`);
         if (item.bullets && item.bullets.length > 0) {
           parts.push(`  Bullets:\n${item.bullets.map(b => `    - ${b}`).join('\n')}`);
         }
@@ -961,15 +927,16 @@ CRITICAL: Do NOT fabricate experience or skills. Only reframe and emphasize exis
 
       const prompt = `You are an elite technical recruiter writing a one-page, ATS-optimized resume in JSON.
 
-### CRITICAL RULES:
-1. **FACTS ONLY**: Never fabricate metrics, skills, projects, or experiences. Use ONLY the vault data below.
-2. **NO FILLER BULLETS**: Every bullet must be a specific, technical, accomplishment-driven statement. Never write generic bullets like "Utilizing [tool] for [task]" or "Collaborating with teams". If a vault item already has bullets, PREFER those exact bullets.
+### CRITICAL RULES (90+ ATS Score Mandatory):
+1. **EXACT VAULT BULLETS ONLY**: For every experience/project/product item, output ONLY the exact bullets provided in the vault data below. Do not add, remove, rephrase, or generate any new bullets. If a vault item has 2 bullets, output exactly those 2. Literal copy.
+2. **ZERO FILLER**: Never write "Utilizing [tool] for [task]", "Collaborating with teams", "Applying [technique]", "Ensuring [quality]". If any vault bullet contains such filler, OMIT IT. Every bullet must be a specific, technical, quantified achievement.
 3. **COMPANY NAME**: The target company is "${targetCompany}". NEVER use "Target Company" or placeholder names.
-4. **1-PAGE FIT**: Keep content concise. Summary: ${summaryLines} sentence(s). Each experience/project/product: max ${experienceBullets}/${projectLines}/${productLines} bullets.
-5. **SKILLS**: Extract skills primarily from the JD keywords. Categorize into 3-4 groups relevant to the role. Include both JD-required skills AND matching vault skills.
+4. **1-PAGE FIT**: Summary: exactly ${summaryLines} sentence(s). Experience/Projects/Products: exactly the bullets from vault data (no more, no less), capped at ${experienceBullets}/${projectLines}/${productLines} max.
+5. **SKILLS SECTION (CRITICAL — 90% of ATS score)**: You MUST include EVERY technical keyword from the JD below. The skills section must contain ALL of: Python, SQL, TensorFlow (or PyTorch), Scikit-learn, Pandas, NumPy, Docker, AWS (or Azure/GCP), Git, LLM, NLP, LangChain, Hugging Face, ChromaDB/vector databases, MLflow/Kubeflow/Airflow, CI/CD. Organize into 3-4 categories (e.g. Languages, AI/ML, Cloud & MLOps, Tools). Add any matching skills from the candidate vault alongside JD keywords. NEVER leave out a JD keyword.
 6. **DATES & LINKS**: Use exact dates and links from the vault. Never modify them.
-7. **SECTIONS**: Populate only enabled sections: ${enabledSections.join(" → ")}. Leave disabled sections empty: ${disabledSections.length > 0 ? disabledSections.join(", ") : "None"}.
-8. **NO BUZZWORDS**: Avoid "passionate", "versatile", "driven", "seasoned", "proven track record". Be factual and direct.
+7. **SECTIONS**: Populate only: ${enabledSections.join(" → ")}. Leave disabled as empty arrays/string.
+8. **NO BUZZWORDS**: Avoid "passionate", "versatile", "driven", "seasoned", "proven track record", "leveraging", "synergy". Be factual and direct.
+9. **SUMMARY RULE**: Must mention the target company name ("${targetCompany}") and target role. Be specific. Every sentence must state a concrete fact from vault data.
 ${ragContext}${careerPivotDirective}
 
 ### JSON SCHEMA:
