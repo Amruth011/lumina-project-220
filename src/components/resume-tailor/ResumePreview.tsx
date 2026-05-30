@@ -889,6 +889,15 @@ Return ONLY the complete updated JSON object matching the input structure.`;
 
   return (
     <div className="w-full px-4 sm:px-8 2xl:px-12 mx-auto min-h-[calc(100vh-140px)]">
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #resume-print-content, #resume-print-content * { visibility: visible !important; }
+          #resume-print-content { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; border: none !important; box-shadow: none !important; margin: 0 !important; padding: ${marginSize}in !important; }
+          body { margin: 0 !important; padding: 0 !important; }
+          @page { margin: 0; }
+        }
+      `}</style>
       {/* ── SHARED CANDIDACY HUB ── */}
       <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-white/60 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.05)] mb-10 gap-6">
         <div className="flex bg-slate-100/50 p-1.5 rounded-[1.8rem] border border-slate-200/50 shadow-inner">
@@ -918,7 +927,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                 <Save size={18} />
               </button>
               <div className="h-8 w-px bg-slate-200 mx-2" />
-              <button onClick={onDownloadPDF} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-[#1E2A3A] text-white shadow-lg shadow-[#1E2A3A]/20 transition-all hover:scale-105 group">
+              <button onClick={() => window.print()} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-[#1E2A3A] text-white shadow-lg shadow-[#1E2A3A]/20 transition-all hover:scale-105 group">
                 <Download size={18} />
                 <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">Export PDF</span>
               </button>
@@ -1981,11 +1990,12 @@ Return ONLY the complete updated JSON object matching the input structure.`;
             <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-8 flex justify-center w-full">
               <div className="w-full flex-1 perspective-2000 rounded-[2.5rem] shadow-inner bg-slate-100/50 p-4 sm:p-6 md:p-8 border border-white/40">
                 <motion.div 
+                  id="resume-print-content"
                   ref={resumeRef}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5 }}
-                  className="relative bg-white border border-[#1E2A3A]/5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.12)] mx-auto"
+                  className="relative bg-white border border-[#1E2A3A]/5 shadow-[0_40px_80px_-20px rgba(0,0,0,0.12)] mx-auto"
                   style={{ 
                     width: '100%', 
                     maxWidth: '850px',
