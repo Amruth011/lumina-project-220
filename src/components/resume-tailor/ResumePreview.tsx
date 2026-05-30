@@ -893,7 +893,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
         @media print {
           body * { visibility: hidden !important; }
           #resume-print-content, #resume-print-content * { visibility: visible !important; }
-          #resume-print-content { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; max-width: 100% !important; min-height: auto !important; height: auto !important; border: none !important; box-shadow: none !important; margin: 0 !important; padding: ${marginSize}in !important; overflow: hidden !important; }
+          #resume-print-content { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; max-width: 100% !important; min-height: auto !important; height: auto !important; border: none !important; box-shadow: none !important; margin: 0 !important; padding: ${marginSize === 0.5 ? "1cm" : "2cm"} !important; overflow: hidden !important; }
           body { margin: 0 !important; padding: 0 !important; }
           @page { margin: 0.5in; size: letter; }
         }
@@ -2001,7 +2001,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                     maxWidth: '850px',
                     minHeight: '297mm',
                     height: 'auto',
-                    padding: `${marginSize}in`,
+                    padding: `${marginSize === 0.5 ? "1cm" : "2cm"}`,
                     lineHeight: lineSpacing,
                     fontSize: fontSizes.body,
                     fontFamily: getHtmlFont(fontFamily)

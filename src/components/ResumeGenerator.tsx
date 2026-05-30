@@ -3,9 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Download, Sparkles, Copy, X, Wand2, FileText, CheckCircle2, AlertCircle, ArrowRight, Github, Linkedin, Mail, MapPin, Plus, Minus, Archive, ArrowUp, ArrowDown, Type, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import type { Skill, VaultItem, UserProfileWithVault, GeneratedResume } from "@/types/jd";
 import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import { ResumePreview } from "./resume-tailor/ResumePreview";
 import { GeneratorSkeleton } from "./resume-tailor/GeneratorSkeleton";
 import { matchVaultItems, type VaultMatchResult } from "@/lib/embeddingClient";
@@ -1732,15 +1731,44 @@ Return ONLY the JSON. No markdown, no comments.`
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!resume) return;
-    const filename = `${(editableHeader.fullName || "resume").replace(/\s+/g, "_")}_${(jdTitle || "role").replace(/\s+/g, "_")}.pdf`;
-    exportResumeAsHtmlPdf(
-      resume as GeneratedResumeData,
-      editableHeader as HeaderData,
-      filename,
-    );
-    toast.success("PDF preview opened. Use Ctrl+P / Cmd+P → Save as PDF.");
+    toast.loading("Generating PDF...");
+    try {
+      const el = document.getElementById("resume-print-content");
+      if (!el) { toast.error("Preview not found"); return; }
+
+      const marginCm = marginSize === 0.5 ? 1 : 2;
+      const marginMm = marginCm * 10;
+      const pageW = 210;
+      const pageH = 297;
+
+      const canvas = await html2canvas(el, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: "#ffffff",
+        logging: false,
+        width: el.scrollWidth,
+        height: el.scrollHeight,
+      });
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      const imgW = pageW - marginMm * 2;
+      const imgH = (canvas.height / canvas.width) * imgW;
+
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      pdf.addImage(imgData, "JPEG", marginMm, marginMm, imgW, imgH);
+
+      const filename = `${(editableHeader.fullName || "resume").replace(/\s+/g, "_")}_${(jdTitle || "role").replace(/\s+/g, "_")}.pdf`;
+      pdf.save(filename);
+      toast.dismiss();
+      toast.success("PDF downloaded!");
+    } catch (err) {
+      toast.dismiss();
+      toast.error("PDF generation failed");
+      console.error("PDF Error:", err);
+    }
   };
 
   const handleDownloadDOC = () => {
@@ -2047,7 +2075,7 @@ Return ONLY the JSON. No markdown, no comments.`
           <style>
             @page {
               size: A4;
-              margin: ${marginSize}in;
+              margin: ${marginSize === 0.5 ? "1cm" : "2cm"};
             }
             body {
               font-family: ${getHtmlFont(fontFamily)};
@@ -2688,7 +2716,7 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
                     </div>
                   </div>
 
-                  <div className="space-y-4">
+                    <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Page Margins</label>
                       <div className="flex gap-2">
@@ -2698,7 +2726,7 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
                             onClick={() => setMarginSize(m as 0.5 | 1.0)}
                             className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all ${marginSize === m ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400'}`}
                           >
-                            {m === 0.5 ? 'Narrow' : 'Standard'}
+                            {m === 0.5 ? 'Narrow (1cm)' : 'Standard (2cm)'}
                           </button>
                         ))}
                       </div>
