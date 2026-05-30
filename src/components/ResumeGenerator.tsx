@@ -925,32 +925,38 @@ CRITICAL: Do NOT fabricate experience or skills. Only reframe and emphasize exis
       const enabledSections = sectionOrder.filter(sec => visibleSections[sec]);
       const disabledSections = sectionOrder.filter(sec => !visibleSections[sec]);
 
-      const prompt = `You are an elite technical recruiter writing a one-page, ATS-optimized resume in JSON.
+      const prompt = `You are an elite ATS optimization specialist generating a one-page resume as JSON. Your output directly determines whether this candidate gets an interview. 90+ ATS score is mandatory.
 
-### CRITICAL RULES (90+ ATS Score Mandatory):
-1. **EXACT VAULT BULLETS ONLY**: For every experience/project/product item, output ONLY the exact bullets provided in the vault data below. Do not add, remove, rephrase, or generate any new bullets. If a vault item has 2 bullets, output exactly those 2. Literal copy.
-2. **ZERO FILLER**: Never write "Utilizing [tool] for [task]", "Collaborating with teams", "Applying [technique]", "Ensuring [quality]". If any vault bullet contains such filler, OMIT IT. Every bullet must be a specific, technical, quantified achievement.
-3. **COMPANY NAME**: The target company is "${targetCompany}". NEVER use "Target Company" or placeholder names.
-4. **1-PAGE FIT**: Summary: exactly ${summaryLines} sentence(s). Experience/Projects/Products: exactly the bullets from vault data (no more, no less), capped at ${experienceBullets}/${projectLines}/${productLines} max.
-5. **SKILLS SECTION (CRITICAL — 90% of ATS score)**: You MUST include EVERY technical keyword from the JD below. The skills section must contain ALL of: Python, SQL, TensorFlow (or PyTorch), Scikit-learn, Pandas, NumPy, Docker, AWS (or Azure/GCP), Git, LLM, NLP, LangChain, Hugging Face, ChromaDB/vector databases, MLflow/Kubeflow/Airflow, CI/CD. Organize into 3-4 categories (e.g. Languages, AI/ML, Cloud & MLOps, Tools). Add any matching skills from the candidate vault alongside JD keywords. NEVER leave out a JD keyword.
-6. **DATES & LINKS**: Use exact dates and links from the vault. Never modify them.
-7. **SECTIONS**: Populate only: ${enabledSections.join(" → ")}. Leave disabled as empty arrays/string.
-8. **NO BUZZWORDS**: Avoid "passionate", "versatile", "driven", "seasoned", "proven track record", "leveraging", "synergy". Be factual and direct.
-9. **SUMMARY RULE**: Must mention the target company name ("${targetCompany}") and target role. Be specific. Every sentence must state a concrete fact from vault data.
-${ragContext}${careerPivotDirective}
+### VIOLATIONS THAT WILL FAIL THE ATS SCORE:
+- Using "Target Company" placeholder — CRITICAL FAILURE. The company is "${targetCompany}". Use it.
+- Writing "Tech Stack" literally — CRITICAL FAILURE. Replace with actual technologies from each vault item's Associated Skills.
+- Omitting ANY JD keyword from the Skills section — CRITICAL FAILURE. ALL must be present.
+- Generic filler bullets like "Utilizing [tool] for [task]", "Collaborating with teams", "Applying [technique]" — CRITICAL FAILURE.
 
-### JSON SCHEMA:
-{
-  "professional_summary": "string",
-  "skills_section": ["Category1: skill1, skill2", "Category2: skill3, skill4"],
-  "experience": [{"heading": "Role @ Company - Mode", "content": "Date range", "bullets": ["bullet1", "bullet2"]}],
-  "products": [{"heading": "Name - Tech Stack", "content": "Status | Links", "bullets": ["bullet1", "bullet2"]}],
-  "projects": [{"heading": "Name - Tech Stack", "content": "Year | Links", "bullets": ["bullet1", "bullet2"]}],
-  "leadership": [{"heading": "Role @ Org", "content": "Dates", "bullets": ["bullet1"]}],
-  "education": ["Degree @ School - Location | Dates"],
-  "certifications": ["Name (Issuer) - Year"],
-  "awards": ["Name (Issuer) - Year"]
-}
+### HEADING FORMAT (strict):
+- experience: "Exact Role @ Exact Company - Remote/Location" (from vault data)
+- products: "Exact Vault Title - EXACT Associated Skills comma-separated" — NEVER write "Tech Stack"
+- projects: "Exact Vault Title - EXACT Associated Skills comma-separated" — NEVER write "Tech Stack"
+
+### BULLET RULES:
+1. First, output ALL bullets from the vault item verbatim (exact copy).
+2. The user requested ${experienceBullets} bullets per experience, ${projectLines} per project, ${productLines} per product. If vault provides fewer, you MAY generate additional bullets ONLY if they: (a) name a specific technology from the item's Associated Skills, (b) describe a concrete technical task/outcome, (c) are NOT generic filler. If you cannot write a specific technical bullet, leave it out.
+
+### SKILLS SECTION — HIGHEST ATS VALUE:
+Include EVERY JD keyword below. Group into 3-4 categories. The full list that MUST appear: Python, SQL, TensorFlow or PyTorch, Scikit-learn, Pandas, NumPy, Docker, AWS or Azure or GCP, Git, LLM, NLP, LangChain, Hugging Face, ChromaDB or vector databases, MLflow or Kubeflow or Airflow, CI/CD. Add matching vault skills alongside. NO OMISSIONS.
+
+### SUMMARY RULE:
+Must mention "${targetCompany}" by name and reference the target role "${targetJdTitle}". Every sentence must state a specific fact from vault data — no fluff.
+
+### SECTIONS:
+Enabled: ${enabledSections.join(" → ")}. Disabled (leave empty): ${disabledSections.length > 0 ? disabledSections.join(", ") : "None"}.
+
+### CANDIDATE DATA:
+Name: ${editableHeader.fullName || profile?.full_name || "Resume Candidate"}
+Contact: ${editableHeader.email || profile?.email || ""} | ${editableHeader.phone || profile?.phone || ""} | ${editableHeader.location || profile?.location || ""}
+LinkedIn: ${editableHeader.linkedin || profile?.linkedin_url || ""}
+GitHub: ${editableHeader.github || profile?.github_url || ""}
+Portfolio: ${editableHeader.portfolio || profile?.website_url || ""}
 
 ### CANDIDATE DATA:
 Name: ${editableHeader.fullName || profile?.full_name || "Resume Candidate"}
