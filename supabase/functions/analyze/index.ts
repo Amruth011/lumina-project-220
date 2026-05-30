@@ -42,11 +42,15 @@ serve(async (req: Request) => {
     let resultData = null;
 
     for (const model of fallbackModels) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000); // 25-second timeout per model fetch call
+
       try {
         console.log(`Lumina Analyze: Attempting with ${model}...`);
         const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({
             model: model,
             messages,
@@ -55,6 +59,7 @@ serve(async (req: Request) => {
             max_tokens: max_tokens ?? 4000,
           }),
         });
+        clearTimeout(timeoutId);
 
         if (groqResponse.ok) {
           resultData = await groqResponse.json();
@@ -76,6 +81,7 @@ serve(async (req: Request) => {
           console.log(`Lumina Analyze: Rate limit (429) hit for ${model}. Instantly falling back to next engine without delay.`);
         }
       } catch (err) {
+        clearTimeout(timeoutId);
         lastError = err instanceof Error ? err.message : String(err);
         console.error(`Lumina Analyze: ${model} exception:`, lastError);
       }

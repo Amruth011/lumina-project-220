@@ -1053,15 +1053,31 @@ For "skills_section", you MUST group the candidate's skills into 3-4 logical, pr
           // Update toast or state to show which model is active
           if (i > 0) toast.loading(`Switching to fallback engine: ${model}...`, { id: "gen-toast" });
 
-          let { data: rawData, error: invokeError } = await supabase.functions.invoke("analyze", {
-            body: {
-              model: model,
-              messages: [{ role: "user", content: prompt }],
-              temperature: 0.3,
-              response_format: { type: "json_object" },
-              max_tokens: 4000
-            }
-          });
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 35000); // 35-second client-side timeout
+
+          let rawData = null;
+          let invokeError = null;
+
+          try {
+            const response = await supabase.functions.invoke("analyze", {
+              body: {
+                model: model,
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.3,
+                response_format: { type: "json_object" },
+                max_tokens: 4000
+              },
+              signal: controller.signal
+            });
+            rawData = response.data;
+            invokeError = response.error;
+          } catch (err) {
+            invokeError = err instanceof Error ? err : new Error(String(err));
+            console.warn(`Lumina Tailoring: Supabase invoke aborted/failed for ${model}:`, err);
+          } finally {
+            clearTimeout(timeoutId);
+          }
 
           // ── EMERGENCY FALLBACK: Try Local API Proxy if Edge Function Fails ──
           if (invokeError) {
