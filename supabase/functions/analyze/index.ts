@@ -43,7 +43,7 @@ serve(async (req: Request) => {
 
     for (const model of fallbackModels) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000); // 25-second timeout per model fetch call
+      const timeoutId = setTimeout(() => controller.abort(), 65000); // 65-second timeout per model fetch call (70B needs ~41s for 8192 tok)
 
       try {
         console.log(`Lumina Analyze: Attempting with ${model}...`);
