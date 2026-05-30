@@ -207,26 +207,26 @@ export const buildResumeHtml = (
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Inter', 'Helvetica', 'Arial', sans-serif; font-size: 10px; line-height: 1.15; color: #1E2A3A; background: #fff; padding: 0.5in; }
-  .header { text-align: center; margin-bottom: 10px; }
-  .header h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; text-transform: uppercase; color: #1E2A3A; margin-bottom: 4px; }
-  .contact { font-size: 8.5px; color: #1E2A3A; font-weight: 500; display: flex; flex-wrap: wrap; justify-content: center; gap: 1px 6px; }
+  body { font-family: 'Inter', 'Helvetica', 'Arial', sans-serif; font-size: 9px; line-height: 1.15; color: #1E2A3A; background: #fff; padding: 0.5in; max-width: 100%; }
+  .header { text-align: center; margin-bottom: 8px; }
+  .header h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; text-transform: uppercase; color: #1E2A3A; margin-bottom: 3px; }
+  .contact { font-size: 8px; color: #1E2A3A; font-weight: 500; display: flex; flex-wrap: wrap; justify-content: center; gap: 1px 5px; }
   .contact a { color: #2563eb; text-decoration: underline; }
-  .section { margin-bottom: 6px; }
-  .section-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #1E2A3A; padding-bottom: 1px; margin-bottom: 4px; color: #1E2A3A; }
-  .summary-text { font-size: 9px; line-height: 1.5; color: #1E2A3A; text-align: justify; }
-  .item { margin-bottom: 5px; }
-  .item-header { font-weight: 700; font-size: 9.5px; color: #1E2A3A; }
-  .item-sub { font-size: 8.5px; color: #555; }
-  .item ul { padding-left: 14px; margin-top: 1px; list-style: disc; }
-  .item li { font-size: 8.5px; line-height: 1.4; margin-bottom: 1px; color: #1E2A3A; }
-  .edu-block { margin-bottom: 4px; }
-  .edu-degree { font-weight: 700; font-size: 9px; }
-  .edu-school { font-size: 8.5px; }
-  .edu-dates { font-size: 8px; color: #555; }
-  .edu-loc { font-size: 8px; color: #555; }
-  .skills-line { font-size: 8.5px; margin-bottom: 1px; }
-  .cert-item { font-size: 8.5px; margin-bottom: 1px; color: #1E2A3A; }
+  .section { margin-bottom: 5px; }
+  .section-title { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #1E2A3A; padding-bottom: 1px; margin-bottom: 3px; color: #1E2A3A; }
+  .summary-text { font-size: 8px; line-height: 1.45; color: #1E2A3A; text-align: justify; }
+  .item { margin-bottom: 4px; }
+  .item-header { font-weight: 700; font-size: 8.5px; color: #1E2A3A; }
+  .item-sub { font-size: 7.5px; color: #555; }
+  .item ul { padding-left: 13px; margin-top: 1px; list-style: disc; }
+  .item li { font-size: 7.5px; line-height: 1.35; margin-bottom: 1px; color: #1E2A3A; }
+  .edu-block { margin-bottom: 3px; }
+  .edu-degree { font-weight: 700; font-size: 8px; }
+  .edu-school { font-size: 7.5px; }
+  .edu-dates { font-size: 7px; color: #555; }
+  .edu-loc { font-size: 7px; color: #555; }
+  .skills-line { font-size: 7.5px; margin-bottom: 1px; }
+  .cert-item { font-size: 7.5px; margin-bottom: 1px; color: #1E2A3A; }
   @media print { body { padding: 0; } }
 </style>
 </head>
