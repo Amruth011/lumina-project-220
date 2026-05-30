@@ -941,18 +941,49 @@ CRITICAL: Do NOT fabricate experience or skills. Only reframe and emphasize exis
       const enabledSections = sectionOrder.filter(sec => visibleSections[sec]);
       const disabledSections = sectionOrder.filter(sec => !visibleSections[sec]);
 
-      const prompt = `Generate an ATS-optimized resume JSON. Target: ${targetCompany} - ${targetJdTitle}.
+      const prompt = `Generate an ATS-optimized resume JSON for ${targetCompany} - ${targetJdTitle}. Follow this exact section sequence and format:
 
-### CAREER-OPS RULES (follow strictly):
-1. REWRITE every bullet using JD keywords. Never invent. Example: vault says "LLM workflows" → JD says "RAG" → output "RAG pipeline design".
-2. REORDER bullets: put most JD-relevant bullet first in each item.
-3. INJECT JD keywords into summary, every bullet, skills, headings. Include: Python, SQL, TensorFlow/PyTorch, Scikit-learn, Pandas, NumPy, Docker, AWS/Azure/GCP, Git, LLM, NLP, LangChain, HuggingFace, ChromaDB, MLflow/Kubeflow/Airflow, CI/CD, ML, DL, Data Preprocessing, Feature Engineering, Model Deployment.
-4. SKILLS first line: "Core Competencies: [6-8 keyword phrases from JD]". Group rest into 3-4 categories. Include ALL keywords above.
-5. SUMMARY: ${summaryLines} sentences. Must name "${targetCompany}" and "${targetJdTitle}". Each sentence = specific vault fact + JD keyword.
-6. HEADINGS: experience = "Role @ Company — Location". products/projects = "Title — Tech1, Tech2..." (NEVER write "Tech Stack" literally).
-7. Bullets per item: experience=${experienceBullets}, projects=${projectLines}, products=${productLines}. If vault has fewer, generate more by rewording same work with different JD keywords.
-8. FORBIDDEN: "Utilizing [tool]", "Collaborating", "Applying [technique]", "Ensuring [quality]", "Target Company", "Tech Stack" literal, fake metrics.
-9. Certifications format: "Name (Issuer) - Year" as plain strings.
+### FORMAT PER SECTION (top to bottom):
+
+**1. SUMMARY** (${summaryLines} sentences)
+- Must name "${targetCompany}" and "${targetJdTitle}"
+- Each sentence = specific vault fact rewritten with a JD keyword
+- Inject 2-3 JD keywords per sentence naturally
+
+**2. EDUCATION** (from vault data, keep verbatim)
+- Format: "Degree @ School — Location | Dates"
+
+**3. EXPERIENCE** (${experienceBullets} bullets each)
+- Heading: "Role @ Company — Remote/Location"
+- Rewrite vault bullets using JD keywords. Never invent.
+- Reorder: most JD-relevant bullet FIRST
+- Each bullet = active verb + specific tech + JD keyword
+
+**4. PRODUCTS** (${productLines} bullets each)
+- Heading: "Exact Title — Tech1, Tech2, Tech3..." (NEVER write "Tech Stack" literally)
+- Content: "Status | GitHub | Live" using exact vault links
+- Rewrite bullets ATS-friendly, most relevant first
+
+**5. PROJECTS** (${projectLines} bullets each)
+- Heading: "Exact Title — Tech1, Tech2, Tech3..." (NEVER write "Tech Stack" literally)
+- Content: "Year | GitHub | Live" using exact vault links
+- Rewrite bullets ATS-friendly, most relevant first
+
+**6. SKILLS** (CRITICAL — highest ATS value)
+- First line MUST be: "Core Competencies: [6-8 keyword phrases from JD]"
+- Then group remaining into 3-4 categories
+- ALL these JD keywords MUST appear: Python, SQL, TensorFlow/PyTorch, Scikit-learn, Pandas, NumPy, Docker, AWS/Azure/GCP, Git, LLM, NLP, LangChain, HuggingFace, ChromaDB, MLflow/Kubeflow/Airflow, CI/CD, ML, DL, Data Preprocessing, Feature Engineering, Model Deployment
+
+**7. CERTIFICATIONS** (ordered by JD relevance — most ATS-relevant FIRST)
+- Format: "Name (Issuer) - Year" as plain strings
+- Sort so certifications matching JD keywords appear top
+
+### GLOBAL RULES:
+- NEVER write "Target Company" — use "${targetCompany}"
+- NEVER write "Tech Stack" literally in headings
+- NEVER "Utilizing [tool]", "Collaborating", "Applying [technique]", "Ensuring [quality]"
+- NEVER fabricate metrics or skills
+- Use exact links from vault data
 
 ### SECTIONS:
 Enabled: ${enabledSections.join(" → ")}. Disabled (return empty): ${disabledSections.length > 0 ? disabledSections.join(", ") : "None"}.
