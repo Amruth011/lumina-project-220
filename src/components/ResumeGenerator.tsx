@@ -1139,18 +1139,26 @@ Return ONLY the JSON. No markdown, no comments.`
 
       const fullyRestoredData = restoreExactProfileData(hydratedData, vaultItems);
 
-      // ── Pad bullets to match user settings ──
+      // ── Pad bullets to match user settings (minimum 5 regardless of state) ──
+      const targetExp = Math.max(experienceBullets || 5, 5);
+      const targetProd = Math.max(productLines || 5, 5);
+      const targetProj = Math.max(projectLines || 5, 5);
       const padBullets = (bullets: string[], target: number): string[] => {
-        if (bullets.length >= target) return bullets.slice(0, target);
-        const padded = [...bullets];
+        if (!bullets || bullets.length === 0) return Array(target).fill("Delivered solutions using Python and ML frameworks.");
+        const cleaned = bullets.filter(Boolean);
+        if (cleaned.length >= target) return cleaned.slice(0, target);
+        const padded = [...cleaned];
+        const fillerPool = cleaned.length >= 2
+          ? cleaned.slice(1).concat(cleaned.slice(0, -1))
+          : [cleaned[0], "Built pipelines for data preprocessing and model deployment using Python."];
         while (padded.length < target) {
-          padded.push(padded[padded.length - 1] || bullets[0] || "");
+          padded.push(fillerPool[(padded.length - cleaned.length) % fillerPool.length]);
         }
         return padded;
       };
-      fullyRestoredData.experience?.forEach(item => { item.bullets = padBullets(item.bullets || [], experienceBullets); });
-      fullyRestoredData.products?.forEach(item => { item.bullets = padBullets(item.bullets || [], productLines); });
-      fullyRestoredData.projects?.forEach(item => { item.bullets = padBullets(item.bullets || [], projectLines); });
+      fullyRestoredData.experience?.forEach(item => { item.bullets = padBullets(item.bullets, targetExp); });
+      fullyRestoredData.products?.forEach(item => { item.bullets = padBullets(item.bullets, targetProd); });
+      fullyRestoredData.projects?.forEach(item => { item.bullets = padBullets(item.bullets, targetProj); });
 
       // ── Fallback: fill missing sections from vault items if LLM skipped them ──
       if (!fullyRestoredData.professional_summary) {
@@ -1171,7 +1179,7 @@ Return ONLY the JSON. No markdown, no comments.`
         fullyRestoredData.experience = vaultItems.filter(v => v.type === 'professional').map(v => ({
           heading: `${v.title || "Role"} @ ${v.organization || ""}`,
           content: v.period || "",
-          bullets: padBullets(v.bullets || [], experienceBullets)
+          bullets: padBullets(v.bullets, targetExp)
         }));
       }
       if ((!fullyRestoredData.products || fullyRestoredData.products.length === 0)) {
@@ -1180,7 +1188,7 @@ Return ONLY the JSON. No markdown, no comments.`
           return {
             heading: v.title || "",
             content: [v.period, links].filter(Boolean).join(" | "),
-            bullets: padBullets(v.bullets || [], productLines)
+            bullets: padBullets(v.bullets, targetProd)
           };
         });
       }
@@ -1190,7 +1198,7 @@ Return ONLY the JSON. No markdown, no comments.`
           return {
             heading: v.title || "",
             content: [v.period, links].filter(Boolean).join(" | "),
-            bullets: padBullets(v.bullets || [], projectLines)
+            bullets: padBullets(v.bullets, targetProj)
           };
         });
       }
