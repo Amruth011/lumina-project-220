@@ -19,12 +19,18 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   public static getDerivedStateFromError(error: Error): State {
+    console.error("Lumina Forensic Boundary caught:", error.message, error.stack);
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Lumina Forensic Boundary caught uncaught exception:", error, errorInfo);
     
+    // Auto-recover after 3 seconds on any error
+    setTimeout(() => {
+      this.setState({ hasError: false, error: null });
+    }, 3000);
+
     // Check if it's a dynamic import or chunk loading failure
     const isChunkLoadFailed = 
       error?.name === "TypeError" ||

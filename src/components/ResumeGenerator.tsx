@@ -4,7 +4,6 @@ import { Loader2, Download, Sparkles, Copy, X, Wand2, FileText, CheckCircle2, Al
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import { ResumePreview } from "./resume-tailor/ResumePreview";
 import { GeneratorSkeleton } from "./resume-tailor/GeneratorSkeleton";
 import { matchVaultItems, type VaultMatchResult } from "@/lib/embeddingClient";
@@ -1737,6 +1736,9 @@ Return ONLY the JSON. No markdown, no comments.`
     try {
       const el = document.getElementById("resume-print-content");
       if (!el) { toast.error("Preview not found"); return; }
+
+      const html2canvasModule = await import("html2canvas");
+      const html2canvas = html2canvasModule.default;
 
       const marginCm = marginSize === 0.5 ? 1 : 2;
       const marginMm = marginCm * 10;
