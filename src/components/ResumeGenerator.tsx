@@ -1959,12 +1959,12 @@ Return ONLY the JSON. No markdown, no comments.`
           return `
             <table class="meta-table">
               <tr>
-                <td style="text-align: left; font-weight: bold; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${school}</td>
-                <td style="text-align: right; font-weight: bold; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
+                <td style="text-align: left; font-weight: bold; font-size: ${bodyFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${school}</td>
+                <td style="text-align: right; font-weight: bold; font-size: ${bodyFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
               </tr>
               <tr>
-                <td style="text-align: left; font-style: italic; font-size: ${bodyFontSize - 1}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${degree} ${metadata ? `| ${metadata}` : ''}</td>
-                <td style="text-align: right; font-size: ${bodyFontSize - 1}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${loc}</td>
+                <td style="text-align: left; font-style: italic; font-size: ${bodyFontSize - 1}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${degree} ${metadata ? `| ${metadata}` : ''}</td>
+                <td style="text-align: right; font-size: ${bodyFontSize - 1}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${loc}</td>
               </tr>
             </table>
           `;
@@ -1989,12 +1989,12 @@ Return ONLY the JSON. No markdown, no comments.`
           return `
             <table class="meta-table">
               <tr>
-                <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${role}</td>
-                <td style="text-align: right; font-weight: bold; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
+                <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${role}</td>
+                <td style="text-align: right; font-weight: bold; font-size: ${bodyFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
               </tr>
               <tr>
-                <td style="text-align: left; font-style: italic; font-size: ${bodyFontSize - 1}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${org}</td>
-                <td style="text-align: right; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${location}</td>
+                <td style="text-align: left; font-style: italic; font-size: ${bodyFontSize - 1}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${org}</td>
+                <td style="text-align: right; font-size: ${bodyFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${location}</td>
               </tr>
             </table>
             ${bulletsToRender.length > 0 ? `
@@ -2035,10 +2035,10 @@ Return ONLY the JSON. No markdown, no comments.`
           return `
             <table class="meta-table">
               <tr>
-                <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">
+                <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">
                   ${title?.trim()} <span style="font-weight: normal; opacity: 0.6; font-family: ${getHtmlFont(fontFamily)};">| ${status?.trim()}</span>
                 </td>
-                <td style="text-align: right; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${productLinkHtml}</td>
+                <td style="text-align: right; font-size: ${bodyFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${productLinkHtml}</td>
               </tr>
             </table>
             ${bulletsToRender.length > 0 ? `
@@ -2078,10 +2078,10 @@ Return ONLY the JSON. No markdown, no comments.`
           return `
             <table class="meta-table">
               <tr>
-                <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">
+                <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">
                   ${title?.trim()} <span style="font-weight: normal; opacity: 0.6; font-family: ${getHtmlFont(fontFamily)};">| ${stack?.trim()}</span>
                 </td>
-                <td style="text-align: right; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${projectLinkHtml}</td>
+                <td style="text-align: right; font-size: ${bodyFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${projectLinkHtml}</td>
               </tr>
             </table>
             ${bulletsToRender.length > 0 ? `
@@ -2107,8 +2107,8 @@ Return ONLY the JSON. No markdown, no comments.`
           return `
             <table class="meta-table">
               <tr>
-                <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${lead.heading || "Role"}</td>
-                <td style="text-align: right; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
+                <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${lead.heading || "Role"}</td>
+                <td style="text-align: right; font-size: ${bodyFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
               </tr>
             </table>
             ${bulletsToRender.length > 0 ? `
@@ -2220,7 +2220,7 @@ Return ONLY the JSON. No markdown, no comments.`
               margin-bottom: 6px;
             }
             .section-title {
-              font-size: ${headlineFontSize}px;
+              font-size: ${headlineFontSize}pt;
               font-weight: bold;
               text-transform: uppercase;
               color: #1E2A3A;
@@ -2229,7 +2229,7 @@ Return ONLY the JSON. No markdown, no comments.`
               letter-spacing: 1px;
             }
             p.summary-text {
-              font-size: ${bodyFontSize}px;
+              font-size: ${bodyFontSize}pt;
               color: #1E2A3A;
               text-align: justify;
               margin: 0;
@@ -2252,14 +2252,14 @@ Return ONLY the JSON. No markdown, no comments.`
               list-style-type: disc;
             }
             li.bullet-item {
-              font-size: ${bodyFontSize}px;
+              font-size: ${bodyFontSize}pt;
               color: #1E2A3A;
               line-height: 1.25;
               text-align: justify;
               margin-bottom: 2px;
             }
             .skills-category {
-              font-size: ${bodyFontSize}px;
+              font-size: ${bodyFontSize}pt;
               color: #1E2A3A;
               margin: 0 0 2px 0;
               padding: 0;
@@ -2271,10 +2271,10 @@ Return ONLY the JSON. No markdown, no comments.`
           </style>
         </head>
         <body>
-          <h1 style="font-size: ${nameFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)}; font-weight: bold; text-align: center; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px;">
+          <h1 style="font-size: ${nameFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)}; font-weight: bold; text-align: center; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px;">
             ${editableHeader.fullName || "Your Name"}
           </h1>
-          <div style="text-align: center; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)}; margin-bottom: 20px; line-height: 1.4;">
+          <div style="text-align: center; font-size: ${bodyFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)}; margin-bottom: 20px; line-height: 1.4;">
             ${headerMeta}
           </div>
           
