@@ -2202,9 +2202,18 @@ Return ONLY the JSON. No markdown, no comments.`
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
           <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
           <style>
-            @page {
+            @page WordSection1 {
               size: A4;
-              margin: ${marginSize === 0.5 ? "1cm" : "2cm"};
+              margin: ${marginSize === 0.5 ? "0.5in" : "1.0in"};
+              mso-page-margin-top: ${marginSize === 0.5 ? "0.5in" : "1.0in"};
+              mso-page-margin-bottom: ${marginSize === 0.5 ? "0.5in" : "1.0in"};
+              mso-page-margin-left: ${marginSize === 0.5 ? "0.5in" : "1.0in"};
+              mso-page-margin-right: ${marginSize === 0.5 ? "0.5in" : "1.0in"};
+              mso-header-margin: 0.5in;
+              mso-footer-margin: 0.5in;
+            }
+            div.WordSection1 {
+              page: WordSection1;
             }
             body {
               font-family: ${getHtmlFont(fontFamily)};
@@ -2271,14 +2280,16 @@ Return ONLY the JSON. No markdown, no comments.`
           </style>
         </head>
         <body>
-          <h1 style="font-size: ${nameFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)}; font-weight: bold; text-align: center; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px;">
-            ${editableHeader.fullName || "Your Name"}
-          </h1>
-          <div style="text-align: center; font-size: ${bodyFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)}; margin-bottom: 20px; line-height: 1.4;">
-            ${headerMeta}
+          <div class="WordSection1">
+            <h1 style="font-size: ${nameFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)}; font-weight: bold; text-align: center; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px;">
+              ${editableHeader.fullName || "Your Name"}
+            </h1>
+            <div style="text-align: center; font-size: ${bodyFontSize}pt; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)}; margin-bottom: 20px; line-height: 1.4;">
+              ${headerMeta}
+            </div>
+            
+            ${bodyContentHtml}
           </div>
-          
-          ${bodyContentHtml}
         </body>
         </html>
       `;
