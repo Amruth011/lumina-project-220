@@ -826,6 +826,62 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
         // Silent fallback — no profile seed available, proceed normally
       }
     }
+
+    // Populate master technical skills if resume was not seeded or generated yet
+    if (loadedItems.length > 0 && profileData) {
+      const skillsFromProfile = (profileData as UserProfileWithVault).technical_skills;
+      const fallbackStr = localStorage.getItem(`fallback_skills_${user?.id}`);
+      let parsedFallback: Record<string, string[]> | null = null;
+      if (fallbackStr) {
+        try { parsedFallback = JSON.parse(fallbackStr); } catch (e) {
+          console.warn("Fallback skills parsing failed", e);
+        }
+      }
+      
+      const activeSkills = skillsFromProfile || parsedFallback;
+      if (activeSkills && Object.values(activeSkills).some(arr => Array.isArray(arr) && arr.length > 0)) {
+        const compiledSkills = Object.entries(activeSkills)
+          .filter(([_, list]) => Array.isArray(list) && list.length > 0)
+          .map(([category, list]) => `${category}: ${(list as string[]).join(", ")}`);
+        
+        setResume(prev => {
+          if (!prev || !prev.skills_section || prev.skills_section.length === 0) {
+            return {
+              ...(prev || {
+                professional_summary: "",
+                experience: [],
+                education: [],
+                certifications: [],
+                awards: [],
+                projects: [],
+                products: [],
+                leadership: []
+              }),
+              skills_section: compiledSkills
+            };
+          }
+          return prev;
+        });
+        setEditableResume(prev => {
+          if (!prev || !prev.skills_section || prev.skills_section.length === 0) {
+            return {
+              ...(prev || {
+                professional_summary: "",
+                experience: [],
+                education: [],
+                certifications: [],
+                awards: [],
+                projects: [],
+                products: [],
+                leadership: []
+              }),
+              skills_section: compiledSkills
+            };
+          }
+          return prev;
+        });
+      }
+    }
   };
 
   /**
@@ -1166,14 +1222,31 @@ Return ONLY the JSON. No markdown, no comments.`
         fullyRestoredData.professional_summary = fallbackSummary;
       }
       if (!fullyRestoredData.skills_section || fullyRestoredData.skills_section.length === 0) {
-        const jdSkillNames = (jdSkills || []).map(s => s.skill);
-        const coreCompetencies = jdSkillNames.slice(0, 8).join(", ");
-        fullyRestoredData.skills_section = [
-          `Core Competencies: ${coreCompetencies}`,
-          `Languages: Python, SQL, TypeScript`,
-          `AI & Machine Learning: LLMs, NLP, TensorFlow, PyTorch, Scikit-learn, XGBoost, Hugging Face, LangChain`,
-          `Cloud & MLOps: Docker, AWS, Git, CI/CD, MLflow`,
-        ];
+        const profileSkills = (profile as UserProfileWithVault)?.technical_skills;
+        const fallbackSkillsStr = localStorage.getItem(`fallback_skills_${user?.id}`);
+        let parsedFallback: Record<string, string[]> | null = null;
+        if (fallbackSkillsStr) {
+          try { parsedFallback = JSON.parse(fallbackSkillsStr); } catch (e) {
+            console.warn("Fallback skills parsing failed", e);
+          }
+        }
+        
+        const activeSkills = profileSkills || parsedFallback;
+
+        if (activeSkills && Object.values(activeSkills).some(arr => Array.isArray(arr) && arr.length > 0)) {
+          fullyRestoredData.skills_section = Object.entries(activeSkills)
+            .filter(([_, list]) => Array.isArray(list) && list.length > 0)
+            .map(([category, list]) => `${category}: ${(list as string[]).join(", ")}`);
+        } else {
+          const jdSkillNames = (jdSkills || []).map(s => s.skill);
+          const coreCompetencies = jdSkillNames.slice(0, 8).join(", ");
+          fullyRestoredData.skills_section = [
+            `Core Competencies: ${coreCompetencies}`,
+            `Languages: Python, SQL, TypeScript`,
+            `AI & Machine Learning: LLMs, NLP, TensorFlow, PyTorch, Scikit-learn, XGBoost, Hugging Face, LangChain`,
+            `Cloud & MLOps: Docker, AWS, Git, CI/CD, MLflow`,
+          ];
+        }
       }
       if ((!fullyRestoredData.experience || fullyRestoredData.experience.length === 0)) {
         fullyRestoredData.experience = vaultItems.filter(v => v.type === 'professional').map(v => ({

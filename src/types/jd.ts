@@ -257,6 +257,7 @@ export interface UserProfileWithVault {
   github_url?: string; // Enhanced portfolio support
   website_url?: string;
   summary_master?: string;
+  technical_skills?: Record<string, string[]>;
   created_at?: string;
 }
 

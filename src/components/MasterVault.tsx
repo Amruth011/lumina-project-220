@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 // Important: Use static import with ?url so Vite bundler properly packages the worker file for Vercel
 import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Briefcase, Code, GraduationCap, Award, Trash2, Edit3, Save, X, Loader2, Sparkles, User, Globe, Linkedin, Mail, Phone, MapPin, Github, Import, Zap, Clock, RefreshCw, AlertCircle, Rocket, Shield, BrainCircuit, ShieldCheck } from "lucide-react";
+import { Plus, Briefcase, Code, GraduationCap, Award, Trash2, Edit3, Save, X, Loader2, Sparkles, User, Globe, Linkedin, Mail, Phone, MapPin, Github, Import, Zap, Clock, RefreshCw, AlertCircle, Rocket, Shield, BrainCircuit, ShieldCheck, Cpu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import { useUsage } from "@/hooks/useUsage";
 import type { VaultItem, VaultItemType, UserProfileWithVault } from "@/types/jd";
 import { VaultSkeleton } from "./dashboard/VaultSkeleton";
 import { generateAndStoreEmbedding, batchGenerateEmbeddings } from "@/lib/embeddingClient";
+import { scanProfileForSkills, generateLLMSeedPrompt } from "@/lib/skillScanner";
 
 const getFieldLabels = (type?: VaultItemType) => {
   switch (type) {
@@ -159,6 +160,140 @@ export const MasterVault = () => {
   const [isCurrent, setIsCurrent] = useState<boolean>(false);
 
   const userId = user?.id;
+
+  // ── Technical Skills States ──
+  const [technicalSkills, setTechnicalSkills] = useState<Record<string, string[]>>({
+    "Programming Languages": [],
+    "Infrastructure / DevOps": [],
+    "AI / ML": [],
+    "Data Science": [],
+    "Software Engineering / Others": []
+  });
+  const [skillInputs, setSkillInputs] = useState<Record<string, string>>({
+    "Programming Languages": "",
+    "Infrastructure / DevOps": "",
+    "AI / ML": "",
+    "Data Science": "",
+    "Software Engineering / Others": ""
+  });
+  const [suggestedSkills, setSuggestedSkills] = useState<Record<string, string[]>>({});
+  const [isScanningSkills, setIsScanningSkills] = useState(false);
+  const [dbColMissing, setDbColMissing] = useState(false);
+
+  // Sync technical skills from profile or fallback
+  useEffect(() => {
+    if (profile && userId) {
+      const skillsFromProfile = profile.technical_skills;
+      const fallbackStr = localStorage.getItem(`fallback_skills_${userId}`);
+      let parsedFallback: Record<string, string[]> | null = null;
+      if (fallbackStr) {
+        try { parsedFallback = JSON.parse(fallbackStr); } catch (e) {
+          console.warn("Fallback skills parsing failed", e);
+        }
+      }
+
+      const defaultSkills: Record<string, string[]> = {
+        "Programming Languages": [],
+        "Infrastructure / DevOps": [],
+        "AI / ML": [],
+        "Data Science": [],
+        "Software Engineering / Others": []
+      };
+
+      const sourceSkills = skillsFromProfile || parsedFallback || defaultSkills;
+      
+      setTechnicalSkills({
+        "Programming Languages": Array.isArray(sourceSkills["Programming Languages"]) ? sourceSkills["Programming Languages"] : [],
+        "Infrastructure / DevOps": Array.isArray(sourceSkills["Infrastructure / DevOps"]) ? sourceSkills["Infrastructure / DevOps"] : [],
+        "AI / ML": Array.isArray(sourceSkills["AI / ML"]) ? sourceSkills["AI / ML"] : [],
+        "Data Science": Array.isArray(sourceSkills["Data Science"]) ? sourceSkills["Data Science"] : [],
+        "Software Engineering / Others": Array.isArray(sourceSkills["Software Engineering / Others"]) ? sourceSkills["Software Engineering / Others"] : []
+      });
+
+      if (parsedFallback && !skillsFromProfile) {
+        setDbColMissing(true);
+      }
+    }
+  }, [profile, userId]);
+
+  const handleLocalScan = () => {
+    setIsScanningSkills(true);
+    const toastId = toast.loading("Analyzing profile items for technical skills...");
+    try {
+      const scanned = scanProfileForSkills(items, profile?.summary_master);
+      setSuggestedSkills(scanned);
+      const total = Object.values(scanned).reduce((acc, list) => acc + list.length, 0);
+      if (total === 0) {
+        toast.info("No matching skills detected from your current profile items.", { id: toastId });
+      } else {
+        toast.success(`Detected ${total} matching skills! Click the suggestions below to add them to your categories.`, { id: toastId });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Local scan failed.", { id: toastId });
+    } finally {
+      setIsScanningSkills(false);
+    }
+  };
+
+  const handleLLMScan = async () => {
+    setIsScanningSkills(true);
+    const toastId = toast.loading("Deep AI Scan: Running advanced skill extraction...");
+    try {
+      const prompt = generateLLMSeedPrompt(items, profile?.summary_master);
+      const techModels = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"];
+      let resultText = "";
+      let lastError = "";
+
+      for (const model of techModels) {
+        try {
+          const { data: rawData, error: invokeError } = await supabase.functions.invoke("analyze", {
+            body: {
+              model: model,
+              messages: [{ role: "user", content: prompt + "\n\nIMPORTANT: Return ONLY JSON format." }],
+              response_format: { type: "json_object" }
+            }
+          });
+
+          if (invokeError) {
+            lastError = invokeError.message;
+            continue;
+          }
+          if (rawData?.choices?.[0]?.message?.content) {
+            resultText = rawData.choices[0].message.content;
+            break;
+          }
+        } catch (e) {
+          lastError = String(e);
+        }
+      }
+
+      if (!resultText) {
+        throw new Error(lastError || "Could not reach AI model.");
+      }
+
+      const firstBrace = resultText.indexOf("{");
+      const lastBrace = resultText.lastIndexOf("}");
+      if (firstBrace === -1 || lastBrace === -1) throw new Error("AI returned invalid format.");
+      const parsed = JSON.parse(resultText.substring(firstBrace, lastBrace + 1));
+      
+      const cleanedSuggestions: Record<string, string[]> = {};
+      Object.entries(parsed).forEach(([cat, list]) => {
+        if (Array.isArray(list)) {
+          cleanedSuggestions[cat] = list.filter(s => typeof s === "string" && s.trim().length > 0);
+        }
+      });
+
+      setSuggestedSkills(cleanedSuggestions);
+      const total = Object.values(cleanedSuggestions).reduce((acc, list) => acc + list.length, 0);
+      toast.success(`Deep AI Scan successful: ${total} skills extracted! Add them using the chips below.`, { id: toastId });
+    } catch (e) {
+      console.error(e);
+      toast.error("Deep AI Scan failed. Please check connection or API key.", { id: toastId });
+    } finally {
+      setIsScanningSkills(false);
+    }
+  };
 
   // ── Engine Configuration States ──
   const [testingDiagnostics, setTestingDiagnostics] = useState(false);
@@ -916,14 +1051,39 @@ RETURN JSON FORMAT ONLY:
       // Field Sanitization: Only send fields that belong in the profiles table
       const { id, email, created_at, ...updateData } = profile;
 
-      console.log("MasterVault: Updating profile with data:", updateData);
+      console.log("MasterVault: Updating profile with payload:", updateData);
 
-      const { error } = await supabase.from("profiles").update(updateData).eq("id", user?.id);
+      const payload = {
+        ...updateData,
+        technical_skills: technicalSkills
+      };
+
+      const { error } = await supabase.from("profiles").update(payload).eq("id", user?.id);
+      
       if (error) {
-        console.error("MasterVault Profile Update Error:", error);
-        throw error;
+        console.warn("DB Save error, checking for column omission:", error);
+        
+        // PostgREST missing column code is PGRST102 / PGRST116 / 42703
+        if (error.message?.includes("column") || error.code === "PGRST102" || error.code === "42703") {
+          console.warn("Saving profile WITHOUT technical_skills column...");
+          const { error: fallbackError } = await supabase.from("profiles").update(updateData).eq("id", user?.id);
+          if (fallbackError) throw fallbackError;
+          
+          // Save skills to local storage fallback
+          localStorage.setItem(`fallback_skills_${user.id}`, JSON.stringify(technicalSkills));
+          setDbColMissing(true);
+          toast.success("Profile saved successfully (Skills stored in browser fallback).", {
+            description: "Notice: Run the migration script in your Supabase SQL editor to enable remote sync.",
+            duration: 6000
+          });
+          return;
+        } else {
+          throw error;
+        }
       }
 
+      setDbColMissing(false);
+      localStorage.removeItem(`fallback_skills_${user.id}`);
       localStorage.removeItem(`draft_profile_${user.id}`);
       localStorage.removeItem(`draft_summary_${user.id}`);
       toast.success("Profile updated in Master Vault.");
@@ -1387,6 +1547,213 @@ RETURN JSON FORMAT ONLY:
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Save Identity Signal
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── SECTION: MASTER TECHNICAL SKILLS ── */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-4 pl-4">
+            <Cpu size={18} className="text-primary" />
+            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-foreground/70">Master Technical Skills</h3>
+            <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+          </div>
+
+          <div className="premium-card p-8 lg:p-10 space-y-8 relative overflow-hidden">
+            {/* Auto Suggestion Section */}
+            <div className="p-6 rounded-3xl bg-slate-950/40 border border-white/5 space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="space-y-1">
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                    AI Skill Suggestion Radar
+                  </h4>
+                  <p className="text-[10px] text-muted-foreground font-medium">Auto-extract and classify your technical skills from your experiences & education.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={handleLocalScan}
+                    disabled={isScanningSkills}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                  >
+                    {isScanningSkills ? <Loader2 size={10} className="animate-spin" /> : <Zap size={10} />}
+                    Instant Scan
+                  </button>
+                  <button
+                    onClick={handleLLMScan}
+                    disabled={isScanningSkills}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 text-primary"
+                  >
+                    {isScanningSkills ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                    Deep AI Scan
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Column Bento Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {Object.keys(technicalSkills).map((category) => {
+                const categoryIcons: Record<string, React.ReactNode> = {
+                  "Programming Languages": <Code className="w-4 h-4 text-emerald-400" />,
+                  "Infrastructure / DevOps": <Shield className="w-4 h-4 text-blue-400" />,
+                  "AI / ML": <BrainCircuit className="w-4 h-4 text-purple-400" />,
+                  "Data Science": <Award className="w-4 h-4 text-pink-400" />,
+                  "Software Engineering / Others": <Cpu className="w-4 h-4 text-amber-400" />
+                };
+
+                const currentSkills = technicalSkills[category] || [];
+                const currentSuggestions = suggestedSkills[category] || [];
+
+                return (
+                  <div key={category} className="p-6 rounded-[2rem] bg-white/5 border border-white/5 flex flex-col justify-between space-y-4 hover:border-white/10 transition-all">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                        <h4 className="text-xs font-black uppercase tracking-widest text-foreground flex items-center gap-2">
+                          {categoryIcons[category]}
+                          {category}
+                        </h4>
+                        <span className="text-[10px] font-bold text-muted-foreground/40">{currentSkills.length} active</span>
+                      </div>
+
+                      {/* Chip area */}
+                      <div className="flex flex-wrap gap-2 min-h-12 py-2">
+                        {currentSkills.map((skill) => (
+                          <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            key={skill}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-foreground/80 hover:bg-white/10 hover:text-white transition-all cursor-default"
+                          >
+                            {skill}
+                            <button
+                              onClick={() => {
+                                setTechnicalSkills(prev => ({
+                                  ...prev,
+                                  [category]: prev[category].filter(s => s !== skill)
+                                }));
+                              }}
+                              className="text-muted-foreground hover:text-red-500 transition-colors"
+                            >
+                              <X size={10} />
+                            </button>
+                          </motion.div>
+                        ))}
+                        {currentSkills.length === 0 && (
+                          <span className="text-[10px] italic text-muted-foreground/30 self-center">No skills mapped. Add below.</span>
+                        )}
+                      </div>
+
+                      {/* Clickable suggestion chips */}
+                      {currentSuggestions.filter(s => !currentSkills.includes(s)).length > 0 && (
+                        <div className="space-y-1.5 pt-2 border-t border-white/5">
+                          <span className="text-[8px] font-black uppercase tracking-widest text-primary/60">Suggested Skills:</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {currentSuggestions
+                              .filter(s => !currentSkills.includes(s))
+                              .map(sug => (
+                                <button
+                                  key={sug}
+                                  onClick={() => {
+                                    setTechnicalSkills(prev => ({
+                                      ...prev,
+                                      [category]: [...prev[category], sug].sort()
+                                    }));
+                                  }}
+                                  className="text-[9px] font-bold px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all flex items-center gap-1"
+                                >
+                                  + {sug}
+                                </button>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Add skill input */}
+                    <div className="relative group pt-2">
+                      <input
+                        className="w-full bg-background/40 border border-border/40 rounded-xl pl-4 pr-10 py-2.5 text-xs focus:ring-2 ring-primary/20 transition-all outline-none"
+                        value={skillInputs[category] || ""}
+                        onChange={(e) => setSkillInputs(prev => ({ ...prev, [category]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const val = skillInputs[category]?.trim();
+                            if (val && !currentSkills.includes(val)) {
+                              setTechnicalSkills(prev => ({
+                                ...prev,
+                                [category]: [...prev[category], val].sort()
+                              }));
+                              setSkillInputs(prev => ({ ...prev, [category]: "" }));
+                            }
+                          }
+                        }}
+                        placeholder={`Add to ${category}...`}
+                      />
+                      <button
+                        onClick={() => {
+                          const val = skillInputs[category]?.trim();
+                          if (val && !currentSkills.includes(val)) {
+                            setTechnicalSkills(prev => ({
+                              ...prev,
+                              [category]: [...prev[category], val].sort()
+                            }));
+                            setSkillInputs(prev => ({ ...prev, [category]: "" }));
+                          }
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Resilient Database Missing Column Warning */}
+            {dbColMissing && (
+              <div className="p-6 rounded-3xl bg-amber-500/10 border border-amber-500/20 space-y-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                  <div className="space-y-1.5">
+                    <h5 className="text-xs font-black uppercase tracking-wider text-amber-500">Database Sync Optimization Needed</h5>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      Lumina stored your category-wise skills successfully in browser fallback storage! To enable full database sync across machines, run the following SQL command in your <strong>Supabase SQL Editor</strong>:
+                    </p>
+                  </div>
+                </div>
+                <div className="relative group bg-slate-950 p-4 rounded-xl border border-white/5">
+                  <code className="text-[10px] text-emerald-400 font-mono select-all">
+                    ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS technical_skills JSONB DEFAULT '{}'::jsonb;
+                  </code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText("ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS technical_skills JSONB DEFAULT '{}'::jsonb;");
+                      toast.success("SQL command copied to clipboard!");
+                    }}
+                    className="absolute right-3 top-3 text-[8px] font-black uppercase tracking-widest px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg transition-all text-white"
+                  >
+                    Copy SQL
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Profile Action Bar */}
+            <div className="flex justify-between items-center pt-4 border-t border-white/5">
+              <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                * Changes are synced with your master identity signal.
+              </span>
+              <button
+                onClick={handleSaveProfile}
+                disabled={isSaving}
+                className="flex items-center gap-3 px-10 py-4 rounded-2xl text-sm font-bold bg-lumina-teal text-white hover:scale-[1.05] transition-all shadow-xl shadow-teal-500/10 active:scale-95 disabled:opacity-50"
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Save Skills Configuration
               </button>
             </div>
           </div>
