@@ -352,11 +352,24 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
     primaryTool = "System Architecture Diagrams";
   }
 
-  // 8. Experience Requirements Heuristic
-  let expText = isFresher ? "Entry Level (Freshers Welcome)" : (isJunior ? "1-3 years of programming experience." : "5+ years of elite industry experience.");
-  const expMatch = jdText.match(/(\d+)\+?\s*years?/i);
+  // 8. Experience Requirements Heuristic — ONLY from JD text, no fabrication
+  const expMatch = jdText.match(/(\d+)\+?\s*(?:years?|yrs?)(?:\s*of)?\s*(?:experience|exp)/i);
+  const expMatchSimple = jdText.match(/(\d+)\s*[-–to]+\s*(\d+)\s*(?:years?|yrs?)/i);
+  const expMatchWord = jdText.match(/(fresher|entry|junior|senior|lead|principal|staff)/i);
+  let expText;
   if (expMatch) {
-    expText = `${expMatch[1]}+ years of industry engineering experience.`;
+    expText = `${expMatch[1]}+ years of experience.`;
+  } else if (expMatchSimple) {
+    expText = `${expMatchSimple[1]}-${expMatchSimple[2]} years of experience.`;
+  } else if (expMatchWord) {
+    const word = expMatchWord[1].toLowerCase();
+    if (word === "fresher" || word === "entry") expText = "Entry Level";
+    else if (word === "junior") expText = "Junior Level";
+    else if (word === "senior") expText = "Senior Level";
+    else if (word === "lead" || word === "principal" || word === "staff") expText = "Senior/Lead Level";
+    else expText = "Not explicitly specified in the JD.";
+  } else {
+    expText = "Not explicitly specified in the JD.";
   }
 
   // 9. Generate realistic, fully detailed DecodeResult structure

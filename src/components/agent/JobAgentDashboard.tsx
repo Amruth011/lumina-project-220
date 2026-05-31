@@ -16,11 +16,14 @@ import {
   ShieldCheck,
   Zap,
   Info,
+  Wifi,
+  WifiOff,
+  Settings2,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { getAgentResumes, deleteAgentResume } from "@/lib/agentStorage";
-import { runAgentJob } from "@/lib/agentWorker";
+import { runAgentJob, getAutomationServiceUrl, setAutomationServiceUrl } from "@/lib/agentWorker";
 import { AgentExecutionLog } from "./AgentExecutionLog";
 
 import type { SavedAgentResume } from "@/types/agent";
@@ -48,6 +51,9 @@ export const JobAgentDashboard: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [logs, setLogs] = useState<AgentLogEntry[]>([]);
   const [result, setResult] = useState<AgentRunResult | null>(null);
+  const [backendStatus, setBackendStatus] = useState<"checking" | "connected" | "disconnected">("checking");
+  const [showSettings, setShowSettings] = useState(false);
+  const [backendUrl, setBackendUrl] = useState(getAutomationServiceUrl());
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // ── Load vault ─────────────────────────────────────────────────────────
@@ -70,6 +76,24 @@ export const JobAgentDashboard: React.FC = () => {
     window.addEventListener("lumina_agent_vault_updated", handle);
     return () => window.removeEventListener("lumina_agent_vault_updated", handle);
   }, [loadVault]);
+
+  // ── Test backend connection ─────────────────────────────────────────
+  const testConnection = useCallback(async () => {
+    setBackendStatus("checking");
+    try {
+      const ws = new WebSocket(backendUrl);
+      await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(() => { ws.close(); reject(new Error("timeout")); }, 3000);
+        ws.onopen = () => { clearTimeout(timer); ws.close(); resolve(); };
+        ws.onerror = () => { clearTimeout(timer); reject(new Error("error")); };
+      });
+      setBackendStatus("connected");
+    } catch {
+      setBackendStatus("disconnected");
+    }
+  }, [backendUrl]);
+
+  useEffect(() => { testConnection(); }, [testConnection]);
 
   // ── Close dropdown on outside click ───────────────────────────────────
   useEffect(() => {
@@ -116,6 +140,12 @@ export const JobAgentDashboard: React.FC = () => {
     if (!isValidUrl(portalUrl)) {
       setUrlError("Please enter a valid URL starting with https://");
       return;
+    }
+
+    if (backendStatus === "disconnected") {
+      toast.warning("Automation backend is offline — running in simulation mode", {
+        description: "Start the automation service for real browser automation: cd automation-service && npm start",
+      });
     }
 
     setUrlError("");
@@ -173,9 +203,83 @@ export const JobAgentDashboard: React.FC = () => {
               AI-powered form injection & passive application submission
             </p>
           </div>
-          <div className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-black uppercase tracking-widest text-blue-600">
-            <Zap size={10} className="animate-pulse" />
-            Llama-3.1-8B
+          <div className="ml-auto flex items-center gap-2">
+            {/* Connection Status */}
+            <button
+              onClick={testConnection}
+              title={`Backend: ${backendStatus === "connected" ? "Connected" : backendStatus === "checking" ? "Checking..." : "Disconnected"} — Click to retest`}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-colors ${
+                backendStatus === "connected"
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-600"
+                  : backendStatus === "checking"
+                  ? "bg-amber-50 border-amber-200 text-amber-600"
+                  : "bg-red-50 border-red-200 text-red-600"
+              }`}
+            >
+              {backendStatus === "connected" ? <Wifi size={9} /> : <WifiOff size={9} />}
+              {backendStatus === "connected" ? "Live" : backendStatus === "checking" ? "..." : "Offline"}
+            </button>
+
+            {/* Settings */}
+            <div className="relative">
+              <button
+                onClick={() => setShowSettings((o) => !o)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-700 transition-colors"
+              >
+                <Settings2 size={9} />
+                Config
+              </button>
+
+              <AnimatePresence>
+                {showSettings && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full right-0 mt-1.5 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-4 space-y-3"
+                  >
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Automation Backend</p>
+                    <p className="text-[10px] text-slate-400 leading-relaxed">
+                      For real browser automation, run the backend service and set the WebSocket URL below.
+                    </p>
+                    <input
+                      type="text"
+                      value={backendUrl}
+                      onChange={(e) => setBackendUrl(e.target.value)}
+                      placeholder="ws://localhost:3001"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-[11px] font-medium text-slate-800 outline-none focus:border-emerald-400"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setAutomationServiceUrl(backendUrl);
+                          testConnection();
+                          toast.success("Backend URL updated");
+                        }}
+                        className="flex-1 py-2 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-colors"
+                      >
+                        Save & Test
+                      </button>
+                      <button
+                        onClick={() => { setBackendUrl("ws://localhost:3001"); setAutomationServiceUrl("ws://localhost:3001"); testConnection(); }}
+                        className="px-3 py-2 rounded-xl border border-slate-200 text-[10px] font-bold text-slate-500 hover:bg-slate-50 transition-colors"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                    <p className="text-[9px] text-slate-400">
+                      Start with: <code className="bg-slate-100 px-1 rounded">cd automation-service && npm start</code>
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-black uppercase tracking-widest text-blue-600">
+              <Zap size={10} className="animate-pulse" />
+              Llama-3.1-8B
+            </div>
           </div>
         </div>
 
@@ -183,9 +287,9 @@ export const JobAgentDashboard: React.FC = () => {
         <div className="flex items-start gap-2.5 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3">
           <Info size={13} className="text-slate-400 mt-0.5 shrink-0" />
           <p className="text-[11px] font-medium text-slate-500 leading-relaxed">
-            The Job Agent reads your saved resume, maps fields from the target job portal using
-            Llama-3.1-8B intelligence, and streams a real-time injection log. A verified proof-of-submission
-            card is rendered upon completion.
+            The Job Agent navigates to your target URL, detects form fields, injects your resume data,
+            and submits the application. Connect the automation backend (wss://) for real browser automation,
+            or run in simulation mode to preview the flow.
           </p>
         </div>
       </div>

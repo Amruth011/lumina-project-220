@@ -1,11 +1,125 @@
-// ── Lumina Job Agent: AI Execution Worker ────────────────────────────────────
-// Powered by Groq Llama-3.1-8B. Simulates intelligent form field detection,
-// mapping, and injection. Streams AgentLogEntry events in real time.
-
 import type { SavedAgentResume } from "@/types/agent";
 import type { AgentLogEntry, AgentRunResult } from "@/types/agent";
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── Configuration ──────────────────────────────────────────────────────────
+
+const AUTOMATION_SERVICE_URL_KEY = "lumina_automation_service_url";
+const DEFAULT_SERVICE_URL = "ws://localhost:3001";
+
+export function getAutomationServiceUrl(): string {
+  return localStorage.getItem(AUTOMATION_SERVICE_URL_KEY) || DEFAULT_SERVICE_URL;
+}
+
+export function setAutomationServiceUrl(url: string): void {
+  localStorage.setItem(AUTOMATION_SERVICE_URL_KEY, url);
+}
+
+// ── WebSocket Runner ───────────────────────────────────────────────────────
+
+async function runViaWebSocket(
+  resume: SavedAgentResume,
+  portalUrl: string,
+  onLog: (entry: AgentLogEntry) => void
+): Promise<AgentRunResult> {
+  const wsUrl = getAutomationServiceUrl();
+
+  return new Promise((resolve, reject) => {
+    let ws: WebSocket;
+    try {
+      ws = new WebSocket(wsUrl);
+    } catch {
+      reject(new Error(`Invalid WebSocket URL: ${wsUrl}`));
+      return;
+    }
+
+    const logs: AgentLogEntry[] = [];
+    const timeout = setTimeout(() => {
+      ws.close();
+      reject(new Error("Connection timed out. Is the automation service running?"));
+    }, 5000);
+
+    ws.onopen = () => {
+      clearTimeout(timeout);
+      ws.send(JSON.stringify({
+        type: "start",
+        portalUrl,
+        resume,
+      }));
+    };
+
+    ws.onmessage = (event) => {
+      let data;
+      try {
+        data = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+
+      if (data.type === "result") {
+        const result: AgentRunResult = {
+          status: data.status || "applied",
+          applicationRef: data.applicationRef || `LMN-${Date.now().toString(36).toUpperCase()}`,
+          totalFields: data.totalFields || 0,
+          successFields: data.successFields || 0,
+          haltReason: data.haltReason,
+          confirmationSnapshot: data.confirmationSnapshot || {
+            title: resume.jdTitle,
+            company: new URL(portalUrl).hostname.replace("www.", ""),
+            portalDomain: new URL(portalUrl).hostname.replace("www.", ""),
+            submittedAt: new Date().toISOString(),
+            referenceId: data.applicationRef || "",
+            fieldsInjected: data.successFields || 0,
+          },
+          logs,
+        };
+        resolve(result);
+        return;
+      }
+
+      if (data.type === "error") {
+        onLog({
+          id: `err_${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          type: "error",
+          message: data.message || "Unknown error",
+        });
+        return;
+      }
+
+      const typeMap: Record<string, AgentLogEntry["type"]> = {
+        info: "info",
+        success: "success",
+        warning: "warning",
+        error: "error",
+        navigation: "navigation",
+        field: "field",
+      };
+
+      const entry: AgentLogEntry = {
+        id: `ws_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        timestamp: new Date().toISOString(),
+        type: typeMap[data.type] || "info",
+        message: data.message || "",
+        fieldName: data.fieldName,
+        injectedValue: data.injectedValue,
+      };
+
+      logs.push(entry);
+      onLog(entry);
+    };
+
+    ws.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error("WebSocket connection failed"));
+    };
+
+    ws.onclose = () => {
+      clearTimeout(timeout);
+    };
+  });
+}
+
+// ── Simulated Runner (Fallback) ────────────────────────────────────────────
 
 function makeLog(
   type: AgentLogEntry["type"],
@@ -36,37 +150,6 @@ function extractDomain(url: string): string {
 function generateRef(): string {
   return `LMN-${Math.random().toString(36).slice(2, 6).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
 }
-
-// ── Groq LLM Call ─────────────────────────────────────────────────────────
-
-async function callGroq(prompt: string, portalUrl?: string): Promise<string> {
-  const apiKey = localStorage.getItem("lumina_groq_api_key") || "";
-
-  if (!apiKey) {
-    // Fallback: return a deterministic structured response if no key is set
-    return JSON.stringify(buildFallbackFieldMap(portalUrl));
-  }
-
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "llama-3.1-8b-instant",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 1024,
-      temperature: 0.3,
-    }),
-  });
-
-  if (!res.ok) return JSON.stringify(buildFallbackFieldMap(portalUrl));
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content ?? JSON.stringify(buildFallbackFieldMap(portalUrl));
-}
-
-// ── Fallback Field Map ─────────────────────────────────────────────────────
 
 interface FieldMap {
   fields: { name: string; selector: string; value: string; type: string }[];
@@ -103,8 +186,6 @@ function buildFallbackFieldMap(portalUrl?: string): FieldMap {
   };
 }
 
-// ── Value Resolver ─────────────────────────────────────────────────────────
-
 function resolveValue(template: string, resume: SavedAgentResume): string {
   const c = resume.contactInfo;
   const r = resume.resume;
@@ -134,9 +215,7 @@ function resolveValue(template: string, resume: SavedAgentResume): string {
   return resolved;
 }
 
-// ── Main Worker ────────────────────────────────────────────────────────────
-
-export async function runAgentJob(
+async function runSimulated(
   resume: SavedAgentResume,
   portalUrl: string,
   onLog: (entry: AgentLogEntry) => void,
@@ -152,45 +231,26 @@ export async function runAgentJob(
   const domain = extractDomain(portalUrl);
   const ref = generateRef();
 
-  // ── Phase 1: Initialization ──────────────────────────────────────────────
   await sleep(400);
-  log(makeLog("info", `Lumina Agent v2.1 initialized — targeting ${domain}`));
+  log(makeLog("info", `Lumina Agent (simulated) — targeting ${domain}`));
   await sleep(350);
-  log(makeLog("info", `Resume profile loaded: "${resume.jdTitle}" (${resume.resume.skills_section?.length ?? 0} skills)`));
+  log(makeLog("info", `Resume profile loaded: "${resume.jdTitle}"`));
   await sleep(300);
-  log(makeLog("navigation", `Navigating to application portal: ${portalUrl}`));
+  log(makeLog("navigation", `Navigating to: ${portalUrl}`));
   await sleep(600);
-  log(makeLog("info", `Portal loaded successfully. DOM structure scanned.`));
+  log(makeLog("info", `Simulated portal loaded.`));
   await sleep(400);
 
-  // ── Phase 2: LLM Field Analysis ─────────────────────────────────────────
-  log(makeLog("info", `Llama-3.1-8B analyzing application form structure...`));
+  log(makeLog("info", `Analyzing form structure...`));
   await sleep(500);
 
-  const prompt = `You are a job application form analyzer. Given this job portal domain: "${domain}" and the candidate's profile below, generate a JSON field mapping for filling out the application form. Return ONLY valid JSON with this structure: {"fields": [{"name": "field label", "selector": "css selector", "value": "resolved value", "type": "text|email|file|textarea|url"}], "companyGuess": "company name"}
-
-Candidate Profile Summary:
-- Name: ${resume.contactInfo.fullName}
-- Email: ${resume.contactInfo.email}
-- Role: ${resume.jdTitle}
-- Skills: ${resume.resume.skills_section?.slice(0, 10).join(", ")}
-- Summary: ${resume.resume.professional_summary?.slice(0, 200)}`;
-
-  let fieldMap: FieldMap;
-  try {
-    const raw = await callGroq(prompt, portalUrl);
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    fieldMap = jsonMatch ? JSON.parse(jsonMatch[0]) : buildFallbackFieldMap(portalUrl);
-  } catch {
-    fieldMap = buildFallbackFieldMap(portalUrl);
-  }
+  const fieldMap = buildFallbackFieldMap(portalUrl);
 
   await sleep(300);
-  log(makeLog("success", `Form field map generated — ${fieldMap.fields.length} injectable fields detected`));
+  log(makeLog("success", `Form field map — ${fieldMap.fields.length} fields detected`));
   await sleep(400);
 
-  // ── Phase 3: Field Injection ─────────────────────────────────────────────
-  log(makeLog("info", `Beginning intelligent field injection sequence...`));
+  log(makeLog("info", `Beginning field injection...`));
   await sleep(350);
 
   let successCount = 0;
@@ -198,44 +258,24 @@ Candidate Profile Summary:
 
   for (const field of fieldMap.fields) {
     await sleep(200 + Math.random() * 300);
-
     const resolved = resolveValue(field.value, resume);
-    const isFile = field.type === "file";
     const isEmpty = !resolved.trim();
 
     if (isEmpty) {
       haltFields.push(field.name);
-      log(
-        makeLog("warning", `Skipped: "${field.name}" — no value available in profile`, {
-          fieldName: field.name,
-        })
-      );
+      log(makeLog("warning", `Skipped: "${field.name}" — no value in profile`, { fieldName: field.name }));
       continue;
     }
 
-    if (isFile) {
-      log(
-        makeLog("success", `Attached: "${field.name}" → ${resolved}`, {
-          type: "field",
-          fieldName: field.name,
-          injectedValue: resolved,
-        })
-      );
-    } else {
-      log(
-        makeLog("field", `Injected: "${field.name}" → ${resolved.length > 60 ? resolved.slice(0, 60) + "…" : resolved}`, {
-          fieldName: field.name,
-          injectedValue: resolved.slice(0, 80),
-        })
-      );
-    }
+    log(makeLog("field", `Injected: "${field.name}" → ${resolved.length > 60 ? resolved.slice(0, 60) + "…" : resolved}`, {
+      fieldName: field.name,
+      injectedValue: resolved.slice(0, 80),
+    }));
     successCount++;
   }
 
   await sleep(400);
-
-  // ── Phase 4: Multi-line Experience / Summary Fields ──────────────────────
-  log(makeLog("info", `Deep-parsing experience and summary textarea blocks...`));
+  log(makeLog("info", `Deep-parsing textarea blocks...`));
   await sleep(500);
 
   const experienceBullets = resume.resume.experience
@@ -245,34 +285,31 @@ Candidate Profile Summary:
 
   if (experienceBullets) {
     await sleep(300);
-    log(
-      makeLog("field", `Injected: "Detailed Work History" → ${experienceBullets.slice(0, 80)}…`, {
-        fieldName: "Detailed Work History",
-        injectedValue: experienceBullets.slice(0, 120),
-      })
-    );
+    log(makeLog("field", `Injected: "Detailed Work History" → ${experienceBullets.slice(0, 80)}…`, {
+      fieldName: "Detailed Work History",
+      injectedValue: experienceBullets.slice(0, 120),
+    }));
     successCount++;
   }
 
-  // ── Phase 5: Submission ──────────────────────────────────────────────────
   await sleep(600);
-  log(makeLog("info", `Locating primary submit control...`));
+  log(makeLog("info", `Locating submit control...`));
   await sleep(400);
-  log(makeLog("success", `Submit button located: button[type='submit'], data-testid='apply-btn'`));
+  log(makeLog("success", `Submit button located (simulated).`));
   await sleep(500);
-  log(makeLog("navigation", `Triggering submission event...`));
+  log(makeLog("navigation", `Triggering submission...`));
   await sleep(700);
 
   const hasHalts = haltFields.length > 3;
 
   if (hasHalts) {
-    log(makeLog("error", `Agent halted — ${haltFields.length} mandatory fields could not be resolved: ${haltFields.slice(0, 3).join(", ")}...`));
+    log(makeLog("error", `Halted — ${haltFields.length} fields unresolved`));
     return {
       status: "halted",
       applicationRef: ref,
       totalFields: fieldMap.fields.length,
       successFields: successCount,
-      haltReason: `${haltFields.length} required fields could not be mapped from your profile. Please complete your Master Vault profile and retry.`,
+      haltReason: `${haltFields.length} required fields could not be mapped. Complete your Master Vault profile and retry.`,
       confirmationSnapshot: {
         title: resume.jdTitle,
         company: fieldMap.companyGuess,
@@ -285,18 +322,13 @@ Candidate Profile Summary:
     };
   }
 
-  log(makeLog("success", `Application submitted successfully. Confirmation captured.`));
+  log(makeLog("success", `Application submitted. Reference: ${ref}`));
   await sleep(600);
-  log(makeLog("info", `Reference ID generated: ${ref}`));
 
   if (agentWindow) {
-      log(makeLog("info", `Closing agent browser window...`));
-      await sleep(1000);
-      try {
-          agentWindow.close();
-      } catch (e) {
-          // ignore
-      }
+    log(makeLog("info", `Closing agent window...`));
+    await sleep(1000);
+    try { agentWindow.close(); } catch { /* ignore */ }
   }
 
   return {
@@ -314,4 +346,64 @@ Candidate Profile Summary:
     },
     logs,
   };
+}
+
+// ── Try backend connection ─────────────────────────────────────────────────
+
+async function testWebSocketConnection(url: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      const ws = new WebSocket(url);
+      const timer = setTimeout(() => {
+        ws.close();
+        resolve(false);
+      }, 3000);
+      ws.onopen = () => {
+        clearTimeout(timer);
+        ws.close();
+        resolve(true);
+      };
+      ws.onerror = () => {
+        clearTimeout(timer);
+        resolve(false);
+      };
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+// ── Main Entry Point ───────────────────────────────────────────────────────
+
+export async function runAgentJob(
+  resume: SavedAgentResume,
+  portalUrl: string,
+  onLog: (entry: AgentLogEntry) => void,
+  agentWindow?: Window | null
+): Promise<AgentRunResult> {
+  const wsUrl = getAutomationServiceUrl();
+
+  try {
+    const connected = await testWebSocketConnection(wsUrl);
+    if (connected) {
+      onLog({
+        id: `init_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        type: "success",
+        message: `Connected to automation service at ${wsUrl}`,
+      });
+      return await runViaWebSocket(resume, portalUrl, onLog);
+    }
+  } catch {
+    // fall through to simulation
+  }
+
+  onLog({
+    id: `init_${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    type: "warning",
+    message: `Automation service not available at ${wsUrl}. Running in simulation mode. Start the backend with: cd automation-service && npm start`,
+  });
+
+  return runSimulated(resume, portalUrl, onLog, agentWindow);
 }
