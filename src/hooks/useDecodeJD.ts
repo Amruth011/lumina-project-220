@@ -65,77 +65,8 @@ export const useDecodeJD = () => {
     }
 
     try {
-      // ── READ CONFIGURATION SETTINGS ──
-      const engineMode = "default";
-      const customProvider = localStorage.getItem("lumina_custom_provider") || "groq";
-      const customKey = localStorage.getItem("lumina_custom_key") || "";
-
-      // ── MOCK/HEURISTIC SCANNER FOR LIFETIME RESILIENCY & OFFLINE SANDBOX ──
-      if (engineMode === "heuristic") {
-        console.log("── SANDBOX HEURISTIC SCAN INITIATED ──");
-        // Short artificial delay to make the UX feel premium and deliberate
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const result = decodeJDHeuristic(jdText);
-        await setCachedDecode(jdText, result);
-        clearResumeAnalysisCache();
-        if (typeof window !== "undefined" && window.sessionStorage) {
-          sessionStorage.removeItem("current_roadmap_id");
-          sessionStorage.removeItem("current_roadmap_jd_title");
-        }
-        setResults(result);
-        setWasCached(false);
-        toast.success(`Forensic Intelligence Active: ${result.title} (Sandbox Engine)`, {
-          description: "Using offline-first heuristic pattern scanner.",
-          duration: 4000
-        });
-        setIsScanning(false);
-        return;
-      }
-
       let data = null;
       let error = null;
-
-      // ── DUAL DIRECT BROWSER CONNECTION (For User/Developer Keys) ──
-      const executeDirectBrowserFetch = async (): Promise<Record<string, unknown>> => {
-        const url = customProvider === "openai"
-          ? "https://api.openai.com/v1/chat/completions"
-          : "https://api.groq.com/openai/v1/chat/completions";
-        
-        const model = customProvider === "openai" ? "gpt-4o-mini" : "llama-3.3-70b-versatile";
-        console.log(`API_DIRECT: Initiating client-side direct request with ${model} on ${url}...`);
-
-
-
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${customKey.trim()}`
-          },
-          body: JSON.stringify({
-            model: model,
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: `ACT ON THIS JD:\n###\n${jdText.substring(0, 10000)}\n###\n\nRETURN ONLY RAW JSON MATCHING SCHEMA.` }
-            ],
-            response_format: { type: "json_object" },
-            temperature: 0.3
-          })
-        });
-
-        if (!response.ok) {
-          const errorBody = await response.text();
-          throw new Error(`Direct connection key error (${response.status}): ${errorBody.substring(0, 150)}`);
-        }
-
-        const resJson = await response.json();
-        const contentText = resJson.choices?.[0]?.message?.content;
-        if (!contentText) throw new Error("Direct API returned empty text choices.");
-
-        const startIdx = contentText.indexOf('{');
-        const endIdx = contentText.lastIndexOf('}');
-        return JSON.parse(contentText.substring(startIdx, endIdx + 1));
-      };
 
       const systemPrompt = `You are the Lumina Forensic Intelligence Architect. 
 Your goal is to deconstruct JDs into hyper-accurate data structures.
@@ -183,99 +114,71 @@ RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
   "resume_help": {"keywords": ["string"], "bullets": ["string"]}
 }`;
 
-      if (engineMode === "custom") {
-        if (!customKey.trim()) {
-          throw new Error("Lumina Auth Error: Custom API Key is missing. Click the API Configuration settings (gear icon) to input your key or switch to Sandbox Mode.");
+      // ── CALL TOTAL INTELLIGENCE ENGINE (Supabase Edge Function) ──
+      console.log("── LUMINA DEFAULT SERVER ENGINE REQUEST INITIATED ──");
+      try {
+        const invokePromise = supabase.functions.invoke('decode-jd', {
+          body: { jdText }
+        });
+        
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Timeout: Supabase function took too long")), 12000)
+        );
+
+        const response = await Promise.race([invokePromise, timeoutPromise]) as { data: Record<string, unknown> | null; error: { message?: string; status?: number } | null };
+        data = response.data;
+        error = response.error;
+        if (!error && data?.error) {
+          error = new Error(String(data.error));
+          data = null;
         }
+      } catch (e) {
+        error = e;
+      }
+
+      // ── EMERGENCY FALLBACK: Try Vercel API Proxy if Edge Function Fails ──
+      if (error) {
+        const errMsg = (error as { message?: string })?.message || '';
+        console.warn("Lumina Engine: Edge Function error. Switching to Vercel API Proxy...", errMsg);
         try {
-          data = await executeDirectBrowserFetch();
-          toast.success("Intelligence Active (Direct Browser Connection)", { duration: 4000 });
-        } catch (customErr) {
-          error = customErr;
-          console.error("Direct browser execution failed:", customErr);
-        }
-      } else {
-        // ── CALL TOTAL INTELLIGENCE ENGINE (Supabase Edge Function) ──
-        console.log("── LUMINA DEFAULT SERVER ENGINE REQUEST INITIATED ──");
-        try {
-          const invokePromise = supabase.functions.invoke('decode-jd', {
-            body: { jdText }
+          const apiController = new AbortController();
+          const apiTimeoutId = setTimeout(() => apiController.abort(), 15000);
+
+          const apiResponse = await fetch("/api/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: apiController.signal,
+            body: JSON.stringify({
+              model: "llama-3.1-8b-instant",
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: `ACT ON THIS JD:\n###\n${jdText.substring(0, 10000)}\n###\n\nRETURN ONLY RAW JSON MATCHING SCHEMA.` }
+              ],
+              response_format: { type: "json_object" }
+            })
           });
-          
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Timeout: Supabase function took too long")), 12000)
-          );
-
-          const response = await Promise.race([invokePromise, timeoutPromise]) as { data: Record<string, unknown> | null; error: { message?: string; status?: number } | null };
-          data = response.data;
-          error = response.error;
-          // If the edge function returned a JSON error payload, treat it as an error
-          if (!error && data?.error) {
-            error = new Error(data.error);
-            data = null;
-          }
-        } catch (e) {
-          error = e;
-        }
-
-        // ── EMERGENCY FALLBACK: Try Local API Proxy if Edge Function Fails ──
-        if (error) {
-          const errMsg = (error as { message?: string })?.message || '';
-          console.warn("Lumina Engine: Edge Function error. Switching to Vercel API Proxy...", errMsg);
-          try {
-            const apiController = new AbortController();
-            const apiTimeoutId = setTimeout(() => apiController.abort(), 15000); // 15s timeout for Vercel proxy fallback
-
-            const apiResponse = await fetch("/api/analyze", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              signal: apiController.signal,
-              body: JSON.stringify({
-                model: "llama-3.1-8b-instant",
-                messages: [
-                  { role: "system", content: systemPrompt },
-                  { role: "user", content: `ACT ON THIS JD:\n###\n${jdText.substring(0, 10000)}\n###\n\nRETURN ONLY RAW JSON MATCHING SCHEMA.` }
-                ],
-                response_format: { type: "json_object" }
-              })
-            });
-            clearTimeout(apiTimeoutId);
-            if (apiResponse.ok) {
-              const fallbackData = await apiResponse.json();
-              if (fallbackData?.choices?.[0]?.message?.content) {
-                try {
-                  data = JSON.parse(fallbackData.choices[0].message.content);
-                } catch {
-                  data = fallbackData.choices[0].message.content;
-                }
-              } else {
-                data = fallbackData;
-              }
-              error = null;
-              console.log("Lumina Engine: Vercel API Proxy fallback succeeded.");
-            } else {
-              const fallbackErr = await apiResponse.json().catch(() => ({ error: `HTTP ${apiResponse.status}` }));
-              const fullErrMsg = fallbackErr?.details ? `${fallbackErr.error}: ${fallbackErr.details}` : (fallbackErr?.error || `Vercel proxy failed: HTTP ${apiResponse.status}`);
-              throw new Error(fullErrMsg);
-            }
-          } catch (apiErr) {
-            console.error("Vercel API Proxy also failed:", apiErr);
-            
-            // If the user has a custom browser key, attempt that as a secondary backend failure fallback!
-            if (customKey.trim()) {
-              console.warn("Vercel proxy failed. Trying direct browser connection as final LLM backup...");
+          clearTimeout(apiTimeoutId);
+          if (apiResponse.ok) {
+            const fallbackData = await apiResponse.json();
+            if (fallbackData?.choices?.[0]?.message?.content) {
               try {
-                data = await executeDirectBrowserFetch();
-                error = null;
-                toast.success("Intelligence Active (Direct Browser Fallback Connection)", { duration: 4000 });
-              } catch (customBackupErr) {
-                console.error("Direct browser fallback also failed:", customBackupErr);
-                throw customBackupErr;
+                data = JSON.parse(fallbackData.choices[0].message.content);
+              } catch {
+                data = fallbackData.choices[0].message.content;
               }
             } else {
-              throw apiErr;
+              data = fallbackData;
             }
+            error = null;
+            console.log("Lumina Engine: Vercel API Proxy fallback succeeded.");
+          } else {
+            const fallbackErr = await apiResponse.json().catch(() => ({ error: `HTTP ${apiResponse.status}` }));
+            const fullErrMsg = fallbackErr?.details ? `${fallbackErr.error}: ${fallbackErr.details}` : (fallbackErr?.error || `Vercel proxy failed: HTTP ${apiResponse.status}`);
+            throw new Error(fullErrMsg);
           }
+        } catch (apiErr) {
+          console.error("Vercel API Proxy also failed:", apiErr);
+          throw apiErr;
         }
       }
 

@@ -302,7 +302,7 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
                     </div>
                     <div className="space-y-4 relative z-10">
                         {results?.red_flags?.length ? results.red_flags.slice(0, 2).map((flag, i) => (
-                            <div key={i} className="pl-4 border-l-2 border-red-500-20 space-y-1 group-f cursor-pointer" onClick={() => { navigator.clipboard.writeText(flag.note); toast.success("Insight copied"); }}>
+                            <div key={i} className="pl-4 border-l-2 border-red-500-20 space-y-1 group-f cursor-pointer" onClick={() => { navigator.clipboard.writeText(String(flag.note ?? "")); toast.success("Insight copied"); }}>
                                 <div className="flex items-center justify-between">
                                     <p className="text-[14px] font-serif italic text-foreground tracking-tight underline decoration-red-500-10 decoration-2 underline-offset-4 group-hover-f:text-red-500 transition-colors">&ldquo;{flag.phrase}&rdquo;</p>
                                     <span className="text-xs font-black text-red-500/60">{flag.intensity}%</span>

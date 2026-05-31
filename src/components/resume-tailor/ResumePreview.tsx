@@ -35,9 +35,8 @@ import {
 import { GeneratedResume, VaultItem } from "@/types/jd";
 import { toast } from "sonner";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
-
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const YEARS = Array.from({ length: 21 }, (_, i) => String(2015 + i));
+import { MONTHS, YEARS } from "@/lib/constants";
+import { sanitizeGeneratedResume, ensureArray } from "@/lib/resumeHelpers";
 
 interface ResumeHeader {
   fullName: string;
@@ -244,175 +243,7 @@ const restoreExactProfileData = (generated: GeneratedResume, vaultItems: VaultIt
   return restored;
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3, experienceBullets = 3, projectLines = 3, productLines = 3): GeneratedResume => {
-  if (!data || typeof data !== "object") {
-    return {
-      professional_summary: "",
-      skills_section: [],
-      experience: [],
-      education: [],
-      certifications: [],
-      awards: [],
-      products: [],
-      projects: [],
-      leadership: []
-    };
-  }
-
-  const ensureArray = (arr: any): any[] => Array.isArray(arr) ? arr : [];
-
-  let summary = "";
-  if (typeof data.professional_summary === "string") {
-    summary = data.professional_summary;
-  } else if (data.professional_summary) {
-    summary = String(data.professional_summary);
-  }
-
-  if (summary) {
-    // Normalise smart punctuation and missing spacing
-    const normalized = summary
-      .replace(/([a-zA-Z])\.([A-Za-z])/g, '$1. $2')
-      .replace(/([a-zA-Z])!([A-Za-z])/g, '$1! $2')
-      .replace(/([a-zA-Z])\?([A-Za-z])/g, '$1? $2')
-      .replace(/[\u201C\u201D]/g, '"')
-      .replace(/[\u2018\u2019]/g, "'")
-      .replace(/[\u2013\u2014]/g, "-")
-      .replace(/\u20B9/g, "Rs. ")
-      .replace(/\u00B9/g, "1")
-      .replace(/\u00B2/g, "2")
-      .replace(/\u00B3/g, "3")
-      .replace(/\u00A0/g, " ");
-
-    const sentences = normalized.match(/[^.!?]+[.!?]+(\s|$)/g) || [normalized];
-    const cleanedSentences = sentences.map(s => s.trim()).filter(Boolean);
-
-    const finalSentences = cleanedSentences.slice(0, targetSummaryLines).map(s => {
-      let clean = s.trim();
-      if (!clean.endsWith(".") && !clean.endsWith("!") && !clean.endsWith("?")) {
-        clean += ".";
-      }
-      return clean.charAt(0).toUpperCase() + clean.slice(1);
-    });
-
-    summary = finalSentences.join(" ");
-  }
-
-  let skills: string[] = [];
-  if (Array.isArray(data.skills_section)) {
-    skills = data.skills_section.map(s => typeof s === "string" ? s : String(s || ""));
-  } else if (data.skills_section && typeof data.skills_section === "object") {
-    skills = Object.entries(data.skills_section).map(([key, val]) => {
-      const valStr = Array.isArray(val) ? val.join(", ") : String(val || "");
-      return `${key}: ${valStr}`;
-    });
-  } else if (typeof data.skills_section === "string") {
-    skills = [data.skills_section];
-  }
-
-  // Programmatically deduplicate skill keywords across categories to ensure strict reliability
-  const seenSkills = new Set<string>();
-  skills = skills.map(line => {
-    if (!line.includes(':')) {
-      const skillsPart = line.split(',');
-      const uniqueSkills = skillsPart
-        .map(s => s.trim())
-        .filter(s => {
-          if (!s) return false;
-          const key = s.toLowerCase();
-          if (seenSkills.has(key)) return false;
-          seenSkills.add(key);
-          return true;
-        });
-      return uniqueSkills.join(', ');
-    }
-    const colonIndex = line.indexOf(':');
-    const category = line.slice(0, colonIndex).trim();
-    const skillsPart = line.slice(colonIndex + 1);
-    const skillsList = skillsPart.split(',').map(s => s.trim());
-    const uniqueSkills = skillsList.filter(s => {
-      if (!s) return false;
-      const key = s.toLowerCase();
-      if (seenSkills.has(key)) return false;
-      seenSkills.add(key);
-      return true;
-    });
-    return uniqueSkills.length > 0 ? `${category}: ${uniqueSkills.join(', ')}` : "";
-  }).filter(Boolean);
-
-  let education: string[] = [];
-  if (Array.isArray(data.education)) {
-    education = data.education.map(edu => {
-      if (typeof edu === "string") return edu;
-      if (edu && typeof edu === "object") {
-        const deg = edu.degree || edu.title || "Degree";
-        const sch = edu.school || edu.organization || edu.institution || "University";
-        const loc = edu.location || "";
-        const dt = edu.date || edu.period || edu.expected || "Expected 2027";
-        const gpaVal = edu.gpa || "";
-        const parts = [];
-        if (loc) parts.push(loc);
-        if (dt) parts.push(dt);
-        if (gpaVal) parts.push(`GPA: ${gpaVal}`);
-        return `${deg} @ ${sch}${parts.length > 0 ? ` - ${parts.join(" | ")}` : ""}`;
-      }
-      return String(edu || "");
-    });
-  } else if (typeof data.education === "string") {
-    education = [data.education];
-  }
-
-  const cleanSections = (sectionsArr: any, limit?: number): GeneratedResumeSection[] => {
-    return ensureArray(sectionsArr).map(item => {
-      if (!item || typeof item !== "object") {
-        return { heading: String(item || ""), content: "", bullets: [] };
-      }
-      
-      const rawBullets = Array.isArray(item.bullets) 
-        ? item.bullets.map((b: any) => typeof b === "string" ? b : String(b || ""))
-        : (typeof item.bullets === "string" ? [item.bullets] : []);
-
-      const cleanedBullets = rawBullets
-        .map(b => {
-          let clean = b.trim();
-          clean = clean.replace(/^[•\-*\s]+/, "");
-          return clean;
-        })
-        .filter(Boolean);
-
-      const finalBullets = limit && limit > 0 
-        ? cleanedBullets.slice(0, limit)
-        : cleanedBullets;
-
-      return {
-        heading: typeof item.heading === "string" ? item.heading : String(item.heading || item.title || ""),
-        content: typeof item.content === "string" ? item.content : String(item.content || item.period || item.date || ""),
-        bullets: finalBullets
-      };
-    });
-  };
-
-  return {
-    professional_summary: summary,
-    skills_section: skills,
-    experience: cleanSections(data.experience, experienceBullets),
-    education: education,
-    products: cleanSections(data.products, productLines),
-    projects: cleanSections(data.projects, projectLines).sort((a, b) => {
-      const getYear = (str: string): number => {
-        const raw = (str || "").toLowerCase();
-        if (raw.includes("ongoing") || raw.includes("present")) return 3000;
-        const match = raw.match(/\b(20\d{2})\b/);
-        return match ? parseInt(match[1], 10) : 0;
-      };
-      return getYear(b.content) - getYear(a.content);
-    }),
-    leadership: cleanSections(data.leadership),
-    certifications: ensureArray(data.certifications).map(c => typeof c === "string" ? c : String(c || "")),
-    awards: ensureArray(data.awards).map(a => typeof a === "string" ? a : String(a || ""))
-  };
-};
-/* eslint-enable @typescript-eslint/no-explicit-any */
+// sanitizeGeneratedResume imported from @/lib/resumeHelpers
 
 
 const renderSubHeaderWithLinks = (
@@ -576,7 +407,7 @@ export const ResumePreview = ({
   
   // ── UI Logic State ──
   const [openSection, setOpenSection] = useState<string | null>("profile");
-  const [showVaultPicker, setShowVaultPicker] = useState<{ section: 'experience' | 'projects' | 'products' | 'education' | 'certifications', index?: number } | null>(null);
+  const [showVaultPicker, setShowVaultPicker] = useState<{ section: 'experience' | 'projects' | 'products' | 'education' | 'certifications' | 'leadership', index?: number } | null>(null);
   const [activeTab, setActiveTab] = useState<'resume' | 'cover-letter'>(initialTab || 'resume');
 
   // Sync active tab when parent overrides it (e.g., after cover letter generation)
@@ -661,7 +492,7 @@ Your objective is to modify the candidate's active JSON resume structure accordi
 ### INPUTS:
 - Target Job Title: ${jdTitle || "Target Role"}
 - Target Company: ${companyName || "Target Company"}
-- Target Skills: ${(jdSkills || []).map(s => s.skill).join(", ") || "None"}
+- Target Skills: ${(localResume.skills_section || []).join(", ") || "None"}
 - User's Specific Edit Request: "${promptText}"
 
 ### CURRENT RESUME JSON:
@@ -843,7 +674,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
         bullets: cleanBullets.length > 0 ? cleanBullets : ["[Enter venture goals, growth metrics, and technical contributions]"] 
       }];
       updatedResume = { ...localResume, products: newItems };
-    } else if (showVaultPicker?.section === 'leadership') {
+    } else if ((showVaultPicker?.section as string) === 'leadership') {
       const leadership = localResume.leadership || [];
       const newItems = [...leadership, { 
         heading: item.organization ? `${item.title} @ ${item.organization}` : item.title, 
@@ -1494,7 +1325,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                 icon={User} 
                 isOpen={openSection === "leadership"} 
                 onToggle={() => setOpenSection(openSection === "leadership" ? null : "leadership")}
-                action={<button onClick={() => setShowVaultPicker({ section: 'leadership' })} className="text-[8px] font-black uppercase text-lumina-teal flex items-center gap-1"><Plus size={10}/> Vault</button>}
+                action={<button onClick={() => setShowVaultPicker({ section: 'leadership' as const })} className="text-[8px] font-black uppercase text-lumina-teal flex items-center gap-1"><Plus size={10}/> Vault</button>}
               >
                 <div className="space-y-4">
                   {(localResume.leadership || []).map((lead, idx) => (

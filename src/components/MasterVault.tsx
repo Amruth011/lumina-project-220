@@ -68,8 +68,7 @@ interface ParsedCert { certificate_name: string; company_name: string; year?: st
 interface ParsedAward { name: string; organization: string; date?: string; details?: string[]; }
 interface ParsedProduct { name: string; status: string; live_link?: string; description?: string; }
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const YEARS = Array.from({ length: 21 }, (_, i) => String(2015 + i));
+import { MONTHS, YEARS } from "@/lib/constants";
 
 const parseMonthYear = (dateStr: string): { month: string | null; year: string | null } => {
   dateStr = dateStr.trim();
@@ -1070,7 +1069,7 @@ RETURN JSON FORMAT ONLY:
           if (fallbackError) throw fallbackError;
           
           // Save skills to local storage fallback
-          localStorage.setItem(`fallback_skills_${user.id}`, JSON.stringify(technicalSkills));
+          if (user) localStorage.setItem(`fallback_skills_${user.id}`, JSON.stringify(technicalSkills));
           setDbColMissing(true);
           toast.success("Profile saved successfully (Skills stored in browser fallback).", {
             description: "Notice: Run the migration script in your Supabase SQL editor to enable remote sync.",
@@ -1083,9 +1082,11 @@ RETURN JSON FORMAT ONLY:
       }
 
       setDbColMissing(false);
-      localStorage.removeItem(`fallback_skills_${user.id}`);
-      localStorage.removeItem(`draft_profile_${user.id}`);
-      localStorage.removeItem(`draft_summary_${user.id}`);
+      if (user) {
+        localStorage.removeItem(`fallback_skills_${user.id}`);
+        localStorage.removeItem(`draft_profile_${user.id}`);
+        localStorage.removeItem(`draft_summary_${user.id}`);
+      }
       toast.success("Profile updated in Master Vault.");
     } catch (err) {
       console.error(err);

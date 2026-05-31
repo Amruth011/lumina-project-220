@@ -1,22 +1,29 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 
-/**
- * Proxy API for Groq / OpenAI
- * =================
- * This serverless function securely holds API keys and proxies
- * requests from the frontend to the LLM API. This prevents the key
- * from being exposed to users in the browser.
- */
-// Increase timeout for large cover letter / resume generation prompts
 export const maxDuration = 60;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // 1. Basic Security: Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // 2. Load API Key from Environment
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized: Missing access token.' });
+  }
+
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (supabaseUrl && supabaseAnonKey) {
+    const sb = createClient(supabaseUrl, supabaseAnonKey, { auth: { persistSession: false } });
+    const { data: { user }, error: authError } = await sb.auth.getUser(token);
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized: Invalid token.' });
+    }
+  }
+
   const groqKey = process.env.GROQ_API_KEY;
   const openAiKey = process.env.OPENAI_API_KEY;
 

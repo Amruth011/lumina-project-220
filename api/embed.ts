@@ -1,21 +1,27 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 
-/**
- * Vercel Serverless Function: /api/embed
- * =======================================
- * Secure proxy for OpenAI's text-embedding-3-small model.
- * Accepts raw text, returns a 1536-dimensional embedding vector.
- *
- * Body: { text: string }
- * Response: { embedding: number[] }
- */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // 1. Method guard — POST only
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // 2. Env var loading
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized: Missing access token.' });
+  }
+
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (supabaseUrl && supabaseAnonKey) {
+    const sb = createClient(supabaseUrl, supabaseAnonKey, { auth: { persistSession: false } });
+    const { data: { user }, error: authError } = await sb.auth.getUser(token);
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized: Invalid token.' });
+    }
+  }
+
   const openaiKey = process.env.OPENAI_API_KEY;
   if (!openaiKey) {
     console.error('SERVER_ERROR: OPENAI_API_KEY is missing from environment variables.');

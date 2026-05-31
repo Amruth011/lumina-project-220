@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { History, X, Clock, ChevronRight, Search } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/context/SessionContext";
+import type { User } from "@supabase/supabase-js";
 
 export interface HistoryItem {
   id: string;
@@ -13,8 +15,14 @@ export interface HistoryItem {
 export const HistoryPanel = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const { supabase, user } = useSession();
+  const [user, setUser] = useState<User | null>(null);
   const { updateSession } = useSession();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+  }, []);
 
   useEffect(() => {
     const fetchHistory = async () => {

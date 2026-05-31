@@ -390,7 +390,7 @@ export const JobAgentDashboard: React.FC = () => {
 
                 {/* Refresh button */}
                 <button
-                  onClick={loadVault}
+                  onClick={() => loadVault()}
                   className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-emerald-600 transition-colors"
                 >
                   <RefreshCw size={10} />

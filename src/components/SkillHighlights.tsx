@@ -47,7 +47,7 @@ export const SkillHighlights = ({
   results, 
   rawJd 
 }: SkillHighlightsProps) => {
-  const allSkills = scavengeSkills(skills || [], results, rawJd || "") || [];
+  const allSkills = scavengeSkills(skills || [], results ?? null, rawJd || "") || [];
   
   const requiredSkills = (allSkills || []).filter((s) => s && (s.importance ?? 0) >= 80);
   const niceToHaveSkills = (allSkills || []).filter((s) => s && (s.importance ?? 0) < 80 && (s.importance ?? 0) > 0);

@@ -9,8 +9,8 @@ interface ATSScoreSimulatorProps {
 
 export const ATSScoreSimulator = ({ result }: ATSScoreSimulatorProps) => {
   const verdict = useMemo(() => {
-    const strongCount = result.skill_matches.filter(s => s.verdict === "strong").length;
-    const totalCount = result.skill_matches.length;
+    const strongCount = (result.skill_matches ?? []).filter(s => s.verdict === "strong").length;
+    const totalCount = (result.skill_matches ?? []).length;
     const keywordRate = totalCount > 0 ? Math.round((strongCount / totalCount) * 100) : 0;
 
     const hasSnippets = !!result.tailored_resume_snippets;

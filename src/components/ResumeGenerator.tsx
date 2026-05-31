@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Download, Sparkles, Copy, X, Wand2, FileText, CheckCircle2, AlertCircle, ArrowRight, Github, Linkedin, Mail, MapPin, Plus, Minus, Archive, ArrowUp, ArrowDown, Type, Eye } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +11,8 @@ import { matchVaultItems, type VaultMatchResult } from "@/lib/embeddingClient";
 import { buildVaultItemsFromProfileJson, buildResumeFromProfileJson } from "@/lib/profileSeed";
 import { saveAgentResume, buildResumeTextForAgent } from "@/lib/agentStorage";
 import { exportResumeAsHtmlPdf, buildResumeHtml, type GeneratedResumeData, type HeaderData } from "@/lib/htmlPdfExporter";
+import type { Skill, GeneratedResume, VaultItem, UserProfileWithVault } from "@/types/jd";
+import { sanitizeGeneratedResume } from "@/lib/resumeHelpers";
 
 const sanitizePdfText = (text: string): string => {
   if (!text) return "";
@@ -75,13 +77,13 @@ const parseProductOrProjectContent = (contentStr: string) => {
     statusOrYear = statusOrYear.split(url).join("");
   });
   
-  statusOrYear = statusOrYear.replace(/[|\s-–—]+/g, " ").trim();
+  statusOrYear = statusOrYear.replace(/[|\s-â€“â€”]+/g, " ").trim();
     
   if (statusOrYear.toLowerCase() === "live" || statusOrYear.toLowerCase() === "live |" || statusOrYear.toLowerCase() === "| live") {
     statusOrYear = "";
   }
 
-  if (statusOrYear === "|" || statusOrYear === "-" || statusOrYear === "–" || statusOrYear === "—") {
+  if (statusOrYear === "|" || statusOrYear === "-" || statusOrYear === "â€“" || statusOrYear === "â€”") {
     statusOrYear = "";
   }
   
@@ -243,7 +245,7 @@ const restoreExactProfileData = (generated: GeneratedResume, vaultItems: VaultIt
         const headingParts = (genItem.heading || "").split("@");
         const role = headingParts[0]?.trim() || match.title || "";
         const afterOrg = headingParts[1] || "";
-        const modeOrLoc = afterOrg.split(/\s*[-–—]\s*/).slice(1).join(" - ").trim();
+        const modeOrLoc = afterOrg.split(/\s*[-â€“â€”]\s*/).slice(1).join(" - ").trim();
         const locSuffix = modeOrLoc ? ` - ${modeOrLoc}` : "";
         return {
           ...genItem,
@@ -269,7 +271,7 @@ const restoreExactProfileData = (generated: GeneratedResume, vaultItems: VaultIt
         const links = [match.github_link, match.live_link].filter(Boolean);
         const newContent = [match.period, ...links].filter(Boolean).join(" | ");
         
-        const headingParts = (genItem.heading || "").split(/\s+[-–—]\s+/);
+        const headingParts = (genItem.heading || "").split(/\s+[-â€“â€”]\s+/);
         const techStack = headingParts.slice(1).join(" - ");
         const newHeading = techStack ? `${match.title} - ${techStack}` : match.title || genItem.heading;
 
@@ -297,7 +299,7 @@ const restoreExactProfileData = (generated: GeneratedResume, vaultItems: VaultIt
         const links = [match.github_link, match.live_link].filter(Boolean);
         const newContent = [match.period, ...links].filter(Boolean).join(" | ");
 
-        const headingParts = (genItem.heading || "").split(/\s+[-–—]\s+/);
+        const headingParts = (genItem.heading || "").split(/\s+[-â€“â€”]\s+/);
         const techStack = headingParts.slice(1).join(" - ");
         const newHeading = techStack ? `${match.title} - ${techStack}` : match.title || genItem.heading;
 
@@ -350,7 +352,7 @@ const restoreExactProfileData = (generated: GeneratedResume, vaultItems: VaultIt
   };
 
   if (Array.isArray(restored.education) && restored.education.length > 0) {
-    // AI generated education entries — restore exact vault data where possible
+    // AI generated education entries â€” restore exact vault data where possible
     restored.education = restored.education.map(genEdu => {
       const match = educationVaultItems.find(vItem => {
         const org = (vItem.organization || "").trim().toLowerCase();
@@ -359,209 +361,11 @@ const restoreExactProfileData = (generated: GeneratedResume, vaultItems: VaultIt
       return match ? buildEduString(match) : genEdu;
     });
   } else if (educationVaultItems.length > 0) {
-    // AI skipped the education section entirely — inject directly from vault
+    // AI skipped the education section entirely â€” inject directly from vault
     restored.education = educationVaultItems.map(buildEduString);
   }
 
   return restored;
-};
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sanitizeGeneratedResume = (data: any, targetSummaryLines = 3, experienceBullets = 3, projectLines = 3, productLines = 3): GeneratedResume => {
-  if (!data || typeof data !== "object") {
-    return {
-      professional_summary: "",
-      skills_section: [],
-      experience: [],
-      education: [],
-      certifications: [],
-      awards: [],
-      products: [],
-      projects: [],
-      leadership: []
-    };
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ensureArray = (arr: any): any[] => Array.isArray(arr) ? arr : [];
-
-  let summary = "";
-  if (typeof data.professional_summary === "string") {
-    summary = data.professional_summary;
-  } else if (data.professional_summary) {
-    summary = String(data.professional_summary);
-  }
-
-  if (summary) {
-    // Normalise smart punctuation and missing spacing
-    const normalized = summary
-      .replace(/([a-zA-Z])\.([A-Za-z])/g, '$1. $2')
-      .replace(/([a-zA-Z])!([A-Za-z])/g, '$1! $2')
-      .replace(/([a-zA-Z])\?([A-Za-z])/g, '$1? $2')
-      .replace(/[\u201C\u201D]/g, '"')
-      .replace(/[\u2018\u2019]/g, "'")
-      .replace(/[\u2013\u2014]/g, "-")
-      .replace(/\u20B9/g, "Rs. ")
-      .replace(/\u00B9/g, "1")
-      .replace(/\u00B2/g, "2")
-      .replace(/\u00B3/g, "3")
-      .replace(/\u00A0/g, " ");
-
-    let sentences = normalized.match(/[^.!?]+[.!?]+(\s|$)/g);
-    if (!sentences || sentences.length < targetSummaryLines) {
-      sentences = normalized.split(/\n+/).map(s => s.trim()).filter(Boolean);
-    }
-    if (!sentences || sentences.length < targetSummaryLines) {
-      sentences = [normalized];
-    }
-    const cleanedSentences = sentences.map(s => s.trim()).filter(Boolean);
-    const toUse = cleanedSentences.slice(0, targetSummaryLines);
-
-    const finalSentences = toUse.map(s => {
-      let clean = s.trim();
-      if (!clean.endsWith(".") && !clean.endsWith("!") && !clean.endsWith("?")) {
-        clean += ".";
-      }
-      return clean.charAt(0).toUpperCase() + clean.slice(1);
-    });
-
-    summary = finalSentences.join(" ");
-  }
-
-  let skills: string[] = [];
-  if (Array.isArray(data.skills_section)) {
-    skills = data.skills_section.map(s => typeof s === "string" ? s : String(s || ""));
-  } else if (data.skills_section && typeof data.skills_section === "object") {
-    skills = Object.entries(data.skills_section).map(([key, val]) => {
-      const valStr = Array.isArray(val) ? val.join(", ") : String(val || "");
-      return `${key}: ${valStr}`;
-    });
-  } else if (typeof data.skills_section === "string") {
-    skills = [data.skills_section];
-  }
-
-  // Programmatically deduplicate skill keywords across categories to ensure strict reliability
-  const seenSkills = new Set<string>();
-  skills = skills.map(line => {
-    if (!line.includes(':')) {
-      const skillsPart = line.split(',');
-      const uniqueSkills = skillsPart
-        .map(s => s.trim())
-        .filter(s => {
-          if (!s) return false;
-          const key = s.toLowerCase();
-          if (seenSkills.has(key)) return false;
-          seenSkills.add(key);
-          return true;
-        });
-      return uniqueSkills.join(', ');
-    }
-    const colonIndex = line.indexOf(':');
-    const category = line.slice(0, colonIndex).trim();
-    const skillsPart = line.slice(colonIndex + 1);
-    const skillsList = skillsPart.split(',').map(s => s.trim());
-    const uniqueSkills = skillsList.filter(s => {
-      if (!s) return false;
-      const key = s.toLowerCase();
-      if (seenSkills.has(key)) return false;
-      seenSkills.add(key);
-      return true;
-    });
-    return uniqueSkills.length > 0 ? `${category}: ${uniqueSkills.join(', ')}` : "";
-  }).filter(Boolean);
-
-  let education: string[] = [];
-  if (Array.isArray(data.education)) {
-    education = data.education.map(edu => {
-      if (typeof edu === "string") return edu;
-      if (edu && typeof edu === "object") {
-        const deg = edu.degree || edu.title || "Degree";
-        const sch = edu.school || edu.organization || edu.institution || "University";
-        const loc = edu.location || "";
-        const dt = edu.date || edu.period || edu.expected || "Expected 2027";
-        const gpaVal = edu.gpa || "";
-        const parts = [];
-        if (loc) parts.push(loc);
-        if (dt) parts.push(dt);
-        if (gpaVal) parts.push(`GPA: ${gpaVal}`);
-        return `${deg} @ ${sch}${parts.length > 0 ? ` - ${parts.join(" | ")}` : ""}`;
-      }
-      return String(edu || "");
-    });
-  } else if (typeof data.education === "string") {
-    education = [data.education];
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cleanSections = (sectionsArr: any, limit?: number): GeneratedResumeSection[] => {
-    return ensureArray(sectionsArr).map(item => {
-      if (!item || typeof item !== "object") {
-        return { heading: String(item || ""), content: "", bullets: [] };
-      }
-      
-      const rawBullets = Array.isArray(item.bullets) 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ? item.bullets.map((b: any) => typeof b === "string" ? b : String(b || ""))
-        : (typeof item.bullets === "string" ? [item.bullets] : []);
-
-      const cleanedBullets = rawBullets
-        .map(b => {
-          let clean = b.trim();
-          // Remove leading bullet/dash if present
-          clean = clean.replace(/^[•\-*\s]+/, "");
-          return clean;
-        })
-        .filter(Boolean);
-
-      const finalBullets = limit && limit > 0 
-        ? cleanedBullets.slice(0, limit)
-        : cleanedBullets;
-
-      return {
-        heading: typeof item.heading === "string" ? item.heading : String(item.heading || item.title || ""),
-        content: typeof item.content === "string" ? item.content : String(item.content || item.period || item.date || ""),
-        bullets: finalBullets
-      };
-    });
-  };
-
-  return {
-    professional_summary: summary,
-    skills_section: skills,
-    experience: cleanSections(data.experience, experienceBullets),
-    education: education,
-    products: cleanSections(data.products, productLines),
-    projects: cleanSections(data.projects, projectLines).sort((a, b) => {
-      const getYear = (str: string): number => {
-        const raw = (str || "").toLowerCase();
-        if (raw.includes("ongoing") || raw.includes("present")) return 3000;
-        const match = raw.match(/\b(20\d{2})\b/);
-        return match ? parseInt(match[1], 10) : 0;
-      };
-      return getYear(b.content) - getYear(a.content);
-    }),
-    leadership: cleanSections(data.leadership),
-    certifications: ensureArray(data.certifications).map(c => {
-      if (typeof c === "string") return c;
-      if (c && typeof c === "object") {
-        const name = c.name || c.title || c.certification || "";
-        const issuer = c.issuer || c.organization || c.provider || "";
-        const year = c.year || c.date || "";
-        return [name, issuer ? `(${issuer})` : "", year ? `- ${year}` : ""].filter(Boolean).join(" ");
-      }
-      return String(c || "");
-    }),
-    awards: ensureArray(data.awards).map(a => {
-      if (typeof a === "string") return a;
-      if (a && typeof a === "object") {
-        const name = a.name || a.title || a.award || "";
-        const issuer = a.issuer || a.organization || "";
-        const year = a.year || a.date || "";
-        return [name, issuer ? `(${issuer})` : "", year ? `- ${year}` : ""].filter(Boolean).join(" ");
-      }
-      return String(a || "");
-    })
-  };
 };
 
 export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: ResumeGeneratorProps) => {
@@ -772,7 +576,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     const loadedItems = (vaultData as VaultItem[]) || [];
     setVaultItems(loadedItems);
 
-    // ── Supabase profile header ────────────────────────────────────────────
+    // â”€â”€ Supabase profile header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (profileData) {
       // Email: prefer profiles table, fall back to auth user email (it lives in supabase.auth.users not profiles)
       const authEmail = user?.email || "";
@@ -787,11 +591,11 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
         github: profileData.github_url || ""
       });
     } else if (user?.email) {
-      // Profile row doesn't exist yet — at minimum pre-fill the email
+      // Profile row doesn't exist yet â€” at minimum pre-fill the email
       setEditableHeader(prev => ({ ...prev, email: user.email!.toLowerCase() }));
     }
 
-    // ── Full Profile Integration: seed vault + resume from user_profile.json ──
+    // â”€â”€ Full Profile Integration: seed vault + resume from user_profile.json â”€â”€
     // When master_vault has no entries, fetch /public/user_profile.json and:
     //   1. Populate VaultItems (education, certifications, projects, experience)
     //   2. Build a production-grade GeneratedResume for immediate preview display
@@ -823,7 +627,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
           }
         }
       } catch {
-        // Silent fallback — no profile seed available, proceed normally
+        // Silent fallback â€” no profile seed available, proceed normally
       }
     }
 
@@ -939,7 +743,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
       }).join("\n\n");
     };
 
-    // ── RAG PHASE: Semantic Vault Matching & Career Pivot Detection ──
+    // â”€â”€ RAG PHASE: Semantic Vault Matching & Career Pivot Detection â”€â”€
     let ragContext = "";
     let isCareerPivot = false;
     let ragMatches: VaultMatchResult[] = [];
@@ -962,27 +766,27 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
           isCareerPivot = bestSimilarity < 0.55;
 
           if (isCareerPivot) {
-            console.log(`[RAG] ⚡ CAREER PIVOT detected (best similarity: ${bestSimilarity.toFixed(3)})`);
+            console.log(`[RAG] âš¡ CAREER PIVOT detected (best similarity: ${bestSimilarity.toFixed(3)})`);
           }
 
           // Build RAG context block with top matches
           ragContext = `\n\n### RAG-RETRIEVED CONTEXT (Semantically Matched Vault Items)
 The following vault items were retrieved via semantic similarity search against the target JD.
-Use these as PRIORITY source material for tailoring — they are the most relevant items in the candidate's profile:
+Use these as PRIORITY source material for tailoring â€” they are the most relevant items in the candidate's profile:
 ${ragMatches.map((m, i) => `  [Match #${i + 1}] (Similarity: ${(m.similarity * 100).toFixed(1)}%) Title: ${m.title}. ${m.description}. Skills: ${(m.skills || []).join(", ")}`).join("\n")}`;
         } else {
-          // No matches at all — full career pivot
+          // No matches at all â€” full career pivot
           isCareerPivot = true;
-          console.log("[RAG] ⚡ CAREER PIVOT detected (no vault items matched above threshold)");
+          console.log("[RAG] âš¡ CAREER PIVOT detected (no vault items matched above threshold)");
         }
       } catch (ragErr) {
         console.warn("[RAG] Semantic matching failed (non-blocking), proceeding with standard generation:", ragErr);
       }
     }
 
-    // ── Career Pivot Strategy Override ──
+    // â”€â”€ Career Pivot Strategy Override â”€â”€
     const careerPivotDirective = isCareerPivot
-      ? `\n\n### ⚡ CAREER PIVOT MODE ACTIVATED
+      ? `\n\n### âš¡ CAREER PIVOT MODE ACTIVATED
 The candidate is applying for a role OUTSIDE their direct past experience domain.
 You MUST activate the following special strategies:
 1. **Transferable Skills Emphasis**: Identify and prominently showcase transferable skills (leadership, problem-solving, system design, communication, analytical thinking) that bridge the gap between the candidate's experience and the target role.
@@ -1001,10 +805,10 @@ CRITICAL: Do NOT fabricate experience or skills. Only reframe and emphasize exis
 
 {
   "professional_summary": "${summaryLines} sentences naming the role, each sentence = vault fact + JD keyword",
-  "education": ["Degree @ School — Location | Dates"],
+  "education": ["Degree @ School â€” Location | Dates"],
   "experience": [{"heading": "Role @ Organization", "content": "dates", "bullets": ["verb + tech + JD keyword"]}],
-  "products": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
-  "projects": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
+  "products": [{"heading": "Title â€” Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
+  "projects": [{"heading": "Title â€” Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
   "certifications": ["Name (Issuer) - Year"],
   "skills_section": ["Core Competencies: [6-8 JD keyword phrases]", "Languages: ...", "AI & ML: ...", "Cloud & MLOps: ..."],
   "awards": [],
@@ -1077,7 +881,7 @@ Return ONLY the JSON. No markdown, no comments.`
             clearTimeout(timeoutId);
           }
 
-          // ── EMERGENCY FALLBACK: Try Local API Proxy if Edge Function Fails ──
+          // â”€â”€ EMERGENCY FALLBACK: Try Local API Proxy if Edge Function Fails â”€â”€
           if (invokeError) {
             console.warn(`Lumina Intelligence: Primary Edge Function error for ${model}. Triggering Local API Proxy Fallback...`);
             try {
@@ -1195,7 +999,7 @@ Return ONLY the JSON. No markdown, no comments.`
 
       const fullyRestoredData = restoreExactProfileData(hydratedData, vaultItems);
 
-      // ── Pad bullets to match user settings (minimum 5 regardless of state) ──
+      // â”€â”€ Pad bullets to match user settings (minimum 5 regardless of state) â”€â”€
       const targetExp = Math.max(experienceBullets || 5, 5);
       const targetProd = Math.max(productLines || 5, 5);
       const targetProj = Math.max(projectLines || 5, 5);
@@ -1212,11 +1016,11 @@ Return ONLY the JSON. No markdown, no comments.`
         }
         return padded;
       };
-      fullyRestoredData.experience?.forEach(item => { item.bullets = padBullets(item.bullets, targetExp); });
-      fullyRestoredData.products?.forEach(item => { item.bullets = padBullets(item.bullets, targetProd); });
-      fullyRestoredData.projects?.forEach(item => { item.bullets = padBullets(item.bullets, targetProj); });
+      fullyRestoredData.experience?.forEach(item => { item.bullets = padBullets(item.bullets ?? [], targetExp); });
+      fullyRestoredData.products?.forEach(item => { item.bullets = padBullets(item.bullets ?? [], targetProd); });
+      fullyRestoredData.projects?.forEach(item => { item.bullets = padBullets(item.bullets ?? [], targetProj); });
 
-      // ── Fallback: fill missing sections from vault items if LLM skipped them ──
+      // â”€â”€ Fallback: fill missing sections from vault items if LLM skipped them â”€â”€
       if (!fullyRestoredData.professional_summary) {
         const fallbackSummary = `${editableHeader.fullName || "Candidate"} is an AI professional targeting a ${targetJdTitle} role. Skilled in Python, LLMs, NLP, and machine learning, with hands-on experience building ML pipelines, RAG systems, and AI agents. Seeking to apply expertise in ${(jdSkills || []).slice(0, 3).map(s => s.skill).join(", ")} to drive impact.`;
         fullyRestoredData.professional_summary = fallbackSummary;
@@ -1282,7 +1086,7 @@ Return ONLY the JSON. No markdown, no comments.`
         });
       }
 
-      // ── Safety truncate summary to exact setting ──
+      // â”€â”€ Safety truncate summary to exact setting â”€â”€
       if (fullyRestoredData.professional_summary) {
         const lines = fullyRestoredData.professional_summary.split(/\n+/).map(s => s.trim()).filter(Boolean);
         const dotSentences = fullyRestoredData.professional_summary.match(/[^.!?]+[.!?]+(\s|$)/g);
@@ -1299,7 +1103,7 @@ Return ONLY the JSON. No markdown, no comments.`
       setIsOpen(true);
       toast.success("Silicon Valley Modern resume generated!");
 
-      // ── Auto-save to Job Agent Vault ─────────────────────────────────────
+      // â”€â”€ Auto-save to Job Agent Vault â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       // Silently persists the generated resume so the Job Agent tab can
       // immediately select it without any manual export step.
       try {
@@ -1320,7 +1124,7 @@ Return ONLY the JSON. No markdown, no comments.`
           },
         });
       } catch {
-        // Non-critical — agent vault save failure does not block resume display
+        // Non-critical â€” agent vault save failure does not block resume display
       }
     } catch (err: unknown) {
       console.error("Generation process failed:", err);
@@ -1344,7 +1148,7 @@ Return ONLY the JSON. No markdown, no comments.`
 
   const handleManualAddExperience = () => {
     if (!editableResume) return;
-    const newItems = [...editableResume.experience, { heading: "New Experience", content: "", bullets: ["• New bullet point"] }];
+    const newItems = [...editableResume.experience, { heading: "New Experience", content: "", bullets: ["â€¢ New bullet point"] }];
     setEditableResume({ ...editableResume, experience: newItems });
     setAddingSection(null);
   };
@@ -1361,7 +1165,7 @@ Return ONLY the JSON. No markdown, no comments.`
 
   const handleManualAddProject = () => {
     if (!editableResume) return;
-    const newItems = [...(editableResume.projects || []), { heading: "New Project", content: "", bullets: ["• Strategic achievement bullet"] }];
+    const newItems = [...(editableResume.projects || []), { heading: "New Project", content: "", bullets: ["â€¢ Strategic achievement bullet"] }];
     setEditableResume({ ...editableResume, projects: newItems });
     setAddingSection(null);
   };
@@ -1418,7 +1222,7 @@ Return ONLY the JSON. No markdown, no comments.`
         projects: [...projects, { 
           heading: item.organization ? `${item.title} @ ${item.organization}` : item.title, 
           content: item.description, 
-          bullets: item.bullets && item.bullets.length > 0 ? item.bullets : ["• Synthesizing metrics from tactical vault..."] 
+          bullets: item.bullets && item.bullets.length > 0 ? item.bullets : ["â€¢ Synthesizing metrics from tactical vault..."] 
         }]
       });
     } else if (item.type === 'professional') {
@@ -1427,7 +1231,7 @@ Return ONLY the JSON. No markdown, no comments.`
         experience: [...editableResume.experience, { 
           heading: item.organization ? `${item.title} @ ${item.organization}` : item.title, 
           content: item.description, 
-          bullets: item.bullets && item.bullets.length > 0 ? item.bullets : ["• Synthesizing metrics from tactical vault..."] 
+          bullets: item.bullets && item.bullets.length > 0 ? item.bullets : ["â€¢ Synthesizing metrics from tactical vault..."] 
         }]
       });
     } else if (item.type === 'education') {
@@ -1493,7 +1297,7 @@ Return ONLY the JSON. No markdown, no comments.`
           for (const exp of editableResume.experience) {
             const headingParts = (exp.heading || "").split('@');
             const role = headingParts[0]?.trim() || "";
-            const orgParts = headingParts[1] ? headingParts[1].split(/\s+[-–—]\s+/) : [];
+            const orgParts = headingParts[1] ? headingParts[1].split(/\s+[-â€“â€”]\s+/) : [];
             const org = orgParts[0]?.trim() || "";
             if (!role && !org) continue;
 
@@ -1602,7 +1406,7 @@ Return ONLY the JSON. No markdown, no comments.`
         // Sync Projects
         if (Array.isArray(editableResume.projects)) {
           for (const proj of editableResume.projects) {
-            const headingParts = (proj.heading || "").split(/\s+[-–—]\s+/);
+            const headingParts = (proj.heading || "").split(/\s+[-â€“â€”]\s+/);
             const title = headingParts[0]?.trim() || "";
             const techStack = headingParts.slice(1).join(" | ") || "";
             if (!title) continue;
@@ -1619,7 +1423,7 @@ Return ONLY the JSON. No markdown, no comments.`
             });
 
             const hasNumbers = checkHasNumbers(proj.bullets || []);
-            const parsedSkills = techStack.split(/[|,\-–—]+/).map(s => s.trim()).filter(Boolean);
+            const parsedSkills = techStack.split(/[|,\-â€“â€”]+/).map(s => s.trim()).filter(Boolean);
 
             if (matchedItem) {
               await supabase
@@ -1656,7 +1460,7 @@ Return ONLY the JSON. No markdown, no comments.`
         // Sync Products
         if (Array.isArray(editableResume.products)) {
           for (const prod of editableResume.products) {
-            const headingParts = (prod.heading || "").split(/\s+[-–—]\s+/);
+            const headingParts = (prod.heading || "").split(/\s+[-â€“â€”]\s+/);
             const title = headingParts[0]?.trim() || "";
             const techStack = headingParts.slice(1).join(" | ") || "";
             if (!title) continue;
@@ -1673,7 +1477,7 @@ Return ONLY the JSON. No markdown, no comments.`
             });
 
             const hasNumbers = checkHasNumbers(prod.bullets || []);
-            const parsedSkills = techStack.split(/[|,\-–—]+/).map(s => s.trim()).filter(Boolean);
+            const parsedSkills = techStack.split(/[|,\-â€“â€”]+/).map(s => s.trim()).filter(Boolean);
 
             if (matchedItem) {
               await supabase
@@ -1712,7 +1516,7 @@ Return ONLY the JSON. No markdown, no comments.`
           for (const lead of editableResume.leadership) {
             const headingParts = (lead.heading || "").split('@');
             const role = headingParts[0]?.trim() || "";
-            const orgParts = headingParts[1] ? headingParts[1].split(/\s+[-–—]\s+/) : [];
+            const orgParts = headingParts[1] ? headingParts[1].split(/\s+[-â€“â€”]\s+/) : [];
             const org = orgParts[0]?.trim() || "";
             if (!role && !org) continue;
 
@@ -1949,7 +1753,7 @@ Return ONLY the JSON. No markdown, no comments.`
           const mainInfo = (parts[0] || "").split('@');
           const degree = mainInfo[0]?.trim() || "Degree";
           const schoolAndLoc = mainInfo[1] || "";
-          const schoolParts = schoolAndLoc.split(/\s*[-–—]\s*/);
+          const schoolParts = schoolAndLoc.split(/\s*[-â€“â€”]\s*/);
           const school = schoolParts[0]?.trim() || "University";
           const loc = schoolParts[1]?.trim() || editableHeader.location || "";
           const rawDateText = parts[1]?.trim() || "";
@@ -1978,7 +1782,7 @@ Return ONLY the JSON. No markdown, no comments.`
         ${editableResume.experience.map(exp => {
           const parts = (exp.heading || "").split('@');
           const role = parts[0]?.trim() || "Role";
-          const orgParts = parts[1] ? parts[1].split(/\s+[-–—]\s+/) : [];
+          const orgParts = parts[1] ? parts[1].split(/\s+[-â€“â€”]\s+/) : [];
           const org = orgParts[0]?.trim() || "Organization";
           const rawLocOrMode = orgParts[1]?.trim() || "";
           const location = getModeOrLocation(rawLocOrMode, editableHeader.location || "");
@@ -2000,7 +1804,7 @@ Return ONLY the JSON. No markdown, no comments.`
             ${bulletsToRender.length > 0 ? `
               <ul class="bullet-list">
                 ${bulletsToRender.map(bullet => `
-                  <li class="bullet-item">${(bullet || "").replace(/^[•\s*-]+/, '').trim()}</li>
+                  <li class="bullet-item">${(bullet || "").replace(/^[â€¢\s*-]+/, '').trim()}</li>
                 `).join("")}
               </ul>
             ` : ""}
@@ -2013,7 +1817,7 @@ Return ONLY the JSON. No markdown, no comments.`
           <h2 class="section-title">Products & Ventures</h2>
         </div>
         ${editableResume.products.map(prod => {
-          const headingParts = (prod.heading || "").split(/\s+[-–—]\s+/);
+          const headingParts = (prod.heading || "").split(/\s+[-â€“â€”]\s+/);
           const title = headingParts[0] || "Product";
           const status = headingParts.slice(1).join(" | ");
           const bulletsToRender = (prod.bullets || []).slice(0, productLines);
@@ -2044,7 +1848,7 @@ Return ONLY the JSON. No markdown, no comments.`
             ${bulletsToRender.length > 0 ? `
               <ul class="bullet-list">
                 ${bulletsToRender.map(bullet => `
-                  <li class="bullet-item">${(bullet || "").replace(/^[•\s*-]+/, '').trim()}</li>
+                  <li class="bullet-item">${(bullet || "").replace(/^[â€¢\s*-]+/, '').trim()}</li>
                 `).join("")}
               </ul>
             ` : ""}
@@ -2057,7 +1861,7 @@ Return ONLY the JSON. No markdown, no comments.`
           <h2 class="section-title">Projects</h2>
         </div>
         ${editableResume.projects.map(proj => {
-          const headingParts = (proj.heading || "").split(/\s+[-–—]\s+/);
+          const headingParts = (proj.heading || "").split(/\s+[-â€“â€”]\s+/);
           const title = headingParts[0] || "Project";
           const stack = headingParts.slice(1).join(" | ");
           const bulletsToRender = (proj.bullets || []).slice(0, projectLines);
@@ -2087,7 +1891,7 @@ Return ONLY the JSON. No markdown, no comments.`
             ${bulletsToRender.length > 0 ? `
               <ul class="bullet-list">
                 ${bulletsToRender.map(bullet => `
-                  <li class="bullet-item">${(bullet || "").replace(/^[•\s*-]+/, '').trim()}</li>
+                  <li class="bullet-item">${(bullet || "").replace(/^[â€¢\s*-]+/, '').trim()}</li>
                 `).join("")}
               </ul>
             ` : ""}
@@ -2114,7 +1918,7 @@ Return ONLY the JSON. No markdown, no comments.`
             ${bulletsToRender.length > 0 ? `
               <ul class="bullet-list">
                 ${bulletsToRender.map(bullet => `
-                  <li class="bullet-item">${(bullet || "").replace(/^[•\s*-]+/, '').trim()}</li>
+                  <li class="bullet-item">${(bullet || "").replace(/^[â€¢\s*-]+/, '').trim()}</li>
                 `).join("")}
               </ul>
             ` : ""}
@@ -2425,7 +2229,7 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
         }
       }
 
-      if (!content) throw new Error("AI returned empty content — try regenerating");
+      if (!content) throw new Error("AI returned empty content â€” try regenerating");
 
       // Post-process: strip markdown formatting, remove duplicate headers/sign-offs, replace placeholders
       content = content
@@ -2616,7 +2420,7 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
         </div>
       </div>
 
-      {/* ── ACTION SUITE: DUAL ENGINES ── */}
+      {/* â”€â”€ ACTION SUITE: DUAL ENGINES â”€â”€ */}
       <div className="relative z-10 w-full mt-16 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* 1. Resume Blueprint Engine */}
@@ -2699,8 +2503,8 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
                       onChange={(e) => setTailorEngine(e.target.value as "speed" | "quality")}
                       className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 ring-lumina-teal/20 transition-all cursor-pointer shadow-sm text-slate-800"
                     >
-                      <option value="speed">⚡ Blazing Fast Mode (Llama-3.1-8B)</option>
-                      <option value="quality">🧠 Deep Intelligence Mode (Llama-3.3-70B)</option>
+                      <option value="speed">âš¡ Blazing Fast Mode (Llama-3.1-8B)</option>
+                      <option value="quality">ðŸ§  Deep Intelligence Mode (Llama-3.3-70B)</option>
                     </select>
                     <p className="text-[9px] text-slate-400 leading-relaxed px-1">
                       {tailorEngine === "speed" 
@@ -3166,7 +2970,7 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="mt-20 pt-20 border-t border-[#1E2A3A]/10 space-y-24"
           >
-            {/* ── Unified Preview & Edit Experience ── */}
+            {/* â”€â”€ Unified Preview & Edit Experience â”€â”€ */}
             <div ref={previewRef}>
             <ResumePreview 
               resume={editableResume || resume || { professional_summary: '', skills_section: [], experience: [], education: [], projects: [], products: [], certifications: [], awards: [], leadership: [] }}

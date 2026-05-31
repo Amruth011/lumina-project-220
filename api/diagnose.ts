@@ -5,16 +5,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const sanitize = (val: string | undefined) => (val || '').replace(/^"|"$/g, '').replace(/^'|'$/g, '').trim();
     const groqKey = process.env.GROQ_API_KEY;
-    const supabaseUrl = sanitize(process.env.VITE_SUPABASE_URL) || 'https://esjzitabjftwiqjzjttw.supabase.co';
-    const supabaseKey = sanitize(process.env.VITE_SUPABASE_PUBLISHABLE_KEY) || '';
+    const supabaseUrl = sanitize(process.env.VITE_SUPABASE_URL);
+    const supabaseKey = sanitize(process.env.VITE_SUPABASE_PUBLISHABLE_KEY);
 
     const diagnostics = {
       groq_key_set: !!groqKey,
-      groq_key_prefix: groqKey ? groqKey.slice(0, 8) + '...' : 'MISSING',
       supabase_url_set: !!supabaseUrl,
       supabase_key_set: !!supabaseKey,
       node_version: process.version,
-      env_keys: Object.keys(process.env).filter(k => !k.includes('SECRET') && !k.includes('PASSWORD')).sort(),
     };
 
     // Test Supabase connection

@@ -196,7 +196,7 @@ export const JourneyScene: React.FC<JourneySceneProps> = ({ progressRef }) => {
 
       {/* Ambient Extras */}
       {particles.map((p, i) => (
-        <Particle key={i} {...p} />
+        <Particle key={i} position={p.position as [number, number, number]} speed={p.speed} opacity={p.opacity} />
       ))}
 
       {/* Post Processing */}

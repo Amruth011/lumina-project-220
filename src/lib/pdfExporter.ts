@@ -33,7 +33,11 @@ export const generateUnifiedReport = (jdResults: DecodeResult, resumeResults?: R
   };
 
   // -- Section 1: JD Intelligence --
-  addHeader("JD Intelligence Report", `Score: ${jdResults.grade.score}% | ${jdResults.logistics.salary_range.currency} ${jdResults.logistics.salary_range.min.toLocaleString()} - ${jdResults.logistics.salary_range.max.toLocaleString()}`);
+  const sr = jdResults.logistics?.salary_range;
+  const salaryLine = sr
+    ? `${sr.currency || "USD"} ${(sr.min || 0).toLocaleString()} - ${(sr.max || 0).toLocaleString()}`
+    : "Not specified";
+  addHeader("JD Intelligence Report", `Score: ${jdResults.grade.score}% | ${salaryLine}`);
 
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");

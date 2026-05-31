@@ -526,7 +526,7 @@ const Auth = () => {
         {/* Engine status */}
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 opacity-15 hover:opacity-60 transition-opacity z-50">
           <p className="text-[8px] font-mono uppercase tracking-widest text-muted-foreground whitespace-nowrap">
-            Engine Signal: {supabase?.auth?.getSession ? "ACTIVE" : (import.meta.env.VITE_SUPABASE_URL ? `...${import.meta.env.VITE_SUPABASE_URL.slice(-12)}` : "OFFLINE")}
+            Engine Signal: {typeof supabase?.auth?.getSession === "function" ? "ACTIVE" : (import.meta.env.VITE_SUPABASE_URL ? `...${import.meta.env.VITE_SUPABASE_URL.slice(-12)}` : "OFFLINE")}
           </p>
         </div>
       </div>
