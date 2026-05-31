@@ -478,7 +478,7 @@ const renderSubHeaderWithLinks = (
       </span>
 
       {/* Right side: Year/Status | GitHub | Live Link */}
-      <span className="flex-shrink-0 text-right ml-4 text-[11px] font-normal !font-inherit flex items-center gap-1.5" style={{ fontFamily: 'inherit' }}>
+      <span className="flex-shrink-0 text-right ml-4 font-normal !font-inherit flex items-center gap-1.5" style={{ fontSize: fontSizes.body, fontFamily: 'inherit' }}>
         {statusOrYear && (
           <span className="opacity-70 font-semibold mr-1">{statusOrYear}</span>
         )}
@@ -2115,12 +2115,12 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                         <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.body, fontFamily: 'inherit' }}>
                                           <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{school}</span>
                                           {dateText && (
-                                            <span className="flex-shrink-0 text-right ml-4 text-[11px] !font-inherit" style={{ fontFamily: 'inherit' }}>{dateText}</span>
+                                            <span className="flex-shrink-0 text-right ml-4 !font-inherit" style={{ fontFamily: 'inherit' }}>{dateText}</span>
                                           )}
                                         </div>
                                         <div className="flex justify-between items-start italic !font-inherit" style={{ fontSize: `calc(${fontSizes.body} - 1px)`, fontFamily: 'inherit' }}>
                                           <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{degree} {metadata && `| ${metadata}`}</span>
-                                          <span className="flex-shrink-0 text-right ml-4 text-[11px] not-italic !font-inherit" style={{ fontFamily: 'inherit' }}>{loc}</span>
+                                          <span className="flex-shrink-0 text-right ml-4 not-italic !font-inherit" style={{ fontFamily: 'inherit' }}>{loc}</span>
                                         </div>
                                       </div>
                                     );
@@ -2167,12 +2167,12 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                         <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
                                           <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{role}</span>
                                           {dateText && (
-                                            <span className="flex-shrink-0 text-right ml-4 text-[11px] !font-inherit" style={{ fontFamily: 'inherit' }}>{dateText}</span>
+                                            <span className="flex-shrink-0 text-right ml-4 font-normal !font-inherit" style={{ fontSize: fontSizes.body, fontFamily: 'inherit' }}>{dateText}</span>
                                           )}
                                         </div>
                                         <div className="flex justify-between items-start italic text-[#1E2A3A]/80 !font-inherit" style={{ fontSize: `calc(${fontSizes.body} - 1px)`, fontFamily: 'inherit' }}>
                                           <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{org}</span>
-                                          <span className="flex-shrink-0 text-right ml-4 text-[11px] not-italic !font-inherit" style={{ fontFamily: 'inherit' }}>{location}</span>
+                                          <span className="flex-shrink-0 text-right ml-4 not-italic !font-inherit" style={{ fontSize: fontSizes.body, fontFamily: 'inherit' }}>{location}</span>
                                         </div>
                                         <ul className="list-disc ml-5 space-y-0.5 pt-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                           {limitBullets(exp.bullets || [], experienceBullets).map((bullet, bullIdx) => (
@@ -2257,7 +2257,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                         <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
                                           <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>{lead.heading || "Role"}</span>
                                           {dateText && (
-                                            <span className="flex-shrink-0 text-right ml-4 text-[11px] font-normal !font-inherit" style={{ fontFamily: 'inherit' }}>{dateText}</span>
+                                            <span className="flex-shrink-0 text-right ml-4 font-normal !font-inherit" style={{ fontSize: fontSizes.body, fontFamily: 'inherit' }}>{dateText}</span>
                                           )}
                                         </div>
                                         <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>

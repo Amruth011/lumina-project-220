@@ -733,10 +733,10 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     
     if (record.settings) {
       setFontFamily(record.settings.fontFamily as "Inter" | "Roboto" | "Merriweather" | "Arial");
-      setNameFontSize(record.settings.nameFontSize);
-      setHeadlineFontSize(record.settings.headlineFontSize);
-      setSubHeadlineFontSize(record.settings.subHeadlineFontSize);
-      setBodyFontSize(record.settings.bodyFontSize);
+      setNameFontSize(Math.max(18, record.settings.nameFontSize || 18));
+      setHeadlineFontSize(Math.max(12, record.settings.headlineFontSize || 12));
+      setSubHeadlineFontSize(Math.max(11, record.settings.subHeadlineFontSize || 11));
+      setBodyFontSize(Math.max(10, record.settings.bodyFontSize || 10));
       setTone(record.settings.tone as "Professional" | "Modern" | "Aggressive");
       if (record.settings.summaryLines) setSummaryLines(Number(record.settings.summaryLines));
       if (record.settings.experienceBullets) setExperienceBullets(Number(record.settings.experienceBullets));
@@ -1960,11 +1960,11 @@ Return ONLY the JSON. No markdown, no comments.`
             <table class="meta-table">
               <tr>
                 <td style="text-align: left; font-weight: bold; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${school}</td>
-                <td style="text-align: right; font-weight: bold; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
+                <td style="text-align: right; font-weight: bold; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
               </tr>
               <tr>
                 <td style="text-align: left; font-style: italic; font-size: ${bodyFontSize - 1}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${degree} ${metadata ? `| ${metadata}` : ''}</td>
-                <td style="text-align: right; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${loc}</td>
+                <td style="text-align: right; font-size: ${bodyFontSize - 1}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${loc}</td>
               </tr>
             </table>
           `;
@@ -1990,11 +1990,11 @@ Return ONLY the JSON. No markdown, no comments.`
             <table class="meta-table">
               <tr>
                 <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${role}</td>
-                <td style="text-align: right; font-weight: bold; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
+                <td style="text-align: right; font-weight: bold; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
               </tr>
               <tr>
                 <td style="text-align: left; font-style: italic; font-size: ${bodyFontSize - 1}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${org}</td>
-                <td style="text-align: right; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${location}</td>
+                <td style="text-align: right; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${location}</td>
               </tr>
             </table>
             ${bulletsToRender.length > 0 ? `
@@ -2038,7 +2038,7 @@ Return ONLY the JSON. No markdown, no comments.`
                 <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">
                   ${title?.trim()} <span style="font-weight: normal; opacity: 0.6; font-family: ${getHtmlFont(fontFamily)};">| ${status?.trim()}</span>
                 </td>
-                <td style="text-align: right; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${productLinkHtml}</td>
+                <td style="text-align: right; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${productLinkHtml}</td>
               </tr>
             </table>
             ${bulletsToRender.length > 0 ? `
@@ -2081,7 +2081,7 @@ Return ONLY the JSON. No markdown, no comments.`
                 <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">
                   ${title?.trim()} <span style="font-weight: normal; opacity: 0.6; font-family: ${getHtmlFont(fontFamily)};">| ${stack?.trim()}</span>
                 </td>
-                <td style="text-align: right; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${projectLinkHtml}</td>
+                <td style="text-align: right; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${projectLinkHtml}</td>
               </tr>
             </table>
             ${bulletsToRender.length > 0 ? `
@@ -2108,7 +2108,7 @@ Return ONLY the JSON. No markdown, no comments.`
             <table class="meta-table">
               <tr>
                 <td style="text-align: left; font-weight: bold; font-size: ${subHeadlineFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${lead.heading || "Role"}</td>
-                <td style="text-align: right; font-size: 11px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
+                <td style="text-align: right; font-size: ${bodyFontSize}px; color: #1E2A3A; font-family: ${getHtmlFont(fontFamily)};">${dateText}</td>
               </tr>
             </table>
             ${bulletsToRender.length > 0 ? `
@@ -2659,19 +2659,19 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                       <div className="space-y-2">
                         <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Name (pt)</label>
-                        <input type="number" min="14" max="48" value={nameFontSize} onChange={e => setNameFontSize(Number(e.target.value))} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-black shadow-sm focus:ring-2 ring-lumina-teal/20 transition-all outline-none" />
+                        <input type="number" min="18" max="48" value={nameFontSize} onChange={e => setNameFontSize(Math.max(18, Number(e.target.value)))} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-black shadow-sm focus:ring-2 ring-lumina-teal/20 transition-all outline-none" />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Headlines (pt)</label>
-                        <input type="number" min="8" max="24" value={headlineFontSize} onChange={e => setHeadlineFontSize(Number(e.target.value))} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-black shadow-sm focus:ring-2 ring-lumina-teal/20 transition-all outline-none" />
+                        <input type="number" min="12" max="24" value={headlineFontSize} onChange={e => setHeadlineFontSize(Math.max(12, Number(e.target.value)))} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-black shadow-sm focus:ring-2 ring-lumina-teal/20 transition-all outline-none" />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Sub-Headers (pt)</label>
-                        <input type="number" min="8" max="20" value={subHeadlineFontSize} onChange={e => setSubHeadlineFontSize(Number(e.target.value))} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-black shadow-sm focus:ring-2 ring-lumina-teal/20 transition-all outline-none" />
+                        <input type="number" min="11" max="20" value={subHeadlineFontSize} onChange={e => setSubHeadlineFontSize(Math.max(11, Number(e.target.value)))} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-black shadow-sm focus:ring-2 ring-lumina-teal/20 transition-all outline-none" />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Body (pt)</label>
-                        <input type="number" min="7" max="14" value={bodyFontSize} onChange={e => setBodyFontSize(Number(e.target.value))} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-black shadow-sm focus:ring-2 ring-lumina-teal/20 transition-all outline-none" />
+                        <input type="number" min="10" max="14" value={bodyFontSize} onChange={e => setBodyFontSize(Math.max(10, Number(e.target.value)))} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-black shadow-sm focus:ring-2 ring-lumina-teal/20 transition-all outline-none" />
                       </div>
                     </div>
                   </div>
