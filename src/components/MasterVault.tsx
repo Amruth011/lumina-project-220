@@ -12,7 +12,7 @@ import { useUsage } from "@/hooks/useUsage";
 import type { VaultItem, VaultItemType, UserProfileWithVault } from "@/types/jd";
 import { VaultSkeleton } from "./dashboard/VaultSkeleton";
 import { generateAndStoreEmbedding, batchGenerateEmbeddings } from "@/lib/embeddingClient";
-import { scanProfileForSkills, generateLLMSeedPrompt } from "@/lib/skillScanner";
+import { scanProfileForSkills, generateLLMSeedPrompt, TECHNICAL_DICTIONARY, SKILL_CAPITALIZATION_MAP } from "@/lib/skillScanner";
 
 const getFieldLabels = (type?: VaultItemType) => {
   switch (type) {
@@ -1519,6 +1519,17 @@ RETURN JSON FORMAT ONLY:
                 }
                 toast.success(`${skills.length} skills added to vault item.`);
               }}
+              onCategorizeSkills={(categorized) => {
+                setTechnicalSkills(prev => {
+                  const next = { ...prev };
+                  categorized.forEach(({ skill, category }) => {
+                    if (next[category] && !next[category].includes(skill)) {
+                      next[category] = [...next[category], skill];
+                    }
+                  });
+                  return next;
+                });
+              }}
             />
 
             <div className="flex justify-between items-center pt-4 border-t border-white/5">
@@ -2558,9 +2569,29 @@ interface JdSkillsImportProps {
   profileSummary: string;
   onAppendToSummary: (text: string) => void;
   onAddSkillsToItem: (skills: string[]) => void;
+  onCategorizeSkills: (categorized: { skill: string; category: string }[]) => void;
 }
 
-function JdSkillsImport({ profileSummary, onAppendToSummary, onAddSkillsToItem }: JdSkillsImportProps) {
+function categorizeSkill(skillName: string): string | null {
+  const lower = skillName.toLowerCase();
+  for (const [category, patterns] of Object.entries(TECHNICAL_DICTIONARY)) {
+    for (const pattern of patterns) {
+      let regexStr = `\\b${pattern}\\b`;
+      if (pattern.includes("+") || pattern.includes("#")) {
+        regexStr = `\\b${pattern.replace(/\+/g, "\\+").replace(/#/g, "\\#")}(?=\\s|\\b|$)`;
+      }
+      try {
+        const regex = new RegExp(regexStr, "i");
+        if (regex.test(lower)) return category;
+      } catch {
+        continue;
+      }
+    }
+  }
+  return null;
+}
+
+function JdSkillsImport({ profileSummary, onAppendToSummary, onAddSkillsToItem, onCategorizeSkills }: JdSkillsImportProps) {
   const [jdData, setJdData] = useState<{ title: string; skills: { skill: string; category: string; importance: number }[] } | null>(null);
   const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
   const [imported, setImported] = useState(false);
@@ -2600,6 +2631,12 @@ function JdSkillsImport({ profileSummary, onAppendToSummary, onAddSkillsToItem }
     const skillsText = skillsList.join(", ");
     onAppendToSummary(`\n\nKey Skills from "${jdData.title}":\n${skillsText}`);
     onAddSkillsToItem(skillsList);
+    const categorized = skillsList
+      .map(skill => ({ skill, category: categorizeSkill(skill) }))
+      .filter((entry): entry is { skill: string; category: string } => entry.category !== null);
+    if (categorized.length > 0) {
+      onCategorizeSkills(categorized);
+    }
     setImported(true);
     toast.success(`${selectedSkills.size} skills imported from "${jdData.title}".`);
   };

@@ -413,6 +413,8 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
   const [savedResumes, setSavedResumes] = useState<ArchiveRecord[]>([]);
   const [showArchive, setShowArchive] = useState(false);
   const [isLoadingArchive, setIsLoadingArchive] = useState(false);
+  const [savedEdits, setSavedEdits] = useState<GeneratedResume | null>(null);
+  const hasSavedEdits = savedEdits !== null;
   
   // Font Size Calibration
   const [nameFontSize, setNameFontSize] = useState(18);
@@ -1037,18 +1039,27 @@ Return ONLY the JSON. No markdown, no comments.`
         
         const activeSkills = profileSkills || parsedFallback;
 
+        const jdSkillNames = (jdSkills || []).map(s => s.skill);
         if (activeSkills && Object.values(activeSkills).some(arr => Array.isArray(arr) && arr.length > 0)) {
-          fullyRestoredData.skills_section = Object.entries(activeSkills)
+          const categoryEntries = Object.entries(activeSkills)
             .filter(([_, list]) => Array.isArray(list) && list.length > 0)
-            .map(([category, list]) => `${category}: ${(list as string[]).join(", ")}`);
+            .map(([category, list]) => {
+              const existing = list as string[];
+              const jdMatches = jdSkillNames.filter(s =>
+                !existing.some(e => e.toLowerCase() === s.toLowerCase())
+              );
+              const augmented = jdMatches.length > 0 ? [...existing, ...jdMatches.slice(0, 4)] : existing;
+              return `${category}: ${augmented.join(", ")}`;
+            });
+          fullyRestoredData.skills_section = categoryEntries;
         } else {
-          const jdSkillNames = (jdSkills || []).map(s => s.skill);
-          const coreCompetencies = jdSkillNames.slice(0, 8).join(", ");
+          const coreCompetencies = jdSkillNames.slice(0, 12).join(", ");
           fullyRestoredData.skills_section = [
             `Core Competencies: ${coreCompetencies}`,
-            `Languages: Python, SQL, TypeScript`,
-            `AI & Machine Learning: LLMs, NLP, TensorFlow, PyTorch, Scikit-learn, XGBoost, Hugging Face, LangChain`,
-            `Cloud & MLOps: Docker, AWS, Git, CI/CD, MLflow`,
+            `Programming Languages: Python, TypeScript, JavaScript, SQL, Java, C++`,
+            `AI & Machine Learning: LLMs, NLP, TensorFlow, PyTorch, Scikit-learn, XGBoost, Hugging Face, LangChain, OpenCV`,
+            `Infrastructure & MLOps: Docker, AWS, Git, CI/CD, MLflow, Kubernetes, Terraform`,
+            `Data Engineering: Pandas, NumPy, Apache Spark, Airflow, PostgreSQL, MongoDB, Redis`,
           ];
         }
       }
@@ -1098,8 +1109,24 @@ Return ONLY the JSON. No markdown, no comments.`
         }
       }
 
-      setResume(fullyRestoredData);
-      setEditableResume(fullyRestoredData);
+      const mergedData = savedEdits
+        ? {
+            ...fullyRestoredData,
+            professional_summary: savedEdits.professional_summary || fullyRestoredData.professional_summary,
+            skills_section: savedEdits.skills_section?.length ? savedEdits.skills_section : fullyRestoredData.skills_section,
+            experience: savedEdits.experience?.length ? savedEdits.experience : fullyRestoredData.experience,
+            education: savedEdits.education?.length ? savedEdits.education : fullyRestoredData.education,
+            projects: savedEdits.projects?.length ? savedEdits.projects : fullyRestoredData.projects,
+            products: savedEdits.products?.length ? savedEdits.products : fullyRestoredData.products,
+            certifications: savedEdits.certifications?.length ? savedEdits.certifications : fullyRestoredData.certifications,
+            awards: savedEdits.awards?.length ? savedEdits.awards : fullyRestoredData.awards,
+            leadership: savedEdits.leadership?.length ? savedEdits.leadership : fullyRestoredData.leadership,
+          }
+        : fullyRestoredData;
+
+      setResume(mergedData);
+      setEditableResume(mergedData);
+      setSavedEdits(null);
       setIsOpen(true);
       toast.success("Silicon Valley Modern resume generated!");
 
@@ -1606,6 +1633,12 @@ Return ONLY the JSON. No markdown, no comments.`
       const message = (err as { message?: string })?.message || (typeof err === 'string' ? err : "Unknown process error");
       toast.error(`Save crashed: ${message}`);
     }
+  };
+
+  const handleSaveEdits = () => {
+    if (!editableResume) return;
+    setSavedEdits(JSON.parse(JSON.stringify(editableResume)));
+    toast.success("Edits saved locally. They will be preserved on next regeneration.");
   };
 
   const handleDownloadPDF = async () => {
@@ -2276,29 +2309,40 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
 
   const handleDownloadCL = (format: 'pdf' | 'doc') => {
     if (!coverLetter) return;
-    const safeName = (editableHeader.fullName || profile?.full_name || "Resume").replace(/[^a-z0-9]/gi, '_');
+      const safeName = (editableHeader.fullName || profile?.full_name || "Resume").replace(/[^a-z0-9]/gi, '_');
+      const clHtmlFont = (() => {
+        switch(fontFamily) {
+          case "Inter": return "Inter, sans-serif";
+          case "Roboto": return "Roboto, sans-serif";
+          case "Merriweather": return "Merriweather, serif";
+          case "Arial": return "Arial, sans-serif";
+          default: return "Inter, sans-serif";
+        }
+      })();
+      const clBodySize = Math.max(10, bodyFontSize - 2);
+      const clNameSize = Math.max(14, nameFontSize - 2);
 
     if (format === 'doc') {
       const content = `
         <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
         <head><meta charset='utf-8'><title>Cover Letter</title></head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.5; margin: 1in; color: #1E2A3A;">
+        <body style="font-family: ${clHtmlFont}; line-height: 1.5; margin: 1in; color: #1E2A3A;">
           <div style="text-align: right; margin-bottom: 24px;">
-            <h2 style="margin: 0 0 4px 0; font-size: 14pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">${editableHeader.fullName}</h2>
-            ${editableHeader.location ? `<p style="margin: 0 0 2px 0; color: rgba(30,42,58,0.7); font-size: 10pt;">${editableHeader.location}</p>` : ''}
-            ${editableHeader.email ? `<p style="margin: 0 0 2px 0; color: rgba(30,42,58,0.7); font-size: 10pt;">${editableHeader.email}</p>` : ''}
-            ${editableHeader.phone ? `<p style="margin: 0 0 2px 0; color: rgba(30,42,58,0.7); font-size: 10pt;">${editableHeader.phone}</p>` : ''}
-            ${editableHeader.linkedin ? `<p style="margin: 0; color: #2563eb; font-size: 10pt;">${editableHeader.linkedin}</p>` : ''}
+            <h2 style="margin: 0 0 4px 0; font-size: ${clNameSize}pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">${editableHeader.fullName}</h2>
+            ${editableHeader.location ? `<p style="margin: 0 0 2px 0; color: rgba(30,42,58,0.7); font-size: ${clBodySize}pt;">${editableHeader.location}</p>` : ''}
+            ${editableHeader.email ? `<p style="margin: 0 0 2px 0; color: rgba(30,42,58,0.7); font-size: ${clBodySize}pt;">${editableHeader.email}</p>` : ''}
+            ${editableHeader.phone ? `<p style="margin: 0 0 2px 0; color: rgba(30,42,58,0.7); font-size: ${clBodySize}pt;">${editableHeader.phone}</p>` : ''}
+            ${editableHeader.linkedin ? `<p style="margin: 0; color: #2563eb; font-size: ${clBodySize}pt;">${editableHeader.linkedin}</p>` : ''}
           </div>
           <div style="margin-bottom: 24px; text-align: left;">
-            ${companyName ? `<p style="margin: 0 0 2px 0; font-size: 11pt; font-weight: bold;">${companyName}</p>` : ''}
+            ${companyName ? `<p style="margin: 0 0 2px 0; font-size: ${clBodySize + 1}pt; font-weight: bold;">${companyName}</p>` : ''}
           </div>
-          ${jdTitle ? `<p style="font-weight: bold; margin-bottom: 24px; font-size: 11pt; color: #000000;">Application for ${jdTitle}</p>` : ''}
-          <p style="font-size: 11pt; margin-bottom: 20px;">Dear Hiring Manager,</p>
-          <div style="white-space: pre-wrap; text-align: justify; font-size: 11pt; line-height: 1.6; color: rgba(30,42,58,0.9); margin-bottom: 28px;">${coverLetter}</div>
+          ${jdTitle ? `<p style="font-weight: bold; margin-bottom: 24px; font-size: ${clBodySize + 1}pt; color: #000000;">Application for ${jdTitle}</p>` : ''}
+          <p style="font-size: ${clBodySize}pt; margin-bottom: 20px;">Dear Hiring Manager,</p>
+          <div style="white-space: pre-wrap; text-align: justify; font-size: ${clBodySize}pt; line-height: 1.6; color: rgba(30,42,58,0.9); margin-bottom: 28px;">${coverLetter}</div>
           <div style="margin-top: 20px;">
-            <p style="font-size: 11pt; margin-bottom: 16px;">Sincerely,</p>
-            <p style="font-size: 11pt; font-weight: bold; margin: 0;">${editableHeader.fullName || profile?.full_name || "Your Name"}</p>
+            <p style="font-size: ${clBodySize}pt; margin-bottom: 16px;">Sincerely,</p>
+            <p style="font-size: ${clBodySize}pt; font-weight: bold; margin: 0;">${editableHeader.fullName || profile?.full_name || "Your Name"}</p>
           </div>
         </body>
         </html>
@@ -2313,8 +2357,9 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
       setTimeout(() => document.body.removeChild(link), 200);
     } else {
       const pdf = new jsPDF();
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(11);
+      const pdfFont = fontFamily === "Merriweather" ? "times" : fontFamily === "Arial" ? "helvetica" : "helvetica";
+      pdf.setFont(pdfFont, "normal");
+      pdf.setFontSize(clBodySize);
       
       let y = 20;
       const margin = 20;
@@ -2323,14 +2368,14 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
       const lineHeight = 6.0;
       
       // Header (Right Aligned)
-      pdf.setFontSize(14);
-      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(clNameSize);
+      pdf.setFont(pdfFont, "bold");
       const name = (editableHeader.fullName || profile?.full_name || "Your Name").toUpperCase();
       pdf.text(name, pageWidth - margin, y, { align: "right" });
       y += 6;
       
-      pdf.setFontSize(10);
-      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(clBodySize);
+      pdf.setFont(pdfFont, "normal");
       pdf.setTextColor(80, 80, 80);
       if (editableHeader.location) {
         pdf.text(editableHeader.location, pageWidth - margin, y, { align: "right" });
@@ -2353,25 +2398,25 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
       pdf.setTextColor(30, 42, 58);
       y += 10;
       
-      // Recipient Company (Prepverse)
+      // Recipient Company
       if (companyName) {
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(11);
+        pdf.setFont(pdfFont, "bold");
+        pdf.setFontSize(clBodySize + 1);
         pdf.text(companyName, margin, y);
         y += 8;
       }
       
       // Subject (Application for ...)
       if (jdTitle) {
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(11);
+        pdf.setFont(pdfFont, "bold");
+        pdf.setFontSize(clBodySize + 1);
         pdf.text(`Application for ${jdTitle}`, margin, y);
         y += 10;
       }
       
       // Salutation
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(11);
+      pdf.setFont(pdfFont, "normal");
+      pdf.setFontSize(clBodySize);
       pdf.text("Dear Hiring Manager,", margin, y);
       y += 10;
       
@@ -2396,7 +2441,7 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
       pdf.setTextColor(30, 42, 58);
       pdf.text("Sincerely,", margin, y);
       y += 12;
-      pdf.setFont("helvetica", "bold");
+      pdf.setFont(pdfFont, "bold");
       pdf.text(editableHeader.fullName || profile?.full_name || "Your Name", margin, y);
       
       pdf.save(`Lumina-Cover-Letter-${safeName}.pdf`);
@@ -2987,6 +3032,8 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
               onDownloadPDF={handleDownloadPDF}
               onDownloadDOC={handleDownloadDOC}
               onSave={handleSaveDraft}
+              onSaveEdits={handleSaveEdits}
+              hasSavedEdits={hasSavedEdits}
               coverLetter={coverLetter}
               isGeneratingCL={isGeneratingCL}
               onGenerateCL={generateCoverLetter}

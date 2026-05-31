@@ -69,6 +69,8 @@ interface ResumePreviewProps {
   onDownloadCL: (format: 'pdf' | 'doc') => void;
   onUpdateCoverLetter?: (updatedCL: string) => void;
   onSave?: () => void;
+  onSaveEdits?: () => void;
+  hasSavedEdits?: boolean;
   summaryLines?: number;
   experienceBullets?: number;
   projectLines?: number;
@@ -753,6 +755,9 @@ Return ONLY the complete updated JSON object matching the input structure.`;
             <div className="flex items-center gap-3">
               <button onClick={onRegenerate} disabled={isGenerating} className="p-3 rounded-2xl bg-white border border-slate-200 text-[#1E2A3A]/40 hover:text-lumina-teal hover:border-lumina-teal/20 transition-all shadow-sm group">
                 <RotateCcw size={18} className={isGenerating ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-700'} />
+              </button>
+              <button onClick={onSaveEdits} className={`p-3 rounded-2xl border transition-all shadow-sm ${hasSavedEdits ? 'bg-amber-500/10 border-amber-400/30 text-amber-500' : 'bg-white border-slate-200 text-[#1E2A3A]/40 hover:text-amber-500 hover:border-amber-400/30'}`} title="Save edits locally">
+                <PenTool size={18} />
               </button>
               <button onClick={onSave} className="p-3 rounded-2xl bg-lumina-teal text-white shadow-lg shadow-lumina-teal/20 transition-all hover:scale-105">
                 <Save size={18} />

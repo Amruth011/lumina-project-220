@@ -12,6 +12,7 @@ import {
   ArrowDownToLine,
   FileText,
   Zap,
+  ExternalLink,
 } from "lucide-react";
 import type { AgentLogEntry, AgentRunResult } from "@/types/agent";
 
@@ -58,6 +59,7 @@ interface AgentExecutionLogProps {
   logs: AgentLogEntry[];
   result: AgentRunResult | null;
   isRunning: boolean;
+  portalUrl?: string;
 }
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -66,6 +68,7 @@ export const AgentExecutionLog: React.FC<AgentExecutionLogProps> = ({
   logs,
   result,
   isRunning,
+  portalUrl,
 }) => {
   const logsEndRef = React.useRef<HTMLDivElement>(null);
 
@@ -339,6 +342,17 @@ export const AgentExecutionLog: React.FC<AgentExecutionLogProps> = ({
                     />
                   </div>
                 </div>
+                {portalUrl && !applied && (
+                  <a
+                    href={portalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#1E2A3A] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#2a3a4a] transition-all"
+                  >
+                    <ExternalLink size={14} />
+                    Open Application Page & Apply Manually
+                  </a>
+                )}
               </div>
             </div>
           </motion.div>

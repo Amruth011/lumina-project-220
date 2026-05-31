@@ -154,12 +154,15 @@ export const JobAgentDashboard: React.FC = () => {
     setIsRunning(true);
 
     try {
-      // Open the target portal in a popup window to simulate the agent taking over
-      const agentWindow = window.open(
-        portalUrl,
-        "LuminaAgentPortal",
-        "width=1024,height=800,left=100,top=100,noopener,noreferrer"
-      );
+      let agentWindow: Window | null = null;
+      // Only open popup if backend is connected (real automation)
+      if (backendStatus === "connected") {
+        agentWindow = window.open(
+          portalUrl,
+          "LuminaAgentPortal",
+          "width=1024,height=800,left=100,top=100"
+        );
+      }
 
       const finalResult = await runAgentJob(selected, portalUrl, (entry) => {
         setLogs((prev) => [...prev, entry]);
@@ -591,6 +594,7 @@ export const JobAgentDashboard: React.FC = () => {
                   logs={logs}
                   result={result}
                   isRunning={isRunning}
+                  portalUrl={portalUrl}
                 />
               </motion.div>
             )}

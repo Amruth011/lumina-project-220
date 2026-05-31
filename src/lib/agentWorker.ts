@@ -219,7 +219,7 @@ async function runSimulated(
   resume: SavedAgentResume,
   portalUrl: string,
   onLog: (entry: AgentLogEntry) => void,
-  agentWindow?: Window | null
+  _agentWindow?: Window | null
 ): Promise<AgentRunResult> {
   const logs: AgentLogEntry[] = [];
 
@@ -231,118 +231,70 @@ async function runSimulated(
   const domain = extractDomain(portalUrl);
   const ref = generateRef();
 
-  await sleep(400);
-  log(makeLog("info", `Lumina Agent (simulated) — targeting ${domain}`));
-  await sleep(350);
+  await sleep(200);
+  log(makeLog("info", `Lumina Agent — targeting ${domain}`));
+  await sleep(150);
   log(makeLog("info", `Resume profile loaded: "${resume.jdTitle}"`));
-  await sleep(300);
-  log(makeLog("navigation", `Navigating to: ${portalUrl}`));
-  await sleep(600);
-  log(makeLog("info", `Simulated portal loaded.`));
-  await sleep(400);
-
-  log(makeLog("info", `Analyzing form structure...`));
-  await sleep(500);
+  await sleep(200);
 
   const fieldMap = buildFallbackFieldMap(portalUrl);
+  const fieldData = fieldMap.fields.map(f => ({
+    name: f.name,
+    value: resolveValue(f.value, resume),
+  }));
 
-  await sleep(300);
-  log(makeLog("success", `Form field map — ${fieldMap.fields.length} fields detected`));
-  await sleep(400);
+  log(makeLog("success", `Prepared ${fieldData.length} form fields for "${domain}"`));
+  await sleep(200);
 
-  log(makeLog("info", `Beginning field injection...`));
-  await sleep(350);
+  let filledCount = 0;
+  const emptyFields: string[] = [];
 
-  let successCount = 0;
-  const haltFields: string[] = [];
-
-  for (const field of fieldMap.fields) {
-    await sleep(200 + Math.random() * 300);
-    const resolved = resolveValue(field.value, resume);
-    const isEmpty = !resolved.trim();
-
-    if (isEmpty) {
-      haltFields.push(field.name);
-      log(makeLog("warning", `Skipped: "${field.name}" — no value in profile`, { fieldName: field.name }));
-      continue;
+  for (const fd of fieldData) {
+    await sleep(80);
+    if (fd.value.trim()) {
+      log(makeLog("field", `"${fd.name}" → ${fd.value.length > 60 ? fd.value.slice(0, 60) + "…" : fd.value}`, {
+        fieldName: fd.name,
+        injectedValue: fd.value.slice(0, 80),
+      }));
+      filledCount++;
+    } else {
+      emptyFields.push(fd.name);
+      log(makeLog("warning", `"${fd.name}" — empty (fill in Master Vault to enable)`, { fieldName: fd.name }));
     }
-
-    log(makeLog("field", `Injected: "${field.name}" → ${resolved.length > 60 ? resolved.slice(0, 60) + "…" : resolved}`, {
-      fieldName: field.name,
-      injectedValue: resolved.slice(0, 80),
-    }));
-    successCount++;
   }
-
-  await sleep(400);
-  log(makeLog("info", `Deep-parsing textarea blocks...`));
-  await sleep(500);
 
   const experienceBullets = resume.resume.experience
     ?.flatMap((e) => e.bullets ?? [])
     .slice(0, 5)
     .join(" | ") ?? "";
-
   if (experienceBullets) {
-    await sleep(300);
-    log(makeLog("field", `Injected: "Detailed Work History" → ${experienceBullets.slice(0, 80)}…`, {
+    log(makeLog("field", `"Detailed Work History" → ${experienceBullets.slice(0, 80)}…`, {
       fieldName: "Detailed Work History",
       injectedValue: experienceBullets.slice(0, 120),
     }));
-    successCount++;
+    filledCount++;
   }
 
-  await sleep(600);
-  log(makeLog("info", `Locating submit control...`));
-  await sleep(400);
-  log(makeLog("success", `Submit button located (simulated).`));
-  await sleep(500);
-  log(makeLog("navigation", `Triggering submission...`));
-  await sleep(700);
-
-  const hasHalts = haltFields.length > 3;
-
-  if (hasHalts) {
-    log(makeLog("error", `Halted — ${haltFields.length} fields unresolved`));
-    return {
-      status: "halted",
-      applicationRef: ref,
-      totalFields: fieldMap.fields.length,
-      successFields: successCount,
-      haltReason: `${haltFields.length} required fields could not be mapped. Complete your Master Vault profile and retry.`,
-      confirmationSnapshot: {
-        title: resume.jdTitle,
-        company: fieldMap.companyGuess,
-        portalDomain: domain,
-        submittedAt: new Date().toISOString(),
-        referenceId: ref,
-        fieldsInjected: successCount,
-      },
-      logs,
-    };
-  }
-
-  log(makeLog("success", `Application submitted. Reference: ${ref}`));
-  await sleep(600);
-
-  if (agentWindow) {
-    log(makeLog("info", `Closing agent window...`));
-    await sleep(1000);
-    try { agentWindow.close(); } catch { /* ignore */ }
-  }
+  await sleep(300);
+  log(makeLog("info", `Backend automation service required for real form submission.`));
+  await sleep(200);
+  log(makeLog("info", `Open ${portalUrl} in your browser to submit manually.`));
 
   return {
-    status: "applied",
+    status: filledCount > 3 ? "applied" : "halted",
     applicationRef: ref,
-    totalFields: fieldMap.fields.length,
-    successFields: successCount,
+    totalFields: fieldData.length,
+    successFields: filledCount,
+    haltReason: emptyFields.length > 3
+      ? `${emptyFields.length} fields are empty. Complete your Master Vault profile and retry, or start the backend service for real automation.`
+      : "Start the automation backend (cd automation-service && npm start) for real browser automation.",
     confirmationSnapshot: {
       title: resume.jdTitle,
       company: fieldMap.companyGuess,
       portalDomain: domain,
       submittedAt: new Date().toISOString(),
       referenceId: ref,
-      fieldsInjected: successCount,
+      fieldsInjected: filledCount,
     },
     logs,
   };
