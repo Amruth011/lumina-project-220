@@ -10,6 +10,13 @@ import { Suspense, useEffect } from "react";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { FeedbackBar } from "@/components/ui/FeedbackBar";
 import { CommandPalette } from "@/components/ui/CommandPalette";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+// Lazy load new feature pages
+const Arsenal = lazyWithRetry(() => import("./pages/Arsenal"));
+const Pipeline = lazyWithRetry(() => import("./pages/Pipeline"));
+const Scoring = lazyWithRetry(() => import("./pages/Scoring"));
+const Interview = lazyWithRetry(() => import("./pages/Interview"));
 
 // Lazy load pages securely with self-healing chunk failure protection
 const Index = lazyWithRetry(() => import("./pages/Index"));
@@ -90,13 +97,19 @@ const App = () => {
                 </div>
               </div>
             }>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <ErrorBoundary>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/dashboard/arsenal" element={<ProtectedRoute><Arsenal /></ProtectedRoute>} />
+                  <Route path="/dashboard/pipeline" element={<ProtectedRoute><Pipeline /></ProtectedRoute>} />
+                  <Route path="/dashboard/scoring" element={<ProtectedRoute><Scoring /></ProtectedRoute>} />
+                  <Route path="/dashboard/interview" element={<ProtectedRoute><Interview /></ProtectedRoute>} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </ErrorBoundary>
             </Suspense>
           </BrowserRouter>
         </TooltipProvider>

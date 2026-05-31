@@ -1,6 +1,208 @@
 import type { GeneratedResume, GeneratedResumeSection } from "@/types/jd";
+import type { VaultItem } from "@/types/jd";
 
 export const ensureArray = (arr: unknown): unknown[] => Array.isArray(arr) ? arr : [];
+
+export const sanitizePdfText = (text: string): string => {
+  if (!text) return "";
+  return text
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u2013\u2014]/g, "-")
+    .replace(/\u20B9/g, "Rs. ")
+    .replace(/\u00B9/g, "1")
+    .replace(/\u00B2/g, "2")
+    .replace(/\u00B3/g, "3")
+    .replace(/\u00A0/g, " ");
+};
+
+export const getModeOrLocation = (modeAndLocRaw: string, defaultLoc: string): string => {
+  const raw = (modeAndLocRaw || "").trim();
+  if (!raw) return defaultLoc;
+  if (raw.toLowerCase().includes("remote")) return "Remote";
+  const match = raw.match(/\(([^)]+)\)/);
+  if (match && match[1]) return match[1].trim();
+  if (raw.toLowerCase().includes("on-site") || raw.toLowerCase().includes("on site")) return defaultLoc || "On-site";
+  return raw;
+};
+
+export const parseProductOrProjectContent = (contentStr: string) => {
+  const raw = contentStr || "";
+  const urlRegex = /(https?:\/\/[^\s|]+|github\.com\/[^\s|]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/[^\s|]*|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
+  const matches = raw.match(urlRegex) || [];
+  const uniqueUrls: string[] = [];
+  const seen = new Set<string>();
+  matches.forEach(u => {
+    const norm = u.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "").trim();
+    if (norm && !seen.has(norm)) { seen.add(norm); uniqueUrls.push(u.trim()); }
+  });
+  let statusOrYear = raw;
+  uniqueUrls.forEach(url => { statusOrYear = statusOrYear.split(url).join(""); });
+  statusOrYear = statusOrYear.replace(/[|\s-–—]+/g, " ").trim();
+  if (statusOrYear.toLowerCase() === "live" || statusOrYear.toLowerCase() === "live |" || statusOrYear.toLowerCase() === "| live") statusOrYear = "";
+  if (statusOrYear === "|" || statusOrYear === "-" || statusOrYear === "–" || statusOrYear === "—") statusOrYear = "";
+  const parts: string[] = [];
+  if (statusOrYear) parts.push(statusOrYear);
+  uniqueUrls.forEach(url => parts.push(url));
+  return { statusOrYear, urls: uniqueUrls, pdfString: parts.join(" | ") };
+};
+
+export const measureOrDrawRightSideLinks = (
+  pdf: any,
+  statusOrYear: string,
+  urls: string[],
+  y: number,
+  margin: number,
+  pageWidth: number,
+  bodyFontSize: number,
+  currentFont: string,
+  draw = true
+): number => {
+  pdf.setFont(currentFont, "normal");
+  pdf.setFontSize(bodyFontSize - 1);
+  const segments: Array<{ text: string; isLink: boolean; url?: string }> = [];
+  if (statusOrYear) segments.push({ text: statusOrYear, isLink: false });
+  urls.forEach(url => {
+    const isGithub = url.toLowerCase().includes("github.com");
+    const label = isGithub ? "GitHub" : "Live Link";
+    const href = url.startsWith("http") ? url : `https://${url}`;
+    segments.push({ text: label, isLink: true, url: href });
+  });
+  let totalWidth = 0;
+  const spacing = pdf.getTextWidth(" | ");
+  const measuredSegments = segments.map(seg => ({ ...seg, width: pdf.getTextWidth(seg.text) }));
+  measuredSegments.forEach((seg, idx) => { totalWidth += seg.width; if (idx < measuredSegments.length - 1) totalWidth += spacing; });
+  if (!draw) return totalWidth;
+  let currentX = pageWidth - margin - totalWidth;
+  measuredSegments.forEach((seg, idx) => {
+    if (seg.isLink && seg.url) {
+      pdf.setFont(currentFont, "bold");
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(seg.text, currentX, y);
+      pdf.setDrawColor(0, 0, 0); pdf.setLineWidth(0.15);
+      pdf.line(currentX, y + 0.5, currentX + seg.width, y + 0.5);
+      pdf.link(currentX, y - 3, seg.width, 4, { url: seg.url });
+    } else {
+      pdf.setFont(currentFont, "normal");
+      pdf.setTextColor(80, 80, 80);
+      pdf.text(seg.text, currentX, y);
+    }
+    currentX += seg.width;
+    if (idx < measuredSegments.length - 1) {
+      pdf.setFont(currentFont, "normal"); pdf.setTextColor(180, 180, 180);
+      pdf.text(" | ", currentX, y); currentX += spacing;
+    }
+  });
+  pdf.setTextColor(0, 0, 0);
+  return totalWidth;
+};
+
+export const limitSummarySentences = (summaryText: string, maxSentences: number): string => {
+  if (!summaryText) return "";
+  const sentences = summaryText.split(/\.\s+/).filter(Boolean);
+  return sentences.slice(0, maxSentences).map(s => s.trim() + (s.trim().endsWith(".") ? "" : ".")).join(" ");
+};
+
+export const limitBullets = (bullets: string[], maxBullets: number): string[] => {
+  if (!bullets) return [];
+  return bullets.slice(0, maxBullets);
+};
+
+export const restoreExactProfileData = (generated: GeneratedResume, vaultItems: VaultItem[]): GeneratedResume => {
+  if (!generated || !vaultItems || vaultItems.length === 0) return generated;
+  const restored = { ...generated };
+  if (Array.isArray(restored.experience)) {
+    restored.experience = restored.experience.map(genItem => {
+      const match = vaultItems.find(vItem => {
+        if (vItem.type !== 'professional') return false;
+        const org = (vItem.organization || "").trim().toLowerCase();
+        const title = (vItem.title || "").trim().toLowerCase();
+        const heading = (genItem.heading || "").trim().toLowerCase();
+        if (!org) return false;
+        if (title) return heading.includes(org) && heading.includes(title);
+        return heading.includes(org);
+      });
+      if (match) {
+        return { ...genItem, content: match.period || genItem.content, heading: genItem.heading || `${match.title || ""} @ ${match.organization}` };
+      }
+      return genItem;
+    });
+  }
+  if (Array.isArray(restored.products)) {
+    restored.products = restored.products.map(genItem => {
+      const match = vaultItems.find(vItem => {
+        if (vItem.type !== 'product') return false;
+        const title = (vItem.title || "").trim().toLowerCase();
+        const heading = (genItem.heading || "").trim().toLowerCase();
+        return title && heading.includes(title);
+      });
+      if (match) {
+        const links = [match.github_link, match.live_link].filter(Boolean);
+        const newContent = [match.period, ...links].filter(Boolean).join(" | ");
+        const headingParts = (genItem.heading || "").split(/\s+[-–—]\s+/);
+        const techStack = headingParts.slice(1).join(" - ");
+        const newHeading = techStack ? `${match.title} - ${techStack}` : match.title || genItem.heading;
+        return { ...genItem, heading: newHeading, content: newContent || genItem.content };
+      }
+      return genItem;
+    });
+  }
+  if (Array.isArray(restored.projects)) {
+    restored.projects = restored.projects.map(genItem => {
+      const match = vaultItems.find(vItem => {
+        if (vItem.type !== 'project') return false;
+        const title = (vItem.title || "").trim().toLowerCase();
+        const heading = (genItem.heading || "").trim().toLowerCase();
+        return title && heading.includes(title);
+      });
+      if (match) {
+        const links = [match.github_link, match.live_link].filter(Boolean);
+        const newContent = [match.period, ...links].filter(Boolean).join(" | ");
+        const headingParts = (genItem.heading || "").split(/\s+[-–—]\s+/);
+        const techStack = headingParts.slice(1).join(" - ");
+        const newHeading = techStack ? `${match.title} - ${techStack}` : match.title || genItem.heading;
+        return { ...genItem, heading: newHeading, content: newContent || genItem.content };
+      }
+      return genItem;
+    });
+  }
+  if (Array.isArray(restored.leadership)) {
+    restored.leadership = restored.leadership.map(genItem => {
+      const match = vaultItems.find(vItem => {
+        if (vItem.type !== 'leadership') return false;
+        const org = (vItem.organization || "").trim().toLowerCase();
+        const title = (vItem.title || "").trim().toLowerCase();
+        const heading = (genItem.heading || "").trim().toLowerCase();
+        if (org && title) return heading.includes(org) && heading.includes(title);
+        return (org && heading.includes(org)) || (title && heading.includes(title));
+      });
+      if (match) return { ...genItem, content: match.period || genItem.content };
+      return genItem;
+    });
+  }
+  const educationVaultItems = vaultItems.filter(v => v.type === 'education');
+  const buildEduString = (vItem: VaultItem): string => {
+    const deg = vItem.title || "Degree";
+    const sch = vItem.organization || "University";
+    const locMatch = (vItem.description || "").match(/Location:\s*([^|\n]+)/i);
+    const loc = locMatch ? locMatch[1].trim() : "";
+    const dt = vItem.period || "";
+    const schoolPart = loc ? `${sch} - ${loc}` : sch;
+    return `${deg} @ ${schoolPart}${dt ? ` | ${dt}` : ""}`;
+  };
+  if (Array.isArray(restored.education) && restored.education.length > 0) {
+    restored.education = restored.education.map(genEdu => {
+      const match = educationVaultItems.find(vItem => {
+        const org = (vItem.organization || "").trim().toLowerCase();
+        return org && genEdu.toLowerCase().includes(org);
+      });
+      return match ? buildEduString(match) : genEdu;
+    });
+  } else if (educationVaultItems.length > 0) {
+    restored.education = educationVaultItems.map(buildEduString);
+  }
+  return restored;
+};
 
 export const sanitizeGeneratedResume = (data: unknown, targetSummaryLines = 3): GeneratedResume => {
   if (!data || typeof data !== "object") {
