@@ -1754,14 +1754,32 @@ Return ONLY the JSON. No markdown, no comments.`
         logging: false,
         width: el.scrollWidth,
         height: el.scrollHeight,
+        onclone: (clonedDoc) => {
+          // Hide any crossed page break warning indicators so they do not appear in the downloaded PDF
+          const spans = clonedDoc.querySelectorAll("span");
+          spans.forEach(s => {
+            if (s.textContent?.includes("Crossed Page") || s.textContent?.includes("Continued On Next")) {
+              const parent = s.parentElement;
+              if (parent) {
+                parent.style.setProperty("display", "none", "important");
+              }
+            }
+          });
+        }
       });
 
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
       const imgW = pageW;
-      const imgH = (canvas.height / canvas.width) * imgW;
+      let imgH = (canvas.height / canvas.width) * imgW;
 
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       
+      // Smart page-fitting: if the content has only a tiny overflow (e.g. less than 15mm / 5%),
+      // compress the height slightly so it fits perfectly on a single page!
+      if (imgH > pageH && imgH <= pageH + 15) {
+        imgH = pageH;
+      }
+
       // High-fidelity multi-page PDF generation: split pages cleanly if canvas height exceeds single A4 page height
       let heightLeft = imgH;
       let position = 0;
@@ -1769,7 +1787,8 @@ Return ONLY the JSON. No markdown, no comments.`
       pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
       heightLeft -= pageH;
 
-      while (heightLeft >= 0) {
+      // Only add a new page if the remaining overflow content is more than 5mm
+      while (heightLeft > 5) {
         position = heightLeft - imgH;
         pdf.addPage();
         pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
