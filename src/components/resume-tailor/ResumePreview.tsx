@@ -2081,7 +2081,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                         switch (sectionKey) {
                           case 'SUMMARY':
                             return localResume.professional_summary ? (
-                              <section key="SUMMARY" className="space-y-1">
+                              <section key="SUMMARY" className="space-y-1" style={{ marginBottom: '0.6cm' }}>
                                 <div className="text-[#1E2A3A] pb-0.5">
                                   <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit', margin: 0, paddingBottom: '3px', borderBottom: '1px solid #1E2A3A', display: 'block', width: '100%', lineHeight: '1.4' }}>Professional Summary</h4>
                                 </div>
@@ -2093,7 +2093,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
 
                           case 'EDUCATION':
                             return (localResume.education && localResume.education.length > 0) ? (
-                              <section key="EDUCATION" className="space-y-1">
+                              <section key="EDUCATION" className="space-y-1" style={{ marginBottom: '0.6cm' }}>
                                 <div className="text-[#1E2A3A] pb-0.5">
                                   <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit', margin: 0, paddingBottom: '3px', borderBottom: '1px solid #1E2A3A', display: 'block', width: '100%', lineHeight: '1.4' }}>Education</h4>
                                 </div>
@@ -2131,7 +2131,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
 
                           case 'EXPERIENCE':
                             return (localResume.experience && localResume.experience.length > 0) ? (
-                              <section key="EXPERIENCE" className="space-y-1">
+                              <section key="EXPERIENCE" className="space-y-1" style={{ marginBottom: '0.6cm' }}>
                                 <div className="text-[#1E2A3A] pb-0.5">
                                   <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit', margin: 0, paddingBottom: '3px', borderBottom: '1px solid #1E2A3A', display: 'block', width: '100%', lineHeight: '1.4' }}>Experience</h4>
                                 </div>
@@ -2190,7 +2190,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
 
                           case 'PRODUCTS':
                             return (localResume.products && localResume.products.length > 0) ? (
-                              <section key="PRODUCTS" className="space-y-1">
+                              <section key="PRODUCTS" className="space-y-1" style={{ marginBottom: '0.6cm' }}>
                                 <div className="text-[#1E2A3A] pb-0.5">
                                   <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit', margin: 0, paddingBottom: '3px', borderBottom: '1px solid #1E2A3A', display: 'block', width: '100%', lineHeight: '1.4' }}>Products & Ventures</h4>
                                 </div>
@@ -2217,7 +2217,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
 
                           case 'PROJECTS':
                             return (localResume.projects && localResume.projects.length > 0) ? (
-                              <section key="PROJECTS" className="space-y-1">
+                              <section key="PROJECTS" className="space-y-1" style={{ marginBottom: '0.6cm' }}>
                                 <div className="text-[#1E2A3A] pb-0.5">
                                   <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit', margin: 0, paddingBottom: '3px', borderBottom: '1px solid #1E2A3A', display: 'block', width: '100%', lineHeight: '1.4' }}>Projects</h4>
                                 </div>
@@ -2244,7 +2244,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
 
                           case 'LEADERSHIP':
                             return (localResume.leadership && localResume.leadership.length > 0) ? (
-                              <section key="LEADERSHIP" className="space-y-1">
+                              <section key="LEADERSHIP" className="space-y-1" style={{ marginBottom: '0.6cm' }}>
                                 <div className="text-[#1E2A3A] pb-0.5">
                                   <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit', margin: 0, paddingBottom: '3px', borderBottom: '1px solid #1E2A3A', display: 'block', width: '100%', lineHeight: '1.4' }}>Leadership</h4>
                                 </div>
@@ -2276,7 +2276,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
 
                           case 'SKILLS':
                             return (localResume.skills_section && localResume.skills_section.length > 0) ? (
-                              <section key="SKILLS" className="space-y-1">
+                              <section key="SKILLS" className="space-y-1" style={{ marginBottom: '0.6cm' }}>
                                 <div className="text-[#1E2A3A] pb-0.5">
                                   <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit', margin: 0, paddingBottom: '3px', borderBottom: '1px solid #1E2A3A', display: 'block', width: '100%', lineHeight: '1.4' }}>Skills</h4>
                                 </div>
@@ -2295,7 +2295,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
 
                           case 'CERTIFICATIONS':
                             return (localResume.certifications && localResume.certifications.length > 0) ? (
-                              <section key="CERTIFICATIONS" className="space-y-1">
+                              <section key="CERTIFICATIONS" className="space-y-1" style={{ marginBottom: '0.6cm' }}>
                                 <div className="text-[#1E2A3A] pb-0.5">
                                   <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit', margin: 0, paddingBottom: '3px', borderBottom: '1px solid #1E2A3A', display: 'block', width: '100%', lineHeight: '1.4' }}>Certifications</h4>
                                 </div>
@@ -2311,7 +2311,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
 
                           case 'AWARDS':
                             return (localResume.awards && localResume.awards.length > 0) ? (
-                              <section key="AWARDS" className="space-y-1">
+                              <section key="AWARDS" className="space-y-1" style={{ marginBottom: '0.6cm' }}>
                                 <div className="text-[#1E2A3A] pb-0.5">
                                   <h4 className="font-bold uppercase tracking-widest" style={{ fontSize: `${headlineFontSize}px`, margin: 0, paddingBottom: '3px', borderBottom: '1px solid #1E2A3A', display: 'block', width: '100%', lineHeight: '1.4' }}>Awards</h4>
                                 </div>
