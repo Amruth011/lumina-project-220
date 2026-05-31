@@ -1741,8 +1741,23 @@ Return ONLY the JSON. No markdown, no comments.`
       const html2canvasModule = await import("html2canvas");
       const html2canvas = html2canvasModule.default;
 
-      // Draw the canvas with the exact margins set in the HTML preview (0.5in = 12.7mm, 1.0in = 25.4mm)
-      // By drawing the canvas directly at (0, 0) with full page width, we get the exact chosen margins.
+      // 1. Temporarily save original styles of the element
+      const originalWidth = el.style.width;
+      const originalMaxWidth = el.style.maxWidth;
+      const originalMinHeight = el.style.minHeight;
+      const originalHeight = el.style.height;
+
+      // 2. Temporarily set to perfect A4 pixel dimensions at standard 96 DPI
+      // Width: 210mm = 794px
+      // Height: 297mm = 1123px
+      el.style.setProperty("width", "794px", "important");
+      el.style.setProperty("max-width", "794px", "important");
+      el.style.setProperty("min-height", "1123px", "important");
+      el.style.setProperty("height", "auto", "important");
+      
+      // Force a synchronous browser layout reflow to apply the styling changes perfectly
+      const reflow = el.offsetHeight;
+
       const pageW = 210;
       const pageH = 297;
 
@@ -1752,7 +1767,7 @@ Return ONLY the JSON. No markdown, no comments.`
         allowTaint: false,
         backgroundColor: "#ffffff",
         logging: false,
-        width: el.scrollWidth,
+        width: 794,
         height: el.scrollHeight,
         onclone: (clonedDoc) => {
           // Hide any crossed page break warning indicators so they do not appear in the downloaded PDF
@@ -1767,6 +1782,12 @@ Return ONLY the JSON. No markdown, no comments.`
           });
         }
       });
+
+      // 3. Restore the original styles immediately after capture
+      el.style.width = originalWidth;
+      el.style.maxWidth = originalMaxWidth;
+      el.style.minHeight = originalMinHeight;
+      el.style.height = originalHeight;
 
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
       const imgW = pageW;
