@@ -1998,7 +1998,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                   className="relative bg-white border border-[#1E2A3A]/5 shadow-[0_40px_80px_-20px rgba(0,0,0,0.12)] mx-auto"
                   style={{ 
                     width: '100%', 
-                    maxWidth: '850px',
+                    maxWidth: '794px',
                     minHeight: '297mm',
                     height: 'auto',
                     padding: `${marginSize === 0.5 ? "1cm" : "2cm"}`,
@@ -2497,7 +2497,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                   className="relative bg-white border border-[#1E2A3A]/5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.12)] mx-auto"
                   style={{ 
                     width: '100%', 
-                    maxWidth: '850px',
+                    maxWidth: '794px',
                     minHeight: '297mm',
                     height: 'auto',
                     padding: '1in',
