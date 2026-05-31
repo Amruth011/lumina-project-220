@@ -1741,8 +1741,8 @@ Return ONLY the JSON. No markdown, no comments.`
       const html2canvasModule = await import("html2canvas");
       const html2canvas = html2canvasModule.default;
 
-      const marginCm = marginSize === 0.5 ? 1 : 2;
-      const marginMm = marginCm * 10;
+      // Draw the canvas with the exact margins set in the HTML preview (0.5in = 12.7mm, 1.0in = 25.4mm)
+      // By drawing the canvas directly at (0, 0) with full page width, we get the exact chosen margins.
       const pageW = 210;
       const pageH = 297;
 
@@ -1757,11 +1757,24 @@ Return ONLY the JSON. No markdown, no comments.`
       });
 
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
-      const imgW = pageW - marginMm * 2;
+      const imgW = pageW;
       const imgH = (canvas.height / canvas.width) * imgW;
 
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      pdf.addImage(imgData, "JPEG", marginMm, marginMm, imgW, imgH);
+      
+      // High-fidelity multi-page PDF generation: split pages cleanly if canvas height exceeds single A4 page height
+      let heightLeft = imgH;
+      let position = 0;
+
+      pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
+      heightLeft -= pageH;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgH;
+        pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
+        heightLeft -= pageH;
+      }
 
       const filename = `${(editableHeader.fullName || "resume").replace(/\s+/g, "_")}_${(jdTitle || "role").replace(/\s+/g, "_")}.pdf`;
       pdf.save(filename);
