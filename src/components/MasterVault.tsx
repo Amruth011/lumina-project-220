@@ -1562,20 +1562,20 @@ RETURN JSON FORMAT ONLY:
 
           <div className="premium-card p-8 lg:p-10 space-y-8 relative overflow-hidden">
             {/* Auto Suggestion Section */}
-            <div className="p-6 rounded-3xl bg-slate-950/40 border border-white/5 space-y-4">
+            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200/80 space-y-4 shadow-sm">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="space-y-1">
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-primary animate-pulse" />
                     AI Skill Suggestion Radar
                   </h4>
-                  <p className="text-[10px] text-muted-foreground font-medium">Auto-extract and classify your technical skills from your experiences & education.</p>
+                  <p className="text-[10px] text-slate-500 font-medium">Auto-extract and classify your technical skills from your experiences & education.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={handleLocalScan}
                     disabled={isScanningSkills}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 text-slate-700 shadow-sm"
                   >
                     {isScanningSkills ? <Loader2 size={10} className="animate-spin" /> : <Zap size={10} />}
                     Instant Scan
@@ -1583,7 +1583,7 @@ RETURN JSON FORMAT ONLY:
                   <button
                     onClick={handleLLMScan}
                     disabled={isScanningSkills}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 text-primary"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 text-primary shadow-sm"
                   >
                     {isScanningSkills ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
                     Deep AI Scan
@@ -1596,25 +1596,25 @@ RETURN JSON FORMAT ONLY:
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {Object.keys(technicalSkills).map((category) => {
                 const categoryIcons: Record<string, React.ReactNode> = {
-                  "Programming Languages": <Code className="w-4 h-4 text-emerald-400" />,
-                  "Infrastructure / DevOps": <Shield className="w-4 h-4 text-blue-400" />,
-                  "AI / ML": <BrainCircuit className="w-4 h-4 text-purple-400" />,
-                  "Data Science": <Award className="w-4 h-4 text-pink-400" />,
-                  "Software Engineering / Others": <Cpu className="w-4 h-4 text-amber-400" />
+                  "Programming Languages": <Code className="w-4 h-4 text-emerald-500" />,
+                  "Infrastructure / DevOps": <Shield className="w-4 h-4 text-blue-500" />,
+                  "AI / ML": <BrainCircuit className="w-4 h-4 text-purple-500" />,
+                  "Data Science": <Award className="w-4 h-4 text-pink-500" />,
+                  "Software Engineering / Others": <Cpu className="w-4 h-4 text-amber-500" />
                 };
 
                 const currentSkills = technicalSkills[category] || [];
                 const currentSuggestions = suggestedSkills[category] || [];
 
                 return (
-                  <div key={category} className="p-6 rounded-[2rem] bg-white/5 border border-white/5 flex flex-col justify-between space-y-4 hover:border-white/10 transition-all">
+                  <div key={category} className="p-6 rounded-[2rem] bg-slate-50/50 border border-slate-200/60 flex flex-col justify-between space-y-4 hover:border-slate-350 hover:bg-white hover:shadow-xl hover:shadow-slate-100 transition-all">
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                        <h4 className="text-xs font-black uppercase tracking-widest text-foreground flex items-center gap-2">
+                      <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                        <h4 className="text-xs font-black uppercase tracking-widest text-[#1E2A3A] flex items-center gap-2">
                           {categoryIcons[category]}
                           {category}
                         </h4>
-                        <span className="text-[10px] font-bold text-muted-foreground/40">{currentSkills.length} active</span>
+                        <span className="text-[10px] font-bold text-slate-400">{currentSkills.length} active</span>
                       </div>
 
                       {/* Chip area */}
@@ -1624,7 +1624,7 @@ RETURN JSON FORMAT ONLY:
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             key={skill}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-foreground/80 hover:bg-white/10 hover:text-white transition-all cursor-default"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all cursor-default shadow-sm"
                           >
                             {skill}
                             <button
@@ -1641,13 +1641,13 @@ RETURN JSON FORMAT ONLY:
                           </motion.div>
                         ))}
                         {currentSkills.length === 0 && (
-                          <span className="text-[10px] italic text-muted-foreground/30 self-center">No skills mapped. Add below.</span>
+                          <span className="text-[10px] italic text-slate-400/50 self-center">No skills mapped. Add below.</span>
                         )}
                       </div>
 
                       {/* Clickable suggestion chips */}
                       {currentSuggestions.filter(s => !currentSkills.includes(s)).length > 0 && (
-                        <div className="space-y-1.5 pt-2 border-t border-white/5">
+                        <div className="space-y-1.5 pt-2 border-t border-slate-200/60">
                           <span className="text-[8px] font-black uppercase tracking-widest text-primary/60">Suggested Skills:</span>
                           <div className="flex flex-wrap gap-1.5">
                             {currentSuggestions
@@ -1661,7 +1661,7 @@ RETURN JSON FORMAT ONLY:
                                       [category]: [...prev[category], sug].sort()
                                     }));
                                   }}
-                                  className="text-[9px] font-bold px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all flex items-center gap-1"
+                                  className="text-[9px] font-bold px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all flex items-center gap-1 shadow-sm"
                                 >
                                   + {sug}
                                 </button>
@@ -1674,7 +1674,7 @@ RETURN JSON FORMAT ONLY:
                     {/* Add skill input */}
                     <div className="relative group pt-2">
                       <input
-                        className="w-full bg-background/40 border border-border/40 rounded-xl pl-4 pr-10 py-2.5 text-xs focus:ring-2 ring-primary/20 transition-all outline-none"
+                        className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-xs focus:ring-2 ring-primary/20 transition-all outline-none text-slate-800"
                         value={skillInputs[category] || ""}
                         onChange={(e) => setSkillInputs(prev => ({ ...prev, [category]: e.target.value }))}
                         onKeyDown={(e) => {
@@ -1743,7 +1743,7 @@ RETURN JSON FORMAT ONLY:
             )}
 
             {/* Profile Action Bar */}
-            <div className="flex justify-between items-center pt-4 border-t border-white/5">
+            <div className="flex justify-between items-center pt-4 border-t border-slate-200/60">
               <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
                 * Changes are synced with your master identity signal.
               </span>
