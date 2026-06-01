@@ -57,20 +57,59 @@ const durationPhaseCounts: Record<string, number> = {
 };
 
 const skillResourceFallbacks: Record<string, { title: string; url: string }> = {
-  react: { title: "React Documentation", url: "https://react.dev/learn" },
-  typescript: { title: "TypeScript Handbook", url: "https://www.typescriptlang.org/docs/" },
+  react: { title: "React — Learn", url: "https://react.dev/learn" },
+  typescript: { title: "TypeScript Handbook", url: "https://www.typescriptlang.org/docs/handbook/intro.html" },
   javascript: { title: "MDN JavaScript Guide", url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide" },
-  node: { title: "Node.js Documentation", url: "https://nodejs.org/docs/latest/api/" },
-  python: { title: "Python Documentation", url: "https://docs.python.org/3/" },
-  sql: { title: "PostgreSQL Documentation", url: "https://www.postgresql.org/docs/" },
-  aws: { title: "AWS Documentation", url: "https://docs.aws.amazon.com/" },
-  docker: { title: "Docker Documentation", url: "https://docs.docker.com/" },
+  node: { title: "Node.js API Docs", url: "https://nodejs.org/docs/latest/api/" },
+  python: { title: "Python Tutorial", url: "https://docs.python.org/3/tutorial/index.html" },
+  sql: { title: "PostgreSQL Tutorial", url: "https://www.postgresql.org/docs/current/tutorial.html" },
+  postgres: { title: "PostgreSQL Tutorial", url: "https://www.postgresql.org/docs/current/tutorial.html" },
+  mongo: { title: "MongoDB Manual", url: "https://www.mongodb.com/docs/manual/" },
+  aws: { title: "AWS Documentation", url: "https://docs.aws.amazon.com/index.html" },
+  docker: { title: "Docker — Get Started", url: "https://docs.docker.com/get-started/" },
+  kubernetes: { title: "Kubernetes Concepts", url: "https://kubernetes.io/docs/concepts/" },
+  tailwind: { title: "Tailwind CSS Docs", url: "https://tailwindcss.com/docs/installation" },
+  next: { title: "Next.js Docs", url: "https://nextjs.org/docs" },
+  vue: { title: "Vue.js Guide", url: "https://vuejs.org/guide/introduction.html" },
+  angular: { title: "Angular Docs", url: "https://angular.dev/overview" },
+  java: { title: "Java Tutorials", url: "https://docs.oracle.com/javase/tutorial/" },
+  spring: { title: "Spring Framework Docs", url: "https://docs.spring.io/spring-framework/reference/" },
+  go: { title: "Go — Learn", url: "https://go.dev/learn/" },
+  rust: { title: "The Rust Book", url: "https://doc.rust-lang.org/book/" },
+  git: { title: "Pro Git Book", url: "https://git-scm.com/book/en/v2" },
+  graphql: { title: "GraphQL Learn", url: "https://graphql.org/learn/" },
+  fastapi: { title: "FastAPI Docs", url: "https://fastapi.tiangolo.com/" },
+  django: { title: "Django Docs", url: "https://docs.djangoproject.com/en/stable/" },
+  flask: { title: "Flask Docs", url: "https://flask.palletsprojects.com/" },
+  pandas: { title: "pandas User Guide", url: "https://pandas.pydata.org/docs/user_guide/index.html" },
+  numpy: { title: "NumPy User Guide", url: "https://numpy.org/doc/stable/user/index.html" },
+  pytorch: { title: "PyTorch Tutorials", url: "https://pytorch.org/tutorials/" },
+  tensorflow: { title: "TensorFlow Tutorials", url: "https://www.tensorflow.org/tutorials" },
+  sklearn: { title: "scikit-learn User Guide", url: "https://scikit-learn.org/stable/user_guide.html" },
+  spark: { title: "Apache Spark Docs", url: "https://spark.apache.org/docs/latest/" },
+  redux: { title: "Redux Essentials", url: "https://redux.js.org/tutorials/essentials/part-1-overview-concepts" },
+  vite: { title: "Vite Guide", url: "https://vite.dev/guide/" },
+  supabase: { title: "Supabase Docs", url: "https://supabase.com/docs" },
+  firebase: { title: "Firebase Docs", url: "https://firebase.google.com/docs" },
+};
+
+const SOFT_SKILL_KEYWORDS = [
+  "communication","leadership","teamwork","collaboration","empathy","stakeholder",
+  "presentation","negotiation","mentoring","ownership","problem solving","problem-solving",
+  "critical thinking","time management","adaptability","conflict","interpersonal","soft skill"
+];
+
+const isSoftSkill = (skill: string): boolean => {
+  const s = (skill || "").toLowerCase();
+  return SOFT_SKILL_KEYWORDS.some(k => s.includes(k));
 };
 
 const getSkillResource = (skill: string) => {
-  const normalized = skill.toLowerCase();
+  const normalized = (skill || "").toLowerCase();
   const match = Object.entries(skillResourceFallbacks).find(([key]) => normalized.includes(key));
-  return match?.[1] || { title: `${skill} official documentation`, url: `https://www.google.com/search?q=${encodeURIComponent(`${skill} official documentation`)}` };
+  if (match) return match[1];
+  const slug = encodeURIComponent(normalized.replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
+  return { title: `${skill} — DevDocs reference`, url: `https://devdocs.io/#q=${slug}` };
 };
 
 const buildLocalRoadmap = (results: DecodeResult | null, jdText: string, duration: string): RoadmapData => {
@@ -80,15 +119,23 @@ const buildLocalRoadmap = (results: DecodeResult | null, jdText: string, duratio
     .map((skill) => skill.skill)
     .filter((skill): skill is string => Boolean(skill));
   const inferredSkills = sortedSkills.length > 0 ? sortedSkills : jdText.match(/[A-Z][A-Za-z+#.]{2,}/g)?.slice(0, 6) || ["Core role skills"];
-  const phaseCount = durationPhaseCounts[duration] || 6;
-  const timeline: RoadmapItem[] = Array.from({ length: phaseCount }, (_, index) => {
-    const skill = inferredSkills[index % inferredSkills.length];
+
+  const techSkills = inferredSkills.filter(s => !isSoftSkill(s));
+  const softSkills = inferredSkills.filter(s => isSoftSkill(s));
+  const coreSkills = techSkills.length > 0 ? techSkills : inferredSkills;
+
+  const totalPhases = durationPhaseCounts[duration] || 6;
+  const includeSoftPhase = softSkills.length > 0 && totalPhases >= 3;
+  const techPhaseCount = includeSoftPhase ? totalPhases - 1 : totalPhases;
+
+  const techTimeline: RoadmapItem[] = Array.from({ length: techPhaseCount }, (_, index) => {
+    const skill = coreSkills[index % coreSkills.length];
     const resource = getSkillResource(skill);
     const phaseNumber = index + 1;
     return {
       phase_number: phaseNumber,
       phase_title: `${skill} execution sprint`,
-      focus_area: skill,
+      focus_area: `Core / Technical · ${skill}`,
       gap_addressed: `Build job-ready proof for ${skill} against ${targetRole} requirements.`,
       actionable_tasks: [
         {
@@ -117,10 +164,33 @@ const buildLocalRoadmap = (results: DecodeResult | null, jdText: string, duratio
     };
   });
 
+  const timeline: RoadmapItem[] = [...techTimeline];
+  if (includeSoftPhase) {
+    const softPhaseNumber = totalPhases;
+    const softFocus = softSkills.slice(0, 3).join(", ");
+    timeline.push({
+      phase_number: softPhaseNumber,
+      phase_title: `Soft skills polish — ${softFocus}`,
+      focus_area: `Soft Skills · ${softFocus}`,
+      gap_addressed: `Demonstrate ${softFocus} explicitly so it lands in interviews and on-the-job for ${targetRole}.`,
+      actionable_tasks: softSkills.slice(0, 3).map((soft, i) => ({
+        id: `local-${softPhaseNumber}-${i + 1}`,
+        title: `Prepare 2 STAR stories that prove ${soft} with measurable impact relevant to ${targetRole}`,
+        estimated_hours: 1,
+        verification_prompt: `Act as a behavioural interviewer for ${targetRole}. Score this ${soft} STAR story on situation clarity, action specificity, quantified result, and one follow-up question I should rehearse.`,
+        is_completed: false,
+      })),
+      deep_dive_resources: [
+        { title: "Amazon — Interviewing at Amazon (STAR)", url: "https://www.amazon.jobs/content/en/how-we-hire/interviewing-at-amazon", source_type: "documentation", estimated_time: "30 min" },
+        { title: "Google re:Work — Effective Teams", url: "https://rework.withgoogle.com/guides/understanding-team-effectiveness/steps/introduction/", source_type: "documentation", estimated_time: "45 min" },
+      ],
+    });
+  }
+
   return {
     target_role: targetRole,
     duration,
-    skill_gaps_identified: inferredSkills.slice(0, Math.min(8, inferredSkills.length)),
+    skill_gaps_identified: coreSkills.slice(0, Math.min(8, coreSkills.length)),
     timeline,
   };
 };
@@ -579,15 +649,19 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
   };
 
   const healResourceUrl = (url: string, title: string): string => {
-    if (!url) return `https://www.google.com/search?q=${encodeURIComponent(title + " official documentation")}`;
-    
+    const fallback = getSkillResource(title).url;
+    if (!url) return fallback;
+
     const cleanUrl = url.trim();
     const lowerUrl = cleanUrl.toLowerCase();
     const cleanTitle = title.trim().toLowerCase();
-    
-    const isSuspicious = lowerUrl.includes("fictional") || 
-                        lowerUrl.includes("example.com") || 
-                        lowerUrl.includes("localhost") || 
+
+    const isSuspicious = lowerUrl.includes("google.com/search") ||
+                        lowerUrl.includes("bing.com/search") ||
+                        lowerUrl.includes("duckduckgo.com/?q") ||
+                        lowerUrl.includes("fictional") ||
+                        lowerUrl.includes("example.com") ||
+                        lowerUrl.includes("localhost") ||
                         lowerUrl.includes("todo") ||
                         lowerUrl.includes("placeholder") ||
                         lowerUrl.includes("datacamp") ||
@@ -596,36 +670,33 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                         lowerUrl.includes("pluralsight") ||
                         !lowerUrl.startsWith("http");
 
-    if (!isSuspicious) {
-      return cleanUrl;
-    }
+    if (!isSuspicious) return cleanUrl;
 
     const mappings = [
       { keys: ["preprocessing", "scikit-learn", "sklearn"], fallback: "https://scikit-learn.org/stable/modules/preprocessing.html" },
       { keys: ["spark", "pyspark"], fallback: "https://spark.apache.org/docs/latest/" },
-      { keys: ["pandas", "dataframe"], fallback: "https://pandas.pydata.org/pandas-docs/stable/" },
-      { keys: ["numpy"], fallback: "https://numpy.org/doc/stable/" },
-      { keys: ["data science", "data cleaning", "data collection"], fallback: "https://docs.python.org/3/library/index.html" },
-      { keys: ["react"], fallback: "https://react.dev" },
+      { keys: ["pandas", "dataframe"], fallback: "https://pandas.pydata.org/docs/user_guide/index.html" },
+      { keys: ["numpy"], fallback: "https://numpy.org/doc/stable/user/index.html" },
+      { keys: ["react"], fallback: "https://react.dev/learn" },
       { keys: ["next.js", "nextjs"], fallback: "https://nextjs.org/docs" },
-      { keys: ["typescript", "tsc"], fallback: "https://www.typescriptlang.org/docs/" },
-      { keys: ["javascript", "js", "html", "css", "mdn", "dom"], fallback: "https://developer.mozilla.org" },
-      { keys: ["node", "npm"], fallback: "https://nodejs.org/docs/" },
-      { keys: ["tailwind"], fallback: "https://tailwindcss.com/docs" },
-      { keys: ["vite"], fallback: "https://vite.dev" },
-      { keys: ["docker"], fallback: "https://docs.docker.com" },
-      { keys: ["kubernetes", "k8s"], fallback: "https://kubernetes.io/docs/" },
-      { keys: ["aws", "amazon", "s3", "ec2", "lambda", "cloudfront"], fallback: "https://docs.aws.amazon.com" },
+      { keys: ["typescript", "tsc"], fallback: "https://www.typescriptlang.org/docs/handbook/intro.html" },
+      { keys: ["javascript", "mdn", "dom"], fallback: "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide" },
+      { keys: ["node", "npm"], fallback: "https://nodejs.org/docs/latest/api/" },
+      { keys: ["tailwind"], fallback: "https://tailwindcss.com/docs/installation" },
+      { keys: ["vite"], fallback: "https://vite.dev/guide/" },
+      { keys: ["docker"], fallback: "https://docs.docker.com/get-started/" },
+      { keys: ["kubernetes", "k8s"], fallback: "https://kubernetes.io/docs/concepts/" },
+      { keys: ["aws", "amazon", "s3", "ec2", "lambda", "cloudfront"], fallback: "https://docs.aws.amazon.com/index.html" },
       { keys: ["supabase"], fallback: "https://supabase.com/docs" },
-      { keys: ["git", "github"], fallback: "https://git-scm.com/doc" },
-      { keys: ["python"], fallback: "https://docs.python.org/3/" },
-      { keys: ["postgres", "postgresql", "sql", "database", "db"], fallback: "https://www.postgresql.org/docs/" },
-      { keys: ["redux"], fallback: "https://redux.js.org" },
-      { keys: ["vue"], fallback: "https://vuejs.org" },
-      { keys: ["angular"], fallback: "https://angular.dev" },
-      { keys: ["go", "golang"], fallback: "https://go.dev/doc/" },
-      { keys: ["rust"], fallback: "https://www.rust-lang.org/learn" },
-      { keys: ["spring", "java"], fallback: "https://docs.spring.io" }
+      { keys: ["git", "github"], fallback: "https://git-scm.com/book/en/v2" },
+      { keys: ["python"], fallback: "https://docs.python.org/3/tutorial/index.html" },
+      { keys: ["postgres", "postgresql", "sql", "database"], fallback: "https://www.postgresql.org/docs/current/tutorial.html" },
+      { keys: ["redux"], fallback: "https://redux.js.org/tutorials/essentials/part-1-overview-concepts" },
+      { keys: ["vue"], fallback: "https://vuejs.org/guide/introduction.html" },
+      { keys: ["angular"], fallback: "https://angular.dev/overview" },
+      { keys: ["go", "golang"], fallback: "https://go.dev/learn/" },
+      { keys: ["rust"], fallback: "https://doc.rust-lang.org/book/" },
+      { keys: ["spring", "java"], fallback: "https://docs.spring.io/spring-framework/reference/" },
     ];
 
     for (const mapping of mappings) {
@@ -634,7 +705,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       }
     }
 
-    return `https://www.google.com/search?q=${encodeURIComponent(title + " official documentation")}`;
+    return fallback;
   };
 
   // Loading Screen
