@@ -27,7 +27,10 @@ jobs:
           supabase functions deploy generate-bullet --no-verify-jwt --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
           supabase functions deploy parse-resume-file --no-verify-jwt --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
           supabase functions deploy analyze --no-verify-jwt --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
-          supabase functions deploy cover-letter --no-verify-jwt --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+          supabase functions deploy cover-letter --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+          supabase functions deploy generate-roadmap --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+          supabase functions deploy embed --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+          supabase functions deploy diagnose --no-verify-jwt --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
