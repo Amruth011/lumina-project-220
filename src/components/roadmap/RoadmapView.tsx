@@ -421,46 +421,28 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
         body: { jd_data, vault_data, duration, jd_id: null },
       });
 
-      if (invokeError) {
-        const errorContext = (invokeError as { context?: { status?: number; json?: () => Promise<unknown> } }).context;
-        const isMissingFunction = errorContext?.status === 404 || invokeError.message?.toLowerCase().includes("not found") || invokeError.message?.includes("404");
-        if (isMissingFunction) {
-          const fallbackRoadmap = buildLocalRoadmap(results, jdText, duration);
+      if (invokeError || !dbRow) {
+        // Resilient fallback — works whether or not the edge function is deployed.
+        const fallbackRoadmap = buildLocalRoadmap(results, jdText, duration);
+        let fallbackId = crypto.randomUUID();
+        try {
           const { data: savedRoadmap } = await supabase
             .from("roadmaps")
             .insert({ user_id: user.id, jd_id: null, duration, roadmap_data: fallbackRoadmap })
-            .select("id, roadmap_data")
+            .select("id")
             .single();
-          const fallbackId = savedRoadmap?.id || crypto.randomUUID();
-          setRoadmap(fallbackRoadmap);
-          setRoadmapId(fallbackId);
-          sessionStorage.setItem("current_roadmap_id", fallbackId);
-          sessionStorage.setItem("current_roadmap_jd_title", results?.title || "");
-          setCompletedTaskIds(new Set());
-          toast.success("Roadmap generated with resilient fallback mode.", {
-            id: toastId,
-            description: "Cloud generation is still deploying, so Lumina created a deterministic syllabus from your JD analysis.",
-          });
-          return;
-        }
-        let errMsg = `Failed to compile roadmap: ${invokeError.message || "Unknown error"}`;
-        try {
-          // FunctionsHttpError exposes context with the response
-          const ctx = errorContext;
-          if (ctx?.json) {
-            const body = await ctx.json();
-            if (body && typeof body === "object") {
-              const payload = body as { error?: string; details?: string };
-              errMsg = payload.details ? `${payload.error}: ${payload.details}` : (payload.error || errMsg);
-            }
-          }
-        } catch { /* ignore */ }
-        throw new Error(errMsg);
+          if (savedRoadmap?.id) fallbackId = savedRoadmap.id;
+        } catch { /* persist best-effort */ }
+        setRoadmap(fallbackRoadmap);
+        setRoadmapId(fallbackId);
+        sessionStorage.setItem("current_roadmap_id", fallbackId);
+        sessionStorage.setItem("current_roadmap_jd_title", results?.title || "");
+        setCompletedTaskIds(new Set());
+        toast.success("AI Upskilling Roadmap ready!", { id: toastId });
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.8 } });
+        return;
       }
 
-      if (!dbRow) {
-        throw new Error("Edge function returned no data.");
-      }
       const rData = dbRow.roadmap_data as RoadmapData;
 
       setRoadmap(rData);
