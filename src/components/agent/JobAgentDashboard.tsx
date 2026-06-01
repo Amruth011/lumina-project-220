@@ -30,6 +30,7 @@ import { getAgentResumes, deleteAgentResume } from "@/lib/agentStorage";
 import { runAgentJob, getAutomationServiceUrl, setAutomationServiceUrl } from "@/lib/agentWorker";
 import { AgentExecutionLog } from "./AgentExecutionLog";
 import { buildAnswerPack, logApplication, deriveCompanyFromUrl, type AnswerPack } from "@/lib/smartApply";
+import { buildBookmarkletUrl } from "@/lib/luminaBookmarklet";
 
 import type { SavedAgentResume } from "@/types/agent";
 import type { AgentLogEntry, AgentRunResult } from "@/types/agent";
@@ -230,14 +231,20 @@ export const JobAgentDashboard: React.FC = () => {
       });
 
       if (logRes.ok) {
-        toast.success("Smart Apply ready", {
-          description: `Answer pack copied · Logged "${selected.jdTitle}" at ${company} to Pipeline.`,
+        toast.success("Smart Apply ready — your details are on your clipboard", {
+          description: `Form is open in a new tab. Click any field → Ctrl/Cmd+V. Logged "${selected.jdTitle}" at ${company} to Pipeline.`,
+          duration: 6000,
         });
       } else {
-        toast.success("Answer pack copied to clipboard", {
+        toast.success("Answer pack copied — paste with Ctrl/Cmd+V on the form", {
           description: `Pipeline log skipped: ${logRes.error}`,
+          duration: 6000,
         });
       }
+      // Scroll the answer pack panel into view so the user sees the value immediately.
+      setTimeout(() => {
+        document.getElementById("smart-apply-pack")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
     } catch (err) {
       console.error(err);
       toast.error("Smart Apply failed unexpectedly.");
@@ -681,6 +688,7 @@ export const JobAgentDashboard: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
+                id="smart-apply-pack"
                 className="bg-white border border-emerald-100 rounded-[2rem] p-6 shadow-sm space-y-4"
               >
                 <div className="flex items-center justify-between gap-2">
