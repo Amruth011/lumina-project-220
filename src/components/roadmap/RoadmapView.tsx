@@ -431,7 +431,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
             .insert({ user_id: user.id, jd_id: null, duration, roadmap_data: fallbackRoadmap })
             .select("id, roadmap_data")
             .single();
-          const fallbackId = savedRoadmap?.id || `local-${Date.now()}`;
+          const fallbackId = savedRoadmap?.id || crypto.randomUUID();
           setRoadmap(fallbackRoadmap);
           setRoadmapId(fallbackId);
           sessionStorage.setItem("current_roadmap_id", fallbackId);
