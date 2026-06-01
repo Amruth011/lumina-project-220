@@ -1530,24 +1530,12 @@ RETURN JSON FORMAT ONLY:
           <div className="premium-card p-8 lg:p-10 space-y-8 relative overflow-hidden">
             {/* ── JD Skills Import ── */}
             <JdSkillsImport
-              profileSummary={profile?.summary_master || ""}
-              onAppendToSummary={(text) => {
-                setProfile(prev => prev ? { ...prev, summary_master: (prev.summary_master + "\n" + text).trim() } : null);
-              }}
-              onAddSkillsToItem={(skills) => {
-                const firstItem = items.find(i => i.type === 'professional');
-                if (firstItem) {
-                  handleStartEdit({ ...firstItem, skills: [...new Set([...firstItem.skills, ...skills])] });
-                } else {
-                  handleStartEdit({ type: 'professional', bullets: [], skills, title: 'Skills Reference', organization: '', period: '', description: '' });
-                }
-                toast.success(`${skills.length} skills added to vault item.`);
-              }}
               onCategorizeSkills={(categorized) => {
                 setTechnicalSkills(prev => {
                   const next = { ...prev };
                   categorized.forEach(({ skill, category }) => {
-                    if (next[category] && !next[category].includes(skill)) {
+                    if (!next[category]) next[category] = [];
+                    if (!next[category].includes(skill)) {
                       next[category] = [...next[category], skill];
                     }
                   });

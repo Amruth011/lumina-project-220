@@ -4,9 +4,6 @@ import { toast } from "sonner";
 import { TECHNICAL_DICTIONARY } from "@/lib/skillScanner";
 
 interface JdSkillsImportProps {
-  profileSummary: string;
-  onAppendToSummary: (text: string) => void;
-  onAddSkillsToItem: (skills: string[]) => void;
   onCategorizeSkills: (categorized: { skill: string; category: string }[]) => void;
 }
 
@@ -29,7 +26,7 @@ function categorizeSkill(skillName: string): string | null {
   return null;
 }
 
-export function JdSkillsImport({ profileSummary, onAppendToSummary, onAddSkillsToItem, onCategorizeSkills }: JdSkillsImportProps) {
+export function JdSkillsImport({ onCategorizeSkills }: JdSkillsImportProps) {
   const [jdData, setJdData] = useState<{ title: string; skills: { skill: string; category: string; importance: number }[] } | null>(null);
   const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
   const [imported, setImported] = useState(false);
@@ -66,15 +63,11 @@ export function JdSkillsImport({ profileSummary, onAppendToSummary, onAddSkillsT
   const handleImport = () => {
     if (selectedSkills.size === 0) return;
     const skillsList = Array.from(selectedSkills);
-    const skillsText = skillsList.join(", ");
-    onAppendToSummary(`\n\nKey Skills from "${jdData.title}":\n${skillsText}`);
-    onAddSkillsToItem(skillsList);
-    const categorized = skillsList
-      .map(skill => ({ skill, category: categorizeSkill(skill) }))
-      .filter((entry): entry is { skill: string; category: string } => entry.category !== null);
-    if (categorized.length > 0) {
-      onCategorizeSkills(categorized);
-    }
+    const categorized = skillsList.map(skill => ({
+      skill,
+      category: categorizeSkill(skill) || "Software Engineering / Others"
+    }));
+    onCategorizeSkills(categorized);
     setImported(true);
     toast.success(`${selectedSkills.size} skills imported from "${jdData.title}".`);
   };
