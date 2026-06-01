@@ -1046,8 +1046,18 @@ RETURN JSON FORMAT ONLY:
       };
 
       const { error } = await supabase.from("profiles").update(payload).eq("id", user?.id);
-      
-      if (error) throw error;
+
+      if (error) {
+        if (error.message?.includes("column") || error.code === "PGRST102" || error.code === "42703") {
+          const { error: fallbackError } = await supabase.from("profiles").update(updateData).eq("id", user?.id);
+          if (fallbackError) throw fallbackError;
+          if (user) localStorage.setItem(`fallback_skills_${user.id}`, JSON.stringify(technicalSkills));
+        } else {
+          throw error;
+        }
+      } else if (user) {
+        localStorage.removeItem(`fallback_skills_${user.id}`);
+      }
 
       if (user) {
         localStorage.removeItem(`draft_profile_${user.id}`);
