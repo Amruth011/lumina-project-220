@@ -205,7 +205,13 @@ export const restoreExactProfileData = (generated: GeneratedResume, vaultItems: 
   return restored;
 };
 
-export const sanitizeGeneratedResume = (data: unknown, targetSummaryLines = 3): GeneratedResume => {
+export const sanitizeGeneratedResume = (
+  data: unknown,
+  targetSummaryLines = 3,
+  experienceBullets?: number,
+  projectLines?: number,
+  productLines?: number,
+): GeneratedResume => {
   if (!data || typeof data !== "object") {
     return { professional_summary: "", skills_section: [], experience: [], education: [], certifications: [], awards: [], products: [], projects: [], leadership: [] };
   }
@@ -296,12 +302,12 @@ export const sanitizeGeneratedResume = (data: unknown, targetSummaryLines = 3): 
   return {
     professional_summary: summary,
     skills_section: skills,
-    experience: cleanSections(d.experience),
+    experience: cleanSections(d.experience, experienceBullets),
     education: d.education ? ensureArrayLocal(d.education).map((edu: unknown) => String(edu || "")) : [],
     certifications: mapStringItems(d.certifications),
     awards: mapStringItems(d.awards),
-    products: cleanSections(d.products),
-    projects: cleanSections(d.projects),
+    products: cleanSections(d.products, productLines),
+    projects: cleanSections(d.projects, projectLines),
     leadership: cleanSections(d.leadership),
   };
 };
