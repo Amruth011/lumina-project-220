@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BrainCircuit, Search, ShieldCheck, Database, Terminal, Sparkles, CheckCircle2 } from "lucide-react";
 
+const steps = [
+  { icon: <Search className="w-5 h-5" />, text: "Scanning semantic structures...", duration: 800 },
+  { icon: <BrainCircuit className="w-5 h-5" />, text: "Extracting high-priority ATS keywords...", duration: 1000 },
+  { icon: <Database className="w-5 h-5" />, text: "Mapping role intelligence profile...", duration: 900 },
+  { icon: <ShieldCheck className="w-5 h-5" />, text: "Verifying recruiter lens alignment...", duration: 800 },
+  { icon: <Sparkles className="w-5 h-5" />, text: "Finalizing strategic insights...", duration: 700 },
+];
+
 export const LoadingSequence = ({ onComplete }: { onComplete?: () => void }) => {
   const [step, setStep] = useState(0);
-  
-  const steps = [
-    { icon: <Search className="w-5 h-5" />, text: "Scanning semantic structures...", duration: 800 },
-    { icon: <BrainCircuit className="w-5 h-5" />, text: "Extracting high-priority ATS keywords...", duration: 1000 },
-    { icon: <Database className="w-5 h-5" />, text: "Mapping role intelligence profile...", duration: 900 },
-    { icon: <ShieldCheck className="w-5 h-5" />, text: "Verifying recruiter lens alignment...", duration: 800 },
-    { icon: <Sparkles className="w-5 h-5" />, text: "Finalizing strategic insights...", duration: 700 },
-  ];
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     let currentStep = 0;
@@ -26,7 +28,7 @@ export const LoadingSequence = ({ onComplete }: { onComplete?: () => void }) => 
         }, steps[currentStep].duration);
         timeouts.push(timeout);
       } else {
-        if (onComplete) onComplete();
+        if (onCompleteRef.current) onCompleteRef.current();
       }
     };
 

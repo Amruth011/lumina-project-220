@@ -266,7 +266,7 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
     } finally {
       setIsAnalyzing(false);
     }
-  }, [resumeText, skills, jobTitle, fileName]);
+  }, [resumeText, skills, jobTitle]);
 
 
   useEffect(() => {

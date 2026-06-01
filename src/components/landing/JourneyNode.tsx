@@ -28,7 +28,7 @@ export const JourneyNode: React.FC<JourneyNodeProps> = ({
   const lightRef = useRef<THREE.PointLight>(null);
   
   const [isActive, setIsActive] = useState(false);
-  const [hasActivated, setHasActivated] = useState(false);
+  const hasActivatedRef = useRef(false);
 
   // Spring for scaling the platform
   const { scale } = useSpring({
@@ -38,7 +38,7 @@ export const JourneyNode: React.FC<JourneyNodeProps> = ({
 
   useEffect(() => {
     if (isActive) {
-      if (!hasActivated) setHasActivated(true);
+      if (!hasActivatedRef.current) hasActivatedRef.current = true;
       
       // Flash effect
       if (lightRef.current) {

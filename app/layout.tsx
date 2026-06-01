@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const metadata: Metadata = {
   title: "Lumina | AI-Powered ATS Resume Optimizer",
   description: "AI-powered ATS resume optimizer and job description analyzer. Bridge skill gaps and land top-tier roles.",

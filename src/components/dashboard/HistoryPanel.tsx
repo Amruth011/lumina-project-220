@@ -66,7 +66,7 @@ export const HistoryPanel = () => {
 
     window.addEventListener("lumina_history_updated", handleHistoryUpdate);
     return () => window.removeEventListener("lumina_history_updated", handleHistoryUpdate);
-  }, [user, supabase]);
+  }, [user]);
 
   const loadHistoryItem = (item: HistoryItem) => {
     updateSession({ currentJD: item.jdText, currentJDDecoded: null });
