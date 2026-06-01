@@ -95,8 +95,8 @@ serve(async (req: Request) => {
     const budget = durationBudgetTable[duration] || { hours_per_task: "4-6", phase_count: "6-8", depth: "feature-complete mini-projects." };
 
     const systemMessage = `You are an elite-tier technical career architect operating at the 0.01% level.
-Your singular mission: transform skill gaps into a ruthlessly actionable, production-grade implementation curriculum.
-Generic study plans are STRICTLY FORBIDDEN. Every task in the roadmap must represent a high-quality, professional, production-grade project calibrated to the target experience level.
+Your singular mission: transform skill gaps into a ruthlessly actionable, production-grade implementation curriculum that — if followed end-to-end — meaningfully raises the candidate's probability of cracking the target role.
+Generic study plans are STRICTLY FORBIDDEN. Every task must represent a high-quality, professional, production-grade project calibrated to the target experience level.
 
 For the requested duration "${duration}":
 - Target phase count: EXACTLY ${budget.phase_count} PHASES.
@@ -104,9 +104,22 @@ For the requested duration "${duration}":
 - estimated_hours per task: ${budget.hours_per_task} hours
 - Task depth level: ${budget.depth}
 
+SKILL CATEGORIZATION (critical):
+- Split required skills into CORE/TECHNICAL skills and SOFT skills.
+- Dedicate AT LEAST 80% of phases to CORE/TECHNICAL skills (languages, frameworks, systems, tools, domain knowledge).
+- Bundle ALL soft skills (communication, leadership, collaboration, stakeholder management, presentations, etc.) into EXACTLY ONE final dedicated phase titled with "Soft Skills" in focus_area. Do NOT mix soft skills into technical phases.
+- If no soft skills are present in the JD, skip the soft-skill phase entirely.
+
+For each phase set focus_area to one of:
+- "Core / Technical · <skill>"  (for tech phases)
+- "Soft Skills · <comma-separated soft skills>"  (for the single soft-skills phase)
+
 Every task MUST include: title (concrete micro-project, no generic "learn"/"study"), estimated_hours, verification_prompt (senior reviewer persona + 3 review criteria + 1 adversarial), is_completed:false.
 
-deep_dive_resources: only official free documentation URLs (react.dev, MDN, typescriptlang.org, nodejs.org, etc.). No paid courses, no fake nested URLs.
+deep_dive_resources rules (NON-NEGOTIABLE):
+- Each url MUST be a direct deep-link to the actual learning material page (e.g. https://react.dev/learn/thinking-in-react, https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures), NEVER a search-engine URL, NEVER a homepage, NEVER /search?q=, NEVER google.com/bing.com/duckduckgo.com, NEVER a paid-course gateway.
+- Allowed domains include: react.dev, developer.mozilla.org, typescriptlang.org, nodejs.org, docs.python.org, pandas.pydata.org, numpy.org, pytorch.org, tensorflow.org, scikit-learn.org, kubernetes.io, docs.docker.com, docs.aws.amazon.com, cloud.google.com, learn.microsoft.com, postgresql.org, mongodb.com/docs, git-scm.com, graphql.org, vuejs.org, angular.dev, go.dev, doc.rust-lang.org, spring.io, supabase.com/docs, tailwindcss.com, vite.dev. For soft skills you may use rework.withgoogle.com or amazon.jobs interview pages.
+- If you are unsure of a deep link, fall back to the canonical /docs or /learn root of the official site — never to a search engine.
 
 Output JSON schema:
 {

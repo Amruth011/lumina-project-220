@@ -611,7 +611,14 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
   };
 
   const handlePrint = () => {
-    window.print();
+    // Brief delay so the print-only Lumina header is mounted before the browser snapshots
+    const role = roadmap?.target_role?.replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "syllabus";
+    const prevTitle = document.title;
+    document.title = `Lumina-Roadmap-${role}`;
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => { document.title = prevTitle; }, 500);
+    }, 50);
   };
 
   // Metric Calculators
@@ -940,6 +947,14 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
           }
         }
       `}} />
+
+      {/* Print-only Lumina header (branding for downloaded PDF) */}
+      <div className="hidden print:flex print:items-center print:justify-between print:mb-4 print:pb-3 print:border-b print:border-slate-200">
+        <img src="/logo.png" alt="Lumina" style={{ height: 28, width: "auto" }} />
+        <div style={{ fontSize: 10, color: "#475569", fontWeight: 600 }}>
+          Personalised Career Roadmap · lumina-glow-create.lovable.app
+        </div>
+      </div>
 
       {/* Global Status Bar (Overview Panel) */}
       <div className="p-6 lg:p-8 rounded-[2.5rem] bg-white border border-slate-100 shadow-[0_8px_30px_rgba(16,185,129,0.02)] relative overflow-hidden flex flex-col md:flex-row justify-between gap-6 print-header print-card">
