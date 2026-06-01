@@ -446,7 +446,6 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
         let errMsg = `Failed to compile roadmap: ${invokeError.message || "Unknown error"}`;
         try {
           // FunctionsHttpError exposes context with the response
-          // deno-lint-ignore no-explicit-any
           const ctx = errorContext;
           if (ctx?.json) {
             const body = await ctx.json();
