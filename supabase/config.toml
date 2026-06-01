@@ -1,22 +1,13 @@
 project_id = "esjzitabjftwiqjzjttw"
 
 [functions.cover-letter]
-enabled = true
 verify_jwt = true
-import_map = "./functions/cover-letter/deno.json"
-entrypoint = "./functions/cover-letter/index.ts"
 
 [functions.generate-roadmap]
-enabled = true
 verify_jwt = true
-entrypoint = "./functions/generate-roadmap/index.ts"
 
 [functions.embed]
-enabled = true
 verify_jwt = true
-entrypoint = "./functions/embed/index.ts"
 
 [functions.diagnose]
-enabled = true
 verify_jwt = false
-entrypoint = "./functions/diagnose/index.ts"
