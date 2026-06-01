@@ -571,35 +571,7 @@ Return ONLY the JSON. No markdown, no comments.`
             clearTimeout(timeoutId);
           }
 
-          // â”€â”€ EMERGENCY FALLBACK: Try Local API Proxy if Edge Function Fails â”€â”€
-          if (invokeError) {
-            console.warn(`Lumina Intelligence: Primary Edge Function error for ${model}. Triggering Local API Proxy Fallback...`);
-            try {
-              const apiResponse = await fetch("/api/analyze", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  model: model,
-                  messages: [{ role: "user", content: prompt }],
-                  temperature: 0.5,
-                  max_tokens: 8192
-                  })
-              });
-              
-              if (apiResponse.ok) {
-                rawData = await apiResponse.json();
-                invokeError = null;
-                console.log(`Lumina Intelligence: Success via Local API Proxy with ${model}`);
-              } else {
-                const proxyError = await apiResponse.json().catch(() => ({ error: apiResponse.statusText }));
-                lastError = `Proxy Fault (${apiResponse.status}): ${proxyError.details || proxyError.error || "Unknown error"}`;
-                console.error(`Lumina Intelligence: Local API Proxy failed for ${model}:`, lastError);
-              }
-            } catch (apiErr) {
-              lastError = `Proxy Connection Fault: ${apiErr instanceof Error ? apiErr.message : String(apiErr)}`;
-              console.error("Local API Proxy connection failed:", apiErr);
-            }
-          }
+          // (Vercel /api/analyze fallback removed — Supabase edge function is the single source)
 
           if (invokeError) {
             // Check if invokeError has a response body we can parse
@@ -1938,29 +1910,24 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
           throw new Error(data.error);
         }
       } catch (invokeError) {
-        console.warn("Cover Letter Edge Function failed. Falling back to secure Local API Proxy...", invokeError);
+        console.warn("Cover Letter Edge Function failed. Falling back to 'analyze' edge function...", invokeError);
         toast.loading("Primary engine failed, trying fallback...", { id: "cl-gen" });
-        
-        const apiResponse = await fetch("/api/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+
+        const { data: rawData, error: fallbackErr } = await supabase.functions.invoke("analyze", {
+          body: {
             messages: [
               { role: "system", content: clSystemPrompt },
-              { role: "user", content: clUserPrompt }
+              { role: "user", content: clUserPrompt },
             ],
-            temperature: 0.7
-          })
+            temperature: 0.7,
+          },
         });
 
-        if (apiResponse.ok) {
-          const rawData = await apiResponse.json();
-          content = rawData?.choices?.[0]?.message?.content || "";
-        } else {
-          const errorText = await apiResponse.text().catch(() => apiResponse.statusText);
-          console.error("Fallback API error:", apiResponse.status, errorText);
-          throw new Error(`API error (${apiResponse.status}): ${errorText}`);
+        if (fallbackErr) {
+          console.error("Fallback edge function error:", fallbackErr);
+          throw new Error(fallbackErr.message || "Fallback engine failed");
         }
+        content = rawData?.choices?.[0]?.message?.content || "";
       }
 
       if (!content) throw new Error("AI returned empty content â€” try regenerating");

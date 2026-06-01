@@ -323,13 +323,12 @@ export const MasterVault = () => {
       sbStatus = "CRASHED";
     }
 
-    // 2. Vercel & Groq via api/diagnose check
+    // 2. Groq / Supabase env via supabase 'diagnose' edge function
     let vercelStatus = "OFFLINE";
     let groqStatus = "MISSING_KEY";
     try {
-      const res = await fetch("/api/diagnose");
-      if (res.ok) {
-        const dData = await res.json();
+      const { data: dData, error: dErr } = await supabase.functions.invoke("diagnose", {});
+      if (!dErr && dData) {
         vercelStatus = "OK";
         if (dData?.groq_test) {
           groqStatus = dData.groq_test.includes("OK") ? "OK" : dData.groq_test;
@@ -337,7 +336,7 @@ export const MasterVault = () => {
           groqStatus = "KEY_SET";
         }
       } else {
-        vercelStatus = `HTTP ${res.status}`;
+        vercelStatus = dErr?.message || "UNREACHABLE";
       }
     } catch (e) {
       vercelStatus = "UNREACHABLE";
@@ -797,27 +796,7 @@ RETURN JSON FORMAT ONLY:
             },
           });
 
-          // ── EMERGENCY FALLBACK: Try Local API Proxy if Edge Function Fails ──
-          if (invokeError && (invokeError.message?.includes("Failed to send a request") || invokeError.status === 404)) {
-            console.warn(`Smart Sync: Edge Function unreachable. Switching to Local API Proxy for ${model}...`);
-            try {
-              const apiResponse = await fetch("/api/analyze", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  model: model,
-                  messages: [{ role: "user", content: syncPrompt + "\n\nIMPORTANT: Return ONLY valid JSON." }],
-                  response_format: { type: "json_object" }
-                })
-              });
-              if (apiResponse.ok) {
-                rawData = await apiResponse.json();
-                invokeError = null;
-              }
-            } catch (apiErr) {
-              console.error("Local API Proxy also failed:", apiErr);
-            }
-          }
+          // (Vercel /api/analyze fallback removed — Supabase edge function is the single source)
 
           if (invokeError) {
             // Resilience: Continue on Rate Limit (429) OR Discovery Error (400/404)
@@ -1068,7 +1047,7 @@ RETURN JSON FORMAT ONLY:
         localStorage.removeItem(`draft_summary_${user.id}`);
         localStorage.removeItem(`draft_skills_${user.id}`);
       }
-      if (skillsDBSaveRef.current) clearTimeout(skillsDBSaveRef.current);
+      
       toast.success("Profile updated in Master Vault.");
     } catch (err) {
       console.error(err);

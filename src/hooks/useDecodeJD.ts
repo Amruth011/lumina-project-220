@@ -136,50 +136,10 @@ RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
         error = e;
       }
 
-      // ── EMERGENCY FALLBACK: Try Vercel API Proxy if Edge Function Fails ──
       if (error) {
-        const errMsg = (error as { message?: string })?.message || '';
-        console.warn("Lumina Engine: Edge Function error. Switching to Vercel API Proxy...", errMsg);
-        try {
-          const apiController = new AbortController();
-          const apiTimeoutId = setTimeout(() => apiController.abort(), 15000);
-
-          const apiResponse = await fetch("/api/analyze", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            signal: apiController.signal,
-            body: JSON.stringify({
-              model: "llama-3.1-8b-instant",
-              messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: `ACT ON THIS JD:\n###\n${jdText.substring(0, 10000)}\n###\n\nRETURN ONLY RAW JSON MATCHING SCHEMA.` }
-              ],
-              response_format: { type: "json_object" }
-            })
-          });
-          clearTimeout(apiTimeoutId);
-          if (apiResponse.ok) {
-            const fallbackData = await apiResponse.json();
-            if (fallbackData?.choices?.[0]?.message?.content) {
-              try {
-                data = JSON.parse(fallbackData.choices[0].message.content);
-              } catch {
-                data = fallbackData.choices[0].message.content;
-              }
-            } else {
-              data = fallbackData;
-            }
-            error = null;
-            console.log("Lumina Engine: Vercel API Proxy fallback succeeded.");
-          } else {
-            const fallbackErr = await apiResponse.json().catch(() => ({ error: `HTTP ${apiResponse.status}` }));
-            const fullErrMsg = fallbackErr?.details ? `${fallbackErr.error}: ${fallbackErr.details}` : (fallbackErr?.error || `Vercel proxy failed: HTTP ${apiResponse.status}`);
-            throw new Error(fullErrMsg);
-          }
-        } catch (apiErr) {
-          console.error("Vercel API Proxy also failed:", apiErr);
-          throw apiErr;
-        }
+        const errMsg = (error as { message?: string })?.message || "Lumina Engine: Edge function failed.";
+        console.error("Lumina Engine error:", errMsg);
+        throw new Error(errMsg);
       }
 
       if (error || !data) {
@@ -188,7 +148,7 @@ RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
 
       // ── JD SIGNAL VALIDATION ──
       if (data.valid === false) {
-        toast.error(data.message || "This doesn't appear to be a job description.");
+        toast.error(String(data.message ?? "This doesn't appear to be a job description."));
         setIsScanning(false);
         return;
       }

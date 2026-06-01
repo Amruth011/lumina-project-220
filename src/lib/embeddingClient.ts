@@ -46,20 +46,16 @@ export async function generateEmbedding(text: string): Promise<number[] | null> 
   }
 
   try {
-    const response = await fetch("/api/embed", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: text.trim() }),
+    const { data, error } = await supabase.functions.invoke("embed", {
+      body: { text: text.trim() },
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error(`[EmbeddingClient] Proxy error (${response.status}):`, errorData);
+    if (error) {
+      console.error("[EmbeddingClient] Edge function error:", error);
       return null;
     }
 
-    const data = await response.json();
-    if (!data.embedding || !Array.isArray(data.embedding)) {
+    if (!data?.embedding || !Array.isArray(data.embedding)) {
       console.error("[EmbeddingClient] Invalid embedding response shape:", data);
       return null;
     }
