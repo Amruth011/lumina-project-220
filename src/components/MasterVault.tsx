@@ -1068,7 +1068,7 @@ RETURN JSON FORMAT ONLY:
         localStorage.removeItem(`draft_summary_${user.id}`);
         localStorage.removeItem(`draft_skills_${user.id}`);
       }
-      if (skillsDBSaveRef.current) clearTimeout(skillsDBSaveRef.current);
+      
       toast.success("Profile updated in Master Vault.");
     } catch (err) {
       console.error(err);
