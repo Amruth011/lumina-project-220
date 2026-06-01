@@ -776,6 +776,35 @@ export const JobAgentDashboard: React.FC = () => {
                     {answerPack.whyThisRole}
                   </p>
                 </div>
+
+                {/* ── One-click Autofill Bookmarklet ── */}
+                <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={12} className="text-emerald-600" />
+                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
+                      Lumina Autofill bookmarklet
+                    </p>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Drag the button below to your bookmarks bar <strong>once</strong>. On any application form, click the bookmark to auto-fill name, email, phone, LinkedIn, GitHub, summary and cover-letter fields. Works on Greenhouse, Lever, Ashby, Workable, and most generic HTML forms.
+                  </p>
+                  <div className="flex items-center gap-3 flex-wrap pt-1">
+                    <a
+                      href={buildBookmarkletUrl(answerPack)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toast.info("Drag this button to your bookmarks bar — don't click it here.");
+                      }}
+                      draggable
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 text-white text-[11px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-colors cursor-grab active:cursor-grabbing select-none shadow-sm shadow-emerald-500/20"
+                    >
+                      <Sparkles size={11} /> Lumina Autofill
+                    </a>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      ↑ Drag me to your bookmarks bar
+                    </span>
+                  </div>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
