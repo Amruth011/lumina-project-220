@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { LogOut, User, Search, ShieldCheck, Zap, Info, Mail, Compass, Bot, FileText, Briefcase, Target, Mic } from "lucide-react";
+import { LogOut, User, Search, ShieldCheck, Zap, Mail, Compass, Bot, FileText, Briefcase, Target, Mic } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -50,7 +50,7 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
     { key: "cover-letter" as Tab, icon: Mail, label: "Cover Letter" },
     { key: "roadmap" as Tab, icon: Compass, label: "Roadmap" },
     { key: "agent" as Tab, icon: Bot, label: "Job Agent", badge: true },
-    { key: "guide" as Tab, icon: Info, label: "Guide" },
+    
     { key: "arsenal" as Tab, icon: FileText, label: "Arsenal" },
     { key: "pipeline" as Tab, icon: Briefcase, label: "Pipeline" },
     { key: "scoring" as Tab, icon: Target, label: "Scoring" },
