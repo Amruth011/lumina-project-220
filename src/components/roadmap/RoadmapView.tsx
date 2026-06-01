@@ -422,7 +422,8 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       });
 
       if (invokeError) {
-        const isMissingFunction = invokeError.message?.toLowerCase().includes("not found") || invokeError.message?.includes("404");
+        const errorContext = (invokeError as { context?: { status?: number; json?: () => Promise<unknown> } }).context;
+        const isMissingFunction = errorContext?.status === 404 || invokeError.message?.toLowerCase().includes("not found") || invokeError.message?.includes("404");
         if (isMissingFunction) {
           const fallbackRoadmap = buildLocalRoadmap(results, jdText, duration);
           const { data: savedRoadmap } = await supabase
@@ -446,10 +447,13 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
         try {
           // FunctionsHttpError exposes context with the response
           // deno-lint-ignore no-explicit-any
-          const ctx = (invokeError as any).context;
+          const ctx = errorContext;
           if (ctx?.json) {
             const body = await ctx.json();
-            errMsg = body.details ? `${body.error}: ${body.details}` : (body.error || errMsg);
+            if (body && typeof body === "object") {
+              const payload = body as { error?: string; details?: string };
+              errMsg = payload.details ? `${payload.error}: ${payload.details}` : (payload.error || errMsg);
+            }
           }
         } catch { /* ignore */ }
         throw new Error(errMsg);
