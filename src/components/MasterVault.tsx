@@ -178,19 +178,10 @@ export const MasterVault = () => {
   });
   const [suggestedSkills, setSuggestedSkills] = useState<Record<string, string[]>>({});
   const [isScanningSkills, setIsScanningSkills] = useState(false);
-  const [dbColMissing, setDbColMissing] = useState(false);
-
-  // Sync technical skills from profile or fallback
+  // Sync technical skills from profile
   useEffect(() => {
     if (profile && userId) {
       const skillsFromProfile = profile.technical_skills;
-      const fallbackStr = localStorage.getItem(`fallback_skills_${userId}`);
-      let parsedFallback: Record<string, string[]> | null = null;
-      if (fallbackStr) {
-        try { parsedFallback = JSON.parse(fallbackStr); } catch (e) {
-          console.warn("Fallback skills parsing failed", e);
-        }
-      }
 
       const defaultSkills: Record<string, string[]> = {
         "Programming Languages": [],
@@ -200,19 +191,15 @@ export const MasterVault = () => {
         "Software Engineering / Others": []
       };
 
-      const sourceSkills = skillsFromProfile || parsedFallback || defaultSkills;
-      
-      setTechnicalSkills({
-        "Programming Languages": Array.isArray(sourceSkills["Programming Languages"]) ? sourceSkills["Programming Languages"] : [],
-        "Infrastructure / DevOps": Array.isArray(sourceSkills["Infrastructure / DevOps"]) ? sourceSkills["Infrastructure / DevOps"] : [],
-        "AI / ML": Array.isArray(sourceSkills["AI / ML"]) ? sourceSkills["AI / ML"] : [],
-        "Data Science": Array.isArray(sourceSkills["Data Science"]) ? sourceSkills["Data Science"] : [],
-        "Software Engineering / Others": Array.isArray(sourceSkills["Software Engineering / Others"]) ? sourceSkills["Software Engineering / Others"] : []
-      });
+      const sourceSkills = skillsFromProfile || defaultSkills;
 
-      if (parsedFallback && !skillsFromProfile) {
-        setDbColMissing(true);
-      }
+      setTechnicalSkills({
+        "Programming Languages": sourceSkills["Programming Languages"] || [],
+        "Infrastructure / DevOps": sourceSkills["Infrastructure / DevOps"] || [],
+        "AI / ML": sourceSkills["AI / ML"] || [],
+        "Data Science": sourceSkills["Data Science"] || [],
+        "Software Engineering / Others": sourceSkills["Software Engineering / Others"] || [],
+      });
     }
   }, [profile, userId]);
 
@@ -1060,31 +1047,9 @@ RETURN JSON FORMAT ONLY:
 
       const { error } = await supabase.from("profiles").update(payload).eq("id", user?.id);
       
-      if (error) {
-        console.warn("DB Save error, checking for column omission:", error);
-        
-        // PostgREST missing column code is PGRST102 / PGRST116 / 42703
-        if (error.message?.includes("column") || error.code === "PGRST102" || error.code === "42703") {
-          console.warn("Saving profile WITHOUT technical_skills column...");
-          const { error: fallbackError } = await supabase.from("profiles").update(updateData).eq("id", user?.id);
-          if (fallbackError) throw fallbackError;
-          
-          // Save skills to local storage fallback
-          if (user) localStorage.setItem(`fallback_skills_${user.id}`, JSON.stringify(technicalSkills));
-          setDbColMissing(true);
-          toast.success("Profile saved successfully (Skills stored in browser fallback).", {
-            description: "Notice: Run the migration script in your Supabase SQL editor to enable remote sync.",
-            duration: 6000
-          });
-          return;
-        } else {
-          throw error;
-        }
-      }
+      if (error) throw error;
 
-      setDbColMissing(false);
       if (user) {
-        localStorage.removeItem(`fallback_skills_${user.id}`);
         localStorage.removeItem(`draft_profile_${user.id}`);
         localStorage.removeItem(`draft_summary_${user.id}`);
       }
@@ -1742,35 +1707,6 @@ RETURN JSON FORMAT ONLY:
                 );
               })}
             </div>
-
-            {/* Resilient Database Missing Column Warning */}
-            {dbColMissing && (
-              <div className="p-6 rounded-3xl bg-amber-500/10 border border-amber-500/20 space-y-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                  <div className="space-y-1.5">
-                    <h5 className="text-xs font-black uppercase tracking-wider text-amber-500">Database Sync Optimization Needed</h5>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed">
-                      Lumina stored your category-wise skills successfully in browser fallback storage! To enable full database sync across machines, run the following SQL command in your <strong>Supabase SQL Editor</strong>:
-                    </p>
-                  </div>
-                </div>
-                <div className="relative group bg-slate-950 p-4 rounded-xl border border-white/5">
-                  <code className="text-[10px] text-emerald-400 font-mono select-all">
-                    ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS technical_skills JSONB DEFAULT '{}'::jsonb;
-                  </code>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText("ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS technical_skills JSONB DEFAULT '{}'::jsonb;");
-                      toast.success("SQL command copied to clipboard!");
-                    }}
-                    className="absolute right-3 top-3 text-[8px] font-black uppercase tracking-widest px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg transition-all text-white"
-                  >
-                    Copy SQL
-                  </button>
-                </div>
-              </div>
-            )}
 
             {/* Profile Action Bar */}
             <div className="flex justify-between items-center pt-4 border-t border-slate-200/60">
