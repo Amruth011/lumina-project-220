@@ -601,7 +601,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
               <button onClick={onSaveEdits} className={`p-3 rounded-2xl border transition-all shadow-sm ${hasSavedEdits ? 'bg-amber-500/10 border-amber-400/30 text-amber-500' : 'bg-white border-slate-200 text-[#1E2A3A]/40 hover:text-amber-500 hover:border-amber-400/30'}`} title="Save edits locally">
                 <PenTool size={18} />
               </button>
-              <button onClick={onSave} className="p-3 rounded-2xl bg-lumina-teal text-white shadow-lg shadow-lumina-teal/20 transition-all hover:scale-105">
+              <button onClick={() => { if (onSave) onSave(); else toast.error("Save function is not available"); }} className="p-3 rounded-2xl bg-lumina-teal text-white shadow-lg shadow-lumina-teal/20 transition-all hover:scale-105">
                 <Save size={18} />
               </button>
               <div className="h-8 w-px bg-slate-200 mx-2" />
