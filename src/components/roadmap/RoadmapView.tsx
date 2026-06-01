@@ -45,6 +45,86 @@ const loadingSteps = [
   "Finalizing customized roadmap payload..."
 ];
 
+const durationPhaseCounts: Record<string, number> = {
+  "1 Week": 3,
+  "2 Weeks": 4,
+  "3 Weeks": 5,
+  "4 Weeks": 6,
+  "2 Months": 8,
+  "3 Months": 10,
+  "6 Months": 12,
+  "1 Year": 16,
+};
+
+const skillResourceFallbacks: Record<string, { title: string; url: string }> = {
+  react: { title: "React Documentation", url: "https://react.dev/learn" },
+  typescript: { title: "TypeScript Handbook", url: "https://www.typescriptlang.org/docs/" },
+  javascript: { title: "MDN JavaScript Guide", url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide" },
+  node: { title: "Node.js Documentation", url: "https://nodejs.org/docs/latest/api/" },
+  python: { title: "Python Documentation", url: "https://docs.python.org/3/" },
+  sql: { title: "PostgreSQL Documentation", url: "https://www.postgresql.org/docs/" },
+  aws: { title: "AWS Documentation", url: "https://docs.aws.amazon.com/" },
+  docker: { title: "Docker Documentation", url: "https://docs.docker.com/" },
+};
+
+const getSkillResource = (skill: string) => {
+  const normalized = skill.toLowerCase();
+  const match = Object.entries(skillResourceFallbacks).find(([key]) => normalized.includes(key));
+  return match?.[1] || { title: `${skill} official documentation`, url: `https://www.google.com/search?q=${encodeURIComponent(`${skill} official documentation`)}` };
+};
+
+const buildLocalRoadmap = (results: DecodeResult | null, jdText: string, duration: string): RoadmapData => {
+  const targetRole = results?.title || "Target Role";
+  const sortedSkills = [...(results?.skills || [])]
+    .sort((a, b) => (b.importance || 0) - (a.importance || 0))
+    .map((skill) => skill.skill)
+    .filter((skill): skill is string => Boolean(skill));
+  const inferredSkills = sortedSkills.length > 0 ? sortedSkills : jdText.match(/[A-Z][A-Za-z+#.]{2,}/g)?.slice(0, 6) || ["Core role skills"];
+  const phaseCount = durationPhaseCounts[duration] || 6;
+  const timeline: RoadmapItem[] = Array.from({ length: phaseCount }, (_, index) => {
+    const skill = inferredSkills[index % inferredSkills.length];
+    const resource = getSkillResource(skill);
+    const phaseNumber = index + 1;
+    return {
+      phase_number: phaseNumber,
+      phase_title: `${skill} execution sprint`,
+      focus_area: skill,
+      gap_addressed: `Build job-ready proof for ${skill} against ${targetRole} requirements.`,
+      actionable_tasks: [
+        {
+          id: `local-${phaseNumber}-1`,
+          title: `Implement a production-style ${skill} feature that mirrors a real ${targetRole} workflow`,
+          estimated_hours: duration === "1 Week" ? 2 : 4,
+          verification_prompt: `Act as a senior ${targetRole} reviewer. Review my ${skill} implementation for correctness, maintainability, edge-case handling, and one adversarial failure scenario.`,
+          is_completed: false,
+        },
+        {
+          id: `local-${phaseNumber}-2`,
+          title: `Document the architecture, tradeoffs, and measurable business impact of the ${skill} build`,
+          estimated_hours: duration === "1 Week" ? 1 : 3,
+          verification_prompt: `Act as a hiring manager for ${targetRole}. Evaluate whether this ${skill} writeup proves role readiness, technical depth, clarity, and one weakness a recruiter may challenge.`,
+          is_completed: false,
+        },
+        {
+          id: `local-${phaseNumber}-3`,
+          title: `Create a portfolio-ready demo with validation, failure states, and a concise README`,
+          estimated_hours: duration === "1 Week" ? 2 : 5,
+          verification_prompt: `Act as a staff engineer. Audit this demo for production polish, testability, user-impact evidence, and one adversarial scenario that could break it.`,
+          is_completed: false,
+        },
+      ],
+      deep_dive_resources: [{ title: resource.title, url: resource.url, source_type: "documentation", estimated_time: "45-90 min" }],
+    };
+  });
+
+  return {
+    target_role: targetRole,
+    duration,
+    skill_gaps_identified: inferredSkills.slice(0, Math.min(8, inferredSkills.length)),
+    timeline,
+  };
+};
+
 // ── Verification Task Card ──────────────────────────────────────────────────
 // Self-contained card that renders a task row + the collapsible AI
 // verification prompt panel with a one-click copy-to-clipboard utility.
@@ -342,14 +422,37 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       });
 
       if (invokeError) {
+        const errorContext = (invokeError as { context?: { status?: number; json?: () => Promise<unknown> } }).context;
+        const isMissingFunction = errorContext?.status === 404 || invokeError.message?.toLowerCase().includes("not found") || invokeError.message?.includes("404");
+        if (isMissingFunction) {
+          const fallbackRoadmap = buildLocalRoadmap(results, jdText, duration);
+          const { data: savedRoadmap } = await supabase
+            .from("roadmaps")
+            .insert({ user_id: user.id, jd_id: null, duration, roadmap_data: fallbackRoadmap })
+            .select("id, roadmap_data")
+            .single();
+          const fallbackId = savedRoadmap?.id || crypto.randomUUID();
+          setRoadmap(fallbackRoadmap);
+          setRoadmapId(fallbackId);
+          sessionStorage.setItem("current_roadmap_id", fallbackId);
+          sessionStorage.setItem("current_roadmap_jd_title", results?.title || "");
+          setCompletedTaskIds(new Set());
+          toast.success("Roadmap generated with resilient fallback mode.", {
+            id: toastId,
+            description: "Cloud generation is still deploying, so Lumina created a deterministic syllabus from your JD analysis.",
+          });
+          return;
+        }
         let errMsg = `Failed to compile roadmap: ${invokeError.message || "Unknown error"}`;
         try {
           // FunctionsHttpError exposes context with the response
-          // deno-lint-ignore no-explicit-any
-          const ctx = (invokeError as any).context;
+          const ctx = errorContext;
           if (ctx?.json) {
             const body = await ctx.json();
-            errMsg = body.details ? `${body.error}: ${body.details}` : (body.error || errMsg);
+            if (body && typeof body === "object") {
+              const payload = body as { error?: string; details?: string };
+              errMsg = payload.details ? `${payload.error}: ${payload.details}` : (payload.error || errMsg);
+            }
           }
         } catch { /* ignore */ }
         throw new Error(errMsg);
