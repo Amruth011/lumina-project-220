@@ -615,18 +615,48 @@ export const JobAgentDashboard: React.FC = () => {
               </div>
             )}
 
-            {/* Launch Button */}
+            {/* Smart Apply (primary - reliable) */}
+            <motion.button
+              onClick={handleSmartApply}
+              disabled={smartApplying || isEmpty || !selected || !portalUrl || !!urlError}
+              whileHover={!smartApplying && !isEmpty ? { scale: 1.02 } : {}}
+              whileTap={!smartApplying && !isEmpty ? { scale: 0.98 } : {}}
+              className={`w-full py-4 px-6 rounded-2xl font-black text-[13px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 ${
+                smartApplying
+                  ? "bg-emerald-400 text-white cursor-wait"
+                  : isEmpty || !selected || !portalUrl || !!urlError
+                  ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                  : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+              }`}
+            >
+              {smartApplying ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                  Preparing…
+                </>
+              ) : (
+                <>
+                  <Sparkles size={16} />
+                  Smart Apply
+                </>
+              )}
+            </motion.button>
+            <p className="text-[10px] text-slate-400 font-medium text-center -mt-2">
+              Opens the application, copies a tailored answer pack to your clipboard, and logs the application to your Pipeline.
+            </p>
+
+            {/* Launch Button (advanced - requires backend) */}
             <motion.button
               onClick={handleLaunch}
               disabled={isRunning || isEmpty || !selected}
               whileHover={!isRunning && !isEmpty ? { scale: 1.02 } : {}}
               whileTap={!isRunning && !isEmpty ? { scale: 0.98 } : {}}
-              className={`w-full py-4 px-6 rounded-2xl font-black text-[13px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 ${
+              className={`w-full py-3 px-6 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 border ${
                 isRunning
-                  ? "bg-blue-500 text-white cursor-not-allowed"
+                  ? "bg-blue-500 text-white cursor-not-allowed border-transparent"
                   : isEmpty
-                  ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
-                  : "bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/20"
+                  ? "bg-slate-50 text-slate-300 cursor-not-allowed border-slate-200"
+                  : "bg-white text-slate-600 hover:text-emerald-600 border-slate-200 hover:border-emerald-300"
               }`}
             >
               {isRunning ? (
@@ -636,12 +666,112 @@ export const JobAgentDashboard: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Rocket size={16} className="animate-pulse" />
-                  Launch Agent
+                  <Rocket size={12} />
+                  Launch Autonomous Agent (requires backend)
                 </>
               )}
             </motion.button>
           </div>
+
+          {/* ══ Smart Apply Answer Pack Panel ══ */}
+          <AnimatePresence>
+            {answerPack && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white border border-emerald-100 rounded-[2rem] p-6 shadow-sm space-y-4"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <ClipboardCheck size={14} className="text-emerald-600" />
+                    <span className="text-[11px] font-black uppercase tracking-widest text-slate-600">
+                      Smart Apply Answer Pack
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => window.open(portalUrl, "_blank", "noopener,noreferrer")}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[10px] font-bold text-slate-600 hover:text-emerald-600 hover:border-emerald-300 transition-colors"
+                    >
+                      <ExternalLink size={10} /> Reopen Portal
+                    </button>
+                    <button
+                      onClick={() => copyField("Full pack", answerPack.combined)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[10px] font-bold hover:bg-emerald-400 transition-colors"
+                    >
+                      <Copy size={10} /> Copy All
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Click any field below to copy it individually. Paste directly into the application form fields.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    { label: "Full Name", value: answerPack.fullName },
+                    { label: "First Name", value: answerPack.firstName },
+                    { label: "Last Name", value: answerPack.lastName },
+                    { label: "Email", value: answerPack.email },
+                    { label: "Phone", value: answerPack.phone },
+                    { label: "Location", value: answerPack.location },
+                    { label: "LinkedIn", value: answerPack.linkedin },
+                    { label: "GitHub", value: answerPack.github },
+                    { label: "Website", value: answerPack.website },
+                    { label: "Top Skills", value: answerPack.topSkills },
+                  ]
+                    .filter((f) => f.value)
+                    .map((f) => (
+                      <button
+                        key={f.label}
+                        onClick={() => copyField(f.label, f.value)}
+                        className="group flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-100 hover:border-emerald-200 text-left transition-colors"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">{f.label}</p>
+                          <p className="text-[11px] font-bold text-slate-700 truncate">{f.value}</p>
+                        </div>
+                        <Copy size={11} className="text-slate-300 group-hover:text-emerald-500 shrink-0" />
+                      </button>
+                    ))}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Summary</p>
+                    <button
+                      onClick={() => copyField("Summary", answerPack.summary)}
+                      className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 hover:text-emerald-500"
+                    >
+                      <Copy size={9} /> Copy
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed bg-slate-50 rounded-xl p-3 border border-slate-100">
+                    {answerPack.summary}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Why This Role</p>
+                    <button
+                      onClick={() => copyField("Why this role", answerPack.whyThisRole)}
+                      className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 hover:text-emerald-500"
+                    >
+                      <Copy size={9} /> Copy
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed bg-slate-50 rounded-xl p-3 border border-slate-100">
+                    {answerPack.whyThisRole}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
 
           {/* ══ Panel C: Execution Log ══ */}
           <AnimatePresence>
