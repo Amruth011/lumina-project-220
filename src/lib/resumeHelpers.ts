@@ -1,5 +1,6 @@
 import type { GeneratedResume, GeneratedResumeSection } from "@/types/jd";
 import type { VaultItem } from "@/types/jd";
+import type jsPDF from "jspdf";
 
 export const ensureArray = (arr: unknown): unknown[] => Array.isArray(arr) ? arr : [];
 
@@ -48,7 +49,7 @@ export const parseProductOrProjectContent = (contentStr: string) => {
 };
 
 export const measureOrDrawRightSideLinks = (
-  pdf: any,
+  pdf: jsPDF,
   statusOrYear: string,
   urls: string[],
   y: number,
