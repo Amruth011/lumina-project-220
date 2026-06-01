@@ -178,41 +178,50 @@ export const MasterVault = () => {
   });
   const [suggestedSkills, setSuggestedSkills] = useState<Record<string, string[]>>({});
   const [isScanningSkills, setIsScanningSkills] = useState(false);
-  // Sync technical skills from profile (with localStorage draft fallback)
+  // Sync technical skills from profile (layered: DB → fallback_skills → draft_skills)
   useEffect(() => {
-    if (profile && userId) {
-      const skillsFromProfile = profile.technical_skills;
+    if (!userId) return;
 
-      const defaultSkills: Record<string, string[]> = {
-        "Programming Languages": [],
-        "Infrastructure / DevOps": [],
-        "AI / ML": [],
-        "Data Science": [],
-        "Software Engineering / Others": []
-      };
+    const defaultSkills: Record<string, string[]> = {
+      "Programming Languages": [],
+      "Infrastructure / DevOps": [],
+      "AI / ML": [],
+      "Data Science": [],
+      "Software Engineering / Others": []
+    };
 
-      const sourceSkills = skillsFromProfile || defaultSkills;
+    // Layer 1: profile.technical_skills from DB (if available)
+    let merged = { ...(profile?.technical_skills || defaultSkills) };
 
-      // Restore unsaved localStorage draft if it exists (user imported skills but didn't save yet)
-      let merged = { ...sourceSkills };
-      const draftStr = localStorage.getItem(`draft_skills_${userId}`);
-      if (draftStr) {
-        try {
-          const draft = JSON.parse(draftStr);
-          if (draft && typeof draft === "object") {
-            merged = { ...merged, ...draft };
-          }
-        } catch (e) { /* ignore corrupt draft */ }
-      }
-
-      setTechnicalSkills({
-        "Programming Languages": merged["Programming Languages"] || [],
-        "Infrastructure / DevOps": merged["Infrastructure / DevOps"] || [],
-        "AI / ML": merged["AI / ML"] || [],
-        "Data Science": merged["Data Science"] || [],
-        "Software Engineering / Others": merged["Software Engineering / Others"] || [],
-      });
+    // Layer 2: fallback_skills (used when DB column didn't exist on last save)
+    const fallbackStr = localStorage.getItem(`fallback_skills_${userId}`);
+    if (fallbackStr) {
+      try {
+        const fallback = JSON.parse(fallbackStr);
+        if (fallback && typeof fallback === "object") {
+          merged = { ...merged, ...fallback };
+        }
+      } catch (e) { /* ignore corrupt fallback */ }
     }
+
+    // Layer 3: unsaved localStorage draft (highest priority)
+    const draftStr = localStorage.getItem(`draft_skills_${userId}`);
+    if (draftStr) {
+      try {
+        const draft = JSON.parse(draftStr);
+        if (draft && typeof draft === "object") {
+          merged = { ...merged, ...draft };
+        }
+      } catch (e) { /* ignore corrupt draft */ }
+    }
+
+    setTechnicalSkills({
+      "Programming Languages": merged["Programming Languages"] || [],
+      "Infrastructure / DevOps": merged["Infrastructure / DevOps"] || [],
+      "AI / ML": merged["AI / ML"] || [],
+      "Data Science": merged["Data Science"] || [],
+      "Software Engineering / Others": merged["Software Engineering / Others"] || [],
+    });
   }, [profile, userId]);
 
   const handleLocalScan = () => {
@@ -409,6 +418,27 @@ export const MasterVault = () => {
     if (userId) {
       localStorage.setItem(`draft_skills_${userId}`, JSON.stringify(technicalSkills));
     }
+  }, [technicalSkills, userId]);
+
+  // Debounced auto-save of technical_skills to Supabase so they persist across devices
+  const skillsDBSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (userId && Object.values(technicalSkills).some(arr => arr.length > 0)) {
+      if (skillsDBSaveRef.current) clearTimeout(skillsDBSaveRef.current);
+      skillsDBSaveRef.current = setTimeout(async () => {
+        const { error } = await supabase.from("profiles").update({ technical_skills: technicalSkills }).eq("id", userId);
+        if (error) {
+          if (error.message?.includes("column") || error.code === "PGRST102" || error.code === "42703") {
+            localStorage.setItem(`fallback_skills_${userId}`, JSON.stringify(technicalSkills));
+          }
+        } else {
+          localStorage.removeItem(`fallback_skills_${userId}`);
+        }
+      }, 3000);
+    }
+    return () => {
+      if (skillsDBSaveRef.current) clearTimeout(skillsDBSaveRef.current);
+    };
   }, [technicalSkills, userId]);
 
   // Persistence for Editing Item Draft
@@ -1083,6 +1113,7 @@ RETURN JSON FORMAT ONLY:
         localStorage.removeItem(`draft_summary_${user.id}`);
         localStorage.removeItem(`draft_skills_${user.id}`);
       }
+      if (skillsDBSaveRef.current) clearTimeout(skillsDBSaveRef.current);
       toast.success("Profile updated in Master Vault.");
     } catch (err) {
       console.error(err);
