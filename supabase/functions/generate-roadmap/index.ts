@@ -63,10 +63,11 @@ serve(async (req: Request) => {
       });
     }
 
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
     const groqKey = Deno.env.get("GROQ_API_KEY");
     const openAiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!groqKey && !openAiKey) {
-      return new Response(JSON.stringify({ error: "Server configuration error: Neither GROQ_API_KEY nor OPENAI_API_KEY is configured." }), {
+    if (!lovableKey && !groqKey && !openAiKey) {
+      return new Response(JSON.stringify({ error: "Server configuration error: no AI runtime key is configured." }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -151,6 +152,11 @@ TIME BUDGET: ${budget.hours_per_task} hours/task · ${budget.phase_count} phases
 Generate the roadmap now. Every task must be a production micro-project with a verification_prompt.`;
 
     const fallbackConfigs: Array<{ url: string; key: string; model: string }> = [];
+    if (lovableKey) {
+      for (const m of ["google/gemini-3-flash-preview", "google/gemini-2.5-flash"]) {
+        fallbackConfigs.push({ url: "https://ai.gateway.lovable.dev/v1/chat/completions", key: lovableKey, model: m });
+      }
+    }
     if (groqKey) {
       for (const m of ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "gemma2-9b-it"]) {
         fallbackConfigs.push({ url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: m });
