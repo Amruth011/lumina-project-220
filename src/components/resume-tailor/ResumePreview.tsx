@@ -258,27 +258,24 @@ ${JSON.stringify(localResume, null, 2)}
 Return ONLY the complete updated JSON object matching the input structure.`;
 
     try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const { data: rawData, error: invokeError } = await supabase.functions.invoke("analyze", {
+        body: {
           model: "llama-3.3-70b-versatile",
           messages: [{ role: "user", content: systemPrompt }],
           temperature: 0.3,
           response_format: { type: "json_object" },
-          max_tokens: 4000
-        })
+          max_tokens: 4000,
+        },
       });
 
-      if (!response.ok) {
-        throw new Error(response.statusText);
+      if (invokeError) {
+        throw new Error(invokeError.message || "AI engine failed");
       }
 
-      const rawData = await response.json();
-      if (rawData.choices?.[0]?.message?.content) {
+      if (rawData?.choices?.[0]?.message?.content) {
         const content = rawData.choices[0].message.content.trim();
         const parsed = JSON.parse(content);
-        
+
         const sanitized = sanitizeGeneratedResume(
           parsed,
           summaryLines,
@@ -286,7 +283,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
           projectLines,
           productLines
         );
-        
+
         const restored = restoreExactProfileData(sanitized, vaultItems);
 
         setLocalResume(restored);
