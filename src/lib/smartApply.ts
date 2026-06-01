@@ -37,7 +37,7 @@ export function buildAnswerPack(resume: SavedAgentResume): AnswerPack {
   const topSkills = resume.jdSkills.slice(0, 12).map((s) => s.skill).join(", ");
 
   const summary =
-    resume.resume?.summary ||
+    (resume.resume as { professional_summary?: string })?.professional_summary ||
     `${c.fullName} — applying for ${resume.jdTitle}. Skilled in ${topSkills}.`;
 
   const whyThisRole = `I'm excited about the ${resume.jdTitle} role because my background aligns directly with the listed requirements — particularly ${resume.jdSkills.slice(0, 3).map((s) => s.skill).join(", ")}. I've shipped production work using these and am ready to contribute from day one.`;
