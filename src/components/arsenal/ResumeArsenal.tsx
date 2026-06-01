@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Upload, FileText, Trash2, Star, ArrowUpDown } from "lucide-react";
+import { Upload, FileText, Trash2, Star, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,68 +54,114 @@ export function ResumeArsenal() {
     toast.success("Primary resume updated");
   };
 
+  const slotsUsed = resumes.length;
+  const slotsTotal = 5;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-0.5">
-          <h2 className="text-sm font-black uppercase tracking-widest text-foreground flex items-center gap-2">
-            <FileText size={14} /> 5-Resume Arsenal
-          </h2>
-          <p className="text-[10px] text-muted-foreground">Upload up to 5 tailored resumes. AI picks the best fit.</p>
+    <div className="w-full max-w-6xl mx-auto space-y-10 py-8">
+      {/* Header */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+            <FileText size={18} className="text-emerald-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Resume Arsenal</h1>
+            <p className="text-[12px] font-medium text-slate-500">
+              Maintain up to {slotsTotal} tailored resumes — Lumina picks the best fit for every application.
+            </p>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <div className="px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500">
+              {slotsUsed} / {slotsTotal} slots
+            </div>
+            <label
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer ${
+                uploading || slotsUsed >= slotsTotal
+                  ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                  : "bg-emerald-500 text-white hover:bg-emerald-400"
+              }`}
+            >
+              <Upload size={10} />
+              {uploading ? "Uploading…" : "Upload PDF"}
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={handleUpload}
+                className="hidden"
+                disabled={uploading || slotsUsed >= slotsTotal}
+              />
+            </label>
+          </div>
         </div>
-        <label className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-all flex items-center gap-1.5 cursor-pointer">
-          <Upload size={12} />
-          {uploading ? "Uploading..." : "Upload PDF"}
-          <input type="file" accept=".pdf" onChange={handleUpload} className="hidden" disabled={uploading || resumes.length >= 5} />
-        </label>
       </div>
 
-      {resumes.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center">
-          <FileText size={32} className="mx-auto text-muted-foreground mb-3 opacity-30" />
-          <p className="text-xs text-muted-foreground">No resumes uploaded yet. Add up to 5 PDFs.</p>
+      {/* Body */}
+      <div className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm space-y-4">
+        <div className="flex items-center gap-2">
+          <ShieldCheck size={14} className="text-emerald-600" />
+          <span className="text-[11px] font-black uppercase tracking-widest text-slate-600">
+            Stored Resumes
+          </span>
         </div>
-      )}
 
-      <div className="grid gap-3">
-        {resumes.map((resume) => (
-          <motion.div
-            key={resume.id}
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`rounded-2xl border p-4 flex items-center justify-between ${
-              resume.is_primary ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/40 bg-background/40"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <FileText size={16} className="text-muted-foreground" />
-              <div>
-                <p className="text-xs font-bold text-foreground">{resume.name}</p>
-                <p className="text-[9px] text-muted-foreground">{new Date(resume.uploaded_at).toLocaleDateString()}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {resume.is_primary ? (
-                <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-400">
-                  <Star size={10} /> Primary
-                </span>
-              ) : (
-                <button
-                  onClick={() => handleSetPrimary(resume.id)}
-                  className="p-1.5 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-foreground transition-all"
-                >
-                  <Star size={12} />
-                </button>
-              )}
-              <button
-                onClick={() => handleDelete(resume.id)}
-                className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-all"
+        {resumes.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-10 text-center">
+            <FileText size={32} className="mx-auto text-slate-300 mb-3" />
+            <p className="text-[13px] font-bold text-slate-600">No resumes uploaded yet</p>
+            <p className="text-[11px] text-slate-400 mt-1">
+              Add up to {slotsTotal} PDFs. The first one becomes your primary automatically.
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {resumes.map((resume) => (
+              <motion.div
+                key={resume.id}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`rounded-2xl border p-4 flex items-center justify-between transition-colors ${
+                  resume.is_primary
+                    ? "border-emerald-200 bg-emerald-50/60"
+                    : "border-slate-100 bg-slate-50/60 hover:border-emerald-200"
+                }`}
               >
-                <Trash2 size={12} />
-              </button>
-            </div>
-          </motion.div>
-        ))}
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-white border border-slate-100 flex items-center justify-center shrink-0">
+                    <FileText size={14} className="text-emerald-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[12px] font-bold text-slate-800 truncate">{resume.name}</p>
+                    <p className="text-[10px] text-slate-400 font-medium">
+                      Added {new Date(resume.uploaded_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {resume.is_primary ? (
+                    <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest">
+                      <Star size={9} /> Primary
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleSetPrimary(resume.id)}
+                      className="px-2.5 py-1 rounded-full border border-slate-200 text-slate-500 text-[9px] font-black uppercase tracking-widest hover:text-emerald-600 hover:border-emerald-300 transition-colors flex items-center gap-1"
+                    >
+                      <Star size={9} /> Set primary
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDelete(resume.id)}
+                    className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center transition-colors"
+                    title="Remove"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
