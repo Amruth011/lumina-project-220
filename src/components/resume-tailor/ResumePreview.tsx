@@ -38,6 +38,7 @@ import { CollapsibleSection } from "./ui/CollapsibleSection";
 import { MONTHS, YEARS } from "@/lib/constants";
 import { sanitizeGeneratedResume, ensureArray, restoreExactProfileData, limitSummarySentences, limitBullets, sanitizePdfText } from "@/lib/resumeHelpers";
 import { SubHeaderWithLinks } from "./SubHeaderWithLinks";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ResumeHeader {
   fullName: string;

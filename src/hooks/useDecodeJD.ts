@@ -148,7 +148,7 @@ RETURN ONLY RAW JSON. MATCH THIS NAKED SCHEMA FORMAT EXACTLY:
 
       // ── JD SIGNAL VALIDATION ──
       if (data.valid === false) {
-        toast.error(data.message || "This doesn't appear to be a job description.");
+        toast.error(String(data.message ?? "This doesn't appear to be a job description."));
         setIsScanning(false);
         return;
       }
