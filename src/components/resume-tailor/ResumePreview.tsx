@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
 import { MONTHS, YEARS } from "@/lib/constants";
 import { sanitizeGeneratedResume, ensureArray, restoreExactProfileData, limitSummarySentences, limitBullets, sanitizePdfText } from "@/lib/resumeHelpers";
+import { SubHeaderWithLinks } from "./SubHeaderWithLinks";
 
 interface ResumeHeader {
   fullName: string;
@@ -90,98 +91,7 @@ interface ResumePreviewProps {
 // sanitizeGeneratedResume imported from @/lib/resumeHelpers
 
 
-const renderSubHeaderWithLinks = (
-  heading: string, 
-  content: string, 
-  fontSizes: { subHeader: string; body: string }
-) => {
-  // 1. Split heading to get Title and Tech Stack (split on dash with spaces to protect inline hyphens like Scikit-learn)
-  const headingParts = (heading || "").split(/\s+[-–—]\s+/);
-  const title = headingParts[0] || "Title";
-  const techStack = headingParts.slice(1).join(" | ");
 
-  // 2. Parse content for Status/Year and Links
-  const rawContent = content || "";
-  
-  // Find any URLs inside rawContent using robust regex
-  const urlRegex = /(https?:\/\/[^\s|]+|github\.com\/[^\s|]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/[^\s|]*|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
-  const rawUrls = rawContent.match(urlRegex) || [];
-  
-  // Deduplicate URLs
-  const urls: string[] = [];
-  const seen = new Set<string>();
-  rawUrls.forEach(u => {
-    const norm = u.toLowerCase()
-      .replace(/^https?:\/\//, "")
-      .replace(/^www\./, "")
-      .replace(/\/$/, "")
-      .trim();
-    if (norm && !seen.has(norm)) {
-      seen.add(norm);
-      urls.push(u.trim());
-    }
-  });
-  
-  // Extract non-URL text (e.g. Year or Status like "2024", "Live", "Ongoing")
-  let statusOrYear = rawContent;
-  urls.forEach(url => {
-    statusOrYear = statusOrYear.split(url).join("");
-  });
-  
-  // Clean separators from statusOrYear
-  statusOrYear = statusOrYear.replace(/[|\s-–—]+/g, " ").trim();
-
-  // Remove redundant "Live" status, but preserve "Ongoing"
-  if (statusOrYear.toLowerCase() === "live" || statusOrYear.toLowerCase() === "live |" || statusOrYear.toLowerCase() === "| live") {
-    statusOrYear = "";
-  }
-
-  if (statusOrYear === "|" || statusOrYear === "-" || statusOrYear === "–" || statusOrYear === "—") {
-    statusOrYear = "";
-  }
-
-  return (
-    <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit', width: '100%' }}>
-      {/* Left side: Title | Tech Stack */}
-      <span className="flex-1 min-w-0 !font-inherit" style={{ fontFamily: 'inherit' }}>
-        {title?.trim()}
-        {techStack && (
-          <span className="font-normal opacity-60 !font-inherit" style={{ fontFamily: 'inherit' }}>
-            {" "}| {techStack.replace(/^\s*\|\s*/, "").trim()}
-          </span>
-        )}
-      </span>
-
-      {/* Right side: Year/Status | GitHub | Live Link */}
-      <span className="flex-shrink-0 text-right ml-4 font-normal !font-inherit flex items-center gap-1.5" style={{ fontSize: fontSizes.body, fontFamily: 'inherit' }}>
-        {statusOrYear && (
-          <span className="opacity-70 font-semibold mr-1">{statusOrYear}</span>
-        )}
-        
-        {urls.map((url, idx) => {
-          const href = url.startsWith("http") ? url : `https://${url}`;
-          const isGithub = url.toLowerCase().includes("github.com");
-          const label = isGithub ? "GitHub" : "Live Link";
-          
-          return (
-            <React.Fragment key={idx}>
-              {(statusOrYear || idx > 0) && <span className="opacity-30">|</span>}
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#1E2A3A] font-bold hover:underline hover:text-lumina-teal transition-all"
-                style={{ fontFamily: 'inherit' }}
-              >
-                {label}
-              </a>
-            </React.Fragment>
-          );
-        })}
-      </span>
-    </div>
-  );
-};
 
 export const ResumePreview = ({ 
   resume, 
@@ -1920,7 +1830,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                     return (
                                       <div key={prodIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                         <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
-                                          {renderSubHeaderWithLinks(prod.heading || "", prod.content || "", fontSizes)}
+                                          <SubHeaderWithLinks heading={prod.heading || ""} content={prod.content || ""} fontSizes={fontSizes} />
                                         </div>
                                         <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                           {limitBullets(prod.bullets || [], productLines).map((bullet, bullIdx) => (
@@ -1947,7 +1857,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                     return (
                                       <div key={projIdx} className="space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                         <div className="flex justify-between items-start font-bold !font-inherit" style={{ fontSize: fontSizes.subHeader, fontFamily: 'inherit' }}>
-                                          {renderSubHeaderWithLinks(proj.heading || "", proj.content || "", fontSizes)}
+                                          <SubHeaderWithLinks heading={proj.heading || ""} content={proj.content || ""} fontSizes={fontSizes} />
                                         </div>
                                         <ul className="list-disc ml-5 space-y-0.5 !font-inherit" style={{ fontFamily: 'inherit', margin: 0, padding: 0 }}>
                                           {limitBullets(proj.bullets || [], projectLines).map((bullet, bullIdx) => (

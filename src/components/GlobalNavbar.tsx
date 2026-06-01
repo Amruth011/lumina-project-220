@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { LogOut, User, Search, ShieldCheck, Zap, Info, Mail, Compass, Bot } from "lucide-react";
+import { LogOut, User, Search, ShieldCheck, Zap, Info, Mail, Compass, Bot, FileText, Briefcase, Target, Mic } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -16,11 +16,20 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isHomePage = location.pathname === "/";
+  const pathTab = location.pathname.replace("/dashboard/", "") as Tab;
+  const effectiveActiveTab = ROUTE_TABS.has(pathTab) ? pathTab : activeTab;
+
+  const ROUTE_TABS: Set<Tab> = new Set(["arsenal", "pipeline", "scoring", "interview"]);
 
   const handleTabClick = (tabKey: Tab) => {
     if (!user) {
       toast.info("Please sign in to access Lumina services.");
       navigate("/auth");
+      return;
+    }
+
+    if (ROUTE_TABS.has(tabKey)) {
+      navigate(`/dashboard/${tabKey}`);
       return;
     }
 
@@ -42,6 +51,10 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
     { key: "roadmap" as Tab, icon: Compass, label: "Roadmap" },
     { key: "agent" as Tab, icon: Bot, label: "Job Agent", badge: true },
     { key: "guide" as Tab, icon: Info, label: "Guide" },
+    { key: "arsenal" as Tab, icon: FileText, label: "Arsenal" },
+    { key: "pipeline" as Tab, icon: Briefcase, label: "Pipeline" },
+    { key: "scoring" as Tab, icon: Target, label: "Scoring" },
+    { key: "interview" as Tab, icon: Mic, label: "Interview" },
   ] as { key: Tab; icon: React.ElementType; label: string; badge?: boolean }[];
 
   return (
@@ -61,12 +74,12 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
               key={tab.key} 
               onClick={() => handleTabClick(tab.key)} 
               className={`relative flex items-center gap-2 px-5 py-2.5 rounded-full text-[12px] font-display font-bold transition-all duration-500 whitespace-nowrap ${
-                activeTab === tab.key
+                effectiveActiveTab === tab.key
                   ? "text-white"
                   : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
               }`}
             >
-              {activeTab === tab.key && (
+              {effectiveActiveTab === tab.key && (
                 <motion.div
                   layoutId="globalActiveTab"
                   className="absolute inset-0 bg-lumina-teal rounded-full shadow-lg shadow-teal-500/20"
@@ -76,7 +89,7 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
               <span className="relative z-10 flex items-center gap-2">
                 <tab.icon size={14} className={activeTab === tab.key ? 'text-white' : 'text-primary/40'} />
                 <span className="tracking-tight">{tab.label}</span>
-                {tab.badge && activeTab !== tab.key && (
+                {tab.badge && effectiveActiveTab !== tab.key && (
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 )}
               </span>

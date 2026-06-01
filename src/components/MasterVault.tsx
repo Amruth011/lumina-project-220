@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 // Important: Use static import with ?url so Vite bundler properly packages the worker file for Vercel
 import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
 import { motion, AnimatePresence } from "framer-motion";
@@ -399,80 +399,35 @@ export const MasterVault = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, authLoading]);
 
-  // Persistence for Profile Draft
-  useEffect(() => {
-    if (user && profile) {
-      localStorage.setItem(`draft_profile_${user.id}`, JSON.stringify(profile));
-    }
-  }, [profile, user]);
-
-  // Persistence for Profile Summary
-  useEffect(() => {
-    if (user && profile?.summary_master) {
-      localStorage.setItem(`draft_summary_${user.id}`, profile.summary_master);
-    }
-  }, [profile?.summary_master, user]);
-
-  // Persistence for Technical Skills (survive refresh without explicit save)
-  useEffect(() => {
-    if (userId) {
-      localStorage.setItem(`draft_skills_${userId}`, JSON.stringify(technicalSkills));
-    }
-  }, [technicalSkills, userId]);
-
-  // Debounced auto-save of technical_skills to Supabase so they persist across devices
-  const skillsDBSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (userId && Object.values(technicalSkills).some(arr => arr.length > 0)) {
-      if (skillsDBSaveRef.current) clearTimeout(skillsDBSaveRef.current);
-      skillsDBSaveRef.current = setTimeout(async () => {
-        const { error } = await supabase.from("profiles").update({ technical_skills: technicalSkills }).eq("id", userId);
-        if (error) {
-          if (error.message?.includes("column") || error.code === "PGRST102" || error.code === "42703") {
-            localStorage.setItem(`fallback_skills_${userId}`, JSON.stringify(technicalSkills));
-          }
-        } else {
-          localStorage.removeItem(`fallback_skills_${userId}`);
+  // Debounced batch persistence for all draft state
+  const persistTimer = useRef<ReturnType<typeof setTimeout>>();
+  const persistDraft = useCallback(() => {
+    if (persistTimer.current) clearTimeout(persistTimer.current);
+    persistTimer.current = setTimeout(() => {
+      if (!user) return;
+      try {
+        if (profile) localStorage.setItem(`draft_profile_${user.id}`, JSON.stringify(profile));
+        if (profile?.summary_master) localStorage.setItem(`draft_summary_${user.id}`, profile.summary_master);
+        if (editingItem) localStorage.setItem(`draft_vault_item_${user.id}`, JSON.stringify(editingItem));
+        if (editingItem?.type === 'professional') {
+          localStorage.setItem(`draft_exp_mode_${user.id}`, expMode);
+          localStorage.setItem(`draft_exp_location_${user.id}`, expLocation);
         }
-      }, 3000);
-    }
-    return () => {
-      if (skillsDBSaveRef.current) clearTimeout(skillsDBSaveRef.current);
-    };
-  }, [technicalSkills, userId]);
+        if (editingItem?.type === 'product') {
+          localStorage.setItem(`draft_product_status_${user.id}`, productStatus);
+        }
+        if (editingItem?.type === 'professional' || editingItem?.type === 'education') {
+          localStorage.setItem(`draft_start_month_${user.id}`, startMonth);
+          localStorage.setItem(`draft_start_year_${user.id}`, startYear);
+          localStorage.setItem(`draft_end_month_${user.id}`, endMonth);
+          localStorage.setItem(`draft_end_year_${user.id}`, endYear);
+          localStorage.setItem(`draft_is_current_${user.id}`, String(isCurrent));
+        }
+      } catch { /* ignore storage errors */ }
+    }, 400);
+  }, [user, profile, editingItem, expMode, expLocation, productStatus, startMonth, startYear, endMonth, endYear, isCurrent]);
 
-  // Persistence for Editing Item Draft
-  useEffect(() => {
-    if (user && editingItem) {
-      localStorage.setItem(`draft_vault_item_${user.id}`, JSON.stringify(editingItem));
-    }
-  }, [editingItem, user]);
-
-  // Persistence for Mode & Location Drafts
-  useEffect(() => {
-    if (user && editingItem?.type === 'professional') {
-      localStorage.setItem(`draft_exp_mode_${user.id}`, expMode);
-      localStorage.setItem(`draft_exp_location_${user.id}`, expLocation);
-    }
-  }, [expMode, expLocation, user, editingItem]);
-
-  // Persistence for Product Status Draft
-  useEffect(() => {
-    if (user && editingItem?.type === 'product') {
-      localStorage.setItem(`draft_product_status_${user.id}`, productStatus);
-    }
-  }, [productStatus, user, editingItem]);
-
-  // Persistence for Duration selectors
-  useEffect(() => {
-    if (user && (editingItem?.type === 'professional' || editingItem?.type === 'education')) {
-      localStorage.setItem(`draft_start_month_${user.id}`, startMonth);
-      localStorage.setItem(`draft_start_year_${user.id}`, startYear);
-      localStorage.setItem(`draft_end_month_${user.id}`, endMonth);
-      localStorage.setItem(`draft_end_year_${user.id}`, endYear);
-      localStorage.setItem(`draft_is_current_${user.id}`, String(isCurrent));
-    }
-  }, [startMonth, startYear, endMonth, endYear, isCurrent, user, editingItem]);
+  useEffect(() => { persistDraft(); return () => { if (persistTimer.current) clearTimeout(persistTimer.current); }; }, [persistDraft]);
 
   const updateDurationPeriod = (sm: string, sy: string, em: string, ey: string, curr: boolean) => {
     const endPart = curr ? "Present" : `${em} ${ey}`;
