@@ -19,12 +19,17 @@ import {
   Wifi,
   WifiOff,
   Settings2,
+  Sparkles,
+  ClipboardCheck,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { getAgentResumes, deleteAgentResume } from "@/lib/agentStorage";
 import { runAgentJob, getAutomationServiceUrl, setAutomationServiceUrl } from "@/lib/agentWorker";
 import { AgentExecutionLog } from "./AgentExecutionLog";
+import { buildAnswerPack, logApplication, deriveCompanyFromUrl, type AnswerPack } from "@/lib/smartApply";
 
 import type { SavedAgentResume } from "@/types/agent";
 import type { AgentLogEntry, AgentRunResult } from "@/types/agent";
