@@ -30,6 +30,7 @@ import { getAgentResumes, deleteAgentResume } from "@/lib/agentStorage";
 import { runAgentJob, getAutomationServiceUrl, setAutomationServiceUrl } from "@/lib/agentWorker";
 import { AgentExecutionLog } from "./AgentExecutionLog";
 import { buildAnswerPack, logApplication, deriveCompanyFromUrl, type AnswerPack } from "@/lib/smartApply";
+import { buildBookmarkletUrl } from "@/lib/luminaBookmarklet";
 
 import type { SavedAgentResume } from "@/types/agent";
 import type { AgentLogEntry, AgentRunResult } from "@/types/agent";
@@ -230,14 +231,20 @@ export const JobAgentDashboard: React.FC = () => {
       });
 
       if (logRes.ok) {
-        toast.success("Smart Apply ready", {
-          description: `Answer pack copied · Logged "${selected.jdTitle}" at ${company} to Pipeline.`,
+        toast.success("Smart Apply ready — your details are on your clipboard", {
+          description: `Form is open in a new tab. Click any field → Ctrl/Cmd+V. Logged "${selected.jdTitle}" at ${company} to Pipeline.`,
+          duration: 6000,
         });
       } else {
-        toast.success("Answer pack copied to clipboard", {
+        toast.success("Answer pack copied — paste with Ctrl/Cmd+V on the form", {
           description: `Pipeline log skipped: ${logRes.error}`,
+          duration: 6000,
         });
       }
+      // Scroll the answer pack panel into view so the user sees the value immediately.
+      setTimeout(() => {
+        document.getElementById("smart-apply-pack")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
     } catch (err) {
       console.error(err);
       toast.error("Smart Apply failed unexpectedly.");
@@ -681,6 +688,7 @@ export const JobAgentDashboard: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
+                id="smart-apply-pack"
                 className="bg-white border border-emerald-100 rounded-[2rem] p-6 shadow-sm space-y-4"
               >
                 <div className="flex items-center justify-between gap-2">
@@ -767,6 +775,35 @@ export const JobAgentDashboard: React.FC = () => {
                   <p className="text-[11px] text-slate-600 leading-relaxed bg-slate-50 rounded-xl p-3 border border-slate-100">
                     {answerPack.whyThisRole}
                   </p>
+                </div>
+
+                {/* ── One-click Autofill Bookmarklet ── */}
+                <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={12} className="text-emerald-600" />
+                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
+                      Lumina Autofill bookmarklet
+                    </p>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Drag the button below to your bookmarks bar <strong>once</strong>. On any application form, click the bookmark to auto-fill name, email, phone, LinkedIn, GitHub, summary and cover-letter fields. Works on Greenhouse, Lever, Ashby, Workable, and most generic HTML forms.
+                  </p>
+                  <div className="flex items-center gap-3 flex-wrap pt-1">
+                    <a
+                      href={buildBookmarkletUrl(answerPack)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toast.info("Drag this button to your bookmarks bar — don't click it here.");
+                      }}
+                      draggable
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 text-white text-[11px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-colors cursor-grab active:cursor-grabbing select-none shadow-sm shadow-emerald-500/20"
+                    >
+                      <Sparkles size={11} /> Lumina Autofill
+                    </a>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      ↑ Drag me to your bookmarks bar
+                    </span>
+                  </div>
                 </div>
               </motion.div>
             )}
