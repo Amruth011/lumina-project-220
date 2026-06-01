@@ -1280,6 +1280,22 @@ Return ONLY the JSON. No markdown, no comments.`
       // Reload local vault state to reflect updates
       await loadVault();
 
+      // Sync skills_section back to profile's technical_skills (Master Technical Skills)
+      if (editableResume.skills_section && editableResume.skills_section.length > 0) {
+        const parsedSkills: Record<string, string[]> = {};
+        for (const line of editableResume.skills_section) {
+          const colonIdx = line.indexOf(':');
+          if (colonIdx !== -1) {
+            const cat = line.slice(0, colonIdx).trim();
+            const skills = line.slice(colonIdx + 1).split(',').map(s => s.trim()).filter(Boolean);
+            if (cat && skills.length > 0) parsedSkills[cat] = skills;
+          }
+        }
+        if (Object.keys(parsedSkills).length > 0) {
+          await supabase.from("profiles").update({ technical_skills: parsedSkills }).eq("id", user.id);
+        }
+      }
+
       // 3. Save resume blueprint draft to generated_resumes table
       const { data, error } = await supabase.from("generated_resumes").upsert({
         ...(draftId ? { id: draftId } : {}),
@@ -2227,7 +2243,7 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
                       className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 ring-lumina-teal/20 transition-all cursor-pointer shadow-sm text-slate-800"
                     >
                       <option value="speed">âš¡ Blazing Fast Mode (Llama-3.1-8B)</option>
-                      <option value="quality">ðŸ§  Deep Intelligence Mode (Llama-3.3-70B)</option>
+                      <option value="quality">Deep Intelligence Mode (Llama-3.3-70B)</option>
                     </select>
                     <p className="text-[9px] text-slate-400 leading-relaxed px-1">
                       {tailorEngine === "speed" 
