@@ -1282,17 +1282,24 @@ Return ONLY the JSON. No markdown, no comments.`
 
       // Sync skills_section back to profile's technical_skills (Master Technical Skills)
       if (editableResume.skills_section && editableResume.skills_section.length > 0) {
-        const parsedSkills: Record<string, string[]> = {};
-        for (const line of editableResume.skills_section) {
-          const colonIdx = line.indexOf(':');
-          if (colonIdx !== -1) {
-            const cat = line.slice(0, colonIdx).trim();
-            const skills = line.slice(colonIdx + 1).split(',').map(s => s.trim()).filter(Boolean);
-            if (cat && skills.length > 0) parsedSkills[cat] = skills;
+        try {
+          const parsedSkills: Record<string, string[]> = {};
+          for (const line of editableResume.skills_section) {
+            const colonIdx = line.indexOf(':');
+            if (colonIdx !== -1) {
+              const cat = line.slice(0, colonIdx).trim();
+              const skills = line.slice(colonIdx + 1).split(',').map(s => s.trim()).filter(Boolean);
+              if (cat && skills.length > 0) parsedSkills[cat] = skills;
+            }
           }
-        }
-        if (Object.keys(parsedSkills).length > 0) {
-          await supabase.from("profiles").update({ technical_skills: parsedSkills }).eq("id", user.id);
+          if (Object.keys(parsedSkills).length > 0) {
+            const { error: skillError } = await supabase.from("profiles").update({ technical_skills: parsedSkills }).eq("id", user.id);
+            if (skillError && (skillError.message?.includes("column") || skillError.code === "PGRST102" || skillError.code === "42703")) {
+              if (user) localStorage.setItem(`fallback_skills_${user.id}`, JSON.stringify(parsedSkills));
+            }
+          }
+        } catch (e) {
+          console.warn("Skills sync to profile failed (non-blocking):", e);
         }
       }
 
