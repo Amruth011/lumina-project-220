@@ -336,51 +336,28 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
         throw new Error("Unable to retrieve valid session credentials.");
       }
 
-      // 3. Trigger API Call
-      const response = await fetch("/api/generate-roadmap", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          jd_data,
-          vault_data,
-          duration,
-          jd_id: null // optional field
-        })
+      // 3. Trigger Supabase edge function
+      const { data: dbRow, error: invokeError } = await supabase.functions.invoke("generate-roadmap", {
+        body: { jd_data, vault_data, duration, jd_id: null },
       });
 
-      if (!response.ok) {
-        let errMsg = `HTTP Error ${response.status}: Failed to compile roadmap.`;
+      if (invokeError) {
+        let errMsg = `Failed to compile roadmap: ${invokeError.message || "Unknown error"}`;
         try {
-          const text = await response.text();
-          try {
-            const errDetails = JSON.parse(text);
-            errMsg = errDetails.details ? `${errDetails.error}: ${errDetails.details}` : (errDetails.error || errDetails.message || errMsg);
-          } catch {
-            if (text && text.trim().length > 0) {
-              if (text.length < 500) {
-                errMsg = text;
-              } else if (text.includes("<title>")) {
-                const matches = text.match(/<title>([^<]+)<\/title>/i);
-                if (matches && matches[1]) {
-                  errMsg = `Server Error: ${matches[1]}`;
-                } else {
-                  errMsg = `Serverless Function error (HTTP ${response.status}).`;
-                }
-              } else {
-                errMsg = `Serverless Function error (HTTP ${response.status}).`;
-              }
-            }
+          // FunctionsHttpError exposes context with the response
+          // deno-lint-ignore no-explicit-any
+          const ctx = (invokeError as any).context;
+          if (ctx?.json) {
+            const body = await ctx.json();
+            errMsg = body.details ? `${body.error}: ${body.details}` : (body.error || errMsg);
           }
-        } catch (readErr) {
-          console.error("Error reading error response:", readErr);
-        }
+        } catch { /* ignore */ }
         throw new Error(errMsg);
       }
 
-      const dbRow = await response.json();
+      if (!dbRow) {
+        throw new Error("Edge function returned no data.");
+      }
       const rData = dbRow.roadmap_data as RoadmapData;
 
       setRoadmap(rData);
