@@ -59,6 +59,8 @@ export const JobAgentDashboard: React.FC = () => {
   const [backendStatus, setBackendStatus] = useState<"checking" | "connected" | "disconnected">("checking");
   const [showSettings, setShowSettings] = useState(false);
   const [backendUrl, setBackendUrl] = useState(getAutomationServiceUrl());
+  const [answerPack, setAnswerPack] = useState<AnswerPack | null>(null);
+  const [smartApplying, setSmartApplying] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // ── Load vault ─────────────────────────────────────────────────────────
