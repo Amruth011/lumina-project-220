@@ -255,6 +255,7 @@ export const ResumePreview = ({
   const [openSection, setOpenSection] = useState<string | null>("profile");
   const [showVaultPicker, setShowVaultPicker] = useState<{ section: 'experience' | 'projects' | 'products' | 'education' | 'certifications' | 'leadership', index?: number } | null>(null);
   const [activeTab, setActiveTab] = useState<'resume' | 'cover-letter'>(initialTab || 'resume');
+  const [skillsViewMode, setSkillsViewMode] = useState<'category' | 'flat'>('category');
 
   // Sync active tab when parent overrides it (e.g., after cover letter generation)
   useEffect(() => {
@@ -1242,6 +1243,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                 isOpen={openSection === "skills"} 
                 onToggle={() => setOpenSection(openSection === "skills" ? null : "skills")}
               >
+                {skillsViewMode === "category" ? (
                 <div className="space-y-4 pt-2">
                   {(localResume.skills_section || []).map((skillLine, i) => {
                     const colonIndex = skillLine.indexOf(':');
@@ -1291,6 +1293,45 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                     className="text-[9px] font-bold text-lumina-teal flex items-center gap-1.5 uppercase tracking-widest pt-3 border-t border-slate-100 mt-2 w-full justify-center hover:text-slate-800 transition-colors"
                   >
                     <Plus size={12} /> Add Skill Category
+                  </button>
+                </div>
+                ) : (
+                <div className="space-y-2 pt-2">
+                  <textarea
+                    value={(localResume.skills_section || []).join("\n")}
+                    onChange={(e) => {
+                      const lines = e.target.value.split("\n").filter(Boolean);
+                      updateResumeState({ ...localResume, skills_section: lines });
+                    }}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-medium outline-none min-h-[120px] resize-y"
+                    placeholder="Programming Languages: Python, JavaScript, TypeScript&#10;AI / ML: PyTorch, TensorFlow&#10;Data Science: Pandas, NumPy"
+                  />
+                  <p className="text-[9px] text-slate-400 font-medium">One category per line: Category Name: skill1, skill2, skill3</p>
+                </div>
+                )}
+                <div className="flex justify-end pt-2">
+                  <button
+                    onClick={() => {
+                      if (skillsViewMode === "category") {
+                        setSkillsViewMode("flat");
+                      } else {
+                        const parsed = (localResume.skills_section || [])
+                          .map(line => {
+                            const idx = line.indexOf(":");
+                            if (idx === -1) return null;
+                            return { category: line.slice(0, idx).trim(), skills: line.slice(idx + 1).trim() };
+                          })
+                          .filter(Boolean) as { category: string; skills: string }[];
+                        if (parsed.length === 0 && (localResume.skills_section || []).length > 0) {
+                          const flat = (localResume.skills_section || []).join(", ");
+                          updateResumeState({ ...localResume, skills_section: [`Skills: ${flat}`] });
+                        }
+                        setSkillsViewMode("category");
+                      }
+                    }}
+                    className="text-[9px] font-bold text-lumina-teal uppercase tracking-widest hover:text-slate-800 transition-colors"
+                  >
+                    {skillsViewMode === "category" ? "Switch to Flat View" : "Switch to Category View"}
                   </button>
                 </div>
               </CollapsibleSection>
