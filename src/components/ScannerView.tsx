@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Brain, Filter, LayoutDashboard, Search, LogOut, LogIn, Loader2, Save, BookmarkCheck, CheckCircle2, RefreshCw, ArrowRight, Shield, Zap, BarChart3, Briefcase, BrainCircuit, ShieldCheck, Info, Download } from "lucide-react";
@@ -123,6 +123,11 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
   const [inputMode, setInputMode] = useState<"text" | "url">("text");
   const [jdUrl, setJdUrl] = useState("");
   const [bypassCache, setBypassCache] = useState(false);
+
+  const memoizedSkills = useMemo(
+    () => results ? scavengeSkills(results.skills, results, jdText) : [],
+    [results, jdText]
+  );
 
   // ── Engine Configuration States ──
 
@@ -394,7 +399,7 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                 {results ? (
                   <div className="space-y-12">
                     <ResumeGapAnalyzer
-                      skills={scavengeSkills(results.skills, results, jdText)}
+                      skills={memoizedSkills}
                       jobTitle={results.title}
                       jdText={jdText}
                       onResultChange={setGapResult}

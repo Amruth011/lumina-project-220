@@ -189,10 +189,14 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
     if (file) processFile(file);
   };
 
+  const isComparingRef = useRef(false);
+
   const handleCompare = useCallback(async () => {
     const trimmedResume = (resumeText || "").trim();
     if (trimmedResume.length < 20) return;
+    if (isComparingRef.current) return;
 
+    isComparingRef.current = true;
     setIsAnalyzing(true);
     setResult(null);
     try {
@@ -264,16 +268,20 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
     } catch (err) {
       toast.error("Analysis failed. Showing static scores.");
     } finally {
+      isComparingRef.current = false;
       setIsAnalyzing(false);
     }
   }, [resumeText, skills, jobTitle]);
 
 
+  const handleCompareRef = useRef(handleCompare);
+  handleCompareRef.current = handleCompare;
+
   useEffect(() => {
     if (isAutoRunEnabled && resumeText && resumeText !== lastAnalyzedText && !isAnalyzing && !isParsing) {
-      handleCompare();
+      handleCompareRef.current();
     }
-  }, [resumeText, isAutoRunEnabled, lastAnalyzedText, isAnalyzing, isParsing, handleCompare]);
+  }, [resumeText, isAutoRunEnabled, lastAnalyzedText, isAnalyzing, isParsing]);
 
   const handleAddToTracker = async () => {
     if (!result) return;
