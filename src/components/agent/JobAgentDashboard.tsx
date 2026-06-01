@@ -193,6 +193,68 @@ export const JobAgentDashboard: React.FC = () => {
     }
   };
 
+  // ── Smart Apply (reliable, no backend needed) ─────────────────────────
+  const handleSmartApply = async () => {
+    if (!selected) {
+      toast.error("Select a saved resume first.");
+      return;
+    }
+    if (!portalUrl.trim() || !isValidUrl(portalUrl)) {
+      setUrlError("Enter a valid application URL.");
+      return;
+    }
+    setSmartApplying(true);
+    try {
+      const pack = buildAnswerPack(selected);
+      setAnswerPack(pack);
+
+      // 1. Copy answer pack to clipboard
+      try {
+        await navigator.clipboard.writeText(pack.combined);
+      } catch {
+        // clipboard may be blocked; UI fallback shows the pack
+      }
+
+      // 2. Open the application URL in a new tab
+      const win = window.open(portalUrl, "_blank", "noopener,noreferrer");
+      if (!win) {
+        toast.warning("Popup blocked — please allow popups and click Smart Apply again.");
+      }
+
+      // 3. Log to Pipeline (best-effort)
+      const company = deriveCompanyFromUrl(portalUrl);
+      const logRes = await logApplication({
+        company,
+        role: selected.jdTitle,
+        url: portalUrl,
+      });
+
+      if (logRes.ok) {
+        toast.success("Smart Apply ready", {
+          description: `Answer pack copied · Logged "${selected.jdTitle}" at ${company} to Pipeline.`,
+        });
+      } else {
+        toast.success("Answer pack copied to clipboard", {
+          description: `Pipeline log skipped: ${logRes.error}`,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Smart Apply failed unexpectedly.");
+    } finally {
+      setSmartApplying(false);
+    }
+  };
+
+  const copyField = async (label: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error("Clipboard blocked by browser.");
+    }
+  };
+
   // ── Empty vault state ──────────────────────────────────────────────────
   const isEmpty = savedResumes.length === 0;
 
