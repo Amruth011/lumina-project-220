@@ -178,7 +178,7 @@ export const MasterVault = () => {
   });
   const [suggestedSkills, setSuggestedSkills] = useState<Record<string, string[]>>({});
   const [isScanningSkills, setIsScanningSkills] = useState(false);
-  // Sync technical skills from profile
+  // Sync technical skills from profile (with localStorage draft fallback)
   useEffect(() => {
     if (profile && userId) {
       const skillsFromProfile = profile.technical_skills;
@@ -193,12 +193,24 @@ export const MasterVault = () => {
 
       const sourceSkills = skillsFromProfile || defaultSkills;
 
+      // Restore unsaved localStorage draft if it exists (user imported skills but didn't save yet)
+      let merged = { ...sourceSkills };
+      const draftStr = localStorage.getItem(`draft_skills_${userId}`);
+      if (draftStr) {
+        try {
+          const draft = JSON.parse(draftStr);
+          if (draft && typeof draft === "object") {
+            merged = { ...merged, ...draft };
+          }
+        } catch (e) { /* ignore corrupt draft */ }
+      }
+
       setTechnicalSkills({
-        "Programming Languages": sourceSkills["Programming Languages"] || [],
-        "Infrastructure / DevOps": sourceSkills["Infrastructure / DevOps"] || [],
-        "AI / ML": sourceSkills["AI / ML"] || [],
-        "Data Science": sourceSkills["Data Science"] || [],
-        "Software Engineering / Others": sourceSkills["Software Engineering / Others"] || [],
+        "Programming Languages": merged["Programming Languages"] || [],
+        "Infrastructure / DevOps": merged["Infrastructure / DevOps"] || [],
+        "AI / ML": merged["AI / ML"] || [],
+        "Data Science": merged["Data Science"] || [],
+        "Software Engineering / Others": merged["Software Engineering / Others"] || [],
       });
     }
   }, [profile, userId]);
@@ -391,6 +403,13 @@ export const MasterVault = () => {
       localStorage.setItem(`draft_summary_${user.id}`, profile.summary_master);
     }
   }, [profile?.summary_master, user]);
+
+  // Persistence for Technical Skills (survive refresh without explicit save)
+  useEffect(() => {
+    if (userId) {
+      localStorage.setItem(`draft_skills_${userId}`, JSON.stringify(technicalSkills));
+    }
+  }, [technicalSkills, userId]);
 
   // Persistence for Editing Item Draft
   useEffect(() => {
@@ -1062,6 +1081,7 @@ RETURN JSON FORMAT ONLY:
       if (user) {
         localStorage.removeItem(`draft_profile_${user.id}`);
         localStorage.removeItem(`draft_summary_${user.id}`);
+        localStorage.removeItem(`draft_skills_${user.id}`);
       }
       toast.success("Profile updated in Master Vault.");
     } catch (err) {
