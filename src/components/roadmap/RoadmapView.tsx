@@ -422,6 +422,26 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       });
 
       if (invokeError) {
+        const isMissingFunction = invokeError.message?.toLowerCase().includes("not found") || invokeError.message?.includes("404");
+        if (isMissingFunction) {
+          const fallbackRoadmap = buildLocalRoadmap(results, jdText, duration);
+          const { data: savedRoadmap } = await supabase
+            .from("roadmaps")
+            .insert({ user_id: user.id, jd_id: null, duration, roadmap_data: fallbackRoadmap })
+            .select("id, roadmap_data")
+            .single();
+          const fallbackId = savedRoadmap?.id || `local-${Date.now()}`;
+          setRoadmap(fallbackRoadmap);
+          setRoadmapId(fallbackId);
+          sessionStorage.setItem("current_roadmap_id", fallbackId);
+          sessionStorage.setItem("current_roadmap_jd_title", results?.title || "");
+          setCompletedTaskIds(new Set());
+          toast.success("Roadmap generated with resilient fallback mode.", {
+            id: toastId,
+            description: "Cloud generation is still deploying, so Lumina created a deterministic syllabus from your JD analysis.",
+          });
+          return;
+        }
         let errMsg = `Failed to compile roadmap: ${invokeError.message || "Unknown error"}`;
         try {
           // FunctionsHttpError exposes context with the response
