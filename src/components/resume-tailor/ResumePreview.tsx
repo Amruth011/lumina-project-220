@@ -199,6 +199,8 @@ export const ResumePreview = ({
   onDownloadCL,
   onUpdateCoverLetter,
   onSave,
+  onSaveEdits,
+  hasSavedEdits,
   initialTab,
   nameFontSize,
   headlineFontSize,
