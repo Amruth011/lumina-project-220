@@ -3,7 +3,6 @@ import { LogOut, User, Search, ShieldCheck, Zap, Mail, Compass, Bot, FileText, B
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { LuminaLogo } from "./LuminaLogo";
 import type { Tab } from "@/types/tabs";
 
 interface GlobalNavbarProps {
@@ -35,22 +34,19 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
 
     if (isHomePage) {
       navigate("/dashboard", { state: { activeTab: tabKey } });
-    } else {
-      if (onTabChange) {
-        onTabChange(tabKey);
-      }
+    } else if (onTabChange) {
+      onTabChange(tabKey);
     }
   };
 
   const tabs = [
+    { key: "profile" as Tab, icon: User, label: "Profile" },
     { key: "decode" as Tab, icon: Search, label: "JD Decode" },
     { key: "analysis" as Tab, icon: ShieldCheck, label: "Analysis" },
-    { key: "profile" as Tab, icon: User, label: "Profile" },
     { key: "generator" as Tab, icon: Zap, label: "Generator" },
     { key: "cover-letter" as Tab, icon: Mail, label: "Cover Letter" },
     { key: "roadmap" as Tab, icon: Compass, label: "Roadmap" },
     { key: "agent" as Tab, icon: Bot, label: "Job Agent", badge: true },
-    
     { key: "arsenal" as Tab, icon: FileText, label: "Arsenal" },
     { key: "pipeline" as Tab, icon: Briefcase, label: "Pipeline" },
     { key: "scoring" as Tab, icon: Target, label: "Scoring" },
@@ -58,80 +54,124 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
   ] as { key: Tab; icon: React.ElementType; label: string; badge?: boolean }[];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[100] px-6 py-2 w-full pointer-events-none">
-      <div className="h-[50px] rounded-full max-w-5xl mx-auto px-0 py-0 flex items-center justify-between pointer-events-auto relative overflow-visible">
-        {/* The Brand Pill Backdrop */}
-        <div className="absolute inset-0 rounded-full bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border/10 -z-10" />
-        
-          <Link to="/" className="flex items-center gap-1.5 group pl-4 transition-transform hover:scale-105">
-            <LuminaLogo size={120} className="object-contain" />
-          </Link>
+    <nav className="fixed top-3 bottom-3 left-3 z-[100] w-14 hover:w-56 group/nav transition-all duration-300 ease-out">
+      <div className="h-full w-full rounded-2xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-border/10 flex flex-col py-3 overflow-hidden">
+        {/* Brand */}
+        <Link
+          to="/"
+          className="flex items-center gap-3 px-3 mb-3 group/brand"
+          title="Lumina"
+        >
+          <div className="w-8 h-8 rounded-lg bg-lumina-teal flex items-center justify-center flex-shrink-0 shadow-md">
+            <span className="text-white font-display font-black text-sm">L</span>
+          </div>
+          <span className="text-[14px] font-display font-bold tracking-tight whitespace-nowrap opacity-0 group-hover/nav:opacity-100 transition-opacity duration-200">
+            Lumina
+          </span>
+        </Link>
 
-        {/* Global Tactical Tabs */}
-        <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-full border border-border/10 shadow-inner overflow-x-auto no-scrollbar flex-1 md:flex-none">
-          {tabs.map((tab) => (
-            <button 
-              key={tab.key} 
-              onClick={() => handleTabClick(tab.key)} 
-              className={`relative flex items-center gap-2 px-5 py-2.5 rounded-full text-[12px] font-display font-bold transition-all duration-500 whitespace-nowrap ${
-                effectiveActiveTab === tab.key
-                  ? "text-white"
-                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+        {/* Profile First */}
+        {user ? (
+          <div className="px-2 mb-2">
+            <button
+              onClick={() => handleTabClick("profile")}
+              className={`relative w-full flex items-center gap-3 px-2 py-2 rounded-xl transition-all ${
+                effectiveActiveTab === "profile"
+                  ? "bg-lumina-teal/10"
+                  : "hover:bg-foreground/5"
               }`}
+              title={user.email ?? "Profile"}
             >
-              {effectiveActiveTab === tab.key && (
-                <motion.div
-                  layoutId="globalActiveTab"
-                  className="absolute inset-0 bg-lumina-teal rounded-full shadow-lg shadow-teal-500/20"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
-              )}
-              <span className="relative z-10 flex items-center gap-2">
-                <tab.icon size={14} className={activeTab === tab.key ? 'text-white' : 'text-primary/40'} />
-                <span className="tracking-tight">{tab.label}</span>
-                {tab.badge && effectiveActiveTab !== tab.key && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                )}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 pr-1 py-1">
-          {user ? (
-            <div className="hidden sm:flex items-center gap-3 px-4">
-              <div className="flex flex-col items-end">
-                <span className="text-[10px] text-foreground font-black uppercase tracking-widest leading-none">Strategist</span>
-                <span className="text-[12px] text-muted-foreground font-semibold truncate max-w-[150px]">
-                  {user.email?.split('@')[0]}
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-lumina-teal to-emerald-400 flex items-center justify-center flex-shrink-0 text-white font-bold text-xs">
+                {(user.email?.[0] ?? "U").toUpperCase()}
+              </div>
+              <div className="flex flex-col items-start min-w-0 opacity-0 group-hover/nav:opacity-100 transition-opacity duration-200">
+                <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest leading-none">Strategist</span>
+                <span className="text-[12px] text-foreground font-semibold truncate max-w-[140px]">
+                  {user.email?.split("@")[0]}
                 </span>
               </div>
+            </button>
+          </div>
+        ) : (
+          <div className="px-2 mb-2">
+            <Link
+              to="/auth"
+              className="w-full flex items-center gap-3 px-2 py-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all"
+              title="Sign In"
+            >
+              <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
+                <User size={16} />
+              </div>
+              <span className="text-[12px] font-bold uppercase tracking-wide whitespace-nowrap opacity-0 group-hover/nav:opacity-100 transition-opacity duration-200">
+                Sign In
+              </span>
+            </Link>
+          </div>
+        )}
+
+        <div className="mx-3 h-px bg-border/40 mb-2" />
+
+        <div className="px-2 mb-1 opacity-0 group-hover/nav:opacity-100 transition-opacity duration-200">
+          <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest pl-2">Menu</span>
+        </div>
+
+        {/* Features */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-2 space-y-1">
+          {tabs.filter(t => t.key !== "profile").map((tab) => {
+            const isActive = effectiveActiveTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => handleTabClick(tab.key)}
+                className={`relative w-full flex items-center gap-3 px-2 py-2 rounded-xl text-[12px] font-display font-semibold transition-all ${
+                  isActive
+                    ? "text-white"
+                    : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+                }`}
+                title={tab.label}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="globalActiveTab"
+                    className="absolute inset-0 bg-lumina-teal rounded-xl shadow-lg shadow-teal-500/20"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                <span className="relative z-10 w-8 h-8 flex items-center justify-center flex-shrink-0">
+                  <tab.icon size={16} />
+                </span>
+                <span className="relative z-10 tracking-tight whitespace-nowrap opacity-0 group-hover/nav:opacity-100 transition-opacity duration-200">
+                  {tab.label}
+                </span>
+                {tab.badge && !isActive && (
+                  <span className="relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse opacity-100 group-hover/nav:mr-2" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Sign Out */}
+        {user && (
+          <>
+            <div className="mx-3 h-px bg-border/40 my-2" />
+            <div className="px-2">
               <button
                 onClick={signOut}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-red-50 hover:bg-red-100 border border-red-200 text-red-500 transition-all"
+                className="w-full flex items-center gap-3 px-2 py-2 rounded-xl text-red-500 hover:bg-red-50 transition-all"
                 title="Sign Out"
               >
-                <LogOut size={16} />
+                <span className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                  <LogOut size={16} />
+                </span>
+                <span className="text-[12px] font-display font-semibold whitespace-nowrap opacity-0 group-hover/nav:opacity-100 transition-opacity duration-200">
+                  Sign Out
+                </span>
               </button>
             </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link 
-                to="/auth" 
-                className="px-6 py-2.5 text-foreground/60 hover:text-foreground text-[12px] font-bold transition-colors hidden sm:block tracking-tight"
-              >
-                Sign In
-              </Link>
-              <Link
-                to="/auth"
-                className="group relative rounded-full px-8 py-3.5 bg-primary text-primary-foreground text-[11px] font-black uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95 overflow-hidden"
-              >
-                <span className="relative z-10">Get Started</span>
-                <div className="absolute inset-0 bg-accent-emerald translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-              </Link>
-            </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </nav>
   );
