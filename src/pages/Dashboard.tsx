@@ -25,7 +25,7 @@ const Dashboard = () => {
         <TooltipTour />
         <HistoryPanel />
         <GlobalNavbar activeTab={activeTab} onTabChange={setActiveTab} />
-        <section id="scanner" className="relative pt-24 pb-12 bg-background min-h-screen">
+        <section id="scanner" className="relative pl-20 pt-8 pb-12 bg-background min-h-screen">
           <ScannerView activeTab={activeTab} onTabChange={setActiveTab} />
         </section>
       </Suspense>
