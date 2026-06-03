@@ -24,6 +24,7 @@ export const useSequenceShortcut = (sequence: string[], handler: () => void) => 
     let timeout: NodeJS.Timeout;
 
     const listener = (event: KeyboardEvent) => {
+      if (!event.key) return;
       pressedKeys.push(event.key.toLowerCase());
       clearTimeout(timeout);
 
