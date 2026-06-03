@@ -148,31 +148,92 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
     toast.success("Copied to clipboard!");
   };
 
-  const processFile = async (file: File) => {
+  const extractFileText = async (file: File): Promise<string> => {
     const ext = file.name.toLowerCase().split(".").pop();
-    setFileName(file.name);
-    setIsParsing(true);
-    try {
-      let text = "";
-      if (ext === "pdf") text = await extractPdfText(file);
-      else if (ext === "docx") text = await extractDocxText(file);
-      else text = await file.text();
-
-      if (text.length < 20) throw new Error("File content too short.");
-      setResumeText(text);
-      setResult(null);
-      setIsOpen(true);
-      toast.success("Ready for analysis");
-    } catch (err) {
-      toast.error("Error parsing file.");
-    } finally {
-      setIsParsing(false);
-    }
+    if (ext === "pdf") return extractPdfText(file);
+    if (ext === "docx") return extractDocxText(file);
+    return file.text();
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) processFile(file);
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    e.target.value = "";
+
+    const availableSlots = MAX_CANDIDATES - candidates.length;
+    if (availableSlots <= 0) {
+      toast.error(`You can upload up to ${MAX_CANDIDATES} resumes. Remove one to add another.`);
+      return;
+    }
+    const toProcess = files.slice(0, availableSlots);
+    if (files.length > availableSlots) {
+      toast.info(`Only the first ${availableSlots} of ${files.length} files were added (limit ${MAX_CANDIDATES}).`);
+    }
+
+    setIsParsing(true);
+    setIsOpen(true);
+    const newCandidates: ResumeCandidate[] = [];
+    for (const file of toProcess) {
+      try {
+        const text = await extractFileText(file);
+        if (text.trim().length < 20) {
+          toast.error(`${file.name}: content too short.`);
+          continue;
+        }
+        const det = computeDeterministicScore(text.trim(), skills);
+        newCandidates.push({
+          id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          name: file.name,
+          text: text.trim(),
+          score: det.overall_match,
+        });
+      } catch {
+        toast.error(`Failed to parse ${file.name}`);
+      }
+    }
+    setIsParsing(false);
+
+    if (!newCandidates.length) return;
+
+    const merged = [...candidates, ...newCandidates].sort((a, b) => b.score - a.score);
+    setCandidates(merged);
+    const winner = merged[0];
+    setSelectedCandidateId(winner.id);
+    setResumeText(winner.text);
+    setFileName(winner.name);
+    setResult(null);
+    toast.success(
+      newCandidates.length === 1
+        ? `Added "${newCandidates[0].name}" (${newCandidates[0].score}% ATS)`
+        : `Lumina picked "${winner.name}" — top ATS match (${winner.score}%) of ${merged.length} resumes`
+    );
+  };
+
+  const selectCandidate = (id: string) => {
+    const c = candidates.find((x) => x.id === id);
+    if (!c) return;
+    setSelectedCandidateId(id);
+    setResumeText(c.text);
+    setFileName(c.name);
+    setResult(null);
+  };
+
+  const removeCandidate = (id: string) => {
+    const remaining = candidates.filter((c) => c.id !== id);
+    setCandidates(remaining);
+    if (selectedCandidateId === id) {
+      const next = remaining[0];
+      if (next) {
+        setSelectedCandidateId(next.id);
+        setResumeText(next.text);
+        setFileName(next.name);
+      } else {
+        setSelectedCandidateId(null);
+        setResumeText("");
+        setFileName("");
+      }
+      setResult(null);
+    }
   };
 
   const isComparingRef = useRef(false);
