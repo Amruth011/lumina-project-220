@@ -471,10 +471,65 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
                     {isParsing ? <Loader2 className="w-16 h-16 text-primary animate-spin" /> : <CloudUpload className="w-16 h-16 text-muted-foreground/20 group-hover/upload:text-primary/40 transition-colors" />}
                     <div className="text-center relative z-10">
                         <p className="text-xl font-display font-bold text-foreground/90">{fileName || "Inject Resume Signal"}</p>
-                        <p className="text-xs text-muted-foreground mt-2 font-medium tracking-wide">PDF or Semantic Textual Signature</p>
+                        <p className="text-xs text-muted-foreground mt-2 font-medium tracking-wide">
+                          Upload up to {MAX_CANDIDATES} PDFs — Lumina ranks ATS fit and auto-selects the top one
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1 font-medium">
+                          {candidates.length} / {MAX_CANDIDATES} resumes loaded
+                        </p>
                     </div>
-                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf" className="hidden" />
+                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf,.docx" multiple className="hidden" />
                 </div>
+
+                {candidates.length > 0 && (
+                  <div className="md:col-span-12 -mt-4">
+                    <div className="p-6 rounded-[2rem] bg-slate-50/50 border border-border/10 space-y-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Trophy className="w-4 h-4 text-accent-emerald" />
+                        <span className="text-[11px] font-black uppercase tracking-widest text-foreground/70">
+                          Resume Battle — Lumina's Pick Highlighted
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {candidates.map((c, idx) => {
+                          const isWinner = idx === 0;
+                          const isSelected = c.id === selectedCandidateId;
+                          return (
+                            <div
+                              key={c.id}
+                              onClick={() => selectCandidate(c.id)}
+                              className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-2 ${
+                                isSelected
+                                  ? "border-accent-emerald bg-accent-emerald/5 shadow-sm"
+                                  : "border-border/30 bg-white hover:border-accent-emerald/40"
+                              }`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  {isWinner && <Trophy className="w-3 h-3 text-accent-emerald shrink-0" />}
+                                  <span className="text-[11px] font-bold text-foreground truncate">{c.name}</span>
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                  {c.score}% ATS match
+                                </span>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeCandidate(c.id);
+                                }}
+                                className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center shrink-0"
+                                title="Remove"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="md:col-span-4 space-y-6">
                     <div className="p-8 rounded-[2.5rem] bg-slate-50/50 border border-border/10 space-y-4">
