@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import type { Tab } from "@/types/tabs";
+import luminaIcon from "@/assets/lumina-icon.png.asset.json";
 
 interface GlobalNavbarProps {
   activeTab?: Tab;
@@ -62,8 +63,8 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
           className="flex items-center gap-3 px-3 mb-3 group/brand"
           title="Lumina"
         >
-          <div className="w-8 h-8 rounded-lg bg-lumina-teal flex items-center justify-center flex-shrink-0 shadow-md">
-            <span className="text-white font-display font-black text-sm">L</span>
+          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center flex-shrink-0 shadow-md border border-border/20 overflow-hidden">
+            <img src={luminaIcon.url} alt="Lumina" className="w-6 h-6 object-contain" />
           </div>
           <span className="text-[14px] font-display font-bold tracking-tight whitespace-nowrap opacity-0 group-hover/nav:opacity-100 transition-opacity duration-200">
             Lumina
