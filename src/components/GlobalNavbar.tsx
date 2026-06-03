@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import type { Tab } from "@/types/tabs";
+import luminaIcon from "@/assets/lumina-icon.png.asset.json";
 
 interface GlobalNavbarProps {
   activeTab?: Tab;
