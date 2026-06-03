@@ -2,19 +2,17 @@ import { useState, useRef, useEffect, useCallback } from "react";
 // Important: Use static import with ?url so Vite bundler properly packages the worker file for Vercel
 import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Loader2, ArrowRight, Upload, PlusCircle as PlusCircleIcon, AlertTriangle, CheckCircle2, XCircle, Sparkles, Copy, ShieldCheck, Edit3, Trash2, Plus, Download, BarChart3, Zap, TrendingUp, CloudUpload, MessageSquare } from "lucide-react";
+import { FileText, Loader2, ArrowRight, Upload, PlusCircle as PlusCircleIcon, AlertTriangle, CheckCircle2, XCircle, Sparkles, Copy, ShieldCheck, Edit3, Trash2, Plus, Download, BarChart3, Zap, TrendingUp, CloudUpload, MessageSquare, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { saveApplication, type TrackedApplication } from "@/hooks/useApplications";
 import type { Skill, ResumeGapResult, ResumeDeduction } from "@/types/jd";
 import { computeDeterministicScore } from "@/lib/deterministicScorer";
-import { buildResumeTextFromProfileJson } from "@/lib/profileSeed";
-import { getCachedResumeAnalysis, setCachedResumeAnalysis } from "@/lib/resumeAnalysisCache";
+import { clearResumeAnalysisCache } from "@/lib/resumeAnalysisCache";
 import { MatchHero } from "./gap-analysis/MatchHero";
 import { ComparisonMatrix } from "./gap-analysis/ComparisonMatrix";
 import { GapRecommendations } from "./gap-analysis/GapRecommendations";
 import { GapAnalyzerSkeleton } from "./gap-analysis/GapAnalyzerSkeleton";
-import { getAgentResumes } from "@/lib/agentStorage";
 import jsPDF from "jspdf";
 
 interface ResumeGapAnalyzerProps {
