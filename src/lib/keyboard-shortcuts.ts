@@ -5,6 +5,7 @@ type ShortcutHandler = (event: KeyboardEvent) => void;
 export const useKeyboardShortcut = (key: string, handler: ShortcutHandler, metaKey = true) => {
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
+      if (!event.key) return;
       const isMeta = metaKey ? (event.metaKey || event.ctrlKey) : true;
       if (event.key.toLowerCase() === key.toLowerCase() && isMeta) {
         event.preventDefault();
@@ -23,6 +24,7 @@ export const useSequenceShortcut = (sequence: string[], handler: () => void) => 
     let timeout: NodeJS.Timeout;
 
     const listener = (event: KeyboardEvent) => {
+      if (!event.key) return;
       pressedKeys.push(event.key.toLowerCase());
       clearTimeout(timeout);
 

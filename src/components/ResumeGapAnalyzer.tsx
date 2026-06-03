@@ -2,19 +2,17 @@ import { useState, useRef, useEffect, useCallback } from "react";
 // Important: Use static import with ?url so Vite bundler properly packages the worker file for Vercel
 import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Loader2, ArrowRight, Upload, PlusCircle as PlusCircleIcon, AlertTriangle, CheckCircle2, XCircle, Sparkles, Copy, ShieldCheck, Edit3, Trash2, Plus, Download, BarChart3, Zap, TrendingUp, CloudUpload, MessageSquare } from "lucide-react";
+import { FileText, Loader2, ArrowRight, Upload, PlusCircle as PlusCircleIcon, AlertTriangle, CheckCircle2, XCircle, Sparkles, Copy, ShieldCheck, Edit3, Trash2, Plus, Download, BarChart3, Zap, TrendingUp, CloudUpload, MessageSquare, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { saveApplication, type TrackedApplication } from "@/hooks/useApplications";
 import type { Skill, ResumeGapResult, ResumeDeduction } from "@/types/jd";
 import { computeDeterministicScore } from "@/lib/deterministicScorer";
-import { buildResumeTextFromProfileJson } from "@/lib/profileSeed";
-import { getCachedResumeAnalysis, setCachedResumeAnalysis } from "@/lib/resumeAnalysisCache";
+import { clearResumeAnalysisCache } from "@/lib/resumeAnalysisCache";
 import { MatchHero } from "./gap-analysis/MatchHero";
 import { ComparisonMatrix } from "./gap-analysis/ComparisonMatrix";
 import { GapRecommendations } from "./gap-analysis/GapRecommendations";
 import { GapAnalyzerSkeleton } from "./gap-analysis/GapAnalyzerSkeleton";
-import { getAgentResumes } from "@/lib/agentStorage";
 import jsPDF from "jspdf";
 
 interface ResumeGapAnalyzerProps {
@@ -65,39 +63,27 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
   const [showReplaceDialog, setShowReplaceDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
-  // ── Auto-Load Latest Generated Resume or Pre-seed from user_profile.json ──
-  const loadResumeSource = useCallback(() => {
-    // 1. Try to load the most recently generated resume from the Job Agent Vault
-    const agentVault = getAgentResumes();
-    const generatedForThisJd = agentVault.find(r => r.jdTitle === jobTitle || r.jdTitle === "Target Role") || agentVault[0];
-    
-    if (generatedForThisJd && generatedForThisJd.resumeText) {
-      setResumeText(generatedForThisJd.resumeText);
-      setFileName(`${jobTitle?.replace(/\s+/g, '_') || 'Generated'}_Resume.txt`);
-      return;
-    }
+  // ── Multi-Resume Battle: upload up to 5, Lumina picks best ATS match ──
+  interface ResumeCandidate {
+    id: string;
+    name: string;
+    text: string;
+    score: number;
+  }
+  const MAX_CANDIDATES = 5;
+  const [candidates, setCandidates] = useState<ResumeCandidate[]>([]);
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
 
-    // 2. Fallback to base user profile
-    fetch('/user_profile.json')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((profile) => {
-        if (profile) {
-          const text = buildResumeTextFromProfileJson(profile);
-          setResumeText(text);
-          setFileName(`${profile.personal_info?.fullName?.replace(/\s+/g, '_') || 'Profile'}_Resume.txt`);
-        }
-      })
-      .catch(() => { /* silent — no profile seed */ });
-  }, [jobTitle]);
-
+  // ── Always start empty: clear any stale cache on mount ──
   useEffect(() => {
-    loadResumeSource();
-    
-    // Listen for new resume generations to immediately update the Gap Analyzer
-    const handleVaultUpdate = () => loadResumeSource();
-    window.addEventListener("lumina_agent_vault_updated", handleVaultUpdate);
-    return () => window.removeEventListener("lumina_agent_vault_updated", handleVaultUpdate);
-  }, [loadResumeSource]);
+    clearResumeAnalysisCache();
+    setResumeText("");
+    setFileName("");
+    setResult(null);
+    setLastAnalyzedText("");
+    setCandidates([]);
+    setSelectedCandidateId(null);
+  }, []);
 
   const handleExportPDF = async () => {
     if (!result) return;
@@ -162,31 +148,92 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
     toast.success("Copied to clipboard!");
   };
 
-  const processFile = async (file: File) => {
+  const extractFileText = async (file: File): Promise<string> => {
     const ext = file.name.toLowerCase().split(".").pop();
-    setFileName(file.name);
-    setIsParsing(true);
-    try {
-      let text = "";
-      if (ext === "pdf") text = await extractPdfText(file);
-      else if (ext === "docx") text = await extractDocxText(file);
-      else text = await file.text();
-
-      if (text.length < 20) throw new Error("File content too short.");
-      setResumeText(text);
-      setResult(null);
-      setIsOpen(true);
-      toast.success("Ready for analysis");
-    } catch (err) {
-      toast.error("Error parsing file.");
-    } finally {
-      setIsParsing(false);
-    }
+    if (ext === "pdf") return extractPdfText(file);
+    if (ext === "docx") return extractDocxText(file);
+    return file.text();
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) processFile(file);
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    e.target.value = "";
+
+    const availableSlots = MAX_CANDIDATES - candidates.length;
+    if (availableSlots <= 0) {
+      toast.error(`You can upload up to ${MAX_CANDIDATES} resumes. Remove one to add another.`);
+      return;
+    }
+    const toProcess = files.slice(0, availableSlots);
+    if (files.length > availableSlots) {
+      toast.info(`Only the first ${availableSlots} of ${files.length} files were added (limit ${MAX_CANDIDATES}).`);
+    }
+
+    setIsParsing(true);
+    setIsOpen(true);
+    const newCandidates: ResumeCandidate[] = [];
+    for (const file of toProcess) {
+      try {
+        const text = await extractFileText(file);
+        if (text.trim().length < 20) {
+          toast.error(`${file.name}: content too short.`);
+          continue;
+        }
+        const det = computeDeterministicScore(text.trim(), skills);
+        newCandidates.push({
+          id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          name: file.name,
+          text: text.trim(),
+          score: det.overall_match,
+        });
+      } catch {
+        toast.error(`Failed to parse ${file.name}`);
+      }
+    }
+    setIsParsing(false);
+
+    if (!newCandidates.length) return;
+
+    const merged = [...candidates, ...newCandidates].sort((a, b) => b.score - a.score);
+    setCandidates(merged);
+    const winner = merged[0];
+    setSelectedCandidateId(winner.id);
+    setResumeText(winner.text);
+    setFileName(winner.name);
+    setResult(null);
+    toast.success(
+      newCandidates.length === 1
+        ? `Added "${newCandidates[0].name}" (${newCandidates[0].score}% ATS)`
+        : `Lumina picked "${winner.name}" — top ATS match (${winner.score}%) of ${merged.length} resumes`
+    );
+  };
+
+  const selectCandidate = (id: string) => {
+    const c = candidates.find((x) => x.id === id);
+    if (!c) return;
+    setSelectedCandidateId(id);
+    setResumeText(c.text);
+    setFileName(c.name);
+    setResult(null);
+  };
+
+  const removeCandidate = (id: string) => {
+    const remaining = candidates.filter((c) => c.id !== id);
+    setCandidates(remaining);
+    if (selectedCandidateId === id) {
+      const next = remaining[0];
+      if (next) {
+        setSelectedCandidateId(next.id);
+        setResumeText(next.text);
+        setFileName(next.name);
+      } else {
+        setSelectedCandidateId(null);
+        setResumeText("");
+        setFileName("");
+      }
+      setResult(null);
+    }
   };
 
   const isComparingRef = useRef(false);
@@ -424,10 +471,65 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
                     {isParsing ? <Loader2 className="w-16 h-16 text-primary animate-spin" /> : <CloudUpload className="w-16 h-16 text-muted-foreground/20 group-hover/upload:text-primary/40 transition-colors" />}
                     <div className="text-center relative z-10">
                         <p className="text-xl font-display font-bold text-foreground/90">{fileName || "Inject Resume Signal"}</p>
-                        <p className="text-xs text-muted-foreground mt-2 font-medium tracking-wide">PDF or Semantic Textual Signature</p>
+                        <p className="text-xs text-muted-foreground mt-2 font-medium tracking-wide">
+                          Upload up to {MAX_CANDIDATES} PDFs — Lumina ranks ATS fit and auto-selects the top one
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1 font-medium">
+                          {candidates.length} / {MAX_CANDIDATES} resumes loaded
+                        </p>
                     </div>
-                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf" className="hidden" />
+                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf,.docx" multiple className="hidden" />
                 </div>
+
+                {candidates.length > 0 && (
+                  <div className="md:col-span-12 -mt-4">
+                    <div className="p-6 rounded-[2rem] bg-slate-50/50 border border-border/10 space-y-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Trophy className="w-4 h-4 text-accent-emerald" />
+                        <span className="text-[11px] font-black uppercase tracking-widest text-foreground/70">
+                          Resume Battle — Lumina's Pick Highlighted
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {candidates.map((c, idx) => {
+                          const isWinner = idx === 0;
+                          const isSelected = c.id === selectedCandidateId;
+                          return (
+                            <div
+                              key={c.id}
+                              onClick={() => selectCandidate(c.id)}
+                              className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-2 ${
+                                isSelected
+                                  ? "border-accent-emerald bg-accent-emerald/5 shadow-sm"
+                                  : "border-border/30 bg-white hover:border-accent-emerald/40"
+                              }`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  {isWinner && <Trophy className="w-3 h-3 text-accent-emerald shrink-0" />}
+                                  <span className="text-[11px] font-bold text-foreground truncate">{c.name}</span>
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                  {c.score}% ATS match
+                                </span>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeCandidate(c.id);
+                                }}
+                                className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center shrink-0"
+                                title="Remove"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="md:col-span-4 space-y-6">
                     <div className="p-8 rounded-[2.5rem] bg-slate-50/50 border border-border/10 space-y-4">
