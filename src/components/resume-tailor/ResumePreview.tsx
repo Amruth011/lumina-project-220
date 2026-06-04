@@ -817,8 +817,8 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                         }
 
                         const updateDurationStr = (sm: string, sy: string, em: string, ey: string, curr: boolean) => {
-                          const endPart = curr ? "Present" : `${em} ${ey}`;
-                          const nextStr = `${sm} ${sy} – ${endPart}`;
+                          const endPart = curr ? "Present" : `${abbrMonth(em)} ${ey}`;
+                          const nextStr = `${abbrMonth(sm)} ${sy} – ${endPart}`;
                           updateExperience(idx, 'content', nextStr);
                         };
 
