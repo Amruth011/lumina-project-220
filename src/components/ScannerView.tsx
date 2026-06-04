@@ -443,6 +443,7 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                     <ResumeGenerator
                       jdTitle={results.title}
                       jdSkills={results.skills}
+                      forceTab="resume"
                     />
                     {gapResult && (
                       <ResumeEnhancer

@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Download, Sparkles, Copy, X, Wand2, FileText, CheckCircle2, AlertCircle, ArrowRight, Github, Linkedin, Mail, MapPin, Plus, Minus, Archive, ArrowUp, ArrowDown, Type, Eye } from "lucide-react";
+import { Loader2, Download, Sparkles, Copy, X, Wand2, FileText, CheckCircle2, AlertCircle, ArrowRight, Github, Linkedin, Mail, MapPin, Plus, Minus, Archive, ArrowUp, ArrowDown, Type, Eye, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -69,6 +69,9 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
   const [resumeSettingsActive, setResumeSettingsActive] = useState(false);
   const [clSettingsActive, setClSettingsActive] = useState(false);
   const [clActiveTab, setClActiveTab] = useState<'resume' | 'cover-letter'>(forceTab || 'resume');
+  const [outreachMessage, setOutreachMessage] = useState<string | null>(null);
+  const [isGeneratingMsg, setIsGeneratingMsg] = useState(false);
+  const [msgChannel, setMsgChannel] = useState<'LinkedIn' | 'Email' | 'Referral'>('LinkedIn');
   const previewRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -1975,6 +1978,76 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
     }
   };
 
+  const generateOutreachMessage = async () => {
+    const candidateName = editableHeader?.fullName || profile?.full_name || 'the candidate';
+    const targetCompany = companyName || 'your team';
+    const contextData = editableResume || {
+      experience: vaultItems.map(v => ({ heading: v.title + (v.organization ? ` @ ${v.organization}` : ""), bullets: v.bullets || [] }))
+    };
+
+    setIsGeneratingMsg(true);
+    toast.loading("Drafting outreach message...", { id: "msg-gen" });
+
+    const channelHint = msgChannel === 'LinkedIn'
+      ? 'a LinkedIn connection / InMail note (max 700 characters, conversational, no salutation block).'
+      : msgChannel === 'Email'
+        ? 'a short cold email body to a hiring manager (90-130 words, no greeting, no sign-off).'
+        : 'a brief referral-request message sent to an internal employee (under 120 words).';
+
+    const systemPrompt = `You are an elite outreach copywriter for senior tech candidates.
+Write a SHORT, professional outreach message for ${channelHint}
+Hard rules:
+- Output ONLY the message body. No "Hi", "Dear", "Hello", "Best", "Thanks,", "[Your Name]", no subject line, no markdown, no bullet lists.
+- 3 to 5 sentences. Plain text. Confident, human, specific.
+- Reference the role (${jdTitle || 'the role'}) and 1-2 concrete proofs from the candidate's experience.
+- No AI-isms ("delve", "passionate about", "thrilled", "synergy", "leverage", "robust").
+- Never invent metrics. Only use what is in the candidate context.`;
+
+    const userPrompt = `Candidate Name: ${candidateName}
+Target Company: ${targetCompany}
+Target Role: ${jdTitle || 'Not specified'}
+Key JD Skills: ${jdSkills?.length ? jdSkills.slice(0, 6).map(s => s.skill).join(", ") : 'Not specified'}
+Channel: ${msgChannel}
+
+Candidate Experience Context:
+${JSON.stringify(contextData).slice(0, 4000)}
+
+Write the message body only.`;
+
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze", {
+        body: {
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.6,
+        },
+      });
+      if (error) throw error;
+      let content: string = data?.choices?.[0]?.message?.content || "";
+      if (!content) throw new Error("Empty response");
+      content = content
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/^(Hi|Hello|Hey|Dear|Greetings)[^\n]*\n+/i, '')
+        .replace(/\n+(Best|Thanks|Thank you|Regards|Sincerely|Cheers)[\s\S]*$/i, '')
+        .replace(/\[Your Name\]/gi, candidateName)
+        .replace(/\[Company\]/gi, targetCompany)
+        .replace(/\[Role\]/gi, jdTitle || 'the role')
+        .trim();
+      setOutreachMessage(content);
+      toast.success("Outreach message ready!", { id: "msg-gen" });
+    } catch (err) {
+      console.error("Message gen error:", err);
+      toast.error("Could not draft message. Try again.", { id: "msg-gen" });
+    } finally {
+      setIsGeneratingMsg(false);
+    }
+  };
+
+
+
   const handleDownloadCL = (format: 'pdf' | 'doc') => {
     if (!coverLetter) return;
       const safeName = (editableHeader.fullName || profile?.full_name || "Resume").replace(/[^a-z0-9]/gi, '_');
@@ -2135,7 +2208,9 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
 
       {/* â”€â”€ ACTION SUITE: DUAL ENGINES â”€â”€ */}
       <div className="relative z-10 w-full mt-16 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <div className={`grid grid-cols-1 ${forceTab ? '' : 'lg:grid-cols-2'} gap-10`}>
+          {forceTab !== 'cover-letter' && (
+          <>
           {/* 1. Resume Blueprint Engine */}
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
@@ -2414,7 +2489,11 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
               )}
             </div>
           </motion.div>
+          </>
+          )}
 
+          {forceTab !== 'resume' && (
+          <>
           {/* 2. Cover Letter Synthesis */}
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
@@ -2561,6 +2640,86 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
               </div>
             )}
           </motion.div>
+
+          {/* 3. Outreach Message Synthesis */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="glass-panel p-10 rounded-[4rem] border-foreground/5 bg-white shadow-2xl shadow-slate-200/50 flex flex-col space-y-8 relative overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-lumina-teal/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-lumina-teal/10 transition-colors" />
+            <div className="space-y-6 relative z-10">
+              <div className="flex items-center justify-between">
+                <div className="w-14 h-14 rounded-2xl bg-lumina-teal/10 flex items-center justify-center text-lumina-teal border border-lumina-teal/10">
+                  <MessageSquare size={28} />
+                </div>
+                {outreachMessage && (
+                  <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                    <CheckCircle2 size={12} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Message Ready</span>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-serif italic text-slate-900">Outreach Message</h3>
+                <p className="text-[13px] text-slate-500 font-medium leading-relaxed">
+                  A short, professional note for the hiring team — perfect for LinkedIn, cold email, or referral asks.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Channel</label>
+                <div className="flex gap-2">
+                  {(['LinkedIn', 'Email', 'Referral'] as const).map(c => (
+                    <button
+                      key={c}
+                      onClick={() => setMsgChannel(c)}
+                      className={`flex-1 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all ${msgChannel === c ? 'bg-lumina-teal text-white shadow-lg shadow-teal-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={generateOutreachMessage}
+                disabled={isGeneratingMsg}
+                className="relative overflow-hidden flex items-center justify-center gap-4 w-full py-6 rounded-full text-[12px] font-black uppercase tracking-[0.2em] bg-lumina-teal text-white hover:scale-[1.02] transition-all duration-300 active:scale-95 disabled:opacity-70 shadow-xl shadow-teal-500/20"
+              >
+                {isGeneratingMsg ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> Drafting...</>
+                ) : outreachMessage ? (
+                  <><MessageSquare className="w-5 h-5" /> Regenerate Message</>
+                ) : (
+                  <><MessageSquare className="w-5 h-5" /> Generate Message</>
+                )}
+              </button>
+
+              {outreachMessage && (
+                <div className="space-y-3 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Preview</p>
+                  <textarea
+                    value={outreachMessage}
+                    onChange={(e) => setOutreachMessage(e.target.value)}
+                    rows={7}
+                    className="w-full p-4 rounded-2xl bg-slate-50/80 border border-slate-100 text-[12px] text-slate-700 leading-relaxed font-sans focus:outline-none focus:ring-2 focus:ring-lumina-teal/20"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(outreachMessage);
+                      toast.success("Message copied to clipboard");
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-slate-50 border border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 transition-all"
+                  >
+                    <Copy size={12} /> Copy Message
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+          </>
+          )}
         </div>
 
         <div className="mt-16 flex flex-col items-center space-y-8">
