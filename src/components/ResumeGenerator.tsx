@@ -1978,6 +1978,76 @@ Write ONLY the body paragraphs. No salutation, no sign-off, no markdown, no plac
     }
   };
 
+  const generateOutreachMessage = async () => {
+    const candidateName = editableHeader?.fullName || profile?.full_name || 'the candidate';
+    const targetCompany = companyName || 'your team';
+    const contextData = editableResume || {
+      experience: vaultItems.map(v => ({ heading: v.title + (v.organization ? ` @ ${v.organization}` : ""), bullets: v.bullets || [] }))
+    };
+
+    setIsGeneratingMsg(true);
+    toast.loading("Drafting outreach message...", { id: "msg-gen" });
+
+    const channelHint = msgChannel === 'LinkedIn'
+      ? 'a LinkedIn connection / InMail note (max 700 characters, conversational, no salutation block).'
+      : msgChannel === 'Email'
+        ? 'a short cold email body to a hiring manager (90-130 words, no greeting, no sign-off).'
+        : 'a brief referral-request message sent to an internal employee (under 120 words).';
+
+    const systemPrompt = `You are an elite outreach copywriter for senior tech candidates.
+Write a SHORT, professional outreach message for ${channelHint}
+Hard rules:
+- Output ONLY the message body. No "Hi", "Dear", "Hello", "Best", "Thanks,", "[Your Name]", no subject line, no markdown, no bullet lists.
+- 3 to 5 sentences. Plain text. Confident, human, specific.
+- Reference the role (${jdTitle || 'the role'}) and 1-2 concrete proofs from the candidate's experience.
+- No AI-isms ("delve", "passionate about", "thrilled", "synergy", "leverage", "robust").
+- Never invent metrics. Only use what is in the candidate context.`;
+
+    const userPrompt = `Candidate Name: ${candidateName}
+Target Company: ${targetCompany}
+Target Role: ${jdTitle || 'Not specified'}
+Key JD Skills: ${jdSkills?.length ? jdSkills.slice(0, 6).map(s => s.skill).join(", ") : 'Not specified'}
+Channel: ${msgChannel}
+
+Candidate Experience Context:
+${JSON.stringify(contextData).slice(0, 4000)}
+
+Write the message body only.`;
+
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze", {
+        body: {
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.6,
+        },
+      });
+      if (error) throw error;
+      let content: string = data?.choices?.[0]?.message?.content || "";
+      if (!content) throw new Error("Empty response");
+      content = content
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/^(Hi|Hello|Hey|Dear|Greetings)[^\n]*\n+/i, '')
+        .replace(/\n+(Best|Thanks|Thank you|Regards|Sincerely|Cheers)[\s\S]*$/i, '')
+        .replace(/\[Your Name\]/gi, candidateName)
+        .replace(/\[Company\]/gi, targetCompany)
+        .replace(/\[Role\]/gi, jdTitle || 'the role')
+        .trim();
+      setOutreachMessage(content);
+      toast.success("Outreach message ready!", { id: "msg-gen" });
+    } catch (err) {
+      console.error("Message gen error:", err);
+      toast.error("Could not draft message. Try again.", { id: "msg-gen" });
+    } finally {
+      setIsGeneratingMsg(false);
+    }
+  };
+
+
+
   const handleDownloadCL = (format: 'pdf' | 'doc') => {
     if (!coverLetter) return;
       const safeName = (editableHeader.fullName || profile?.full_name || "Resume").replace(/[^a-z0-9]/gi, '_');
