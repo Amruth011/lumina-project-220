@@ -21,7 +21,9 @@ interface ResumeGapAnalyzerProps {
   jdText?: string;
   onResumeTextChange?: (text: string) => void;
   onResultChange?: (result: ResumeGapResult | null) => void;
+  onNavigateToGenerator?: () => void;
 }
+
 
 async function extractPdfText(file: File): Promise<string> {
   const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
@@ -47,7 +49,7 @@ async function extractDocxText(file: File): Promise<string> {
   return result.value;
 }
 
-export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange, onResultChange }: ResumeGapAnalyzerProps) => {
+export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange, onResultChange, onNavigateToGenerator }: ResumeGapAnalyzerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [resumeText, setResumeText] = useState("");
   const [fileName, setFileName] = useState("");
@@ -90,43 +92,132 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
     try {
       const pdf = new jsPDF("p", "mm", "a4");
       const pageWidth = pdf.internal.pageSize.getWidth();
-      let y = 20;
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 18;
+      const maxWidth = pageWidth - margin * 2;
+      let y = margin;
 
+      const ensureSpace = (need: number) => {
+        if (y + need > pageHeight - margin) {
+          pdf.addPage();
+          y = margin;
+        }
+      };
+
+      const writeWrapped = (text: string, size = 10, bold = false, color: [number, number, number] = [30, 42, 58]) => {
+        pdf.setFont("helvetica", bold ? "bold" : "normal");
+        pdf.setFontSize(size);
+        pdf.setTextColor(color[0], color[1], color[2]);
+        const lines = pdf.splitTextToSize(text, maxWidth);
+        for (const line of lines) {
+          ensureSpace(size * 0.45 + 2);
+          pdf.text(line, margin, y);
+          y += size * 0.45 + 2;
+        }
+      };
+
+      // ── Header band ──
+      pdf.setFillColor(16, 185, 129);
+      pdf.rect(0, 0, pageWidth, 4, "F");
+      y = margin;
+      writeWrapped("Lumina Resume Intelligence Report", 20, true, [16, 185, 129]);
+      writeWrapped(
+        `${jobTitle || "Target Role"} — Generated ${new Date().toLocaleString()}`,
+        9,
+        false,
+        [120, 120, 120]
+      );
+      if (fileName) writeWrapped(`Source resume: ${fileName}`, 9, false, [120, 120, 120]);
+      y += 4;
+
+      // ── Headline score ──
+      pdf.setDrawColor(230, 230, 230);
+      pdf.setFillColor(245, 250, 247);
+      ensureSpace(28);
+      pdf.roundedRect(margin, y, maxWidth, 24, 4, 4, "FD");
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(18);
-      pdf.setTextColor(16, 185, 129); // #10B981 Teal
-      pdf.text("Lumina Strategy: Path to 100% Match", 20, y);
-      
-      y += 15;
-      pdf.setFontSize(12);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(`Match Score: ${result.overall_match}%`, 20, y);
-      
-      y += 10;
-      pdf.text("Executive Summary:", 20, y);
-      y += 7;
+      pdf.setFontSize(28);
+      pdf.setTextColor(16, 185, 129);
+      pdf.text(`${result.overall_match}%`, margin + 6, y + 17);
+      pdf.setFontSize(10);
+      pdf.setTextColor(60, 60, 60);
+      pdf.text("Overall ATS / JD Match Score", margin + 40, y + 11);
       pdf.setFont("helvetica", "normal");
-      const summaryLines = pdf.splitTextToSize(result.summary, pageWidth - 40);
-      pdf.text(summaryLines, 20, y);
-      y += summaryLines.length * 7;
+      pdf.setFontSize(9);
+      pdf.setTextColor(110, 110, 110);
+      pdf.text(
+        `Top-scored resume out of ${candidates.length || 1} uploaded`,
+        margin + 40,
+        y + 17
+      );
+      y += 30;
 
-      y += 10;
-      pdf.setFont("helvetica", "bold");
-      pdf.text("Identified Gaps:", 20, y);
-      y += 7;
-      pdf.setFont("helvetica", "normal");
-      (result.deductions || []).forEach(d => {
-        const text = `- ${d.reason} (-${d.percent}%)`;
-        pdf.text(text, 25, y);
-        y += 7;
-      });
+      // ── Executive summary ──
+      writeWrapped("Executive Summary", 13, true);
+      y += 1;
+      writeWrapped(result.summary || "—", 10);
+      y += 4;
 
-      pdf.save("Match-Strategy.pdf");
-      toast.success("PDF Downloaded!");
+      // ── Skill signatures ──
+      const sm = result.skill_matches || [];
+      if (sm.length) {
+        writeWrapped("Skill Signature Breakdown", 13, true);
+        y += 1;
+        sm.forEach((s) => {
+          const verdictLabel = s.verdict === "strong" ? "STRONG" : s.verdict === "partial" ? "PARTIAL" : "MISSING";
+          const color: [number, number, number] =
+            s.verdict === "strong" ? [16, 185, 129] : s.verdict === "partial" ? [217, 119, 6] : [220, 38, 38];
+          writeWrapped(`• ${s.skill} — ${s.match_percent}% [${verdictLabel}]`, 10, true, color);
+          if (s.note) writeWrapped(`   ${s.note}`, 9, false, [90, 90, 90]);
+        });
+        y += 4;
+      }
+
+      // ── Identified gaps ──
+      const ds = result.deductions || [];
+      if (ds.length) {
+        writeWrapped("Identified Gaps & Score Impact", 13, true);
+        y += 1;
+        ds.forEach((d) => {
+          writeWrapped(`• ${d.reason}  (-${d.percent}%)`, 10, true, [220, 38, 38]);
+          if (d.fix_snippet) writeWrapped(`   Suggested rewrite: ${d.fix_snippet}`, 9, false, [60, 60, 60]);
+        });
+        y += 4;
+      }
+
+      // ── Tactical recommendations ──
+      const dirs = result.actionable_directives || [];
+      if (dirs.length) {
+        writeWrapped("Tactical Recommendations", 13, true);
+        y += 1;
+        dirs.forEach((d, i) => {
+          writeWrapped(`${i + 1}. ${d.action}`, 11, true, [16, 185, 129]);
+          writeWrapped(`   ${d.description}`, 10);
+        });
+      }
+
+      // ── Footer on every page ──
+      const total = pdf.getNumberOfPages();
+      for (let p = 1; p <= total; p++) {
+        pdf.setPage(p);
+        pdf.setFontSize(8);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text(
+          `Lumina Intelligence • Page ${p}/${total} • Confidential`,
+          pageWidth / 2,
+          pageHeight - 8,
+          { align: "center" }
+        );
+      }
+
+      pdf.save(`Lumina-Resume-Intelligence-${Date.now()}.pdf`);
+      toast.success("Detailed report downloaded");
     } catch (e) {
+      console.error(e);
       toast.error("Failed to generate PDF");
     }
   };
+
 
   const handleGenerateBullet = async (index: number, reason: string) => {
     setGeneratingFor(index);
@@ -210,13 +301,12 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
   };
 
   const selectCandidate = (id: string) => {
-    const c = candidates.find((x) => x.id === id);
-    if (!c) return;
-    setSelectedCandidateId(id);
-    setResumeText(c.text);
-    setFileName(c.name);
-    setResult(null);
+    if (id !== selectedCandidateId) {
+      toast.info("Analysis is locked to the top ATS-scoring resume. Remove it to promote another.");
+    }
   };
+
+
 
   const removeCandidate = (id: string) => {
     const remaining = candidates.filter((c) => c.id !== id);
@@ -472,7 +562,7 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
                     <div className="text-center relative z-10">
                         <p className="text-xl font-display font-bold text-foreground/90">{fileName || "Inject Resume Signal"}</p>
                         <p className="text-xs text-muted-foreground mt-2 font-medium tracking-wide">
-                          Upload up to {MAX_CANDIDATES} PDFs — Lumina ranks ATS fit and auto-selects the top one
+                          Upload 1 to {MAX_CANDIDATES} resumes (PDF/DOCX). Lumina ranks ATS fit and locks analysis to the top one.
                         </p>
                         <p className="text-[10px] text-muted-foreground/60 mt-1 font-medium">
                           {candidates.length} / {MAX_CANDIDATES} resumes loaded
@@ -584,23 +674,30 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
                       description: d.description,
                       type: "strategy" as const
                     }))}
+                    onApply={() => {
+                      if (onNavigateToGenerator) {
+                        onNavigateToGenerator();
+                      } else {
+                        toast.info("Open the Resume Generator tab to apply this recommendation.");
+                      }
+                    }}
                   />
                 </div>
 
                 {/* ── FINAL ACTIONS ── */}
-                <div className="mt-20 flex flex-col items-center gap-10">
-                  <button 
-                    onClick={handleAddToTracker} 
-                    disabled={addedToTracker} 
-                    className="px-16 py-7 rounded-full bg-[#10B981] text-[#1E2A3A] font-black uppercase tracking-[0.4em] text-[13px] hover:scale-110 active:scale-95 transition-all flex items-center gap-5 group shadow-2xl shadow-[#10B981]/20"
+                <div className="mt-20 flex flex-col items-center gap-6">
+                  <button
+                    onClick={handleExportPDF}
+                    className="px-14 py-6 rounded-full bg-[#10B981] text-white font-black uppercase tracking-[0.3em] text-[13px] hover:scale-105 active:scale-95 transition-all flex items-center gap-4 shadow-2xl shadow-[#10B981]/30"
                   >
-                    {addedToTracker ? <CheckCircle2 className="w-6 h-6" /> : <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform" />}
-                    {addedToTracker ? "Application Tracked" : "Initiate Pipeline Tracking"}
+                    <Download className="w-5 h-5" />
+                    Download Detailed Report (PDF)
                   </button>
-                  <button onClick={handleExportPDF} className="text-xs font-display font-bold uppercase tracking-[0.5em] text-[#1E2A3A]/40 hover:text-[#1E2A3A] transition-all duration-500 pb-1 border-b border-transparent hover:border-[#1E2A3A]/10">
-                    Download Intelligence Strategy
-                  </button>
+                  <p className="text-[11px] text-muted-foreground/70 font-medium tracking-wide text-center max-w-md">
+                    Full breakdown: skill signatures, score deductions, and tactical recommendations for the top-scored resume.
+                  </p>
                 </div>
+
               </div>
             )}
           </motion.div>
