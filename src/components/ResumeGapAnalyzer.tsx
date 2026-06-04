@@ -301,8 +301,11 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
   };
 
   const selectCandidate = (id: string) => {
-    const c = candidates.find((x) => x.id === id);
-    if (!c) return;
+    if (id !== selectedCandidateId) {
+      toast.info("Analysis is locked to the top ATS-scoring resume. Remove it to promote another.");
+    }
+  };
+
     setSelectedCandidateId(id);
     setResumeText(c.text);
     setFileName(c.name);
