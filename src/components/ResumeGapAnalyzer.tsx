@@ -306,11 +306,7 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
     }
   };
 
-    setSelectedCandidateId(id);
-    setResumeText(c.text);
-    setFileName(c.name);
-    setResult(null);
-  };
+
 
   const removeCandidate = (id: string) => {
     const remaining = candidates.filter((c) => c.id !== id);
