@@ -35,7 +35,16 @@ export const GapRecommendations = ({ recommendations, onApply }: GapRecommendati
           <motion.div
             key={i}
             whileHover={{ y: -5 }}
-            className="bg-white p-8 rounded-[2.5rem] border border-[#1E2A3A]/5 shadow-sm space-y-4 group"
+            onClick={() => onApply?.(rec)}
+            role={onApply ? "button" : undefined}
+            tabIndex={onApply ? 0 : undefined}
+            onKeyDown={(e) => {
+              if (onApply && (e.key === "Enter" || e.key === " ")) {
+                e.preventDefault();
+                onApply(rec);
+              }
+            }}
+            className={`bg-white p-8 rounded-[2.5rem] border border-[#1E2A3A]/5 shadow-sm space-y-4 group ${onApply ? "cursor-pointer hover:border-[#10B981]/40 hover:shadow-md transition-all" : ""}`}
           >
             <div className="w-12 h-12 rounded-2xl bg-[#F4F5F7] flex items-center justify-center group-hover:scale-110 transition-transform">
               {getIcon(rec.type)}
@@ -48,11 +57,16 @@ export const GapRecommendations = ({ recommendations, onApply }: GapRecommendati
               </p>
             </div>
 
-            <button className="flex items-center gap-2 text-[10px] font-display font-bold uppercase tracking-widest text-[#10B981] group-hover:translate-x-1 transition-transform">
-              Apply Suggestion <ArrowRight className="w-3.5 h-3.5" />
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onApply?.(rec); }}
+              className="flex items-center gap-2 text-[10px] font-display font-bold uppercase tracking-widest text-[#10B981] group-hover:translate-x-1 transition-transform"
+            >
+              Apply In Resume Generator <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </motion.div>
         ))}
+
       </div>
     </div>
   );
