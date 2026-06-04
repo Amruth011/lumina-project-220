@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { LogOut, User, Search, ShieldCheck, Zap, Mail, Compass, Bot, FileText, Briefcase, Target, Mic, ChevronRight, ChevronLeft } from "lucide-react";
+import { LogOut, User, Search, ShieldCheck, Zap, Mail, Compass, Bot, Mic, ChevronRight, ChevronLeft } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
