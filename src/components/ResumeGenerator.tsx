@@ -69,6 +69,9 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
   const [resumeSettingsActive, setResumeSettingsActive] = useState(false);
   const [clSettingsActive, setClSettingsActive] = useState(false);
   const [clActiveTab, setClActiveTab] = useState<'resume' | 'cover-letter'>(forceTab || 'resume');
+  const [outreachMessage, setOutreachMessage] = useState<string | null>(null);
+  const [isGeneratingMsg, setIsGeneratingMsg] = useState(false);
+  const [msgChannel, setMsgChannel] = useState<'LinkedIn' | 'Email' | 'Referral'>('LinkedIn');
   const previewRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
