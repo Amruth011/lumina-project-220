@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { LogOut, User, Search, ShieldCheck, Zap, Mail, Compass, Bot, FileText, Briefcase, Target, Mic, ChevronRight, ChevronLeft } from "lucide-react";
+import { LogOut, User, Search, ShieldCheck, Zap, Mail, Compass, Bot, Mic, ChevronRight, ChevronLeft } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -48,9 +48,6 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
     { key: "cover-letter" as Tab, icon: Mail, label: "Cover Letter" },
     { key: "roadmap" as Tab, icon: Compass, label: "Roadmap" },
     { key: "agent" as Tab, icon: Bot, label: "Job Agent", badge: true },
-    { key: "arsenal" as Tab, icon: FileText, label: "Arsenal" },
-    { key: "pipeline" as Tab, icon: Briefcase, label: "Pipeline" },
-    { key: "scoring" as Tab, icon: Target, label: "Scoring" },
     { key: "interview" as Tab, icon: Mic, label: "Interview" },
   ] as { key: Tab; icon: React.ElementType; label: string; badge?: boolean }[];
 
@@ -71,14 +68,14 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
           {/* Toggle Arrow */}
           <button
             onClick={() => setIsOpen((v) => !v)}
-            className="absolute -right-3 top-8 z-20 w-6 h-6 rounded-full bg-white border border-border/30 shadow-md flex items-center justify-center hover:bg-lumina-teal hover:text-white hover:border-lumina-teal transition-all"
+            className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white border border-border/40 shadow-lg flex items-center justify-center hover:bg-lumina-teal hover:text-white hover:border-lumina-teal transition-all"
             aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
           >
-            {isOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+            {isOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
           </button>
 
           {/* Brand */}
-          <Link to="/" className="flex items-center gap-3 px-3 mb-3" title="Lumina">
+          <Link to="/" className={`flex items-center ${isOpen ? "gap-3 px-3" : "justify-center px-0"} mb-3`} title="Lumina">
             <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center flex-shrink-0 shadow-md border border-border/20 overflow-hidden">
               <img src={luminaIcon.url} alt="Lumina" className="w-6 h-6 object-contain" />
             </div>
@@ -94,7 +91,7 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
             <div className="px-2 mb-2">
               <button
                 onClick={() => handleTabClick("profile")}
-                className={`relative w-full flex items-center gap-3 px-2 py-2 rounded-xl transition-all ${
+                className={`relative w-full flex items-center ${isOpen ? "gap-3 px-2" : "justify-center px-0"} py-2 rounded-xl transition-all ${
                   effectiveActiveTab === "profile" ? "bg-lumina-teal/10" : "hover:bg-foreground/5"
                 }`}
                 title={user.email ?? "Profile"}
@@ -116,7 +113,7 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
             <div className="px-2 mb-2">
               <Link
                 to="/auth"
-                className="w-full flex items-center gap-3 px-2 py-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all"
+                className={`w-full flex items-center ${isOpen ? "gap-3 px-2" : "justify-center px-0"} py-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all`}
                 title="Sign In"
               >
                 <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
@@ -147,7 +144,7 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
                 <button
                   key={tab.key}
                   onClick={() => handleTabClick(tab.key)}
-                  className={`relative w-full flex items-center gap-3 px-2 py-2 rounded-xl text-[12px] font-display font-semibold transition-all ${
+                  className={`relative w-full flex items-center ${isOpen ? "gap-3 px-2" : "justify-center px-0"} py-2 rounded-xl text-[12px] font-display font-semibold transition-all ${
                     isActive ? "text-white" : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
                   }`}
                   title={tab.label}
@@ -182,7 +179,7 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
               <div className="px-2">
                 <button
                   onClick={signOut}
-                  className="w-full flex items-center gap-3 px-2 py-2 rounded-xl text-red-500 hover:bg-red-50 transition-all"
+                  className={`w-full flex items-center ${isOpen ? "gap-3 px-2" : "justify-center px-0"} py-2 rounded-xl text-red-500 hover:bg-red-50 transition-all`}
                   title="Sign Out"
                 >
                   <span className="w-8 h-8 flex items-center justify-center flex-shrink-0">
