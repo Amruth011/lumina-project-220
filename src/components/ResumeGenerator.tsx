@@ -2489,7 +2489,11 @@ Write the message body only.`;
               )}
             </div>
           </motion.div>
+          </>
+          )}
 
+          {forceTab !== 'resume' && (
+          <>
           {/* 2. Cover Letter Synthesis */}
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
