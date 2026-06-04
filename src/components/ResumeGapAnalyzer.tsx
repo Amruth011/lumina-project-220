@@ -562,7 +562,7 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
                     <div className="text-center relative z-10">
                         <p className="text-xl font-display font-bold text-foreground/90">{fileName || "Inject Resume Signal"}</p>
                         <p className="text-xs text-muted-foreground mt-2 font-medium tracking-wide">
-                          Upload up to {MAX_CANDIDATES} PDFs — Lumina ranks ATS fit and auto-selects the top one
+                          Upload 1 to {MAX_CANDIDATES} resumes (PDF/DOCX). Lumina ranks ATS fit and locks analysis to the top one.
                         </p>
                         <p className="text-[10px] text-muted-foreground/60 mt-1 font-medium">
                           {candidates.length} / {MAX_CANDIDATES} resumes loaded
