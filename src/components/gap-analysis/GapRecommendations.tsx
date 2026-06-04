@@ -10,9 +10,11 @@ interface Recommendation {
 
 interface GapRecommendationsProps {
   recommendations: Recommendation[];
+  onApply?: (rec: Recommendation) => void;
 }
 
-export const GapRecommendations = ({ recommendations }: GapRecommendationsProps) => {
+export const GapRecommendations = ({ recommendations, onApply }: GapRecommendationsProps) => {
+
   const getIcon = (type: Recommendation["type"]) => {
     switch (type) {
       case "addition": return <Zap className="w-5 h-5 text-[#10B981]" />;
