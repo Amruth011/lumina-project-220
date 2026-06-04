@@ -134,6 +134,7 @@ export const ResumePreview = ({
   sectionOrder,
   companyName,
   jdTitle,
+  jdSkills,
   activeTabOverride,
   onTabChange
 }: ResumePreviewProps) => {
