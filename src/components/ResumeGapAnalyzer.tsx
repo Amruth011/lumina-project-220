@@ -674,23 +674,30 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
                       description: d.description,
                       type: "strategy" as const
                     }))}
+                    onApply={() => {
+                      if (onNavigateToGenerator) {
+                        onNavigateToGenerator();
+                      } else {
+                        toast.info("Open the Resume Generator tab to apply this recommendation.");
+                      }
+                    }}
                   />
                 </div>
 
                 {/* ── FINAL ACTIONS ── */}
-                <div className="mt-20 flex flex-col items-center gap-10">
-                  <button 
-                    onClick={handleAddToTracker} 
-                    disabled={addedToTracker} 
-                    className="px-16 py-7 rounded-full bg-[#10B981] text-[#1E2A3A] font-black uppercase tracking-[0.4em] text-[13px] hover:scale-110 active:scale-95 transition-all flex items-center gap-5 group shadow-2xl shadow-[#10B981]/20"
+                <div className="mt-20 flex flex-col items-center gap-6">
+                  <button
+                    onClick={handleExportPDF}
+                    className="px-14 py-6 rounded-full bg-[#10B981] text-white font-black uppercase tracking-[0.3em] text-[13px] hover:scale-105 active:scale-95 transition-all flex items-center gap-4 shadow-2xl shadow-[#10B981]/30"
                   >
-                    {addedToTracker ? <CheckCircle2 className="w-6 h-6" /> : <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform" />}
-                    {addedToTracker ? "Application Tracked" : "Initiate Pipeline Tracking"}
+                    <Download className="w-5 h-5" />
+                    Download Detailed Report (PDF)
                   </button>
-                  <button onClick={handleExportPDF} className="text-xs font-display font-bold uppercase tracking-[0.5em] text-[#1E2A3A]/40 hover:text-[#1E2A3A] transition-all duration-500 pb-1 border-b border-transparent hover:border-[#1E2A3A]/10">
-                    Download Intelligence Strategy
-                  </button>
+                  <p className="text-[11px] text-muted-foreground/70 font-medium tracking-wide text-center max-w-md">
+                    Full breakdown: skill signatures, score deductions, and tactical recommendations for the top-scored resume.
+                  </p>
                 </div>
+
               </div>
             )}
           </motion.div>
