@@ -1227,19 +1227,20 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                   <button
                     onClick={() => {
                       if (skillsViewMode === "category") {
+                        // Merge all categories into ONE flat "Skills:" line so the rendered resume actually changes.
+                        const allSkills: string[] = [];
+                        (localResume.skills_section || []).forEach(line => {
+                          const idx = line.indexOf(":");
+                          const tail = idx === -1 ? line : line.slice(idx + 1);
+                          tail.split(",").map(s => s.trim()).filter(Boolean).forEach(s => {
+                            if (!allSkills.includes(s)) allSkills.push(s);
+                          });
+                        });
+                        if (allSkills.length > 0) {
+                          updateResumeState({ ...localResume, skills_section: [`Skills: ${allSkills.join(", ")}`] });
+                        }
                         setSkillsViewMode("flat");
                       } else {
-                        const parsed = (localResume.skills_section || [])
-                          .map(line => {
-                            const idx = line.indexOf(":");
-                            if (idx === -1) return null;
-                            return { category: line.slice(0, idx).trim(), skills: line.slice(idx + 1).trim() };
-                          })
-                          .filter(Boolean) as { category: string; skills: string }[];
-                        if (parsed.length === 0 && (localResume.skills_section || []).length > 0) {
-                          const flat = (localResume.skills_section || []).join(", ");
-                          updateResumeState({ ...localResume, skills_section: [`Skills: ${flat}`] });
-                        }
                         setSkillsViewMode("category");
                       }
                     }}
