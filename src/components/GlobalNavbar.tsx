@@ -48,9 +48,6 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
     { key: "cover-letter" as Tab, icon: Mail, label: "Cover Letter" },
     { key: "roadmap" as Tab, icon: Compass, label: "Roadmap" },
     { key: "agent" as Tab, icon: Bot, label: "Job Agent", badge: true },
-    { key: "arsenal" as Tab, icon: FileText, label: "Arsenal" },
-    { key: "pipeline" as Tab, icon: Briefcase, label: "Pipeline" },
-    { key: "scoring" as Tab, icon: Target, label: "Scoring" },
     { key: "interview" as Tab, icon: Mic, label: "Interview" },
   ] as { key: Tab; icon: React.ElementType; label: string; badge?: boolean }[];
 
