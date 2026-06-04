@@ -2875,6 +2875,7 @@ Write the message body only.`;
               onUpdateCoverLetter={(updatedCL: string) => setCoverLetter(updatedCL)}
               companyName={companyName}
               jdTitle={jdTitle}
+              jdSkills={jdSkills}
               initialTab={clActiveTab}
               activeTabOverride={clActiveTab}
               onTabChange={(tab: 'resume' | 'cover-letter') => setClActiveTab(tab)}

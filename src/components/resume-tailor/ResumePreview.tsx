@@ -32,7 +32,13 @@ import {
   Loader2,
   ArrowRight
 } from "lucide-react";
-import { GeneratedResume, VaultItem } from "@/types/jd";
+import { GeneratedResume, VaultItem, Skill } from "@/types/jd";
+
+const abbrMonth = (m: string): string => {
+  if (!m) return m;
+  const map: Record<string, string> = { January: "Jan", February: "Feb", March: "Mar", April: "Apr", May: "May", June: "Jun", July: "Jul", August: "Aug", September: "Sept", October: "Oct", November: "Nov", December: "Dec" };
+  return map[m] || m.slice(0, 3);
+};
 import { toast } from "sonner";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
 import { MONTHS, YEARS } from "@/lib/constants";
@@ -83,6 +89,7 @@ interface ResumePreviewProps {
   sectionOrder?: string[];
   companyName?: string;
   jdTitle?: string;
+  jdSkills?: Skill[];
   activeTabOverride?: 'resume' | 'cover-letter';
   onTabChange?: (tab: 'resume' | 'cover-letter') => void;
 }
@@ -127,6 +134,7 @@ export const ResumePreview = ({
   sectionOrder,
   companyName,
   jdTitle,
+  jdSkills,
   activeTabOverride,
   onTabChange
 }: ResumePreviewProps) => {
@@ -811,8 +819,8 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                         }
 
                         const updateDurationStr = (sm: string, sy: string, em: string, ey: string, curr: boolean) => {
-                          const endPart = curr ? "Present" : `${em} ${ey}`;
-                          const nextStr = `${sm} ${sy} – ${endPart}`;
+                          const endPart = curr ? "Present" : `${abbrMonth(em)} ${ey}`;
+                          const nextStr = `${abbrMonth(sm)} ${sy} – ${endPart}`;
                           updateExperience(idx, 'content', nextStr);
                         };
 
@@ -1221,19 +1229,20 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                   <button
                     onClick={() => {
                       if (skillsViewMode === "category") {
+                        // Merge all categories into ONE flat "Skills:" line so the rendered resume actually changes.
+                        const allSkills: string[] = [];
+                        (localResume.skills_section || []).forEach(line => {
+                          const idx = line.indexOf(":");
+                          const tail = idx === -1 ? line : line.slice(idx + 1);
+                          tail.split(",").map(s => s.trim()).filter(Boolean).forEach(s => {
+                            if (!allSkills.includes(s)) allSkills.push(s);
+                          });
+                        });
+                        if (allSkills.length > 0) {
+                          updateResumeState({ ...localResume, skills_section: [`Skills: ${allSkills.join(", ")}`] });
+                        }
                         setSkillsViewMode("flat");
                       } else {
-                        const parsed = (localResume.skills_section || [])
-                          .map(line => {
-                            const idx = line.indexOf(":");
-                            if (idx === -1) return null;
-                            return { category: line.slice(0, idx).trim(), skills: line.slice(idx + 1).trim() };
-                          })
-                          .filter(Boolean) as { category: string; skills: string }[];
-                        if (parsed.length === 0 && (localResume.skills_section || []).length > 0) {
-                          const flat = (localResume.skills_section || []).join(", ");
-                          updateResumeState({ ...localResume, skills_section: [`Skills: ${flat}`] });
-                        }
                         setSkillsViewMode("category");
                       }
                     }}
@@ -1326,8 +1335,8 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                           const nextIsCurrent = fields.isCurrent !== undefined ? fields.isCurrent : parsedIsCurrent;
                           const nextGpa = fields.gpa !== undefined ? fields.gpa : gpaSection;
 
-                          const endPart = nextIsCurrent ? "Present" : `${nextEndMonth} ${nextEndYear}`;
-                          const timelineStr = `${nextStartMonth} ${nextStartYear} – ${endPart}`;
+                          const endPart = nextIsCurrent ? "Present" : `${abbrMonth(nextEndMonth)} ${nextEndYear}`;
+                          const timelineStr = `${abbrMonth(nextStartMonth)} ${nextStartYear} – ${endPart}`;
                           
                           const schoolPart = nextSchool ? ` @ ${nextSchool}` : "";
                           const locPart = (nextSchool && nextLocation) ? ` - ${nextLocation}` : (nextLocation ? ` @ ${nextLocation}` : "");
@@ -1910,14 +1919,28 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                   <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit', margin: 0, paddingBottom: '3px', borderBottom: '1px solid #1E2A3A', display: 'block', width: '100%', lineHeight: '1.4' }}>Skills</h4>
                                 </div>
                                 <div className="flex flex-col !font-inherit" style={{ fontFamily: 'inherit', gap: '0.5px' }}>
-                                  {(localResume.skills_section || []).map((skillLine, i) => {
-                                    const [category, skills] = (skillLine || "").split(':');
-                                    return (
-                                      <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
-                                        <span className="font-bold !font-inherit" style={{ fontFamily: 'inherit' }}>{(category || "").trim()}:</span> {(skills || "").trim()}
-                                      </p>
-                                    );
-                                  })}
+                                  {(() => {
+                                    const jdKeywordSet = new Set<string>((jdSkills || []).map(s => (s.skill || "").toLowerCase().trim()).filter(Boolean));
+                                    const renderSkillTokens = (str: string) => {
+                                      const parts = str.split(/(,\s*)/);
+                                      return parts.map((token, idx) => {
+                                        if (/^,\s*$/.test(token)) return <React.Fragment key={idx}>{token}</React.Fragment>;
+                                        const key = token.trim().toLowerCase();
+                                        const isMatch = key && (jdKeywordSet.has(key) || Array.from(jdKeywordSet).some(j => j && (key.includes(j) || j.includes(key))));
+                                        return isMatch
+                                          ? <strong key={idx} className="!font-inherit" style={{ fontWeight: 700 }}>{token}</strong>
+                                          : <React.Fragment key={idx}>{token}</React.Fragment>;
+                                      });
+                                    };
+                                    return (localResume.skills_section || []).map((skillLine, i) => {
+                                      const [category, skills] = (skillLine || "").split(':');
+                                      return (
+                                        <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
+                                          <span className="font-bold !font-inherit" style={{ fontFamily: 'inherit' }}>{(category || "").trim()}:</span> {renderSkillTokens((skills || "").trim())}
+                                        </p>
+                                      );
+                                    });
+                                  })()}
                                 </div>
                               </section>
                             ) : null;
