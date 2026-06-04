@@ -49,7 +49,7 @@ async function extractDocxText(file: File): Promise<string> {
   return result.value;
 }
 
-export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange, onResultChange }: ResumeGapAnalyzerProps) => {
+export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange, onResultChange, onNavigateToGenerator }: ResumeGapAnalyzerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [resumeText, setResumeText] = useState("");
   const [fileName, setFileName] = useState("");
