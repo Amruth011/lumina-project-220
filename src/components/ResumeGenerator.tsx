@@ -2210,7 +2210,8 @@ Write the message body only.`;
       <div className="relative z-10 w-full mt-16 max-w-7xl mx-auto">
         <div className={`grid grid-cols-1 ${forceTab ? '' : 'lg:grid-cols-2'} gap-10`}>
           {forceTab !== 'cover-letter' && (
-          /* 1. Resume Blueprint Engine */
+          <>
+          {/* 1. Resume Blueprint Engine */}
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
