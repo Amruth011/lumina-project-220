@@ -1919,14 +1919,28 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                   <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit', margin: 0, paddingBottom: '3px', borderBottom: '1px solid #1E2A3A', display: 'block', width: '100%', lineHeight: '1.4' }}>Skills</h4>
                                 </div>
                                 <div className="flex flex-col !font-inherit" style={{ fontFamily: 'inherit', gap: '0.5px' }}>
-                                  {(localResume.skills_section || []).map((skillLine, i) => {
-                                    const [category, skills] = (skillLine || "").split(':');
-                                    return (
-                                      <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
-                                        <span className="font-bold !font-inherit" style={{ fontFamily: 'inherit' }}>{(category || "").trim()}:</span> {(skills || "").trim()}
-                                      </p>
-                                    );
-                                  })}
+                                  {(() => {
+                                    const jdKeywordSet = new Set<string>((jdSkills || []).map(s => (s.skill || "").toLowerCase().trim()).filter(Boolean));
+                                    const renderSkillTokens = (str: string) => {
+                                      const parts = str.split(/(,\s*)/);
+                                      return parts.map((token, idx) => {
+                                        if (/^,\s*$/.test(token)) return <React.Fragment key={idx}>{token}</React.Fragment>;
+                                        const key = token.trim().toLowerCase();
+                                        const isMatch = key && (jdKeywordSet.has(key) || Array.from(jdKeywordSet).some(j => j && (key.includes(j) || j.includes(key))));
+                                        return isMatch
+                                          ? <strong key={idx} className="!font-inherit" style={{ fontWeight: 700 }}>{token}</strong>
+                                          : <React.Fragment key={idx}>{token}</React.Fragment>;
+                                      });
+                                    };
+                                    return (localResume.skills_section || []).map((skillLine, i) => {
+                                      const [category, skills] = (skillLine || "").split(':');
+                                      return (
+                                        <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
+                                          <span className="font-bold !font-inherit" style={{ fontFamily: 'inherit' }}>{(category || "").trim()}:</span> {renderSkillTokens((skills || "").trim())}
+                                        </p>
+                                      );
+                                    });
+                                  })()}
                                 </div>
                               </section>
                             ) : null;
