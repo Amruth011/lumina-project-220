@@ -75,7 +75,7 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
           </button>
 
           {/* Brand */}
-          <Link to="/" className="flex items-center gap-3 px-3 mb-3" title="Lumina">
+          <Link to="/" className={`flex items-center ${isOpen ? "gap-3 px-3" : "justify-center px-0"} mb-3`} title="Lumina">
             <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center flex-shrink-0 shadow-md border border-border/20 overflow-hidden">
               <img src={luminaIcon.url} alt="Lumina" className="w-6 h-6 object-contain" />
             </div>
