@@ -113,7 +113,7 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
             <div className="px-2 mb-2">
               <Link
                 to="/auth"
-                className="w-full flex items-center gap-3 px-2 py-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all"
+                className={`w-full flex items-center ${isOpen ? "gap-3 px-2" : "justify-center px-0"} py-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all`}
                 title="Sign In"
               >
                 <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
