@@ -91,7 +91,7 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
             <div className="px-2 mb-2">
               <button
                 onClick={() => handleTabClick("profile")}
-                className={`relative w-full flex items-center gap-3 px-2 py-2 rounded-xl transition-all ${
+                className={`relative w-full flex items-center ${isOpen ? "gap-3 px-2" : "justify-center px-0"} py-2 rounded-xl transition-all ${
                   effectiveActiveTab === "profile" ? "bg-lumina-teal/10" : "hover:bg-foreground/5"
                 }`}
                 title={user.email ?? "Profile"}
