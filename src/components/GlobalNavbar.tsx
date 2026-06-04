@@ -138,7 +138,7 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
 
           {/* Features */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-2 space-y-1">
-            {tabs.filter((t) => t.key !== "profile").map((tab) => {
+            {tabs.map((tab) => {
               const isActive = effectiveActiveTab === tab.key;
               return (
                 <button
