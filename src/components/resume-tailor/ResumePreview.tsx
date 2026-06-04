@@ -1332,8 +1332,8 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                           const nextIsCurrent = fields.isCurrent !== undefined ? fields.isCurrent : parsedIsCurrent;
                           const nextGpa = fields.gpa !== undefined ? fields.gpa : gpaSection;
 
-                          const endPart = nextIsCurrent ? "Present" : `${nextEndMonth} ${nextEndYear}`;
-                          const timelineStr = `${nextStartMonth} ${nextStartYear} – ${endPart}`;
+                          const endPart = nextIsCurrent ? "Present" : `${abbrMonth(nextEndMonth)} ${nextEndYear}`;
+                          const timelineStr = `${abbrMonth(nextStartMonth)} ${nextStartYear} – ${endPart}`;
                           
                           const schoolPart = nextSchool ? ` @ ${nextSchool}` : "";
                           const locPart = (nextSchool && nextLocation) ? ` - ${nextLocation}` : (nextLocation ? ` @ ${nextLocation}` : "");
