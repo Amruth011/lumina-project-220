@@ -89,6 +89,7 @@ interface ResumePreviewProps {
   sectionOrder?: string[];
   companyName?: string;
   jdTitle?: string;
+  jdSkills?: Skill[];
   activeTabOverride?: 'resume' | 'cover-letter';
   onTabChange?: (tab: 'resume' | 'cover-letter') => void;
 }
