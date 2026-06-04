@@ -2640,6 +2640,86 @@ Write the message body only.`;
               </div>
             )}
           </motion.div>
+
+          {/* 3. Outreach Message Synthesis */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="glass-panel p-10 rounded-[4rem] border-foreground/5 bg-white shadow-2xl shadow-slate-200/50 flex flex-col space-y-8 relative overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-lumina-teal/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-lumina-teal/10 transition-colors" />
+            <div className="space-y-6 relative z-10">
+              <div className="flex items-center justify-between">
+                <div className="w-14 h-14 rounded-2xl bg-lumina-teal/10 flex items-center justify-center text-lumina-teal border border-lumina-teal/10">
+                  <MessageSquare size={28} />
+                </div>
+                {outreachMessage && (
+                  <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                    <CheckCircle2 size={12} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Message Ready</span>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-serif italic text-slate-900">Outreach Message</h3>
+                <p className="text-[13px] text-slate-500 font-medium leading-relaxed">
+                  A short, professional note for the hiring team — perfect for LinkedIn, cold email, or referral asks.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Channel</label>
+                <div className="flex gap-2">
+                  {(['LinkedIn', 'Email', 'Referral'] as const).map(c => (
+                    <button
+                      key={c}
+                      onClick={() => setMsgChannel(c)}
+                      className={`flex-1 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all ${msgChannel === c ? 'bg-lumina-teal text-white shadow-lg shadow-teal-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={generateOutreachMessage}
+                disabled={isGeneratingMsg}
+                className="relative overflow-hidden flex items-center justify-center gap-4 w-full py-6 rounded-full text-[12px] font-black uppercase tracking-[0.2em] bg-lumina-teal text-white hover:scale-[1.02] transition-all duration-300 active:scale-95 disabled:opacity-70 shadow-xl shadow-teal-500/20"
+              >
+                {isGeneratingMsg ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> Drafting...</>
+                ) : outreachMessage ? (
+                  <><MessageSquare className="w-5 h-5" /> Regenerate Message</>
+                ) : (
+                  <><MessageSquare className="w-5 h-5" /> Generate Message</>
+                )}
+              </button>
+
+              {outreachMessage && (
+                <div className="space-y-3 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Preview</p>
+                  <textarea
+                    value={outreachMessage}
+                    onChange={(e) => setOutreachMessage(e.target.value)}
+                    rows={7}
+                    className="w-full p-4 rounded-2xl bg-slate-50/80 border border-slate-100 text-[12px] text-slate-700 leading-relaxed font-sans focus:outline-none focus:ring-2 focus:ring-lumina-teal/20"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(outreachMessage);
+                      toast.success("Message copied to clipboard");
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-slate-50 border border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 transition-all"
+                  >
+                    <Copy size={12} /> Copy Message
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+          </>
+          )}
         </div>
 
         <div className="mt-16 flex flex-col items-center space-y-8">
