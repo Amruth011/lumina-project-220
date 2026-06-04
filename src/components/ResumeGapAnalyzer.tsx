@@ -21,7 +21,9 @@ interface ResumeGapAnalyzerProps {
   jdText?: string;
   onResumeTextChange?: (text: string) => void;
   onResultChange?: (result: ResumeGapResult | null) => void;
+  onNavigateToGenerator?: () => void;
 }
+
 
 async function extractPdfText(file: File): Promise<string> {
   const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
