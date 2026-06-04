@@ -68,10 +68,10 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
           {/* Toggle Arrow */}
           <button
             onClick={() => setIsOpen((v) => !v)}
-            className="absolute -right-3 top-8 z-20 w-6 h-6 rounded-full bg-white border border-border/30 shadow-md flex items-center justify-center hover:bg-lumina-teal hover:text-white hover:border-lumina-teal transition-all"
+            className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white border border-border/40 shadow-lg flex items-center justify-center hover:bg-lumina-teal hover:text-white hover:border-lumina-teal transition-all"
             aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
           >
-            {isOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+            {isOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
           </button>
 
           {/* Brand */}
