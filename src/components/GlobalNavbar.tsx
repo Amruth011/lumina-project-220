@@ -43,8 +43,8 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
   const tabs = [
     { key: "profile" as Tab, icon: User, label: "Profile" },
     { key: "decode" as Tab, icon: Search, label: "JD Decode" },
-    { key: "analysis" as Tab, icon: ShieldCheck, label: "Analysis" },
-    { key: "generator" as Tab, icon: Zap, label: "Generator" },
+    { key: "analysis" as Tab, icon: ShieldCheck, label: "Resume Analysis" },
+    { key: "generator" as Tab, icon: Zap, label: "Resume Generator" },
     { key: "cover-letter" as Tab, icon: Mail, label: "Cover Letter" },
     { key: "roadmap" as Tab, icon: Compass, label: "Roadmap" },
     { key: "agent" as Tab, icon: Bot, label: "Job Agent", badge: true },
