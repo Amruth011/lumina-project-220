@@ -403,7 +403,9 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                       jobTitle={results.title}
                       jdText={jdText}
                       onResultChange={setGapResult}
+                      onNavigateToGenerator={() => handleTabSwitch("generator")}
                     />
+
                     {gapResult && (
                       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
                         <ATSScoreSimulator result={gapResult} />
