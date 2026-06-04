@@ -32,7 +32,13 @@ import {
   Loader2,
   ArrowRight
 } from "lucide-react";
-import { GeneratedResume, VaultItem } from "@/types/jd";
+import { GeneratedResume, VaultItem, Skill } from "@/types/jd";
+
+const abbrMonth = (m: string): string => {
+  if (!m) return m;
+  const map: Record<string, string> = { January: "Jan", February: "Feb", March: "Mar", April: "Apr", May: "May", June: "Jun", July: "Jul", August: "Aug", September: "Sept", October: "Oct", November: "Nov", December: "Dec" };
+  return map[m] || m.slice(0, 3);
+};
 import { toast } from "sonner";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
 import { MONTHS, YEARS } from "@/lib/constants";
