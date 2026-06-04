@@ -179,7 +179,7 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
               <div className="px-2">
                 <button
                   onClick={signOut}
-                  className="w-full flex items-center gap-3 px-2 py-2 rounded-xl text-red-500 hover:bg-red-50 transition-all"
+                  className={`w-full flex items-center ${isOpen ? "gap-3 px-2" : "justify-center px-0"} py-2 rounded-xl text-red-500 hover:bg-red-50 transition-all`}
                   title="Sign Out"
                 >
                   <span className="w-8 h-8 flex items-center justify-center flex-shrink-0">
