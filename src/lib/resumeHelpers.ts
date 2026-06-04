@@ -100,8 +100,17 @@ export const measureOrDrawRightSideLinks = (
 
 export const limitSummarySentences = (summaryText: string, maxSentences: number): string => {
   if (!summaryText) return "";
-  const sentences = summaryText.split(/\.\s+/).filter(Boolean);
-  return sentences.slice(0, maxSentences).map(s => s.trim() + (s.trim().endsWith(".") ? "" : ".")).join(" ");
+  const sentences = summaryText.split(/(?<=[.!?])\s+/).filter(Boolean);
+  let result = sentences.slice(0, maxSentences).map(s => s.trim() + (/[.!?]$/.test(s.trim()) ? "" : ".")).join(" ");
+  // Approximate visual-line cap: ~95 chars per rendered line at default body size.
+  // Drop trailing sentences until the rendered text fits within maxSentences lines.
+  const maxChars = Math.max(80, maxSentences * 95);
+  let trimmed = sentences.slice(0, maxSentences);
+  while (result.length > maxChars && trimmed.length > 1) {
+    trimmed = trimmed.slice(0, -1);
+    result = trimmed.map(s => s.trim() + (/[.!?]$/.test(s.trim()) ? "" : ".")).join(" ");
+  }
+  return result;
 };
 
 export const limitBullets = (bullets: string[], maxBullets: number): string[] => {

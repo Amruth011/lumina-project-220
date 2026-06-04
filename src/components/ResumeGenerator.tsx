@@ -1436,13 +1436,20 @@ Return ONLY the JSON. No markdown, no comments.`
         }
       };
 
+      const ensureHref = (u: string) => {
+        const t = (u || '').trim();
+        if (!t) return '';
+        return /^https?:\/\//i.test(t) ? t : `https://${t.replace(/^\/+/, '')}`;
+      };
+      const linkAnchor = (url: string, label: string) =>
+        url ? `<a href="${ensureHref(url)}" style="color:#1E2A3A; text-decoration: underline;">${label}</a>` : '';
       const headerMeta = [
         editableHeader.location,
         editableHeader.phone,
         editableHeader.email,
-        editableHeader.linkedin ? `LinkedIn: ${editableHeader.linkedin.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/$/, '')}` : '',
-        editableHeader.github ? `GitHub: ${editableHeader.github.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/$/, '')}` : '',
-        editableHeader.portfolio ? `Portfolio: ${editableHeader.portfolio.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/$/, '')}` : ''
+        linkAnchor(editableHeader.linkedin, 'LinkedIn'),
+        linkAnchor(editableHeader.github, 'GitHub'),
+        linkAnchor(editableHeader.portfolio, 'Portfolio')
       ].filter(Boolean).join(" &nbsp;|&nbsp; ");
 
       // Section templates mirroring ResumePreview structure perfectly
