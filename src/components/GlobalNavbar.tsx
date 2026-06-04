@@ -43,8 +43,8 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
   const tabs = [
     { key: "profile" as Tab, icon: User, label: "Profile" },
     { key: "decode" as Tab, icon: Search, label: "JD Decode" },
-    { key: "analysis" as Tab, icon: ShieldCheck, label: "Analysis" },
-    { key: "generator" as Tab, icon: Zap, label: "Generator" },
+    { key: "analysis" as Tab, icon: ShieldCheck, label: "Resume Analysis" },
+    { key: "generator" as Tab, icon: Zap, label: "Resume Generator" },
     { key: "cover-letter" as Tab, icon: Mail, label: "Cover Letter" },
     { key: "roadmap" as Tab, icon: Compass, label: "Roadmap" },
     { key: "agent" as Tab, icon: Bot, label: "Job Agent", badge: true },
@@ -138,7 +138,7 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
 
           {/* Features */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-2 space-y-1">
-            {tabs.filter((t) => t.key !== "profile").map((tab) => {
+            {tabs.map((tab) => {
               const isActive = effectiveActiveTab === tab.key;
               return (
                 <button
