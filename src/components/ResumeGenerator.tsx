@@ -1648,10 +1648,13 @@ Return ONLY the JSON. No markdown, no comments.`
           <h2 class="section-title">Skills</h2>
         </div>
         ${editableResume.skills_section.map(skillLine => {
-          const [category, skills] = (skillLine || "").split(':');
+          const colonIdx = (skillLine || "").indexOf(':');
+          const category = colonIdx !== -1 ? (skillLine.slice(0, colonIdx) || "").trim() : "";
+          const skills = colonIdx !== -1 ? (skillLine.slice(colonIdx + 1) || "").trim() : (skillLine || "").trim();
+          const showCategory = category && category.toLowerCase() !== 'skills';
           return `
             <p class="skills-category">
-              <span class="skills-label">${(category || "").trim()}:</span> ${(skills || "").trim()}
+              ${showCategory ? `<span class="skills-label">${category}:</span> ` : ''}${skills}
             </p>
           `;
         }).join("")}
