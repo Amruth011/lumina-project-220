@@ -2338,13 +2338,14 @@ Write the message body only.`;
                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Global Font</label>
                       <select 
                         value={fontFamily} 
-                        onChange={(e) => setFontFamily(e.target.value as "Inter" | "Roboto" | "Merriweather" | "Arial")}
+                        onChange={(e) => setFontFamily(e.target.value as "Inter" | "Roboto" | "Merriweather" | "Arial" | "Times New Roman")}
                         className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 ring-lumina-teal/20 transition-all"
                       >
                         <option value="Inter">Inter (Clean)</option>
                         <option value="Roboto">Roboto (Technical)</option>
                         <option value="Merriweather">Merriweather (Serif)</option>
                         <option value="Arial">Arial (Standard)</option>
+                        <option value="Times New Roman">Times New Roman (Classic)</option>
                       </select>
                     </div>
                   </div>
