@@ -276,12 +276,22 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
           continue;
         }
         const det = computeDeterministicScore(text.trim(), skills);
+        const matchedSkills = (det.skill_matches || [])
+          .filter((s) => s.verdict === "strong")
+          .map((s) => s.skill);
+        const missingSkills = (det.skill_matches || [])
+          .filter((s) => s.verdict === "missing")
+          .map((s) => s.skill);
         newCandidates.push({
           id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
           name: file.name,
           text: text.trim(),
           score: det.overall_match,
+          matchedSkills,
+          missingSkills,
+          topDeductions: (det.deductions || []).slice(0, 4),
         });
+
       } catch {
         toast.error(`Failed to parse ${file.name}`);
       }
