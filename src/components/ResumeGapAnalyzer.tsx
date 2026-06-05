@@ -662,11 +662,68 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
               />
             </div>
 
+            {candidates.length > 0 && selectedCandidateId && (() => {
+              const winner = candidates.find((c) => c.id === selectedCandidateId);
+              if (!winner) return null;
+              return (
+                <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-accent-emerald/[0.04] to-transparent border border-accent-emerald/20 space-y-5">
+                  <div className="flex items-center gap-3">
+                    <Trophy className="w-5 h-5 text-accent-emerald" />
+                    <span className="text-[11px] font-black uppercase tracking-widest text-foreground/80">
+                      Why "{winner.name}" Won {candidates.length > 1 ? `(beat ${candidates.length - 1} others)` : ""}
+                    </span>
+                    <span className="ml-auto text-[11px] font-black px-3 py-1 rounded-full bg-accent-emerald text-white">
+                      {winner.score}% ATS Match vs JD
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-accent-emerald mb-2">
+                        Matched JD Keywords ({winner.matchedSkills.length})
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {winner.matchedSkills.length === 0 && (
+                          <span className="text-[11px] text-muted-foreground italic">No strong matches found</span>
+                        )}
+                        {winner.matchedSkills.slice(0, 18).map((s) => (
+                          <span key={s} className="text-[10px] font-bold px-2 py-1 rounded-md bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/20">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-accent-red mb-2">
+                        Missing JD Keywords ({winner.missingSkills.length})
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {winner.missingSkills.length === 0 && (
+                          <span className="text-[11px] text-muted-foreground italic">All key skills present</span>
+                        )}
+                        {winner.missingSkills.slice(0, 18).map((s) => (
+                          <span key={s} className="text-[10px] font-bold px-2 py-1 rounded-md bg-accent-red/5 text-accent-red border border-accent-red/15">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  {isAutoRunEnabled && (
+                    <p className="text-[10px] text-muted-foreground/70 font-medium tracking-wide flex items-center gap-2">
+                      <Sparkles className="w-3 h-3 text-accent-emerald" />
+                      Auto-Run Diagnostic is on — full intelligence scan running on the top resume.
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
+
             {isAnalyzing && (
               <div className="mt-12">
                 <GapAnalyzerSkeleton />
               </div>
             )}
+
 
             {!isAnalyzing && result && (
               <div className="space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000">
