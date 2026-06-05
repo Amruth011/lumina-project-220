@@ -2118,7 +2118,7 @@ Write the message body only.`;
       setTimeout(() => document.body.removeChild(link), 200);
     } else {
       const pdf = new jsPDF();
-      const pdfFont = fontFamily === "Merriweather" ? "times" : fontFamily === "Arial" ? "helvetica" : "helvetica";
+      const pdfFont = (fontFamily === "Merriweather" || fontFamily === "Times New Roman") ? "times" : "helvetica";
       pdf.setFont(pdfFont, "normal");
       pdf.setFontSize(clBodySize);
       
