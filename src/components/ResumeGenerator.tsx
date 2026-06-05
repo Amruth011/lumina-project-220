@@ -1783,20 +1783,28 @@ Return ONLY the JSON. No markdown, no comments.`
               margin: 2px 0 6px 0;
               padding-left: 18px;
               list-style-type: disc;
+              mso-margin-top-alt: 0pt;
+              mso-margin-bottom-alt: 0pt;
             }
             li.bullet-item {
               font-size: ${bodyFontSize}pt;
               color: #1E2A3A;
               line-height: 1.25;
               text-align: justify;
-              margin-bottom: 2px;
+              margin-top: 0pt;
+              margin-bottom: 2pt;
+              mso-margin-top-alt: 0pt;
+              mso-margin-bottom-alt: 0pt;
+              mso-pagination: widow-orphan;
+              mso-list: l0 level1 lfo1;
             }
-            .skills-category {
+            p.skills-category {
               font-size: ${bodyFontSize}pt;
               color: #1E2A3A;
               margin: 0 0 2px 0;
               padding: 0;
               text-align: left;
+              mso-margin-top-alt: 0pt;
             }
             .skills-label {
               font-weight: bold;
