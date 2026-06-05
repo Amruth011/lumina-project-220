@@ -2076,6 +2076,7 @@ Write the message body only.`;
           case "Roboto": return "Roboto, sans-serif";
           case "Merriweather": return "Merriweather, serif";
           case "Arial": return "Arial, sans-serif";
+          case "Times New Roman": return "'Times New Roman', Times, serif";
           default: return "Inter, sans-serif";
         }
       })();
