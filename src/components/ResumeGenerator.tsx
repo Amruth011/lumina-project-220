@@ -229,7 +229,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     });
     
     if (record.settings) {
-      setFontFamily(record.settings.fontFamily as "Inter" | "Roboto" | "Merriweather" | "Arial");
+      setFontFamily(record.settings.fontFamily as "Inter" | "Roboto" | "Merriweather" | "Arial" | "Times New Roman");
       setNameFontSize(Math.max(18, record.settings.nameFontSize || 18));
       setHeadlineFontSize(Math.max(12, record.settings.headlineFontSize || 12));
       setSubHeadlineFontSize(Math.max(11, record.settings.subHeadlineFontSize || 11));
