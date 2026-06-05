@@ -1956,10 +1956,14 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                       });
                                     };
                                     return (localResume.skills_section || []).map((skillLine, i) => {
-                                      const [category, skills] = (skillLine || "").split(':');
+                                      const colonIdx = (skillLine || "").indexOf(":");
+                                      const category = colonIdx !== -1 ? skillLine.slice(0, colonIdx).trim() : "";
+                                      const skills = colonIdx !== -1 ? skillLine.slice(colonIdx + 1).trim() : (skillLine || "").trim();
+                                      const showCategory = skillsViewMode === 'category' && category && category.toLowerCase() !== 'skills';
                                       return (
                                         <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
-                                          <span className="font-bold !font-inherit" style={{ fontFamily: 'inherit' }}>{(category || "").trim()}:</span> {renderSkillTokens((skills || "").trim())}
+                                          {showCategory && <span className="font-bold !font-inherit" style={{ fontFamily: 'inherit' }}>{category}: </span>}
+                                          {renderSkillTokens(skills)}
                                         </p>
                                       );
                                     });
