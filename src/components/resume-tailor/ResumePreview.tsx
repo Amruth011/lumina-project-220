@@ -174,7 +174,30 @@ export const ResumePreview = ({
   const [openSection, setOpenSection] = useState<string | null>("profile");
   const [showVaultPicker, setShowVaultPicker] = useState<{ section: 'experience' | 'projects' | 'products' | 'education' | 'certifications' | 'leadership', index?: number } | null>(null);
   const [activeTab, setActiveTab] = useState<'resume' | 'cover-letter'>(initialTab || 'resume');
-  const [skillsViewMode, setSkillsViewMode] = useState<'category' | 'flat'>('category');
+  const [skillsViewMode, setSkillsViewMode] = useState<'category' | 'flat'>('flat');
+
+  // Auto-flatten categorized skills on first mount so default view shows ATS-friendly keyword list.
+  const didAutoFlattenRef = React.useRef(false);
+  useEffect(() => {
+    if (didAutoFlattenRef.current) return;
+    const lines = localResume.skills_section || [];
+    if (lines.length <= 1) { didAutoFlattenRef.current = true; return; }
+    const hasMultipleCategories = lines.filter(l => (l || "").includes(":")).length > 1;
+    if (!hasMultipleCategories) { didAutoFlattenRef.current = true; return; }
+    const seen = new Set<string>();
+    const all: string[] = [];
+    lines.forEach(line => {
+      const colonIdx = (line || "").indexOf(":");
+      const skillsPart = colonIdx !== -1 ? line.slice(colonIdx + 1) : line;
+      skillsPart.split(",").map(s => s.trim()).filter(Boolean).forEach(s => {
+        const k = s.toLowerCase();
+        if (!seen.has(k)) { seen.add(k); all.push(s); }
+      });
+    });
+    if (all.length > 0) updateResumeState({ ...localResume, skills_section: [`Skills: ${all.join(", ")}`] });
+    didAutoFlattenRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync active tab when parent overrides it (e.g., after cover letter generation)
   useEffect(() => {
@@ -1933,10 +1956,14 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                       });
                                     };
                                     return (localResume.skills_section || []).map((skillLine, i) => {
-                                      const [category, skills] = (skillLine || "").split(':');
+                                      const colonIdx = (skillLine || "").indexOf(":");
+                                      const category = colonIdx !== -1 ? skillLine.slice(0, colonIdx).trim() : "";
+                                      const skills = colonIdx !== -1 ? skillLine.slice(colonIdx + 1).trim() : (skillLine || "").trim();
+                                      const showCategory = skillsViewMode === 'category' && category && category.toLowerCase() !== 'skills';
                                       return (
                                         <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
-                                          <span className="font-bold !font-inherit" style={{ fontFamily: 'inherit' }}>{(category || "").trim()}:</span> {renderSkillTokens((skills || "").trim())}
+                                          {showCategory && <span className="font-bold !font-inherit" style={{ fontFamily: 'inherit' }}>{category}: </span>}
+                                          {renderSkillTokens(skills)}
                                         </p>
                                       );
                                     });

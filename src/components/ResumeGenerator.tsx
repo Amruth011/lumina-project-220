@@ -83,7 +83,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
   const [experienceBullets, setExperienceBullets] = useState(3);
   const [showSettings, setShowSettings] = useState(false);
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
-  const [fontFamily, setFontFamily] = useState<"Inter" | "Roboto" | "Merriweather" | "Arial">("Inter");
+  const [fontFamily, setFontFamily] = useState<"Inter" | "Roboto" | "Merriweather" | "Arial" | "Times New Roman">("Inter");
   const [draftId, setDraftId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editableResume, setEditableResume] = useState<GeneratedResume | null>(null);
@@ -229,7 +229,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
     });
     
     if (record.settings) {
-      setFontFamily(record.settings.fontFamily as "Inter" | "Roboto" | "Merriweather" | "Arial");
+      setFontFamily(record.settings.fontFamily as "Inter" | "Roboto" | "Merriweather" | "Arial" | "Times New Roman");
       setNameFontSize(Math.max(18, record.settings.nameFontSize || 18));
       setHeadlineFontSize(Math.max(12, record.settings.headlineFontSize || 12));
       setSubHeadlineFontSize(Math.max(11, record.settings.subHeadlineFontSize || 11));
@@ -1432,6 +1432,7 @@ Return ONLY the JSON. No markdown, no comments.`
           case "Roboto": return "Roboto, sans-serif";
           case "Merriweather": return "Merriweather, serif";
           case "Arial": return "Arial, sans-serif";
+          case "Times New Roman": return "'Times New Roman', Times, serif";
           default: return "Inter, sans-serif";
         }
       };
@@ -1647,10 +1648,13 @@ Return ONLY the JSON. No markdown, no comments.`
           <h2 class="section-title">Skills</h2>
         </div>
         ${editableResume.skills_section.map(skillLine => {
-          const [category, skills] = (skillLine || "").split(':');
+          const colonIdx = (skillLine || "").indexOf(':');
+          const category = colonIdx !== -1 ? (skillLine.slice(0, colonIdx) || "").trim() : "";
+          const skills = colonIdx !== -1 ? (skillLine.slice(colonIdx + 1) || "").trim() : (skillLine || "").trim();
+          const showCategory = category && category.toLowerCase() !== 'skills';
           return `
             <p class="skills-category">
-              <span class="skills-label">${(category || "").trim()}:</span> ${(skills || "").trim()}
+              ${showCategory ? `<span class="skills-label">${category}:</span> ` : ''}${skills}
             </p>
           `;
         }).join("")}
@@ -1779,20 +1783,28 @@ Return ONLY the JSON. No markdown, no comments.`
               margin: 2px 0 6px 0;
               padding-left: 18px;
               list-style-type: disc;
+              mso-margin-top-alt: 0pt;
+              mso-margin-bottom-alt: 0pt;
             }
             li.bullet-item {
               font-size: ${bodyFontSize}pt;
               color: #1E2A3A;
               line-height: 1.25;
               text-align: justify;
-              margin-bottom: 2px;
+              margin-top: 0pt;
+              margin-bottom: 2pt;
+              mso-margin-top-alt: 0pt;
+              mso-margin-bottom-alt: 0pt;
+              mso-pagination: widow-orphan;
+              mso-list: l0 level1 lfo1;
             }
-            .skills-category {
+            p.skills-category {
               font-size: ${bodyFontSize}pt;
               color: #1E2A3A;
               margin: 0 0 2px 0;
               padding: 0;
               text-align: left;
+              mso-margin-top-alt: 0pt;
             }
             .skills-label {
               font-weight: bold;
@@ -2064,6 +2076,7 @@ Write the message body only.`;
           case "Roboto": return "Roboto, sans-serif";
           case "Merriweather": return "Merriweather, serif";
           case "Arial": return "Arial, sans-serif";
+          case "Times New Roman": return "'Times New Roman', Times, serif";
           default: return "Inter, sans-serif";
         }
       })();
@@ -2105,7 +2118,7 @@ Write the message body only.`;
       setTimeout(() => document.body.removeChild(link), 200);
     } else {
       const pdf = new jsPDF();
-      const pdfFont = fontFamily === "Merriweather" ? "times" : fontFamily === "Arial" ? "helvetica" : "helvetica";
+      const pdfFont = (fontFamily === "Merriweather" || fontFamily === "Times New Roman") ? "times" : "helvetica";
       pdf.setFont(pdfFont, "normal");
       pdf.setFontSize(clBodySize);
       
@@ -2325,13 +2338,14 @@ Write the message body only.`;
                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Global Font</label>
                       <select 
                         value={fontFamily} 
-                        onChange={(e) => setFontFamily(e.target.value as "Inter" | "Roboto" | "Merriweather" | "Arial")}
+                        onChange={(e) => setFontFamily(e.target.value as "Inter" | "Roboto" | "Merriweather" | "Arial" | "Times New Roman")}
                         className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 ring-lumina-teal/20 transition-all"
                       >
                         <option value="Inter">Inter (Clean)</option>
                         <option value="Roboto">Roboto (Technical)</option>
                         <option value="Merriweather">Merriweather (Serif)</option>
                         <option value="Arial">Arial (Standard)</option>
+                        <option value="Times New Roman">Times New Roman (Classic)</option>
                       </select>
                     </div>
                   </div>
