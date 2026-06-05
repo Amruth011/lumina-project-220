@@ -71,10 +71,14 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
     name: string;
     text: string;
     score: number;
+    matchedSkills: string[];
+    missingSkills: string[];
+    topDeductions: { reason: string; percent: number }[];
   }
   const MAX_CANDIDATES = 5;
   const [candidates, setCandidates] = useState<ResumeCandidate[]>([]);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
+
 
   // ── Always start empty: clear any stale cache on mount ──
   useEffect(() => {
