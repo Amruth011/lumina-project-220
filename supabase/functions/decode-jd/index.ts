@@ -181,7 +181,58 @@ ${JSON.stringify(nakedSchema)}` }
     }
     
     // Merge with original schema to ensure all fields exist for frontend
-    const finalResult = { ...JD_SCHEMA, ...parsed };
+    const finalResult: Record<string, unknown> = { ...JD_SCHEMA, ...parsed };
+
+    // ── Overview heuristic fallback ──
+    // Ensure the Role Overview card always has data even if the model omitted "overview".
+    const extractOverview = (jd: string, title: string) => {
+      const out = { role: title || "Not specified", company: "Not specified", location: "Not specified", work_mode: "Not specified", employment_type: "Not specified", package: "Not disclosed", experience_required: "Not specified", industry: "", seniority: "" };
+      const text = jd.replace(/\s+/g, " ");
+      // Work mode
+      if (/\bhybrid\b/i.test(text)) out.work_mode = "Hybrid";
+      else if (/\bremote\b|work\s*from\s*home|wfh\b/i.test(text)) out.work_mode = "Remote";
+      else if (/on[-\s]?site|in[-\s]?office|onsite/i.test(text)) out.work_mode = "On-site";
+      // Employment type
+      if (/full[-\s]?time/i.test(text)) out.employment_type = "Full-time";
+      else if (/part[-\s]?time/i.test(text)) out.employment_type = "Part-time";
+      else if (/\bcontract\b|contractor/i.test(text)) out.employment_type = "Contract";
+      else if (/intern(ship)?/i.test(text)) out.employment_type = "Internship";
+      // Experience
+      const expM = text.match(/(\d{1,2}\s*(?:-|to|–)\s*\d{1,2}\+?\s*(?:years|yrs|yoe))|(\d{1,2}\+?\s*(?:years|yrs|yoe))/i);
+      if (expM) out.experience_required = expM[0].trim();
+      // Package
+      const pkgM = text.match(/(?:₹|rs\.?|inr|usd|\$|€|eur|gbp|£)\s*\d[\d,.\s\-–to]*\s*(?:lpa|lakh|lakhs|cr|crore|k|m|mn|million|per\s*annum|p\.?a\.?)?/i)
+        || text.match(/\d{1,3}\s*(?:-|to|–)\s*\d{1,3}\s*(?:lpa|lakh|lakhs|k\s*usd|usd|inr)/i);
+      if (pkgM) out.package = pkgM[0].trim();
+      // Company "at <Company>" or "join <Company>"
+      const compM = text.match(/\b(?:at|join|with|@)\s+([A-Z][A-Za-z0-9&.\- ]{1,40}?)(?:\s+in\s+|\s+is\s+|,|\.|\s+as\s+)/);
+      if (compM) out.company = compM[1].trim();
+      // Location "in <City>"
+      const locM = text.match(/\bin\s+([A-Z][A-Za-z .\-]{2,30}?)(?:,|\.|\s+(?:hybrid|remote|on[-\s]?site|office))/i);
+      if (locM) out.location = locM[1].trim();
+      return out;
+    };
+
+    const ov = (finalResult.overview ?? {}) as Record<string, string>;
+    const needsOverview = !finalResult.overview || !ov.role || ov.role === "Not specified";
+    const isPlaceholder = (v?: string) => !v || v === "Not specified" || v === "Not disclosed" || v === "";
+    if (needsOverview) {
+      finalResult.overview = extractOverview(jdText, String((finalResult as { title?: string }).title || ""));
+    } else {
+      const heur = extractOverview(jdText, String((finalResult as { title?: string }).title || ""));
+      finalResult.overview = {
+        role: isPlaceholder(ov.role) ? heur.role : ov.role,
+        company: isPlaceholder(ov.company) ? heur.company : ov.company,
+        location: isPlaceholder(ov.location) ? heur.location : ov.location,
+        work_mode: isPlaceholder(ov.work_mode) ? heur.work_mode : ov.work_mode,
+        employment_type: isPlaceholder(ov.employment_type) ? heur.employment_type : ov.employment_type,
+        package: isPlaceholder(ov.package) ? heur.package : ov.package,
+        experience_required: isPlaceholder(ov.experience_required) ? heur.experience_required : ov.experience_required,
+        industry: ov.industry || "",
+        seniority: ov.seniority || "",
+      };
+    }
+
     
     return new Response(JSON.stringify(finalResult), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
