@@ -14,6 +14,7 @@ const corsHeaders = {
 const JD_SCHEMA = {
   valid: true,
   title: "",
+  overview: { role: "", company: "", location: "", work_mode: "", employment_type: "", package: "", experience_required: "", industry: "", seniority: "" },
   skills: [{ category: "", skill: "", importance: 0 }],
   requirements: { education: [], experience: "", soft_skills: [], agreements: [] },
   winning_strategy: [{ title: "", description: "" }],
