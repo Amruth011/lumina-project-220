@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Copy, Check, Star, Shield, Zap, Briefcase, Info, ListChecks, Target, Share2 } from "lucide-react";
+import { Copy, Check, Star, Shield, Zap, Briefcase, Info, ListChecks, Target, Share2, Building2, MapPin, Wallet, Clock, Laptop } from "lucide-react";
 import { DecodeResult, Skill } from "@/types/jd";
 import { useLuminaToast } from "@/context/ToastContext";
 import { generateShareUrl, copyToClipboard } from "@/lib/shareUtils";
