@@ -63,8 +63,8 @@ NativeDeno.serve(async (req: Request) => {
 
     const safeJD = jdText.substring(0, 15000); 
     const fallbackModels = [
-      "llama-3.1-8b-instant",
-      "llama-3.3-70b-versatile"
+      "llama-3.3-70b-versatile",
+      "llama-3.1-8b-instant"
     ];
 
     let resultText = "";
