@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Copy, Check, Star, Shield, Zap, Briefcase, Info, ListChecks, Target, Share2 } from "lucide-react";
+import { Copy, Check, Star, Shield, Zap, Briefcase, Info, ListChecks, Target, Share2, Building2, MapPin, Wallet, Clock, Laptop } from "lucide-react";
 import { DecodeResult, Skill } from "@/types/jd";
 import { useLuminaToast } from "@/context/ToastContext";
 import { generateShareUrl, copyToClipboard } from "@/lib/shareUtils";
@@ -62,6 +62,51 @@ export const StructuredOutput = ({ results }: StructuredOutputProps) => {
           <span className="text-[10px] font-display font-bold uppercase tracking-[0.2em] text-white/40">JD Grade: {results.grade.letter}</span>
         </div>
       </div>
+
+      {/* Role Overview Card */}
+      {(() => {
+        const ov = results.overview;
+        const items = [
+          { icon: Briefcase, label: "Role", value: ov?.role || results.title },
+          { icon: Building2, label: "Company", value: ov?.company || "Not specified" },
+          { icon: MapPin, label: "Location", value: ov?.location || "Not specified" },
+          { icon: Laptop, label: "Work Mode", value: ov?.work_mode || "Not specified" },
+          { icon: Clock, label: "Employment", value: ov?.employment_type || "Not specified" },
+          { icon: Wallet, label: "Package", value: ov?.package || (results.logistics?.salary_range ? `${results.logistics.salary_range.currency}${results.logistics.salary_range.min.toLocaleString()} - ${results.logistics.salary_range.max.toLocaleString()}` : "Not disclosed") },
+        ];
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-[#1E2A3A] to-[#0F1822] text-white p-8 rounded-[2.5rem] shadow-xl"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <span className="px-3 py-1 rounded-full bg-[#10B981]/15 text-[#10B981] text-[10px] font-display font-bold uppercase tracking-widest border border-[#10B981]/30">
+                  Role Overview
+                </span>
+                {ov?.experience_required && ov.experience_required !== "Not specified" && (
+                  <span className="text-[11px] font-mono text-white/50 uppercase">Exp: {ov.experience_required}</span>
+                )}
+              </div>
+              {ov?.seniority && (
+                <span className="text-[10px] font-display font-bold uppercase tracking-widest text-white/40">{ov.seniority} Level</span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+              {items.map((it) => (
+                <div key={it.label} className="flex items-start gap-3 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-[#10B981]/30 transition-colors">
+                  <it.icon className="w-4 h-4 text-[#10B981] mt-1 shrink-0" />
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-[10px] font-display font-bold uppercase tracking-widest text-white/40 block">{it.label}</span>
+                    <p className="text-sm font-serif font-bold text-white break-words leading-snug">{it.value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        );
+      })()}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Keywords Column */}

@@ -161,9 +161,22 @@ export interface BonusPulse {
   }[];
 }
 
+export interface RoleOverview {
+  role: string;
+  company: string;
+  location: string;
+  work_mode: string;
+  employment_type: string;
+  package: string;
+  experience_required: string;
+  industry?: string;
+  seniority?: string;
+}
+
 export interface DecodeResult {
   valid?: boolean;
   title: string;
+  overview?: RoleOverview;
   skills: Skill[];
   requirements: JdRequirements;
   winning_strategy: WinningStep[];
