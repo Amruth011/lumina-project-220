@@ -107,7 +107,7 @@ NativeDeno.serve(async (req: Request) => {
         try {
             console.log(`Lumina Engine: Activating Forensic Scan with ${model}...`);
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 25000); // 25-second strict timeout
+            const timeoutId = setTimeout(() => controller.abort(), 18000); // 18s per-model strict timeout
 
             const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                 method: "POST",
