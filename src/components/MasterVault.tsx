@@ -788,7 +788,7 @@ RETURN JSON FORMAT ONLY:
           }
 
           console.log(`Smart Sync v2.7: Requesting ${model}...`);
-          let { data: rawData, error: invokeError } = await supabase.functions.invoke("analyze", {
+          const { data: rawData, error: invokeError } = await supabase.functions.invoke("analyze", {
             body: {
               model: model,
               messages: [{ role: "user", content: syncPrompt + "\n\nIMPORTANT: Return ONLY valid JSON." }],

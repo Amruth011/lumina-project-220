@@ -208,7 +208,7 @@ ${JSON.stringify(nakedSchema)}` }
       const compM = text.match(/\b(?:at|join|with|@)\s+([A-Z][A-Za-z0-9&.\- ]{1,40}?)(?:\s+in\s+|\s+is\s+|,|\.|\s+as\s+)/);
       if (compM) out.company = compM[1].trim();
       // Location "in <City>"
-      const locM = text.match(/\bin\s+([A-Z][A-Za-z .\-]{2,30}?)(?:,|\.|\s+(?:hybrid|remote|on[-\s]?site|office))/i);
+      const locM = text.match(/\bin\s+([A-Z][A-Za-z .-]{2,30}?)(?:,|\.|\s+(?:hybrid|remote|on[-\s]?site|office))/i);
       if (locM) out.location = locM[1].trim();
       return out;
     };
