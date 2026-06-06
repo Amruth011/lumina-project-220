@@ -73,6 +73,7 @@ NativeDeno.serve(async (req: Request) => {
     // ── NAKED SCHEMA (No Defaults) ──
     const nakedSchema = {
       valid: "boolean", title: "string",
+      overview: { role: "string (exact job title from JD)", company: "string (company/organization name, 'Not specified' if absent)", location: "string (city, state/country; 'Not specified' if absent)", work_mode: "Remote|Hybrid|On-site|Not specified", employment_type: "Full-time|Part-time|Contract|Internship|Not specified", package: "string (salary/CTC range exactly as stated, e.g. '₹12-18 LPA' or 'Not disclosed')", experience_required: "string (years of experience exactly as stated, or 'Not specified')", industry: "string", seniority: "Entry|Mid|Senior|Lead|Principal" },
       skills: [{ category: "string", skill: "string", importance: "number (0-100)" }],
       requirements: { education: ["string"], experience: "string", soft_skills: ["string"], agreements: ["string"] },
       grade: { 
