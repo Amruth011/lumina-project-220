@@ -12,8 +12,6 @@ interface GlobalNavbarProps {
   onTabChange?: (tab: Tab) => void;
 }
 
-const ROUTE_TABS: Set<Tab> = new Set(["arsenal", "pipeline", "scoring", "interview"]);
-
 export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -21,7 +19,8 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const isHomePage = location.pathname === "/";
   const pathTab = location.pathname.replace("/dashboard/", "") as Tab;
-  const effectiveActiveTab = ROUTE_TABS.has(pathTab) ? pathTab : activeTab;
+  const isRouteTab = ["arsenal", "pipeline", "scoring", "interview"].includes(pathTab);
+  const effectiveActiveTab = isRouteTab ? pathTab : activeTab;
 
   const handleTabClick = (tabKey: Tab) => {
     if (!user) {
@@ -30,7 +29,7 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
       return;
     }
 
-    if (ROUTE_TABS.has(tabKey)) {
+    if (["arsenal", "pipeline", "scoring", "interview"].includes(tabKey)) {
       navigate(`/dashboard/${tabKey}`);
     } else if (isHomePage) {
       navigate("/dashboard", { state: { activeTab: tabKey } });
