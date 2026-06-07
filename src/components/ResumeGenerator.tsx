@@ -497,13 +497,13 @@ CRITICAL: Only reframe and emphasize existing profile data through the lens of t
       const prompt = `You are an ATS resume expert. Generate a resume JSON for a ${targetJdTitle} role. Return EXACTLY this structure:
 
 {
-  "professional_summary": "EXACTLY ${summaryLines} complete sentences naming the role. Each sentence MUST be highly impactful. Do NOT generate ${summaryLines - 1} or ${summaryLines + 1} sentences.",
+  "professional_summary": "PUNCHY FRAGMENT STYLE. STRICT TOTAL LENGTH: Minimum ${summaryLines * 100} to ${summaryLines * 130} characters. Do NOT fall short.",
   "education": ["Degree @ School — Location | Dates"],
   "experience": [{"heading": "Role @ Organization", "content": "dates", "bullets": ["verb + tech + JD keyword"]}],
   "products": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
   "projects": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
   "certifications": ["Name (Issuer) - Year"],
-  "skills_section": ["Core Competencies: [6-8 JD keyword phrases]", "Languages: ...", "AI & ML: ...", "Cloud & MLOps: ..."],
+  "skills_section": ["Core Competencies: [ALL relevant skills from vault]", "Languages: [ALL vault languages]", "AI & ML: [ALL vault AI skills]", "Cloud & MLOps: [ALL vault cloud skills]"],
   "awards": [],
   "leadership": []
 }
@@ -523,9 +523,9 @@ STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
    - Use a punchy, telegraphic, fragment style. Example: "AI & Data Science graduate with expertise in Python, LangChain... Interned at iStudio... Built production tools..."
    - Length Constraint (CRITICAL): You MUST write EXACTLY 100 to 115 characters for EACH line requested. The user requested ${summaryLines} lines, so your TOTAL character count MUST be strictly between ${summaryLines * 100} and ${summaryLines * 115} characters. Adjust wording to hit this precise target without leaving orphans.
 2. BULLET POINTS: Every single bullet point MUST fully utilize the line space.
-   - A single full line should be EXACTLY 110 to 125 characters (including spaces).
-   - Two full lines should be EXACTLY 220 to 250 characters (including spaces).
-   - MINIMUM LENGTH (CRITICAL): Every single bullet point MUST be a minimum of 100 characters. Do NOT generate short 60-70% lines. Write detailed, technically rich sentences to fill the space perfectly without fabricating metrics.
+   - A single full line should be EXACTLY 110 to 130 characters (including spaces).
+   - Two full lines should be EXACTLY 220 to 260 characters (including spaces).
+   - MINIMUM LENGTH (CRITICAL): Every single bullet point MUST be a strict minimum of 100 characters, up to 130 characters per point. Do NOT generate short 60-70% lines. Write detailed, technically rich sentences to fill the space.
 
 If the vault provides fewer source bullets, derive additional bullets from the item's skills/tech stack and JD keywords. Never fabricate metrics.
 
@@ -533,7 +533,7 @@ CAREER-OPS RULES:
 - Rewrite each bullet with a JD keyword: active verb + tool + domain term
 - Reorder bullets: most JD-relevant FIRST per section
 - NEVER: Utilizing/Utilized, Collaborating, Applying/Applied, Ensuring, "Tech Stack" as heading text
-- Skills first line MUST be "Core Competencies:" followed by 6-8 JD keyword phrases
+- Skills first line MUST be "Core Competencies:" followed by ALL relevant skills from the vault (never omit vault skills)
 - Certifications sorted by JD relevance, format: "Name (Issuer) - Year"
 
 VAULT DATA TO USE:
