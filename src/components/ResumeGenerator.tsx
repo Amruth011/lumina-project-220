@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Download, Sparkles, Copy, X, Wand2, FileText, CheckCircle2, AlertCircle, ArrowRight, Github, Linkedin, Mail, MapPin, Plus, Minus, Archive, ArrowUp, ArrowDown, Type, Eye, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
@@ -487,7 +487,7 @@ You MUST activate the following special strategies:
 3. **Impact Reframing**: Reframe the candidate's achievements using language and metrics that resonate with the target industry/role, without fabricating facts.
 4. **Skill Stack Bridging**: In the Skills section, strategically organize skills to lead with those most relevant to the target JD, even if they were secondary in previous roles.
 5. **Summary Pivot Framing**: The professional summary MUST position the candidate as a versatile professional whose diverse background is a STRENGTH, not a gap. Frame the pivot as intentional career growth.
-CRITICAL: Do NOT fabricate experience or skills. Only reframe and emphasize existing profile data through the lens of the target role.`
+CRITICAL: Only reframe and emphasize existing profile data through the lens of the target role.`
       : "";
 
     try {
@@ -497,21 +497,27 @@ CRITICAL: Do NOT fabricate experience or skills. Only reframe and emphasize exis
       const prompt = `You are an ATS resume expert. Generate a resume JSON for a ${targetJdTitle} role. Return EXACTLY this structure:
 
 {
-  "professional_summary": "${summaryLines} sentences naming the role, each sentence = vault fact + JD keyword",
-  "education": ["Degree @ School â€” Location | Dates"],
+  "professional_summary": "EXACTLY ${summaryLines} complete sentences naming the role. Each sentence MUST be highly impactful. Do NOT generate ${summaryLines - 1} or ${summaryLines + 1} sentences.",
+  "education": ["Degree @ School — Location | Dates"],
   "experience": [{"heading": "Role @ Organization", "content": "dates", "bullets": ["verb + tech + JD keyword"]}],
-  "products": [{"heading": "Title â€” Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
-  "projects": [{"heading": "Title â€” Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
+  "products": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
+  "projects": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
   "certifications": ["Name (Issuer) - Year"],
   "skills_section": ["Core Competencies: [6-8 JD keyword phrases]", "Languages: ...", "AI & ML: ...", "Cloud & MLOps: ..."],
   "awards": [],
   "leadership": []
 }
 
-CRITICAL BULLET COUNTS - generate EXACTLY:
-- Experience: ${experienceBullets} bullets per item
-- Products: ${productLines} bullets per item
-- Projects: ${projectLines} bullets per item
+CRITICAL BULLET COUNTS & LENGTHS:
+- Experience: EXACTLY ${experienceBullets} bullets per item
+- Products: EXACTLY ${productLines} bullets per item
+- Projects: EXACTLY ${projectLines} bullets per item
+
+STRICT BULLET POINT LINE LENGTH MANDATE:
+Every single bullet point generated in experience, products, and projects MUST fully utilize the line space to make it impactful and ATS-friendly.
+- A single full line should be EXACTLY 110 to 125 characters (including spaces).
+- Two full lines should be EXACTLY 220 to 250 characters (including spaces).
+Do NOT generate short 60-70% lines (e.g., do not return bullets less than 110 characters). Write detailed, technically rich sentences to fill the space perfectly without fabricating metrics.
 
 If the vault provides fewer source bullets, derive additional bullets from the item's skills/tech stack and JD keywords. Never fabricate metrics.
 
@@ -758,20 +764,7 @@ Return ONLY the JSON. No markdown, no comments.`
           const suffix = v.organization ? ` (${v.organization})` : "";
           return `${v.title}${suffix}`;
         });
-      }
-
-      // â”€â”€ Safety truncate summary to exact setting â”€â”€
-      if (fullyRestoredData.professional_summary) {
-        const lines = fullyRestoredData.professional_summary.split(/\n+/).map(s => s.trim()).filter(Boolean);
-        const dotSentences = fullyRestoredData.professional_summary.match(/[^.!?]+[.!?]+(\s|$)/g);
-        const parts = dotSentences && dotSentences.length >= summaryLines ? dotSentences : lines;
-        const cleanParts = parts.map(s => s.trim()).filter(Boolean);
-        if (cleanParts.length > summaryLines) {
-          fullyRestoredData.professional_summary = cleanParts.slice(0, summaryLines).join(" ");
-          if (!fullyRestoredData.professional_summary.endsWith(".")) fullyRestoredData.professional_summary += ".";
-        }
-      }
-
+      }      // ── Safety truncate summary removed: relying on LLM exact sentence generation ──
       const mergedData = savedEdits
         ? {
             ...fullyRestoredData,
