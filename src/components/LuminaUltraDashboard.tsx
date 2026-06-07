@@ -232,29 +232,69 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
                     <div className="space-y-4 px-6 md:px-12 relative">
                     <div className="flex items-center gap-3">
                         <DollarSign size={16} className="text-accent-gold" />
-                        <span className="text-[10px] uppercase font-black tracking-[0.3em] text-accent-gold/60">Forensic Salary Valuation</span>
+                        <span className="text-[10px] uppercase font-black tracking-[0.3em] text-accent-gold/60">
+                            {(!results?.logistics?.salary_range?.min && !results?.logistics?.salary_range?.max) ? "Market Average Estimate" : "Forensic Salary Valuation"}
+                        </span>
                     </div>
                     <div className="flex items-baseline gap-2 flex-wrap">
                         <span className="text-4xl lg:text-5xl font-display font-black tracking-[-0.07em] text-foreground leading-none group-hover:text-accent-gold transition-colors">
                             {(() => {
-                                const c = results?.logistics?.salary_range?.currency?.toUpperCase();
-                                if (c === 'USD' || c === '$') return '$';
-                                if (c === 'INR' || c === '₹') return '₹';
-                                if (c === 'GBP' || c === '£') return '£';
-                                if (c === 'EUR' || c === '€') return '€';
-                                return '$';
+                                const actualMin = results?.logistics?.salary_range?.min ?? 0;
+                                const actualMax = results?.logistics?.salary_range?.max ?? 0;
+                                let currency = results?.logistics?.salary_range?.currency?.toUpperCase();
+                                if (currency === 'USD' || currency === '$') currency = '$';
+                                else if (currency === 'INR' || currency === '₹') currency = '₹';
+                                else if (currency === 'GBP' || currency === '£') currency = '£';
+                                else if (currency === 'EUR' || currency === '€') currency = '€';
+                                else {
+                                    const loc = (results?.title || "").toLowerCase();
+                                    currency = loc.match(/india|bengaluru|bangalore|hyderabad|chennai|pune|mumbai|delhi/i) ? '₹' : '$';
+                                }
+
+                                if (actualMin === 0 && actualMax === 0) {
+                                    const seniority = results?.qualifiers?.seniority_level ?? 40;
+                                    let estMin = 0;
+                                    let estMax = 0;
+                                    if (currency === '₹') {
+                                        if (seniority < 30) { estMin = 400000; estMax = 800000; }
+                                        else if (seniority < 70) { estMin = 1000000; estMax = 2500000; }
+                                        else { estMin = 3000000; estMax = 6000000; }
+                                    } else {
+                                        if (seniority < 30) { estMin = 60000; estMax = 90000; }
+                                        else if (seniority < 70) { estMin = 110000; estMax = 160000; }
+                                        else { estMin = 180000; estMax = 250000; }
+                                    }
+                                    return (
+                                        <>
+                                            {currency}{estMin.toLocaleString()}
+                                            <span className="text-xl text-muted-foreground/20 font-black mx-2">-</span>
+                                            <span className="text-4xl lg:text-5xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none">
+                                                {estMax.toLocaleString()}
+                                            </span>
+                                        </>
+                                    );
+                                }
+
+                                return (
+                                    <>
+                                        {currency}{actualMin.toLocaleString()}
+                                        <span className="text-xl text-muted-foreground/20 font-black mx-2">-</span>
+                                        <span className="text-4xl lg:text-5xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none">
+                                            {actualMax.toLocaleString()}
+                                        </span>
+                                    </>
+                                );
                             })()}
-                            {(results?.logistics?.salary_range?.min ?? 0).toLocaleString()}
-                        </span>
-                        <span className="text-xl text-muted-foreground/20 font-black">-</span>
-                        <span className="text-4xl lg:text-5xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none">
-                            {(results?.logistics?.salary_range?.max ?? 0).toLocaleString()}
                         </span>
                         
                         <div className="ml-4 px-3 py-1 rounded-full bg-accent-gold/10 border border-accent-gold/20 flex items-center gap-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-accent-gold animate-pulse" />
                             <span className="text-[9px] font-black uppercase text-accent-gold tracking-widest">
-                                {(results?.logistics?.salary_range?.max ?? 0) > 150000 || (results?.logistics?.salary_range?.max ?? 0) > 5000000 ? "Market Elite Tier" : "Standard Domain Pay"}
+                                {(!results?.logistics?.salary_range?.max || results?.logistics?.salary_range?.max === 0) 
+                                    ? "Industry Baseline" 
+                                    : (results.logistics.salary_range.max > 150000 || results.logistics.salary_range.max > 5000000 
+                                        ? "Market Elite Tier" 
+                                        : "Standard Domain Pay")}
                             </span>
                         </div>
                     </div>
