@@ -4,7 +4,8 @@ import {
   ShieldAlert, Target, TrendingUp, Clock, Ghost, Scale, 
   BrainCircuit, Star, Zap, UserCheck, MessageSquare,
   LayoutDashboard, Heart, SearchCheck, Briefcase, ArrowRight,
-  ShieldCheck, Info, Copy, Activity, Sparkles, Download, Check, Users, Wand2, DollarSign
+  ShieldCheck, Info, Copy, Activity, Sparkles, Download, Check, Users, Wand2, DollarSign,
+  Building2, MapPin
 } from "lucide-react";
 import type { DecodeResult, ResumeGapResult } from "@/types/jd";
 import { LuminaGauge } from "./LuminaGauge";
@@ -100,6 +101,80 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
 
   return (
     <div className="space-y-6">
+      {/* ── TARGET BRIEFING CARD ── */}
+      {results.overview && (
+        <div className="glass-panel bg-gradient-to-r from-white via-slate-50/50 to-white shadow-[0_8px_30px_rgb(0,0,0,0.03)] border-border/10 p-6 md:p-8 rounded-[2.5rem] relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent-emerald/5 to-accent-blue/5 opacity-30 group-hover:opacity-50 transition-opacity duration-700 pointer-events-none" />
+          <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none group-hover:scale-105 transition-transform duration-700">
+            <Briefcase size={180} className="text-primary" />
+          </div>
+          
+          <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-black uppercase text-accent-emerald tracking-[0.3em] bg-accent-emerald/10 px-3 py-1 rounded-full border border-accent-emerald/20">
+                  Target Briefing
+                </span>
+                {results.overview.employment_type && results.overview.employment_type !== 'Not specified' && (
+                  <span className="text-[10px] font-black uppercase text-accent-blue tracking-widest bg-accent-blue/10 px-3 py-1 rounded-full border border-accent-blue/20">
+                    {results.overview.employment_type}
+                  </span>
+                )}
+                {results.overview.seniority && results.overview.seniority !== 'Not specified' && (
+                  <span className="text-[10px] font-black uppercase text-primary tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+                    {results.overview.seniority}
+                  </span>
+                )}
+              </div>
+              <h1 className="text-3xl md:text-4xl font-serif italic text-foreground tracking-tight">
+                {results.overview.role || results.title || "Target Position"}
+              </h1>
+              <p className="text-sm font-semibold text-muted-foreground flex items-center gap-2 flex-wrap">
+                <Building2 size={14} className="text-muted-foreground/60" />
+                <span>at <span className="text-foreground font-black">{results.overview.company || "Confidential Organization"}</span></span>
+                {results.overview.industry && results.overview.industry !== 'Not specified' && (
+                  <>
+                    <span className="text-muted-foreground/30">•</span>
+                    <span>{results.overview.industry}</span>
+                  </>
+                )}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-border/10 md:pl-8">
+              <div className="space-y-1">
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">Location</span>
+                <p className="text-[12px] font-black text-foreground flex items-center gap-1.5">
+                  <MapPin size={12} className="text-accent-blue shrink-0" />
+                  <span>{results.overview.location || "Not specified"}</span>
+                </p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">Work Mode</span>
+                <p className="text-[12px] font-black text-foreground flex items-center gap-1.5">
+                  <Activity size={12} className="text-accent-emerald shrink-0" />
+                  <span>{results.overview.work_mode || "Not specified"}</span>
+                </p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">Salary Range</span>
+                <p className="text-[12px] font-black text-foreground flex items-center gap-1.5">
+                  <DollarSign size={12} className="text-accent-gold shrink-0" />
+                  <span>{results.overview.package || "Not disclosed"}</span>
+                </p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">Experience</span>
+                <p className="text-[12px] font-black text-foreground flex items-center gap-1.5">
+                  <Target size={12} className="text-primary shrink-0" />
+                  <span>{results.overview.experience_required || "Not specified"}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── HERO INTELLIGENCE (Priority Metrics) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Total Score & Grade */}
