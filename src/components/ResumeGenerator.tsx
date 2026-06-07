@@ -521,11 +521,11 @@ STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
    - Specificity over vagueness — name actual projects from the vault, not generic "experience".
    - End on deployment credibility (e.g., Docker & AWS) to signal production readiness.
    - Use a punchy, telegraphic, fragment style. Example: "AI & Data Science graduate with expertise in Python, LangChain... Interned at iStudio... Built production tools..."
-   - Length Constraint (CRITICAL): You MUST write EXACTLY 100 to 115 characters for EACH line requested. The user requested ${summaryLines} lines, so your TOTAL character count MUST be strictly between ${summaryLines * 100} and ${summaryLines * 115} characters. Adjust wording to hit this precise target without leaving orphans.
+   - Length Constraint (CRITICAL): LLMs cannot count characters well, so follow this rule: Write EXACTLY ${summaryLines} extremely long, distinct sentences/fragments. You MUST use at least ${summaryLines * 20} words in total. Your TOTAL character count MUST be strictly between ${summaryLines * 100} and ${summaryLines * 115} characters.
 2. BULLET POINTS: Every single bullet point MUST fully utilize the line space.
    - A single full line should be EXACTLY 110 to 130 characters (including spaces).
    - Two full lines should be EXACTLY 220 to 260 characters (including spaces).
-   - MINIMUM LENGTH (CRITICAL): Every single bullet point MUST be a strict minimum of 100 characters, up to 130 characters per point. Do NOT generate short 60-70% lines. Write detailed, technically rich sentences to fill the space.
+   - MINIMUM LENGTH (CRITICAL): Every single bullet point MUST be a strict minimum of 100 characters (at least 15 to 20 words per point). Do NOT generate short 60-70% lines. Write detailed, technically rich sentences to fill the space.
 
 If the vault provides fewer source bullets, derive additional bullets from the item's skills/tech stack and JD keywords. Never fabricate metrics.
 
