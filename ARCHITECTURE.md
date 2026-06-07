@@ -81,7 +81,6 @@ lumina-jd-scanner-main/
 │   │   ├── useDecodeJD.ts          # Core hook calling the JD AI pipeline
 │   │   └── useApplications.ts      # Active application tracking
 │   ├── integrations/               # API integration client setups
-│   │   ├── lovable/                # Integration adapters
 │   │   └── supabase/               # Supabase JS clients and types
 │   ├── lib/                        # Common utility libraries
 │   │   ├── deterministicScorer.ts  # STRICT, OFFLINE, DETERMINISTIC matching algorithm

@@ -952,7 +952,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       <div className="hidden print:flex print:items-center print:justify-between print:mb-4 print:pb-3 print:border-b print:border-slate-200">
         <img src="/logo.png" alt="Lumina" style={{ height: 28, width: "auto" }} />
         <div style={{ fontSize: 10, color: "#475569", fontWeight: 600 }}>
-          Personalised Career Roadmap · lumina-glow-create.lovable.app
+          Personalised Career Roadmap · lumina-jd-scanner.vercel.app
         </div>
       </div>
 
