@@ -521,7 +521,7 @@ STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
    - Specificity over vagueness — name actual projects from the vault, not generic "experience".
    - End on deployment credibility (e.g., Docker & AWS) to signal production readiness.
    - Use a punchy, telegraphic, fragment style. Example: "AI & Data Science graduate with hands-on expertise in agentic AI... Built production-grade tools including a multi-agent platform... Experienced in ML development, Docker & AWS deployments."
-   - Length Constraint: Total character count MUST be strictly around ${summaryLines * 100} to ${summaryLines * 100 + 20} characters. Adjust to hit this target without orphans.
+   - Length Constraint (CRITICAL): You MUST write EXACTLY 100 characters for EACH line requested. The user requested ${summaryLines} lines, so your TOTAL character count MUST be strictly between ${summaryLines * 100} and ${summaryLines * 100 + 20} characters. Adjust wording to hit this precise target without leaving orphans.
 2. BULLET POINTS: Every single bullet point MUST fully utilize the line space.
    - A single full line should be EXACTLY 110 to 125 characters (including spaces).
    - Two full lines should be EXACTLY 220 to 250 characters (including spaces).
