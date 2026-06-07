@@ -63,7 +63,7 @@ NativeDeno.serve(async (req: Request) => {
         throw new Error("Lumina Auth Error: Missing GROQ_API_KEY or OPENAI_API_KEY in Supabase secrets. Please run 'supabase secrets set GROQ_API_KEY=your_key'.");
     }
 
-    const safeJD = jdText.substring(0, 15000); 
+    const safeJD = jdText.substring(0, 12000); 
     const fallbackConfigs: Array<{ url: string; key: string; model: string }> = [];
     if (groqKey) {
       fallbackConfigs.push(
@@ -151,8 +151,8 @@ OUTPUT JSON FORMAT:
 ${JSON.stringify(nakedSchema)}` }
                     ],
                     response_format: { type: "json_object" },
-                    temperature: 0.2,
-                    max_tokens: 5000,
+                    temperature: 0.3,
+                    max_tokens: 2500,
                 }),
             });
             clearTimeout(timeoutId);
