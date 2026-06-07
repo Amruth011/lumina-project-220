@@ -513,11 +513,13 @@ CRITICAL BULLET COUNTS & LENGTHS:
 - Products: EXACTLY ${productLines} bullets per item
 - Projects: EXACTLY ${projectLines} bullets per item
 
-STRICT BULLET POINT LINE LENGTH MANDATE:
-Every single bullet point generated in experience, products, and projects MUST fully utilize the line space to make it impactful and ATS-friendly.
-- A single full line should be EXACTLY 110 to 125 characters (including spaces).
-- Two full lines should be EXACTLY 220 to 250 characters (including spaces).
-Do NOT generate short 60-70% lines (e.g., do not return bullets less than 110 characters). Write detailed, technically rich sentences to fill the space perfectly without fabricating metrics.
+STRICT LENGTH MANDATES TO PREVENT ORPHANS (CRITICAL):
+1. PROFESSIONAL SUMMARY: The summary MUST completely fill visual lines without leaving single-word orphans on the last line. 
+   - Total character count MUST be strictly around: ${summaryLines * 135} to ${summaryLines * 150} characters. (Write longer, detailed sentences to hit this target).
+2. BULLET POINTS: Every single bullet point MUST fully utilize the line space.
+   - A single full line should be EXACTLY 110 to 125 characters (including spaces).
+   - Two full lines should be EXACTLY 220 to 250 characters (including spaces).
+   - Do NOT generate short 60-70% lines. Write detailed, technically rich sentences to fill the space perfectly without fabricating metrics.
 
 If the vault provides fewer source bullets, derive additional bullets from the item's skills/tech stack and JD keywords. Never fabricate metrics.
 
