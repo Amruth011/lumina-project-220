@@ -513,9 +513,15 @@ CRITICAL BULLET COUNTS & LENGTHS:
 - Products: EXACTLY ${productLines} bullets per item
 - Projects: EXACTLY ${projectLines} bullets per item
 
-STRICT LENGTH MANDATES TO PREVENT ORPHANS (CRITICAL):
-1. PROFESSIONAL SUMMARY: The summary MUST be written in a punchy, telegraphic, fragment style (e.g., "AI & Data Science graduate with hands-on expertise in agentic AI... Built production-grade tools... Experienced in ML development...").
-   - Total character count MUST be strictly around: ${summaryLines * 100} to ${summaryLines * 100 + 20} characters. (Adjust length perfectly to hit this target).
+STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
+1. PROFESSIONAL SUMMARY FORMULA:
+   Apply: JD Signal Extraction + Profile Mapping + Constraint Fitting.
+   - Lead with identity (e.g., AI & Data Science graduate, based on JD).
+   - No soft skills, no filler words like "passionate" or "motivated".
+   - Specificity over vagueness — name actual projects from the vault, not generic "experience".
+   - End on deployment credibility (e.g., Docker & AWS) to signal production readiness.
+   - Use a punchy, telegraphic, fragment style. Example: "AI & Data Science graduate with hands-on expertise in agentic AI... Built production-grade tools including a multi-agent platform... Experienced in ML development, Docker & AWS deployments."
+   - Length Constraint: Total character count MUST be strictly around ${summaryLines * 100} to ${summaryLines * 100 + 20} characters. Adjust to hit this target without orphans.
 2. BULLET POINTS: Every single bullet point MUST fully utilize the line space.
    - A single full line should be EXACTLY 110 to 125 characters (including spaces).
    - Two full lines should be EXACTLY 220 to 250 characters (including spaces).
