@@ -56,16 +56,27 @@ NativeDeno.serve(async (req: Request) => {
     if (!jdText) throw new Error("Job description input is missing.");
 
     const groqKey = NativeDeno.env.get("GROQ_API_KEY")?.trim();
-    if (!groqKey) {
-        console.error("GROQ_API_KEY is missing from Supabase secrets.");
-        throw new Error("Lumina Auth Error: Missing GROQ_API_KEY in Supabase secrets. Please run 'supabase secrets set GROQ_API_KEY=your_key'.");
+    const openAiKey = NativeDeno.env.get("OPENAI_API_KEY")?.trim();
+
+    if (!groqKey && !openAiKey) {
+        console.error("API keys are missing from Supabase secrets.");
+        throw new Error("Lumina Auth Error: Missing GROQ_API_KEY or OPENAI_API_KEY in Supabase secrets. Please run 'supabase secrets set GROQ_API_KEY=your_key'.");
     }
 
     const safeJD = jdText.substring(0, 15000); 
-    const fallbackModels = [
-      "llama-3.3-70b-versatile",
-      "llama-3.1-8b-instant"
-    ];
+    const fallbackConfigs: Array<{ url: string; key: string; model: string }> = [];
+    if (groqKey) {
+      fallbackConfigs.push(
+        { url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "llama-3.1-8b-instant" },
+        { url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "llama-3.3-70b-versatile" }
+      );
+    }
+    if (openAiKey) {
+      fallbackConfigs.push(
+        { url: "https://api.openai.com/v1/chat/completions", key: openAiKey, model: "gpt-4o-mini" },
+        { url: "https://api.openai.com/v1/chat/completions", key: openAiKey, model: "gpt-4o" }
+      );
+    }
 
     let resultText = "";
     let lastError = "";
@@ -103,18 +114,18 @@ NativeDeno.serve(async (req: Request) => {
       resume_help: { keywords: ["string"], bullets: ["string"] }
     };
 
-    for (const model of fallbackModels) {
+    for (const config of fallbackConfigs) {
         try {
-            console.log(`Lumina Engine: Activating Forensic Scan with ${model}...`);
+            console.log(`Lumina Engine: Activating Forensic Scan with ${config.model}...`);
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 18000); // 18s per-model strict timeout
 
-            const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            const llmResponse = await fetch(config.url, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${groqKey}` },
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${config.key}` },
                 signal: controller.signal,
                 body: JSON.stringify({
-                    model: model,
+                    model: config.model,
                     messages: [
                         { role: "system", content: `You are the Lumina Forensic Intelligence Architect.
 Your goal is to deconstruct JDs into hyper-accurate data structures grounded ONLY in the JD text.
@@ -146,22 +157,22 @@ ${JSON.stringify(nakedSchema)}` }
             });
             clearTimeout(timeoutId);
 
-            if (!groqResponse.ok) {
-                const status = groqResponse.status;
-                if (status === 429 || status === 400 || status === 404) {
-                    lastError = `Model ${model} unavailable (${status})`;
+            if (!llmResponse.ok) {
+                const status = llmResponse.status;
+                if (status === 429 || status === 400 || status === 404 || status >= 500) {
+                    lastError = `Model ${config.model} unavailable (${status})`;
                     continue; 
                 }
-                const errorBody = await groqResponse.text();
+                const errorBody = await llmResponse.text();
                 throw new Error(`AI Provider Error (${status}): ${errorBody.substring(0, 100)}`);
             }
 
-            const data = await groqResponse.json();
+            const data = await llmResponse.json();
             resultText = data.choices?.[0]?.message?.content;
             if (resultText && resultText.trim().startsWith('{')) break;
         } catch (err: unknown) {
             lastError = err instanceof Error ? err.message : String(err);
-            console.error(`Lumina Engine Error with ${model}:`, lastError);
+            console.error(`Lumina Engine Error with ${config.model}:`, lastError);
             if (lastError.includes("aborted") || lastError.includes("Abort") || lastError.includes("429") || lastError.includes("400") || lastError.includes("404") || lastError.includes("timeout")) {
                 continue; 
             }
@@ -239,7 +250,7 @@ ${JSON.stringify(nakedSchema)}` }
   } catch (e) {
     const errorMsg = e instanceof Error ? e.message : "System Exception";
     return new Response(JSON.stringify({ error: `Lumina Engine Fault: ${errorMsg}`, details: errorMsg }), {
-      status: 500,
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
