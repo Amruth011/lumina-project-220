@@ -514,8 +514,8 @@ CRITICAL BULLET COUNTS & LENGTHS:
 - Projects: EXACTLY ${projectLines} bullets per item
 
 STRICT LENGTH MANDATES TO PREVENT ORPHANS (CRITICAL):
-1. PROFESSIONAL SUMMARY: The summary MUST completely fill visual lines without leaving single-word orphans on the last line. 
-   - Total character count MUST be strictly around: ${summaryLines * 135} to ${summaryLines * 150} characters. (Write longer, detailed sentences to hit this target).
+1. PROFESSIONAL SUMMARY: The summary MUST be written in a punchy, telegraphic, fragment style (e.g., "AI & Data Science graduate with hands-on expertise in agentic AI... Built production-grade tools... Experienced in ML development...").
+   - Total character count MUST be strictly around: ${summaryLines * 100} to ${summaryLines * 100 + 20} characters. (Adjust length perfectly to hit this target).
 2. BULLET POINTS: Every single bullet point MUST fully utilize the line space.
    - A single full line should be EXACTLY 110 to 125 characters (including spaces).
    - Two full lines should be EXACTLY 220 to 250 characters (including spaces).

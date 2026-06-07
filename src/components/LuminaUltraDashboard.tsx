@@ -237,7 +237,7 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
                         </span>
                     </div>
                     <div className="flex items-baseline gap-2 flex-wrap">
-                        <span className="text-4xl lg:text-5xl font-display font-black tracking-[-0.07em] text-foreground leading-none group-hover:text-accent-gold transition-colors">
+                        <div className="flex flex-col gap-1 text-4xl lg:text-5xl font-display font-black tracking-[-0.07em] text-foreground leading-none group-hover:text-accent-gold transition-colors">
                             {(() => {
                                 const actualMin = results?.logistics?.salary_range?.min ?? 0;
                                 const actualMax = results?.logistics?.salary_range?.max ?? 0;
@@ -266,26 +266,26 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
                                     }
                                     return (
                                         <>
-                                            {currency}{estMin.toLocaleString()}
-                                            <span className="text-xl text-muted-foreground/20 font-black mx-2">-</span>
-                                            <span className="text-4xl lg:text-5xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none">
+                                            <div>{currency}{estMin.toLocaleString()}</div>
+                                            <div className="flex items-center text-4xl lg:text-5xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none">
+                                                <span className="text-xl text-muted-foreground/20 font-black mr-3">-</span>
                                                 {estMax.toLocaleString()}
-                                            </span>
+                                            </div>
                                         </>
                                     );
                                 }
 
                                 return (
                                     <>
-                                        {currency}{actualMin.toLocaleString()}
-                                        <span className="text-xl text-muted-foreground/20 font-black mx-2">-</span>
-                                        <span className="text-4xl lg:text-5xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none">
+                                        <div>{currency}{actualMin.toLocaleString()}</div>
+                                        <div className="flex items-center text-4xl lg:text-5xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none">
+                                            <span className="text-xl text-muted-foreground/20 font-black mr-3">-</span>
                                             {actualMax.toLocaleString()}
-                                        </span>
+                                        </div>
                                     </>
                                 );
                             })()}
-                        </span>
+                        </div>
                         
                         <div className="ml-4 px-3 py-1 rounded-full bg-accent-gold/10 border border-accent-gold/20 flex items-center gap-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-accent-gold animate-pulse" />
