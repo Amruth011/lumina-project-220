@@ -516,16 +516,16 @@ CRITICAL BULLET COUNTS & LENGTHS:
 STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
 1. PROFESSIONAL SUMMARY FORMULA:
    Apply: JD Signal Extraction + Profile Mapping + Constraint Fitting.
-   - Lead with identity (e.g., AI & Data Science graduate, based on JD).
+   - Lead with the user's TRUE identity based exclusively on their EDUCATION and EXPERIENCE vault data (e.g., "AI & Data Science graduate", "Data Science Intern"). NEVER hallucinate or claim the target JD title if the user does not actually hold it.
    - No soft skills, no filler words like "passionate" or "motivated".
    - Specificity over vagueness — name actual projects from the vault, not generic "experience".
    - End on deployment credibility (e.g., Docker & AWS) to signal production readiness.
-   - Use a punchy, telegraphic, fragment style. Example: "AI & Data Science graduate with hands-on expertise in agentic AI... Built production-grade tools including a multi-agent platform... Experienced in ML development, Docker & AWS deployments."
-   - Length Constraint (CRITICAL): You MUST write EXACTLY 100 characters for EACH line requested. The user requested ${summaryLines} lines, so your TOTAL character count MUST be strictly between ${summaryLines * 100} and ${summaryLines * 100 + 20} characters. Adjust wording to hit this precise target without leaving orphans.
+   - Use a punchy, telegraphic, fragment style. Example: "AI & Data Science graduate with expertise in Python, LangChain... Interned at iStudio... Built production tools..."
+   - Length Constraint (CRITICAL): You MUST write EXACTLY 100 to 115 characters for EACH line requested. The user requested ${summaryLines} lines, so your TOTAL character count MUST be strictly between ${summaryLines * 100} and ${summaryLines * 115} characters. Adjust wording to hit this precise target without leaving orphans.
 2. BULLET POINTS: Every single bullet point MUST fully utilize the line space.
    - A single full line should be EXACTLY 110 to 125 characters (including spaces).
    - Two full lines should be EXACTLY 220 to 250 characters (including spaces).
-   - Do NOT generate short 60-70% lines. Write detailed, technically rich sentences to fill the space perfectly without fabricating metrics.
+   - MINIMUM LENGTH (CRITICAL): Every single bullet point MUST be a minimum of 100 characters. Do NOT generate short 60-70% lines. Write detailed, technically rich sentences to fill the space perfectly without fabricating metrics.
 
 If the vault provides fewer source bullets, derive additional bullets from the item's skills/tech stack and JD keywords. Never fabricate metrics.
 
