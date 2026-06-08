@@ -517,7 +517,7 @@ STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
 1. PROFESSIONAL SUMMARY RULES — FOLLOW EXACTLY:
    - Write EXACTLY ${summaryLines} sentences. Not more. Not fewer. Count them.
    - Each sentence must be distinct: [1] Role + years/level, [2] Core technical skills from THIS JD, [3] Impact/achievement framing, [4] Domain expertise (if 4+), [5] Career ambition aligned to company (if 5).
-   - Every sentence must contain at least one keyword extracted directly from the decoded JD skills: ${jdSkills.map(s => s.skill).join(', ')}.
+   - Every sentence must contain at least one keyword extracted directly from the decoded JD skills: ${(jdSkills || []).slice(0, 15).map(s => s.skill).join(', ')}.
    - DO NOT merge sentences with semicolons or em-dashes to fake multiple lines.
    - DO NOT write a single long paragraph. Each sentence is standalone.
    - Output ONLY the summary sentences. No label, no bullets, no preamble.
@@ -577,7 +577,7 @@ Return ONLY the JSON. No markdown, no comments.`
                 model: model,
                 messages: [{ role: "user", content: prompt }],
                 temperature: 0.5,
-                max_tokens: 8192
+                max_tokens: 4000
                   },
                   signal: controller.signal
             });
