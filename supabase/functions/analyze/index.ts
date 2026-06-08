@@ -35,8 +35,8 @@ serve(async (req: Request) => {
     const fallbackModels = [
       requestedModel || "llama-3.3-70b-versatile",
       "llama-3.1-8b-instant",
-      "gemma2-9b-it",
-      "llama3-8b-8192"
+      "qwen/qwen3-32b",
+      "meta-llama/llama-4-scout-17b-16e-instruct"
     ].filter((v, i, a) => a.indexOf(v) === i);
 
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

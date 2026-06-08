@@ -41,7 +41,7 @@ serve(async (req) => {
       throw new Error("Server configuration error: Missing API Key");
     }
     
-    const fallbackModels = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "gemma2-9b-it", "llama3-8b-8192"];
+    const fallbackModels = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "qwen/qwen3-32b", "meta-llama/llama-4-scout-17b-16e-instruct"];
     let resultJson = null;
     let lastError = "";
 
