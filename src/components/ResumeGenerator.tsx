@@ -515,13 +515,13 @@ CRITICAL BULLET COUNTS & LENGTHS:
 
 STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
 1. PROFESSIONAL SUMMARY FORMULA:
-   Apply: JD Signal Extraction + Profile Mapping + Constraint Fitting.
-   - Lead with the user's TRUE identity based exclusively on their EDUCATION and EXPERIENCE vault data (e.g., "AI & Data Science graduate", "Data Science Intern"). NEVER hallucinate or claim the target JD title if the user does not actually hold it.
-   - No soft skills, no filler words like "passionate" or "motivated".
-   - Specificity over vagueness — name actual projects from the vault, not generic "experience".
-   - End on deployment credibility (e.g., Docker & AWS) to signal production readiness.
-   - Use a punchy, telegraphic, fragment style. Example: "AI & Data Science graduate with expertise in Python, LangChain... Interned at iStudio... Built production tools..."
-   - Length Constraint (CRITICAL): LLMs cannot count characters well, so follow this rule: Write EXACTLY ${summaryLines} extremely long, distinct sentences/fragments. You MUST use at least ${summaryLines * 20} words in total. Your TOTAL character count MUST be strictly between ${summaryLines * 100} and ${summaryLines * 115} characters.
+   Apply: JD Signal Extraction + Profile Mapping + Narrative Flow.
+   - CRITICAL: DO NOT start with "As a [Target Role]" or claim the target title unless the user already holds it. Lead with their ACTUAL current identity based on education/experience (e.g., "Recent [Degree] graduate", "Data Science Intern").
+   - AVOID ROBOTIC LISTS: DO NOT write repetitive sentences (e.g., "I leverage X for Y. Using A, I analyze B. I apply C for D.").
+   - Write a highly cohesive, compelling narrative that bridges the user's specific vault projects to the JD's highest-priority requirements.
+   - Prioritize advanced JD keywords (e.g., Agentic AI, LLMs, LangChain, RAG) over basic requirements, if the user has them.
+   - Explicitly name actual projects and startups from the user's vault instead of saying "built projects".
+   - Length Constraint: Write EXACTLY ${summaryLines} flowing, distinct sentences that form a compelling professional story.
 2. BULLET POINTS: Every single bullet point MUST fully utilize the line space.
    - A single full line should be EXACTLY 110 to 130 characters (including spaces).
    - Two full lines should be EXACTLY 220 to 260 characters (including spaces).
