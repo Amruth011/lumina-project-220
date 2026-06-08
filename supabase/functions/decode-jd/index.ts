@@ -68,7 +68,9 @@ NativeDeno.serve(async (req: Request) => {
     if (groqKey) {
       fallbackConfigs.push(
         { url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "llama-3.1-8b-instant" },
-        { url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "llama-3.3-70b-versatile" }
+        { url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "llama-3.3-70b-versatile" },
+        { url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "gemma2-9b-it" },
+        { url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "mixtral-8x7b-32768" }
       );
     }
     if (openAiKey) {
