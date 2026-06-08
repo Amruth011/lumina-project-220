@@ -1945,27 +1945,33 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                 <div className="flex flex-col !font-inherit" style={{ fontFamily: 'inherit', gap: '0.5px' }}>
                                   {(() => {
                                     const jdKeywordSet = new Set<string>((jdSkills || []).map(s => (s.skill || "").toLowerCase().trim()).filter(Boolean));
-                                    const renderSkillTokens = (str: string) => {
-                                      const parts = str.split(/(,\s*)/);
-                                      return parts.map((token, idx) => {
-                                        if (/^,\s*$/.test(token)) return <React.Fragment key={idx}>{token}</React.Fragment>;
-                                        const key = token.trim().toLowerCase();
-                                        const isMatch = key && (jdKeywordSet.has(key) || Array.from(jdKeywordSet).some(j => j && (key.includes(j) || j.includes(key))));
-                                        return isMatch
-                                          ? <strong key={idx} className="!font-inherit" style={{ fontWeight: 700 }}>{token}</strong>
-                                          : <React.Fragment key={idx}>{token}</React.Fragment>;
-                                      });
+                                    const isHighlight = (skill: string) => {
+                                      const key = skill.trim().toLowerCase();
+                                      return key && (jdKeywordSet.has(key) || Array.from(jdKeywordSet).some(j => j && (key.includes(j) || j.includes(key))));
                                     };
+                                    
                                     return (localResume.skills_section || []).map((skillLine, i) => {
                                       const colonIdx = (skillLine || "").indexOf(":");
                                       const category = colonIdx !== -1 ? skillLine.slice(0, colonIdx).trim() : "";
-                                      const skills = colonIdx !== -1 ? skillLine.slice(colonIdx + 1).trim() : (skillLine || "").trim();
+                                      const skillsRaw = colonIdx !== -1 ? skillLine.slice(colonIdx + 1).trim() : (skillLine || "").trim();
                                       const showCategory = skillsViewMode === 'category' && category && category.toLowerCase() !== 'skills';
+                                      
+                                      const skillsArray = skillsRaw.split(",").map(s => s.trim()).filter(Boolean);
+                                      
                                       return (
-                                        <p key={i} className="text-[#1E2A3A]/90 leading-tight !font-inherit text-left" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'left', margin: 0, padding: 0 }}>
-                                          {showCategory && <span className="font-bold !font-inherit" style={{ fontFamily: 'inherit' }}>{category}: </span>}
-                                          {renderSkillTokens(skills)}
-                                        </p>
+                                        <div key={i} className="mb-1">
+                                          {showCategory && <div className="font-bold !font-inherit mb-1" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', color: '#1E2A3A' }}>{category}</div>}
+                                          <div className="grid grid-cols-3 gap-x-4 gap-y-1 !font-inherit" style={{ fontSize: fontSizes.body, fontFamily: 'inherit' }}>
+                                            {skillsArray.map((skill, idx) => (
+                                              <div key={idx} className="flex items-start text-[#1E2A3A]/90 !font-inherit" style={{ margin: 0, padding: 0 }}>
+                                                <span className="mr-2" style={{ color: '#1E2A3A', fontSize: fontSizes.body }}>•</span>
+                                                <span className={isHighlight(skill) ? "font-bold" : ""} style={{ fontWeight: isHighlight(skill) ? 700 : 'normal' }}>
+                                                  {skill}
+                                                </span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
                                       );
                                     });
                                   })()}
