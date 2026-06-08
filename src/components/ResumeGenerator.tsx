@@ -406,7 +406,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
       return;
     }
     const targetJdTitle = jdTitle || "Target Role";
-    const targetJdSkills = (jdSkills || []).map(s => `${s.skill} (Importance: ${s.importance})`).join(', ') || "None specified.";
+    const targetJdSkills = (jdSkills || []).slice(0, 20).map(s => `${s.skill} (Importance: ${s.importance})`).join(', ') || "None specified.";
     const targetCompany = companyName || "Target Company";
 
     setIsGenerating(true);
@@ -423,7 +423,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
 
     const serializeVaultItems = (items: VaultItem[]) => {
       if (items.length === 0) return "None provided.";
-      return items.map((item, idx) => {
+      return items.slice(0, 6).map((item, idx) => {
         const lines = [`Item ${idx + 1}:`];
         if (item.title) lines.push(`  Title: ${item.title}`);
         if (item.organization) lines.push(`  Org: ${item.organization}`);
@@ -577,7 +577,7 @@ Return ONLY the JSON. No markdown, no comments.`
                 model: model,
                 messages: [{ role: "user", content: prompt }],
                 temperature: 0.5,
-                max_tokens: 4000
+                max_tokens: 2000
                   },
                   signal: controller.signal
             });
