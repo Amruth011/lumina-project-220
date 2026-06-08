@@ -514,16 +514,16 @@ CRITICAL BULLET COUNTS & LENGTHS:
 - Projects: EXACTLY ${projectLines} bullets per item
 
 STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
-1. PROFESSIONAL SUMMARY FORMULA:
-   Apply: JD Signal Extraction + Profile Mapping + Narrative Flow.
-   - CRITICAL: DO NOT start with "As a [Target Role]" or claim the target title unless the user already holds it. Lead with their ACTUAL current identity based on education/experience (e.g., "Recent [Degree] graduate", "Data Science Intern").
-   - AVOID ROBOTIC LISTS: DO NOT write repetitive sentences (e.g., "I leverage X for Y. Using A, I analyze B. I apply C for D.").
-   - Write a highly cohesive, compelling narrative that bridges the user's specific vault projects to the JD's highest-priority requirements.
-   - Prioritize advanced JD keywords (e.g., Agentic AI, LLMs, LangChain, RAG) over basic requirements, if the user has them.
-   - Explicitly name actual projects and startups from the user's vault instead of saying "built projects".
-   - Length Constraint: Write EXACTLY ${summaryLines} flowing, distinct sentences. (If you output ${summaryLines - 1} sentences instead of ${summaryLines}, you fail).
-   - BAD EXAMPLE (Do NOT do this): "As an Associate Engineer, I leverage Python for AI models. With expertise in PyTorch, I drive systems. Utilizing Scikit-learn, I analyze data."
-   - GOOD EXAMPLE (DO THIS): "Recent B.Tech graduate and Data Science Intern specializing in Python, Agentic AI, and LLM-powered applications. Proven ability to build autonomous systems using LangChain and RAG architectures to deliver scalable machine learning solutions."
+1. PROFESSIONAL SUMMARY RULES — FOLLOW EXACTLY:
+   - Write EXACTLY ${summaryLines} sentences. Not more. Not fewer. Count them.
+   - Each sentence must be distinct: [1] Role + years/level, [2] Core technical skills from THIS JD, [3] Impact/achievement framing, [4] Domain expertise (if 4+), [5] Career ambition aligned to company (if 5).
+   - Every sentence must contain at least one keyword extracted directly from the decoded JD skills: ${jdSkills.map(s => s.skill).join(', ')}.
+   - DO NOT merge sentences with semicolons or em-dashes to fake multiple lines.
+   - DO NOT write a single long paragraph. Each sentence is standalone.
+   - Output ONLY the summary sentences. No label, no bullets, no preamble.
+
+   EXAMPLE (3 sentences):
+   "Sentence one about role and level. Sentence two about specific tech skills. Sentence three about impact." - Mirror the seniority language from the JD. If the JD says "lead", use "lead". If it says "drive", use "drive". Pull exact verb choices from the JD description.
 2. BULLET POINTS: Every single bullet point MUST fully utilize the line space.
    - A single full line should be EXACTLY 110 to 130 characters (including spaces).
    - Two full lines should be EXACTLY 220 to 260 characters (including spaces).
