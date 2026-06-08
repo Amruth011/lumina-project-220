@@ -521,7 +521,7 @@ STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
    - Write a highly cohesive, compelling narrative that bridges the user's specific vault projects to the JD's highest-priority requirements.
    - Prioritize advanced JD keywords (e.g., Agentic AI, LLMs, LangChain, RAG) over basic requirements, if the user has them.
    - Explicitly name actual projects and startups from the user's vault instead of saying "built projects".
-   - Length Constraint: Write EXACTLY ${summaryLines} flowing, distinct sentences. (If you output 4 sentences instead of 5, you fail).
+   - Length Constraint: Write EXACTLY ${summaryLines} flowing, distinct sentences. (If you output ${summaryLines - 1} sentences instead of ${summaryLines}, you fail).
    - BAD EXAMPLE (Do NOT do this): "As an Associate Engineer, I leverage Python for AI models. With expertise in PyTorch, I drive systems. Utilizing Scikit-learn, I analyze data."
    - GOOD EXAMPLE (DO THIS): "Recent B.Tech graduate and Data Science Intern specializing in Python, Agentic AI, and LLM-powered applications. Proven ability to build autonomous systems using LangChain and RAG architectures to deliver scalable machine learning solutions."
 2. BULLET POINTS: Every single bullet point MUST fully utilize the line space.
