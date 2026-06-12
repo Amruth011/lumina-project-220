@@ -267,8 +267,8 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
                                     return (
                                         <>
                                             <div>{currency}{estMin.toLocaleString()}</div>
-                                            <div className="flex items-center text-3xl lg:text-4xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none mt-1">
-                                                <span className="text-xs uppercase font-black tracking-widest text-muted-foreground/40 mr-2">to</span>
+                                            <div className="flex items-center text-4xl lg:text-5xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none mt-2">
+                                                <span className="text-sm uppercase font-black tracking-widest text-muted-foreground/40 mr-3">to</span>
                                                 {currency}{estMax.toLocaleString()}
                                             </div>
                                         </>
@@ -278,8 +278,8 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
                                 return (
                                     <>
                                         <div>{currency}{actualMin.toLocaleString()}</div>
-                                        <div className="flex items-center text-3xl lg:text-4xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none mt-1">
-                                            <span className="text-xs uppercase font-black tracking-widest text-muted-foreground/40 mr-2">to</span>
+                                        <div className="flex items-center text-4xl lg:text-5xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none mt-2">
+                                            <span className="text-sm uppercase font-black tracking-widest text-muted-foreground/40 mr-3">to</span>
                                             {currency}{actualMax.toLocaleString()}
                                         </div>
                                     </>
