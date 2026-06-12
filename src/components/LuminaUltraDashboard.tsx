@@ -237,7 +237,7 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
                         </span>
                     </div>
                     <div className="flex items-baseline gap-2 flex-wrap">
-                        <div className="flex flex-col gap-1 text-4xl lg:text-5xl font-display font-black tracking-[-0.07em] text-foreground leading-none group-hover:text-accent-gold transition-colors">
+                        <div className="flex flex-col gap-1 text-4xl lg:text-5xl font-display font-black tracking-[-0.07em] text-foreground leading-none group-hover:text-accent-gold transition-colors" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                             {(() => {
                                 const actualMin = results?.logistics?.salary_range?.min ?? 0;
                                 const actualMax = results?.logistics?.salary_range?.max ?? 0;
@@ -267,9 +267,9 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
                                     return (
                                         <>
                                             <div>{currency}{estMin.toLocaleString()}</div>
-                                            <div className="flex items-center text-4xl lg:text-5xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none">
-                                                <span className="text-xl text-muted-foreground/20 font-black mr-3">-</span>
-                                                {estMax.toLocaleString()}
+                                            <div className="flex items-center text-3xl lg:text-4xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none mt-1">
+                                                <span className="text-xs uppercase font-black tracking-widest text-muted-foreground/40 mr-2">to</span>
+                                                {currency}{estMax.toLocaleString()}
                                             </div>
                                         </>
                                     );
@@ -278,9 +278,9 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
                                 return (
                                     <>
                                         <div>{currency}{actualMin.toLocaleString()}</div>
-                                        <div className="flex items-center text-4xl lg:text-5xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none">
-                                            <span className="text-xl text-muted-foreground/20 font-black mr-3">-</span>
-                                            {actualMax.toLocaleString()}
+                                        <div className="flex items-center text-3xl lg:text-4xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none mt-1">
+                                            <span className="text-xs uppercase font-black tracking-widest text-muted-foreground/40 mr-2">to</span>
+                                            {currency}{actualMax.toLocaleString()}
                                         </div>
                                     </>
                                 );
