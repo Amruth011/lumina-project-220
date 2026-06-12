@@ -1745,7 +1745,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                           return items.reduce<React.ReactNode[]>((acc, item, idx) => {
                             if (idx > 0) {
                               acc.push(
-                                <span key={`sep-${idx}`} className="opacity-30 select-none">|</span>
+                                <span key={`sep-${idx}`} className="opacity-40 select-none mx-1">•</span>
                               );
                             }
                             acc.push(item);

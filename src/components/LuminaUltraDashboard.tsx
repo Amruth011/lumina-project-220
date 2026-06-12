@@ -213,31 +213,40 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
 
           {/* Salary Range Card */}
           <div 
-            className="lg:col-span-4 glass-panel bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-border/10 p-10 rounded-[3.5rem] flex flex-col justify-center space-y-10 relative overflow-hidden group cursor-pointer"
+            className="lg:col-span-4 glass-panel bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-border/10 p-6 md:p-8 rounded-[3.5rem] flex flex-col justify-center space-y-10 relative overflow-hidden group cursor-pointer"
             onClick={handleCopySalary}
           >
                 <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
                     <Star size={140} className="text-accent-gold" />
                 </div>
                 <div className="space-y-8 relative z-10">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between flex-wrap gap-3">
                         <div className="flex flex-col gap-1">
                             <span className="text-xs uppercase font-black tracking-widest text-muted-foreground opacity-60">Projected Value Range</span>
                             {(results?.logistics?.salary_range?.estimate || !jdText?.toLowerCase()?.includes('salary')) && (
                                 <LuminaInferenceBadge tooltip="Salary not explicitly stated. Calculated based on role, location, and seniority." />
                             )}
                         </div>
+                        <div className="px-3 py-1 rounded-full bg-accent-gold/10 border border-accent-gold/20 flex items-center gap-2 self-start">
+                            <div className="w-1.5 h-1.5 rounded-full bg-accent-gold animate-pulse" />
+                            <span className="text-[9px] font-black uppercase text-accent-gold tracking-widest">
+                                {(!results?.logistics?.salary_range?.max || results?.logistics?.salary_range?.max === 0) 
+                                    ? "Industry Baseline" 
+                                    : (results.logistics.salary_range.max > 150000 || results.logistics.salary_range.max > 5000000 
+                                        ? "Market Elite Tier" 
+                                        : "Standard Domain Pay")}
+                            </span>
+                        </div>
                     </div>
 
-                    <div className="space-y-4 px-6 md:px-12 relative">
-                    <div className="flex items-center gap-3">
-                        <DollarSign size={16} className="text-accent-gold" />
-                        <span className="text-[10px] uppercase font-black tracking-[0.3em] text-accent-gold/60">
-                            {(!results?.logistics?.salary_range?.min && !results?.logistics?.salary_range?.max) ? "Market Average Estimate" : "Forensic Salary Valuation"}
-                        </span>
-                    </div>
-                    <div className="flex items-baseline gap-2 flex-wrap">
-                        <div className="flex flex-col gap-1 text-4xl lg:text-5xl font-display font-black tracking-[-0.07em] text-foreground leading-none group-hover:text-accent-gold transition-colors" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <div className="space-y-4 px-4 relative">
+                        <div className="flex items-center gap-3">
+                            <DollarSign size={16} className="text-accent-gold" />
+                            <span className="text-[10px] uppercase font-black tracking-[0.3em] text-accent-gold/60">
+                                {(!results?.logistics?.salary_range?.min && !results?.logistics?.salary_range?.max) ? "Market Average Estimate" : "Forensic Salary Valuation"}
+                            </span>
+                        </div>
+                        <div className="flex flex-col gap-2 text-4xl lg:text-5xl font-display font-black tracking-[-0.07em] text-foreground leading-none group-hover:text-accent-gold transition-colors">
                             {(() => {
                                 const actualMin = results?.logistics?.salary_range?.min ?? 0;
                                 const actualMax = results?.logistics?.salary_range?.max ?? 0;
@@ -292,17 +301,6 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
                                 );
                             })()}
                         </div>
-                        
-                        <div className="ml-4 px-3 py-1 rounded-full bg-accent-gold/10 border border-accent-gold/20 flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-accent-gold animate-pulse" />
-                            <span className="text-[9px] font-black uppercase text-accent-gold tracking-widest">
-                                {(!results?.logistics?.salary_range?.max || results?.logistics?.salary_range?.max === 0) 
-                                    ? "Industry Baseline" 
-                                    : (results.logistics.salary_range.max > 150000 || results.logistics.salary_range.max > 5000000 
-                                        ? "Market Elite Tier" 
-                                        : "Standard Domain Pay")}
-                            </span>
-                        </div>
                     </div>
                     {copiedField === 'salary' && (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-accent-gold/10 backdrop-blur-sm flex items-center justify-center rounded-[3.5rem] z-20">
@@ -338,7 +336,6 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
                 </div>
             </div>
           </div>
-      </div>
 
       {/* ── PHASE 1: JD DECODER ── */}
       <div className="space-y-8">

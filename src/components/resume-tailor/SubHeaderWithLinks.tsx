@@ -9,7 +9,7 @@ interface Props {
 export function SubHeaderWithLinks({ heading, content, fontSizes }: Props) {
   const headingParts = (heading || "").split(/\s+[-–—]\s+/);
   const title = headingParts[0] || "Title";
-  const techStack = headingParts.slice(1).join(" | ");
+  const techStack = headingParts.slice(1).join(" • ");
 
   const rawContent = content || "";
   const urlRegex = /(https?:\/\/[^\s|]+|github\.com\/[^\s|]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/[^\s|]*|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
@@ -33,7 +33,7 @@ export function SubHeaderWithLinks({ heading, content, fontSizes }: Props) {
         {title?.trim()}
         {techStack && (
           <span className="font-normal opacity-60 !font-inherit" style={{ fontFamily: 'inherit' }}>
-            {" "}| {techStack.replace(/^\s*\|\s*/, "").trim()}
+            {" "}• {techStack.replace(/^\s*•\s*/, "").trim()}
           </span>
         )}
       </span>
@@ -47,7 +47,7 @@ export function SubHeaderWithLinks({ heading, content, fontSizes }: Props) {
           const label = isGithub ? "GitHub" : "Live Link";
           return (
             <React.Fragment key={idx}>
-              {(statusOrYear || idx > 0) && <span className="opacity-30">|</span>}
+              {(statusOrYear || idx > 0) && <span className="opacity-40 select-none mx-1">•</span>}
               <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#1E2A3A] font-bold hover:underline hover:text-lumina-teal transition-all" style={{ fontFamily: 'inherit' }}>
                 {label}
               </a>
