@@ -1675,63 +1675,98 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                       <h1 className="font-bold tracking-tight uppercase !font-inherit" style={{ fontSize: `${nameFontSize}px`, color: '#1E2A3A', fontFamily: 'inherit' }}>
                         {localHeader.fullName || "Your Name"}
                       </h1>
-                      <div className="flex flex-wrap justify-center items-center gap-x-2 text-[#1E2A3A] font-medium !font-inherit" style={{ fontSize: fontSizes.meta }}>
-                        {localHeader.location && (
-                          <>
-                            <span>{localHeader.location}</span>
-                            <span className="opacity-30">|</span>
-                          </>
-                        )}
-                        {localHeader.phone && (
-                          <>
-                            <span>{localHeader.phone}</span>
-                            <span className="opacity-30">|</span>
-                          </>
-                        )}
-                        {localHeader.email && (
-                          <>
-                            <a href={`mailto:${localHeader.email.toLowerCase()}`} className="hover:underline text-[#1E2A3A]">
-                              {localHeader.email.toLowerCase()}
-                            </a>
-                            {(localHeader.linkedin || localHeader.github || localHeader.portfolio) && <span className="opacity-30">|</span>}
-                          </>
-                        )}
-                        {localHeader.linkedin && (
-                          <>
-                            <a 
-                              href={localHeader.linkedin.startsWith('http') ? localHeader.linkedin : `https://${localHeader.linkedin}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="text-blue-600 underline hover:text-blue-800 transition-colors"
-                            >
-                              Linkedin
-                            </a>
-                            {(localHeader.github || localHeader.portfolio) && <span className="opacity-30">|</span>}
-                          </>
-                        )}
-                        {localHeader.github && (
-                          <>
-                            <a 
-                              href={localHeader.github.startsWith('http') ? localHeader.github : `https://${localHeader.github}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="text-blue-600 underline hover:text-blue-800 transition-colors"
-                            >
-                              GitHub
-                            </a>
-                            {localHeader.portfolio && <span className="opacity-30">|</span>}
-                          </>
-                        )}
-                        {localHeader.portfolio && (
-                          <a 
-                            href={localHeader.portfolio.startsWith('http') ? localHeader.portfolio : `https://${localHeader.portfolio}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="text-blue-600 underline hover:text-blue-800 transition-colors"
-                          >
-                            Portfolio
-                          </a>
-                        )}
+                      <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-[#1E2A3A] font-medium !font-inherit" style={{ fontSize: fontSizes.meta }}>
+                        {(() => {
+                          const items = [];
+                          const loc = (localHeader.location || "").trim();
+                          const ph = (localHeader.phone || "").trim();
+                          const em = (localHeader.email || "").trim();
+                          const li = (localHeader.linkedin || "").trim();
+                          const gh = (localHeader.github || "").trim();
+                          const pf = (localHeader.portfolio || "").trim();
+
+                          if (loc) {
+                            items.push(
+                              <span key="loc" className="inline-flex items-center gap-1">
+                                <MapPin size={11} className="opacity-75 flex-shrink-0" />
+                                <span>{loc}</span>
+                              </span>
+                            );
+                          }
+                          if (ph) {
+                            items.push(
+                              <span key="phone" className="inline-flex items-center gap-1">
+                                <Phone size={11} className="opacity-75 flex-shrink-0" />
+                                <span>{ph}</span>
+                              </span>
+                            );
+                          }
+                          if (em) {
+                            items.push(
+                              <span key="email" className="inline-flex items-center gap-1">
+                                <Mail size={11} className="opacity-75 flex-shrink-0" />
+                                <a href={`mailto:${em.toLowerCase()}`} className="hover:underline text-[#1E2A3A]">
+                                  {em.toLowerCase()}
+                                </a>
+                              </span>
+                            );
+                          }
+                          if (li) {
+                            items.push(
+                              <span key="linkedin" className="inline-flex items-center gap-1">
+                                <Linkedin size={11} className="opacity-75 flex-shrink-0 text-blue-600" />
+                                <a 
+                                  href={li.startsWith('http') ? li : `https://${li}`} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                                >
+                                  LinkedIn
+                                </a>
+                              </span>
+                            );
+                          }
+                          if (gh) {
+                            items.push(
+                              <span key="github" className="inline-flex items-center gap-1">
+                                <Github size={11} className="opacity-75 flex-shrink-0" />
+                                <a 
+                                  href={gh.startsWith('http') ? gh : `https://${gh}`} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                                >
+                                  GitHub
+                                </a>
+                              </span>
+                            );
+                          }
+                          if (pf) {
+                            items.push(
+                              <span key="portfolio" className="inline-flex items-center gap-1">
+                                <Globe size={11} className="opacity-75 flex-shrink-0" />
+                                <a 
+                                  href={pf.startsWith('http') ? pf : `https://${pf}`} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                                >
+                                  Portfolio
+                                </a>
+                              </span>
+                            );
+                          }
+
+                          return items.reduce<React.ReactNode[]>((acc, item, idx) => {
+                            if (idx > 0) {
+                              acc.push(
+                                <span key={`sep-${idx}`} className="opacity-30 select-none">|</span>
+                              );
+                            }
+                            acc.push(item);
+                            return acc;
+                          }, []);
+                        })()}
                       </div>
                     </div>
 

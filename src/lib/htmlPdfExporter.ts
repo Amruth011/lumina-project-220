@@ -49,13 +49,20 @@ const escapeHtml = (text: string): string => {
 
 const buildContactHtml = (header: HeaderData): string => {
   const parts: string[] = [];
-  if (header.location) parts.push(escapeHtml(header.location));
-  if (header.phone) parts.push(escapeHtml(header.phone));
-  if (header.email) parts.push(escapeHtml(header.email));
-  if (header.linkedin) parts.push(`<a href="${escapeHtml(header.linkedin)}">LinkedIn</a>`);
-  if (header.github) parts.push(`<a href="${escapeHtml(header.github)}">GitHub</a>`);
-  if (header.portfolio) parts.push(`<a href="${escapeHtml(header.portfolio)}">Portfolio</a>`);
-  return parts.join(' &nbsp;|&nbsp; ');
+  const loc = (header.location || "").trim();
+  const ph = (header.phone || "").trim();
+  const em = (header.email || "").trim();
+  const li = (header.linkedin || "").trim();
+  const gh = (header.github || "").trim();
+  const pf = (header.portfolio || "").trim();
+
+  if (loc) parts.push(escapeHtml(loc));
+  if (ph) parts.push(escapeHtml(ph));
+  if (em) parts.push(`<a href="mailto:${escapeHtml(em.toLowerCase())}">${escapeHtml(em.toLowerCase())}</a>`);
+  if (li) parts.push(`<a href="${escapeHtml(li.startsWith('http') ? li : `https://${li}`)}">LinkedIn</a>`);
+  if (gh) parts.push(`<a href="${escapeHtml(gh.startsWith('http') ? gh : `https://${gh}`)}">GitHub</a>`);
+  if (pf) parts.push(`<a href="${escapeHtml(pf.startsWith('http') ? pf : `https://${pf}`)}">Portfolio</a>`);
+  return parts.join(' &nbsp;&bull;&nbsp; ');
 };
 
 const buildBulletsHtml = (bullets: string[]): string => {

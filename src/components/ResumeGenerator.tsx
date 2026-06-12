@@ -1447,14 +1447,18 @@ Return ONLY the JSON. No markdown, no comments.`
       };
       const linkAnchor = (url: string, label: string) =>
         url ? `<a href="${ensureHref(url)}" style="color:#1E2A3A; text-decoration: underline;">${label}</a>` : '';
+      const emailLink = (email: string) => {
+        const trimmed = (email || '').trim();
+        return trimmed ? `<a href="mailto:${trimmed.toLowerCase()}" style="color:#1E2A3A; text-decoration: underline;">${trimmed.toLowerCase()}</a>` : '';
+      };
       const headerMeta = [
-        editableHeader.location,
-        editableHeader.phone,
-        editableHeader.email,
-        linkAnchor(editableHeader.linkedin, 'LinkedIn'),
-        linkAnchor(editableHeader.github, 'GitHub'),
-        linkAnchor(editableHeader.portfolio, 'Portfolio')
-      ].filter(Boolean).join(" &nbsp;|&nbsp; ");
+        (editableHeader.location || '').trim(),
+        (editableHeader.phone || '').trim(),
+        emailLink(editableHeader.email),
+        linkAnchor((editableHeader.linkedin || '').trim(), 'LinkedIn'),
+        linkAnchor((editableHeader.github || '').trim(), 'GitHub'),
+        linkAnchor((editableHeader.portfolio || '').trim(), 'Portfolio')
+      ].filter(Boolean).join(" &nbsp;&bull;&nbsp; ");
 
       // Section templates mirroring ResumePreview structure perfectly
       const summaryHtml = editableResume.professional_summary ? `
