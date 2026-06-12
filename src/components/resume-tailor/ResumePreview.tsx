@@ -1687,73 +1687,58 @@ Return ONLY the complete updated JSON object matching the input structure.`;
 
                           if (loc) {
                             items.push(
-                              <span key="loc" className="inline-flex items-center gap-1">
-                                <MapPin size={11} className="opacity-75 flex-shrink-0" />
-                                <span>{loc}</span>
-                              </span>
+                              <span key="loc">{loc}</span>
                             );
                           }
                           if (ph) {
                             items.push(
-                              <span key="phone" className="inline-flex items-center gap-1">
-                                <Phone size={11} className="opacity-75 flex-shrink-0" />
-                                <span>{ph}</span>
-                              </span>
+                              <span key="phone">{ph}</span>
                             );
                           }
                           if (em) {
                             items.push(
-                              <span key="email" className="inline-flex items-center gap-1">
-                                <Mail size={11} className="opacity-75 flex-shrink-0" />
-                                <a href={`mailto:${em.toLowerCase()}`} className="hover:underline text-[#1E2A3A]">
-                                  {em.toLowerCase()}
-                                </a>
-                              </span>
+                              <a key="email" href={`mailto:${em.toLowerCase()}`} className="hover:underline text-[#1E2A3A]">
+                                {em.toLowerCase()}
+                              </a>
                             );
                           }
                           if (li) {
                             items.push(
-                              <span key="linkedin" className="inline-flex items-center gap-1">
-                                <Linkedin size={11} className="opacity-75 flex-shrink-0 text-blue-600" />
-                                <a 
-                                  href={li.startsWith('http') ? li : `https://${li}`} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="text-blue-600 underline hover:text-blue-800 transition-colors"
-                                >
-                                  LinkedIn
-                                </a>
-                              </span>
+                              <a 
+                                key="linkedin"
+                                href={li.startsWith('http') ? li : `https://${li}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                              >
+                                LinkedIn
+                              </a>
                             );
                           }
                           if (gh) {
                             items.push(
-                              <span key="github" className="inline-flex items-center gap-1">
-                                <Github size={11} className="opacity-75 flex-shrink-0" />
-                                <a 
-                                  href={gh.startsWith('http') ? gh : `https://${gh}`} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="text-blue-600 underline hover:text-blue-800 transition-colors"
-                                >
-                                  GitHub
-                                </a>
-                              </span>
+                              <a 
+                                key="github"
+                                href={gh.startsWith('http') ? gh : `https://${gh}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                              >
+                                GitHub
+                              </a>
                             );
                           }
                           if (pf) {
                             items.push(
-                              <span key="portfolio" className="inline-flex items-center gap-1">
-                                <Globe size={11} className="opacity-75 flex-shrink-0" />
-                                <a 
-                                  href={pf.startsWith('http') ? pf : `https://${pf}`} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="text-blue-600 underline hover:text-blue-800 transition-colors"
-                                >
-                                  Portfolio
-                                </a>
-                              </span>
+                              <a 
+                                key="portfolio"
+                                href={pf.startsWith('http') ? pf : `https://${pf}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                              >
+                                Portfolio
+                              </a>
                             );
                           }
 

@@ -266,10 +266,13 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
                                     }
                                     return (
                                         <>
-                                            <div>{currency}{estMin.toLocaleString()}</div>
-                                            <div className="flex items-center text-4xl lg:text-5xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none mt-2">
-                                                <span className="text-sm uppercase font-black tracking-widest text-muted-foreground/40 mr-3">to</span>
-                                                {currency}{estMax.toLocaleString()}
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-sm uppercase font-black tracking-widest text-muted-foreground/40 w-12 flex-shrink-0">From</span>
+                                                <span>{currency}{estMin.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex items-center gap-3 text-accent-emerald mt-2">
+                                                <span className="text-sm uppercase font-black tracking-widest text-accent-emerald/60 w-12 flex-shrink-0">To</span>
+                                                <span>{currency}{estMax.toLocaleString()}</span>
                                             </div>
                                         </>
                                     );
@@ -277,10 +280,13 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
 
                                 return (
                                     <>
-                                        <div>{currency}{actualMin.toLocaleString()}</div>
-                                        <div className="flex items-center text-4xl lg:text-5xl font-display font-black text-accent-emerald tracking-[-0.07em] leading-none mt-2">
-                                            <span className="text-sm uppercase font-black tracking-widest text-muted-foreground/40 mr-3">to</span>
-                                            {currency}{actualMax.toLocaleString()}
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm uppercase font-black tracking-widest text-muted-foreground/40 w-12 flex-shrink-0">From</span>
+                                            <span>{currency}{actualMin.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-accent-emerald mt-2">
+                                            <span className="text-sm uppercase font-black tracking-widest text-accent-emerald/60 w-12 flex-shrink-0">To</span>
+                                            <span>{currency}{actualMax.toLocaleString()}</span>
                                         </div>
                                     </>
                                 );
