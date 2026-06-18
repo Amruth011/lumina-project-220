@@ -185,6 +185,7 @@ MANDATORY RULES:
 10. SKILLS: Extract every tool, framework, language, methodology mentioned in the JD with correct category and importance weighted by frequency and emphasis.
 11. ICEBERG: "role_reality" must contain non-obvious truths specific to this JD's domain.
 12. DAY IN LIFE TIMELINES: Do NOT use clock times (e.g. '09:00 AM'). Instead, use task order sequential labels: '1st Task', '2nd Task', '3rd Task', '4th Task', '5th Task' in the 'time' field.
+13. RESUME BULLETS: "resume_help.bullets" MUST contain EXACTLY 5 unique high-impact resume bullet points tailored to the JD's requirements and target role, starting with strong action verbs.
 
 RETURN ONLY RAW JSON.` },
                         { role: "user", content: `ACT ON THIS JD:
@@ -487,13 +488,29 @@ ${JSON.stringify(nakedSchema)}` }
         }
       }
 
-      if (Array.isArray(rh.bullets)) {
+      const roleTitle = finalResult.title || "Target Position";
+      const topSkills = Array.isArray(finalResult.skills) 
+        ? finalResult.skills.map((s: any) => s.skill).filter(Boolean).slice(0, 5)
+        : [];
+      while (topSkills.length < 5) {
+        topSkills.push(["Python", "SQL", "Git", "Cloud Infrastructure", "System Design"][topSkills.length] || "Problem Solving");
+      }
+
+      if (Array.isArray(rh.bullets) && rh.bullets.filter(b => b && b.trim().length > 0).length > 0) {
         rh.bullets = rh.bullets.filter(b => b && b.trim().length > 0).slice(0, 5);
         while (rh.bullets.length < 5) {
-          rh.bullets.push("Collaborated with cross-functional stakeholders to align data engineering pipelines with business objectives.");
+          const idx = rh.bullets.length;
+          const skill = topSkills[idx % topSkills.length];
+          rh.bullets.push(`Leveraged **${skill}** to design, test, and execute modular features within the ${roleTitle} ecosystem.`);
         }
       } else {
-        rh.bullets = Array(5).fill("Collaborated with cross-functional stakeholders to align data engineering pipelines with business objectives.");
+        rh.bullets = [
+          `Architected and scaled robust systems for ${roleTitle} tasks using **${topSkills[0]}** to drive core business objectives.`,
+          `Designed, developed, and maintained production workflows utilizing **${topSkills[1]}** to enhance efficiency.`,
+          `Collaborated with cross-functional partners to cleanly integrate **${topSkills[2]}** into reliable services.`,
+          `Optimized performance, resource utilization, and throughput by leveraging **${topSkills[3]}**.`,
+          `Applied industry best practices, testing, and version control using **${topSkills[4]}** to ensure code quality.`
+        ];
       }
     }
 
