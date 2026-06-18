@@ -5,7 +5,6 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import type { Tab } from "@/types/tabs";
-import luminaIcon from "@/assets/lumina-icon.png.asset.json";
 
 interface GlobalNavbarProps {
   activeTab?: Tab;
@@ -74,14 +73,13 @@ export const GlobalNavbar = ({ activeTab, onTabChange }: GlobalNavbarProps) => {
           </button>
 
           {/* Brand */}
-          <Link to="/" className={`flex items-center ${isOpen ? "gap-3 px-3" : "justify-center px-0"} mb-3`} title="Lumina">
-            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center flex-shrink-0 shadow-md border border-border/20 overflow-hidden">
-              <img src={luminaIcon.url} alt="Lumina" className="w-6 h-6 object-contain" />
-            </div>
-            {isOpen && (
-              <span className="text-[14px] font-display font-bold tracking-tight whitespace-nowrap">
-                Lumina
-              </span>
+          <Link to="/" className={`flex items-center ${isOpen ? "px-3" : "justify-center px-0"} mb-3`} title="Lumina">
+            {isOpen ? (
+              <img src="/logo.png" alt="Lumina" className="h-6 w-auto object-contain" />
+            ) : (
+              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center flex-shrink-0 shadow-md border border-border/20 overflow-hidden">
+                <img src="/favicon.png" alt="Lumina" className="w-6 h-6 object-contain" />
+              </div>
             )}
           </Link>
 
