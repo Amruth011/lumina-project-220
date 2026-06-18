@@ -327,7 +327,23 @@ ${JSON.stringify(nakedSchema)}` }
       responsibilities: Array.isArray(sd.responsibilities) ? sd.responsibilities : defaultSd.responsibilities,
       culture_signals: Array.isArray(sd.culture_signals) ? sd.culture_signals : defaultSd.culture_signals,
       company_context: { ...defaultSd.company_context, ...(typeof sd.company_context === 'object' ? sd.company_context : {}) },
-      keywords_for_ats: Array.isArray(sd.keywords_for_ats) ? sd.keywords_for_ats : defaultSd.keywords_for_ats,
+      keywords_for_ats: Array.isArray(sd.keywords_for_ats) && sd.keywords_for_ats.length > 0
+        ? sd.keywords_for_ats
+        : (Array.isArray((finalResult.resume_help as Record<string, any>)?.keywords) && ((finalResult.resume_help as Record<string, any>).keywords as string[]).length > 0
+            ? ((finalResult.resume_help as Record<string, any>).keywords as string[]).map((kw: string) => {
+                const parts = kw.split(/\s+\(|\)/);
+                const spelled = parts[0].trim();
+                const acr = parts[1] ? parts[1].trim() : undefined;
+                return { spelled_out: spelled, acronym: acr };
+              })
+            : (Array.isArray(finalResult.skills) && finalResult.skills.length > 0
+                ? (finalResult.skills as any[]).map((s: any) => {
+                    const parts = s.skill.split(/\s+\(|\)/);
+                    const spelled = parts[0].trim();
+                    const acr = parts[1] ? parts[1].trim() : undefined;
+                    return { spelled_out: spelled, acronym: acr };
+                  }).slice(0, 12)
+                : defaultSd.keywords_for_ats)),
       red_flags: { ...defaultSd.red_flags, ...(typeof sd.red_flags === 'object' ? sd.red_flags : {}) }
     };
 
@@ -458,8 +474,19 @@ ${JSON.stringify(nakedSchema)}` }
 
     // ── Post-processing guardrails for bullets, questions, and timeline counts ──
     // Enforce exactly 5 bullets in resume_help.bullets
+    // Enforce exactly 5 bullets and keywords fallback in resume_help
     if (finalResult.resume_help) {
       const rh = finalResult.resume_help as Record<string, any>;
+      
+      // Fallback for keywords if empty
+      if (!Array.isArray(rh.keywords) || rh.keywords.length === 0) {
+        if (Array.isArray(finalResult.skills) && finalResult.skills.length > 0) {
+          rh.keywords = (finalResult.skills as any[]).map((s: any) => s.skill).slice(0, 12);
+        } else {
+          rh.keywords = ["SQL", "Python", "Pandas", "Snowflake", "BigQuery", "dbt", "Qlik", "Data Engineering", "Data Science", "Analytics"];
+        }
+      }
+
       if (Array.isArray(rh.bullets)) {
         rh.bullets = rh.bullets.filter(b => b && b.trim().length > 0).slice(0, 5);
         while (rh.bullets.length < 5) {
