@@ -1,3 +1,5 @@
+import type { GapAnalysisResult } from "./gapAnalysis";
+
 export interface Skill {
   category: string;
   skill: string;
@@ -348,6 +350,7 @@ export interface ResumeGapResult {
   skill_matches?: SkillMatch[];
   tailored_resume_snippets?: string[];
   actionable_directives?: { action: string; description: string }[];
+  detailed_gaps?: GapAnalysisResult;
 }
 
 export interface InterviewQuestion {

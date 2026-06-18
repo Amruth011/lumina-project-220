@@ -14,6 +14,12 @@ import { ComparisonMatrix } from "./gap-analysis/ComparisonMatrix";
 import { GapRecommendations } from "./gap-analysis/GapRecommendations";
 import { GapAnalyzerSkeleton } from "./gap-analysis/GapAnalyzerSkeleton";
 import jsPDF from "jspdf";
+import { parseGapAnalysis } from "@/lib/gapAnalyzer";
+import type { GapAnalysisResult } from "@/types/gapAnalysis";
+import { 
+  Target, ShieldAlert, Award, Clock, Activity, Briefcase, 
+  ExternalLink, ChevronDown, ChevronUp, Info, HelpCircle, ListChecks 
+} from "lucide-react";
 
 interface ResumeGapAnalyzerProps {
   skills: Skill[];
@@ -78,7 +84,8 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
   const MAX_CANDIDATES = 5;
   const [candidates, setCandidates] = useState<ResumeCandidate[]>([]);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
-
+  const [activeDashboardTab, setActiveDashboardTab] = useState<"gaps" | "keywords" | "culture" | "action_plan" | "positioning">("gaps");
+  const [gapFilter, setGapFilter] = useState<"all" | "dealbreaker" | "missing" | "partial">("all");
 
   // ── Always start empty: clear any stale cache on mount ──
   useEffect(() => {
@@ -90,6 +97,15 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
     setCandidates([]);
     setSelectedCandidateId(null);
   }, []);
+
+  useEffect(() => {
+    onResumeTextChange?.(resumeText);
+  }, [resumeText, onResumeTextChange]);
+
+  useEffect(() => {
+    onResultChange?.(result);
+  }, [result, onResultChange]);
+
 
   const handleExportPDF = async () => {
     if (!result) return;
@@ -351,78 +367,25 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
     setIsAnalyzing(true);
     setResult(null);
     try {
-      // 2. Run Deterministic Keyword Base
-      const deterministicResult = computeDeterministicScore(trimmedResume, skills);
-      const baseResult: ResumeGapResult = {
-        overall_match: deterministicResult.overall_match,
-        skill_matches: (deterministicResult.skill_matches || []).map(sm => ({
-            skill: sm.skill,
-            match_percent: sm.match_percent,
-            verdict: sm.verdict,
-            note: sm.note
-        })),
-        deductions: (deterministicResult.deductions || []).map(d => ({
-            reason: d.reason,
-            percent: d.percent
-        })),
-        summary: `Match identified at ${deterministicResult.overall_match}%. Reviewing specific capability tokens now.`
-      };
-
-      setResult(baseResult);
-      setIsOpen(true);
-
-      let aiResult: Partial<ResumeGapResult> | null = null;
-      try {
-        console.log(`Deep Scan: Invoking compare-resume intelligence...`);
-        const { data, error: invokeError } = await supabase.functions.invoke("compare-resume", {
-          body: { 
-            jdSkills: skills, 
-            resumeText: trimmedResume,
-            jobTitle 
-          },
-        });
-
-        if (invokeError) throw invokeError;
-        
-        if (data && !data.error) {
-          aiResult = data;
-          console.log(`Deep Scan: Intelligence Scored Successfully via Groq.`);
-        } else if (data?.error) {
-          throw new Error(data.error);
-        }
-      } catch (err) {
-        console.warn("AI Deep Scan encountered a non-critical limit:", err);
-        toast.info("AI Analysis limited. Using high-precision deterministic scoring.");
-      }
- 
-      // Scoring Logic: Blend AI score with Deterministic score for a "Live" but grounded result
-      // We give AI 70% weight for semantic nuance, and Deterministic 30% for hard keyword matching.
-      const aiScore = (aiResult && typeof aiResult.overall_match === 'number') ? aiResult.overall_match : baseResult.overall_match;
-      const finalOverallMatch = Math.round((baseResult.overall_match * 0.3) + (aiScore * 0.7));
-
-      const final: ResumeGapResult = aiResult ? {
-        ...baseResult,
-        overall_match: finalOverallMatch,
-        summary: aiResult.summary || baseResult.summary,
-        deductions: (baseResult.deductions || []).map(d => {
-            const safeAiDeductions = Array.isArray(aiResult?.deductions) ? aiResult.deductions : [];
-            const aiD = safeAiDeductions.find((ad: { reason: string; fix_snippet?: string }) => ad.reason?.includes(d.reason));
-            return aiD?.fix_snippet ? { ...d, fix_snippet: aiD.fix_snippet } : d;
-        }),
-        tailored_resume_snippets: Array.isArray(aiResult.tailored_resume_snippets) ? aiResult.tailored_resume_snippets : [],
-        actionable_directives: Array.isArray(aiResult.actionable_directives) ? aiResult.actionable_directives : []
-      } : baseResult;
-
+      console.log(`Deep Scan: Invoking compare-resume gap analyzer...`);
+      const final = await parseGapAnalysis(
+        trimmedResume,
+        jdText || "",
+        skills,
+        jobTitle || "Target Position"
+      );
       setResult(final);
+      setIsOpen(true);
       setLastAnalyzedText(trimmedResume);
       toast.success("Intelligence Scan Complete");
     } catch (err) {
-      toast.error("Analysis failed. Showing static scores.");
+      console.warn("AI Deep Scan encountered a limit:", err);
+      toast.error("Analysis failed.");
     } finally {
       isComparingRef.current = false;
       setIsAnalyzing(false);
     }
-  }, [resumeText, skills, jobTitle]);
+  }, [resumeText, jdText, skills, jobTitle]);
 
 
   const handleCompareRef = useRef(handleCompare);
@@ -727,48 +690,504 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
 
             {!isAnalyzing && result && (
               <div className="space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-                <MatchHero score={result.overall_match} summary={result.summary} />
+                {result.detailed_gaps ? (
+                  /* ── NEW INTERACTIVE TABS DASHBOARD ── */
+                  <div className="space-y-8">
+                    {/* executive match rating */}
+                    <div className="glass-panel p-8 rounded-[3rem] bg-white border border-white/20 shadow-xl flex flex-col md:flex-row items-center gap-8">
+                      <div className="relative flex-shrink-0">
+                        <div className="w-32 h-32 rounded-full border-8 border-lumina-teal/10 flex items-center justify-center relative">
+                          <div className="absolute inset-0 rounded-full border-8 border-t-lumina-teal border-r-lumina-teal animate-pulse" />
+                          <span className="text-3xl font-serif italic text-foreground font-black">{result.overall_match}%</span>
+                        </div>
+                      </div>
+                      <div className="flex-1 space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[10px] font-black uppercase text-accent-emerald tracking-[0.2em] bg-accent-emerald/10 px-3 py-1 rounded-full border border-accent-emerald/20">
+                            Match Diagnosis
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold text-foreground/80 leading-relaxed">
+                          {result.summary}
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="space-y-12">
-                  <ComparisonMatrix 
-                    items={(result.skill_matches || []).map(sm => ({
-                      skill: sm.skill,
-                      required: true, // Assuming all skills in result are high-priority
-                      present: sm.match_percent > 50,
-                      evidence: sm.note
-                    }))}
-                  />
+                    {/* tab selections */}
+                    <div className="flex border-b border-black/5 pb-2 overflow-x-auto gap-4">
+                      {[
+                        { key: "gaps", label: "Capability Gaps", icon: Target },
+                        { key: "keywords", label: "Keywords", icon: ListChecks },
+                        { key: "culture", label: "Culture & Achievements", icon: Award },
+                        { key: "action_plan", label: "Action Plan", icon: Clock },
+                        { key: "positioning", label: "Competitive Positioning", icon: Briefcase }
+                      ].map(tab => {
+                        const TabIcon = tab.icon;
+                        return (
+                          <button
+                            key={tab.key}
+                            onClick={() => setActiveDashboardTab(tab.key as any)}
+                            className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-wider transition-colors border-b-2 -mb-[10px] whitespace-nowrap ${
+                              activeDashboardTab === tab.key 
+                                ? "border-lumina-teal text-lumina-teal font-black" 
+                                : "border-transparent text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            <TabIcon size={12} />
+                            {tab.label}
+                          </button>
+                        );
+                      })}
+                    </div>
 
-                  <GapRecommendations 
-                    recommendations={(result.actionable_directives || []).map(d => ({
-                      title: d.action,
-                      description: d.description,
-                      type: "strategy" as const
-                    }))}
-                    onApply={() => {
-                      if (onNavigateToGenerator) {
-                        onNavigateToGenerator();
-                      } else {
-                        toast.info("Open the Resume Generator tab to apply this recommendation.");
-                      }
-                    }}
-                  />
-                </div>
+                    {/* tab contents */}
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={activeDashboardTab}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="space-y-6"
+                      >
+                        {/* ── Gaps Tab ── */}
+                        {activeDashboardTab === "gaps" && (
+                          <div className="space-y-6">
+                            <div className="flex flex-wrap gap-2">
+                              {[
+                                { key: "all", label: "All Gaps" },
+                                { key: "dealbreaker", label: "Dealbreakers" },
+                                { key: "missing", label: "Missing Skills" },
+                                { key: "partial", label: "Partial Matches" }
+                              ].map(f => (
+                                <button
+                                  key={f.key}
+                                  onClick={() => setGapFilter(f.key as any)}
+                                  className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border ${
+                                    gapFilter === f.key 
+                                      ? "bg-lumina-teal text-white border-lumina-teal" 
+                                      : "bg-muted text-muted-foreground border-black/5 hover:border-black/10"
+                                  }`}
+                                >
+                                  {f.label}
+                                </button>
+                              ))}
+                            </div>
 
-                {/* ── FINAL ACTIONS ── */}
-                <div className="mt-20 flex flex-col items-center gap-6">
-                  <button
-                    onClick={handleExportPDF}
-                    className="px-14 py-6 rounded-full bg-[#10B981] text-white font-black uppercase tracking-[0.3em] text-[13px] hover:scale-105 active:scale-95 transition-all flex items-center gap-4 shadow-2xl shadow-[#10B981]/30"
-                  >
-                    <Download className="w-5 h-5" />
-                    Download Detailed Report (PDF)
-                  </button>
-                  <p className="text-[11px] text-muted-foreground/70 font-medium tracking-wide text-center max-w-md">
-                    Full breakdown: skill signatures, score deductions, and tactical recommendations for the top-scored resume.
-                  </p>
-                </div>
+                            <div className="grid grid-cols-1 gap-4">
+                              {(() => {
+                                const allGaps = [
+                                  ...(result.detailed_gaps.technical_gaps || []).map(g => ({ ...g, type: "technical" })),
+                                  ...(result.detailed_gaps.experience_gaps || []).map(g => ({ ...g, type: "experience" }))
+                                ];
+                                
+                                const filtered = allGaps.filter(g => {
+                                  if (gapFilter === "dealbreaker") return g.impact === "dealbreaker";
+                                  if (gapFilter === "missing") return g.status === "missing";
+                                  if (gapFilter === "partial") return g.status === "partial";
+                                  return true;
+                                });
 
+                                if (filtered.length === 0) {
+                                  return (
+                                    <div className="p-8 text-center rounded-2xl bg-slate-50 border border-black/5 text-muted-foreground text-xs font-semibold">
+                                      No gaps identified matching this filter.
+                                    </div>
+                                  );
+                                }
+
+                                return filtered.map((gap, gIdx) => {
+                                  const statusColors = {
+                                    has_it: "bg-emerald-500/10 text-accent-emerald border-emerald-500/20",
+                                    partial: "bg-blue-500/10 text-accent-blue border-blue-500/20",
+                                    missing: "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                                  };
+
+                                  const impactColors = {
+                                    dealbreaker: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+                                    important: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+                                    minor: "bg-slate-500/10 text-slate-500 border-slate-500/20"
+                                  };
+
+                                  return (
+                                    <div key={gIdx} className="p-6 rounded-3xl bg-white border border-black/5 space-y-4 hover:shadow-md transition-all">
+                                      <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-xs font-bold text-foreground uppercase tracking-wider">
+                                            {gap.requirement}
+                                          </span>
+                                          <span className="text-[8px] font-black text-muted-foreground/60 uppercase bg-black/5 px-2 py-0.5 rounded">
+                                            {gap.type}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${statusColors[gap.status]}`}>
+                                            {gap.status.replace("_", " ")}
+                                          </span>
+                                          <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${impactColors[gap.impact]}`}>
+                                            {gap.impact}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground font-semibold leading-relaxed">
+                                        {gap.description}
+                                      </p>
+                                      {gap.mitigation_strategy && (
+                                        <div className="p-4 rounded-2xl bg-slate-50 border border-black/5 space-y-1">
+                                          <h5 className="text-[9px] font-black uppercase tracking-wider text-lumina-teal flex items-center gap-1.5">
+                                            <Zap size={10} /> Mitigation Strategy
+                                          </h5>
+                                          <p className="text-xs font-semibold text-foreground/80 leading-normal">
+                                            {gap.mitigation_strategy}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                });
+                              })()}
+                            </div>
+
+                            {/* Education Gaps */}
+                            {result.detailed_gaps.education_gaps && result.detailed_gaps.education_gaps.length > 0 && (
+                              <div className="space-y-4 pt-4 border-t border-black/5">
+                                <h4 className="text-xs font-black uppercase tracking-widest text-[#1E2A3A]">
+                                  Education & Credentials
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {result.detailed_gaps.education_gaps.map((edu, eIdx) => (
+                                    <div key={eIdx} className="p-5 rounded-2xl bg-white border border-black/5 space-y-3">
+                                      <div className="flex items-center justify-between gap-3">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-foreground/80">
+                                          {edu.requirement}
+                                        </span>
+                                        <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
+                                          edu.user_status === "has_it" ? "bg-emerald-500/10 text-accent-emerald border-emerald-500/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                                        }`}>
+                                          {edu.user_status.replace("_", " ")}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground font-semibold leading-relaxed">
+                                        Alternative Path: {edu.alternative_path}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ── Keywords Tab ── */}
+                        {activeDashboardTab === "keywords" && (
+                          <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="p-6 rounded-3xl bg-rose-500/[0.01] border border-rose-500/10 space-y-4">
+                                <h4 className="text-xs font-black uppercase tracking-widest text-rose-500">
+                                  Missing Keywords
+                                </h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {result.detailed_gaps.keyword_gaps.missing_keywords.length === 0 && (
+                                    <p className="text-[11px] text-muted-foreground italic font-semibold">No missing keywords found.</p>
+                                  )}
+                                  {result.detailed_gaps.keyword_gaps.missing_keywords.map((k, kIdx) => (
+                                    <span key={kIdx} className="text-[10px] font-black px-2.5 py-1 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                                      {k}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="p-6 rounded-3xl bg-amber-500/[0.01] border border-amber-500/10 space-y-4">
+                                <h4 className="text-xs font-black uppercase tracking-widest text-amber-500">
+                                  Underrepresented Keywords
+                                </h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {result.detailed_gaps.keyword_gaps.underrepresented_keywords.length === 0 && (
+                                    <p className="text-[11px] text-muted-foreground italic font-semibold">No underrepresented keywords found.</p>
+                                  )}
+                                  {result.detailed_gaps.keyword_gaps.underrepresented_keywords.map((k, kIdx) => (
+                                    <span key={kIdx} className="text-[10px] font-black px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                      {k}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="p-6 rounded-3xl bg-white border border-black/5 space-y-3">
+                              <h4 className="text-xs font-black uppercase tracking-widest text-[#1E2A3A] flex items-center gap-2">
+                                <Info size={14} className="text-lumina-teal" /> Natural Placement suggestions
+                              </h4>
+                              <ul className="list-disc pl-5 text-xs text-muted-foreground font-semibold space-y-2">
+                                {result.detailed_gaps.keyword_gaps.keyword_density_suggestions.map((s, sIdx) => (
+                                  <li key={sIdx} className="leading-relaxed">{s}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ── Culture & Achievements Tab ── */}
+                        {activeDashboardTab === "culture" && (
+                          <div className="space-y-6">
+                            <div className="p-6 rounded-3xl bg-white border border-black/5 space-y-4">
+                              <div className="flex items-center justify-between border-b border-black/5 pb-4">
+                                <div>
+                                  <h4 className="text-xs font-black uppercase tracking-widest text-[#1E2A3A]">
+                                    Culture Fit radar
+                                  </h4>
+                                  <p className="text-[10px] text-muted-foreground mt-0.5">Alignment and behavioral signs</p>
+                                </div>
+                                <span className="text-lg font-black text-lumina-teal">{result.detailed_gaps.culture_fit_analysis.alignment_score}% Match</span>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                                <div className="space-y-2">
+                                  <span className="text-[9px] font-black uppercase tracking-wider text-accent-emerald block">Matched Signals</span>
+                                  <ul className="space-y-1.5">
+                                    {result.detailed_gaps.culture_fit_analysis.matched_signals.map((s, sIdx) => (
+                                      <li key={sIdx} className="text-xs text-muted-foreground font-semibold flex items-start gap-2 leading-normal">
+                                        <span className="text-accent-emerald mt-0.5">•</span>
+                                        <span>{s}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <span className="text-[9px] font-black uppercase tracking-wider text-muted-foreground/60 block">Missing Signals</span>
+                                  <ul className="space-y-1.5">
+                                    {result.detailed_gaps.culture_fit_analysis.missing_signals.map((s, sIdx) => (
+                                      <li key={sIdx} className="text-xs text-muted-foreground font-semibold flex items-start gap-2 leading-normal">
+                                        <span className="text-muted-foreground/40 mt-0.5">•</span>
+                                        <span>{s}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <span className="text-[9px] font-black uppercase tracking-wider text-rose-500 block">Red Flags</span>
+                                  {result.detailed_gaps.culture_fit_analysis.red_flags.length === 0 ? (
+                                    <p className="text-[11px] text-muted-foreground italic font-semibold">No warnings detected.</p>
+                                  ) : (
+                                    <ul className="space-y-1.5">
+                                      {result.detailed_gaps.culture_fit_analysis.red_flags.map((s, sIdx) => (
+                                        <li key={sIdx} className="text-xs text-rose-500 font-semibold flex items-start gap-2 leading-normal">
+                                          <span className="text-rose-500 mt-0.5">⚠️</span>
+                                          <span>{s}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="p-6 rounded-3xl bg-white border border-black/5 space-y-4">
+                              <div className="flex items-center justify-between border-b border-black/5 pb-4">
+                                <div>
+                                  <h4 className="text-xs font-black uppercase tracking-widest text-[#1E2A3A]">
+                                    Achievement Quantification
+                                  </h4>
+                                  <p className="text-[10px] text-muted-foreground mt-0.5">Quantifiable metrics and business outcomes</p>
+                                </div>
+                                <span className="text-lg font-black text-accent-emerald">{result.detailed_gaps.achievement_gaps.achievement_quality_score}% Quality</span>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[9px] font-black uppercase tracking-wider text-muted-foreground/60">Metric Status</span>
+                                    <span className={`text-[9px] font-black px-2 py-0.5 rounded ${
+                                      result.detailed_gaps.achievement_gaps.has_quantified_achievements ? "bg-emerald-500/10 text-accent-emerald" : "bg-rose-500/10 text-rose-500"
+                                    }`}>
+                                      {result.detailed_gaps.achievement_gaps.has_quantified_achievements ? "Quantified Achievements" : "No Quantified Achievements"}
+                                    </span>
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <span className="text-[9px] font-black uppercase tracking-wider text-muted-foreground/60 block">Missing Metric Areas</span>
+                                    {result.detailed_gaps.achievement_gaps.missing_impact_areas.map((a, aIdx) => (
+                                      <span key={aIdx} className="inline-block text-[10px] font-black bg-rose-500/5 text-rose-500 px-2.5 py-1 rounded-xl border border-rose-500/10 mr-2 mb-2">
+                                        {a}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                  <span className="text-[9px] font-black uppercase tracking-wider text-lumina-teal block">Suggested Quantifications</span>
+                                  <div className="space-y-2">
+                                    {result.detailed_gaps.achievement_gaps.suggested_achievements.map((a, aIdx) => (
+                                      <div key={aIdx} className="p-3 rounded-xl bg-slate-50 border border-black/5 text-xs text-muted-foreground font-semibold leading-relaxed">
+                                        {a}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ── Action Plan Tab ── */}
+                        {activeDashboardTab === "action_plan" && (
+                          <div className="space-y-6">
+                            <div className="relative border-l border-lumina-teal/20 ml-4 pl-8 space-y-8">
+                              {result.detailed_gaps.priority_action_plan.map((plan, pIdx) => {
+                                const impactColors = {
+                                  high: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+                                  medium: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+                                  low: "bg-blue-500/10 text-accent-blue border-accent-blue/20"
+                                };
+
+                                return (
+                                  <div key={pIdx} className="relative space-y-3">
+                                    <div className="absolute -left-[45px] top-0 w-8 h-8 rounded-full bg-white border-2 border-lumina-teal flex items-center justify-center text-xs font-black text-lumina-teal shadow-md">
+                                      {plan.priority}
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                      <h4 className="text-sm font-black text-foreground uppercase tracking-wider">
+                                        {plan.action}
+                                      </h4>
+                                      <div className="flex items-center gap-2">
+                                        <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${impactColors[plan.impact]}`}>
+                                          Impact: {plan.impact}
+                                        </span>
+                                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border border-black/5 bg-muted text-muted-foreground">
+                                          Effort: {plan.effort}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground font-semibold leading-relaxed">
+                                      {plan.how_to_do_it}
+                                    </p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ── Positioning Tab ── */}
+                        {activeDashboardTab === "positioning" && (
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="p-6 rounded-3xl bg-emerald-500/[0.01] border border-emerald-500/10 space-y-4">
+                              <div className="flex items-center gap-2.5 pb-2 border-b border-black/5">
+                                <CheckCircle2 className="text-accent-emerald shrink-0" size={16} />
+                                <h4 className="text-xs font-black uppercase tracking-widest text-accent-emerald">
+                                  User Strengths
+                                </h4>
+                              </div>
+                              <ul className="space-y-3">
+                                {result.detailed_gaps.competitive_positioning.user_strengths.map((s, sIdx) => (
+                                  <li key={sIdx} className="text-xs text-muted-foreground font-semibold leading-relaxed flex items-start gap-2">
+                                    <span className="text-accent-emerald mt-0.5">•</span>
+                                    <span>{s}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            <div className="p-6 rounded-3xl bg-rose-500/[0.01] border border-rose-500/10 space-y-4">
+                              <div className="flex items-center gap-2.5 pb-2 border-b border-black/5">
+                                <AlertTriangle className="text-rose-500 shrink-0" size={16} />
+                                <h4 className="text-xs font-black uppercase tracking-widest text-rose-500">
+                                  User Weaknesses
+                                </h4>
+                              </div>
+                              <ul className="space-y-3">
+                                {result.detailed_gaps.competitive_positioning.user_weaknesses.map((s, sIdx) => (
+                                  <li key={sIdx} className="text-xs text-muted-foreground font-semibold leading-relaxed flex items-start gap-2">
+                                    <span className="text-rose-500 mt-0.5">•</span>
+                                    <span>{s}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            <div className="p-6 rounded-3xl bg-blue-500/[0.01] border border-blue-500/10 space-y-4">
+                              <div className="flex items-center gap-2.5 pb-2 border-b border-black/5">
+                                <Sparkles className="text-accent-blue shrink-0" size={16} />
+                                <h4 className="text-xs font-black uppercase tracking-widest text-accent-blue">
+                                  Differentiation Opportunities
+                                </h4>
+                              </div>
+                              <ul className="space-y-3">
+                                {result.detailed_gaps.competitive_positioning.differentiation_opportunities.map((s, sIdx) => (
+                                  <li key={sIdx} className="text-xs text-muted-foreground font-semibold leading-relaxed flex items-start gap-2">
+                                    <span className="text-accent-blue mt-0.5">•</span>
+                                    <span>{s}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    </AnimatePresence>
+
+                    {/* ── FINAL ACTIONS ── */}
+                    <div className="mt-20 flex flex-col items-center gap-6">
+                      <button
+                        onClick={handleExportPDF}
+                        className="px-14 py-6 rounded-full bg-[#10B981] text-white font-black uppercase tracking-[0.3em] text-[13px] hover:scale-105 active:scale-95 transition-all flex items-center gap-4 shadow-2xl shadow-[#10B981]/30"
+                      >
+                        <Download className="w-5 h-5" />
+                        Download Detailed Report (PDF)
+                      </button>
+                      <p className="text-[11px] text-muted-foreground/70 font-medium tracking-wide text-center max-w-md">
+                        Full breakdown: skill signatures, score deductions, and tactical recommendations for the top-scored resume.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  /* ── LEGACY BACKWARD COMPATIBLE FALLBACK ── */
+                  <>
+                    <MatchHero score={result.overall_match} summary={result.summary} />
+
+                    <div className="space-y-12">
+                      <ComparisonMatrix 
+                        items={(result.skill_matches || []).map(sm => ({
+                          skill: sm.skill,
+                          required: true,
+                          present: sm.match_percent > 50,
+                          evidence: sm.note
+                        }))}
+                      />
+
+                      <GapRecommendations 
+                        recommendations={(result.actionable_directives || []).map(d => ({
+                          title: d.action,
+                          description: d.description,
+                          type: "strategy" as const
+                        }))}
+                        onApply={() => {
+                          if (onNavigateToGenerator) {
+                            onNavigateToGenerator();
+                          } else {
+                            toast.info("Open the Resume Generator tab to apply this recommendation.");
+                          }
+                        }}
+                      />
+                    </div>
+
+                    <div className="mt-20 flex flex-col items-center gap-6">
+                      <button
+                        onClick={handleExportPDF}
+                        className="px-14 py-6 rounded-full bg-[#10B981] text-white font-black uppercase tracking-[0.3em] text-[13px] hover:scale-105 active:scale-95 transition-all flex items-center gap-4 shadow-2xl shadow-[#10B981]/30"
+                      >
+                        <Download className="w-5 h-5" />
+                        Download Detailed Report (PDF)
+                      </button>
+                      <p className="text-[11px] text-muted-foreground/70 font-medium tracking-wide text-center max-w-md">
+                        Full breakdown: skill signatures, score deductions, and tactical recommendations for the top-scored resume.
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </motion.div>

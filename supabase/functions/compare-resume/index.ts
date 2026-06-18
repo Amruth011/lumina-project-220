@@ -9,32 +9,101 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { jdSkills, resumeText } = await req.json();
+    const { jdSkills, resumeText, jobTitle, jdText } = await req.json();
     if (!jdSkills || !resumeText) throw new Error("JD skills and resume text are required");
 
     const skillNames = (jdSkills as { skill: string }[]).map((s) => s.skill).join(", ");
     const prompt = `
-      Compare this resume against the following required skills.
-      Required Skills: ${skillNames}
+      You are an expert Career Gap Analyst. Compare the Candidate's Resume against the Target Job Description (JD) and identify exactly what is missing.
 
-      Resume:
+      Target Job Title: ${jobTitle || "Not specified"}
+      Target Job Skills (Core): ${skillNames}
+      ${jdText ? `Target Job Description Raw Text:\n${jdText}\n` : ""}
+
+      Candidate Resume:
       ${resumeText}
 
-      CRITICAL: Keep all text responses EXTREMELY concise (max 1 sentence per array item) to ensure fast processing.
+      CRITICAL RULES:
+      - Be extremely honest and constructive. Do not sugarcoat gaps.
+      - For every gap, provide a highly specific, actionable mitigation strategy.
+      - Prioritize actions by impact/effort ratio.
+      - Suggest realistic alternatives (e.g. if missing a specific tool, suggest emphasizing experience with equivalent tools).
+      - Ensure all output strings are clean and contain no markdown.
 
-      RETURN JSON FORMAT ONLY:
+      You MUST return exactly this combined JSON structure containing both legacy and detailed fields:
       {
         "overall_match": 0-100,
-        "summary": "1-sentence executive verdict",
+        "summary": "2-3 sentence executive summary of the match, strengths, and primary gaps.",
         "skill_matches": [
-          { "skill": "Skill Name", "match_percent": 100, "verdict": "strong|missing" }
+          { "skill": "Skill Name", "match_percent": 0-100, "verdict": "strong" | "partial" | "missing" }
         ],
         "deductions": [
-          { "reason": "Missing skill X", "percent": 5, "fix_snippet": "Add X to your professional history" }
+          { "reason": "Short summary of gap", "percent": 0-100, "fix_snippet": "Action to fix" }
         ],
         "actionable_directives": [
-          { "action": "Optimize", "description": "Add metrics to your experience section." }
-        ]
+          { "action": "Action Verb", "description": "Details of the action" }
+        ],
+        "detailed_gaps": {
+          "overall_match_score": 0-100,
+          "summary": "Same executive summary as above.",
+          "technical_gaps": [
+            {
+              "requirement": "Exact technical requirement (e.g., dbt or Snowflake)",
+              "status": "has_it" | "missing" | "partial",
+              "impact": "dealbreaker" | "important" | "minor",
+              "description": "Why this is a gap or how it is met.",
+              "mitigation_strategy": "Specific steps to compensate (e.g., certification, portfolio project)"
+            }
+          ],
+          "experience_gaps": [
+            {
+              "requirement": "Experience requirement (e.g., leadership, specific industry, years of tenure)",
+              "status": "has_it" | "missing" | "partial",
+              "impact": "dealbreaker" | "important" | "minor",
+              "description": "Description of experience gap.",
+              "mitigation_strategy": "Specific steps to compensate"
+            }
+          ],
+          "education_gaps": [
+            {
+              "requirement": "Degree or certification requirement (e.g., B.Tech in CS, Snowflake certification)",
+              "user_status": "has_it" | "missing" | "partial",
+              "impact": "dealbreaker" | "important" | "minor",
+              "alternative_path": "Alternative certifications or online course details"
+            }
+          ],
+          "keyword_gaps": {
+            "missing_keywords": ["important keywords from JD not in resume"],
+            "underrepresented_keywords": ["keywords in resume but only once or twice, needs prominence"],
+            "keyword_density_suggestions": ["specific natural recommendations for adding keywords in resume sections"]
+          },
+          "culture_fit_analysis": {
+            "alignment_score": 0-100,
+            "matched_signals": ["culture signals user demonstrates"],
+            "missing_signals": ["culture signals user should emphasize"],
+            "red_flags": ["potential culture mismatches or warnings"]
+          },
+          "achievement_gaps": {
+            "has_quantified_achievements": true | false,
+            "achievement_quality_score": 0-100,
+            "missing_impact_areas": ["impact areas that lack metrics"],
+            "suggested_achievements": ["suggested bullets with placeholders for user to quantify"]
+          },
+          "priority_action_plan": [
+            {
+              "priority": 1,
+              "action": "Core action to take",
+              "impact": "high" | "medium" | "low",
+              "effort": "hours" | "days" | "weeks",
+              "how_to_do_it": "Detailed step-by-step description of how to complete this action"
+            }
+          ],
+          "competitive_positioning": {
+            "user_strengths": ["primary candidate advantages"],
+            "user_weaknesses": ["primary candidate disadvantages"],
+            "differentiation_opportunities": ["how candidate can stand out from others"]
+          }
+        }
       }
     `;
 
@@ -46,8 +115,8 @@ serve(async (req) => {
     }
     
     const fallbackModels = [
-      "llama-3.1-8b-instant",
-      "llama-3.3-70b-versatile"
+      "llama-3.3-70b-versatile",
+      "llama-3.1-8b-instant"
     ];
 
     let resultJson = null;

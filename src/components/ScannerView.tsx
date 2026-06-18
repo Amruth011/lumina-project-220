@@ -375,7 +375,7 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                           </div>
                         </div>
 
-                        <LuminaUltraDashboard results={results} resumeResults={gapResult} jdText={jdText} />
+                        <LuminaUltraDashboard results={results} resumeResults={gapResult} jdText={jdText} resumeText={userResumeText} />
                         
                         <JdActionCta 
                           onCheckResume={() => handleTabSwitch("analysis")} 
@@ -402,13 +402,18 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                       skills={memoizedSkills}
                       jobTitle={results.title}
                       jdText={jdText}
+                      onResumeTextChange={setUserResumeText}
                       onResultChange={setGapResult}
                       onNavigateToGenerator={() => handleTabSwitch("generator")}
                     />
 
                     {gapResult && (
                       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
-                        <ATSScoreSimulator result={gapResult} />
+                        <ATSScoreSimulator 
+                          result={gapResult} 
+                          resumeText={userResumeText} 
+                          jdText={jdText} 
+                        />
                         <div className="flex justify-center mt-12">
                           <button 
                             onClick={() => handleTabSwitch("generator")}

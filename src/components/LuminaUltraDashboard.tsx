@@ -28,9 +28,10 @@ interface LuminaUltraDashboardProps {
   results: DecodeResult;
   resumeResults?: ResumeGapResult | null;
   jdText?: string;
+  resumeText?: string;
 }
 
-export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaUltraDashboardProps) => {
+export const LuminaUltraDashboard = ({ results, resumeResults, jdText, resumeText }: LuminaUltraDashboardProps) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [synParams, setSynParams] = useState({
     intensity: 'Elite',
@@ -604,7 +605,11 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
                 <CultureRadar radar={results?.deep_dive?.culture_radar} />
             </div>
             <div className="lg:col-span-6 flex flex-col">
-                <ResumeBulletGenerator bullets={results?.resume_help?.bullets} />
+                <ResumeBulletGenerator 
+                  bullets={results?.resume_help?.bullets} 
+                  resumeText={resumeText}
+                  jdResults={results}
+                />
             </div>
         </div>
 
