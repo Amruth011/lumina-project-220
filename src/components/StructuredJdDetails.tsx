@@ -12,8 +12,6 @@ interface StructuredJdDetailsProps {
 }
 
 export const StructuredJdDetails = ({ data }: StructuredJdDetailsProps) => {
-  const [activeSection, setActiveSection] = useState<"mandates" | "culture" | "responsibilities" | "context">("mandates");
-
   if (!data) {
     return (
       <div className="glass-panel p-6 rounded-[2rem] text-center bg-white/50 border border-slate-100">
@@ -30,6 +28,34 @@ export const StructuredJdDetails = ({ data }: StructuredJdDetailsProps) => {
   const atsKeywords = data.keywords_for_ats || [];
   const redFlags = data.red_flags || { vague_requirements: [], unrealistic_expectations: [] };
 
+  // Determine if each section has valid results
+  const hasMandates = hardReqs.length > 0 || softReqs.length > 0;
+  const hasResponsibilities = responsibilities.length > 0;
+  const hasCulture = cultureSignals.length > 0 || 
+    (redFlags.vague_requirements && redFlags.vague_requirements.length > 0) || 
+    (redFlags.unrealistic_expectations && redFlags.unrealistic_expectations.length > 0);
+  const hasContext = atsKeywords.length > 0 || 
+    Object.values(context).some(v => v && v !== "Not specified" && v !== "");
+
+  // Compile active tabs
+  const availableTabs = [
+    hasMandates && { id: "mandates" as const, label: "mandates" },
+    hasResponsibilities && { id: "responsibilities" as const, label: "responsibilities" },
+    hasCulture && { id: "culture" as const, label: "culture" },
+    hasContext && { id: "context" as const, label: "context" }
+  ].filter((t): t is { id: "mandates" | "responsibilities" | "culture" | "context"; label: string } => !!t);
+
+  // If no tabs have results, remove Structured JD Intelligence completely
+  if (availableTabs.length === 0) {
+    return null;
+  }
+
+  // Handle active tab state safely
+  const [activeSection, setActiveSection] = useState<"mandates" | "culture" | "responsibilities" | "context" | null>(null);
+  const currentTab = activeSection && availableTabs.some(t => t.id === activeSection)
+    ? activeSection
+    : (availableTabs[0]?.id || null);
+
   return (
     <div className="glass-panel bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-slate-200/60 p-6 md:p-8 rounded-[3rem] space-y-8 relative overflow-hidden group">
       <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-accent-emerald/5 opacity-40 pointer-events-none" />
@@ -43,17 +69,17 @@ export const StructuredJdDetails = ({ data }: StructuredJdDetailsProps) => {
           <h3 className="text-3xl font-serif italic text-foreground">Structured JD Intelligence</h3>
         </div>
         <div className="flex flex-wrap gap-2">
-          {(["mandates", "responsibilities", "culture", "context"] as const).map((tab) => (
+          {availableTabs.map((tab) => (
             <button
-              key={tab}
-              onClick={() => setActiveSection(tab)}
+              key={tab.id}
+              onClick={() => setActiveSection(tab.id)}
               className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                activeSection === tab 
+                currentTab === tab.id 
                   ? "bg-slate-900 text-white shadow-md shadow-slate-950/15" 
                   : "bg-slate-50 border border-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-100"
               }`}
             >
-              {tab}
+              {tab.label}
             </button>
           ))}
         </div>
@@ -62,7 +88,7 @@ export const StructuredJdDetails = ({ data }: StructuredJdDetailsProps) => {
       {/* Main Content Area */}
       <div className="relative z-10 min-h-[300px]">
         <AnimatePresence mode="wait">
-          {activeSection === "mandates" && (
+          {currentTab === "mandates" && (
             <motion.div
               key="mandates"
               initial={{ opacity: 0, y: 10 }}
@@ -148,7 +174,7 @@ export const StructuredJdDetails = ({ data }: StructuredJdDetailsProps) => {
             </motion.div>
           )}
 
-          {activeSection === "responsibilities" && (
+          {currentTab === "responsibilities" && (
             <motion.div
               key="responsibilities"
               initial={{ opacity: 0, y: 10 }}
@@ -179,7 +205,7 @@ export const StructuredJdDetails = ({ data }: StructuredJdDetailsProps) => {
             </motion.div>
           )}
 
-          {activeSection === "culture" && (
+          {currentTab === "culture" && (
             <motion.div
               key="culture"
               initial={{ opacity: 0, y: 10 }}
@@ -258,7 +284,7 @@ export const StructuredJdDetails = ({ data }: StructuredJdDetailsProps) => {
             </motion.div>
           )}
 
-          {activeSection === "context" && (
+          {currentTab === "context" && (
             <motion.div
               key="context"
               initial={{ opacity: 0, y: 10 }}

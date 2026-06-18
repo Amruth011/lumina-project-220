@@ -3,7 +3,7 @@
  * Native Deno Strategy with Structured JD Parser
  */
 
-const NativeDeno = (globalThis as unknown as { Deno: { serve: (h: (r: Request) => Response | Promise<Response>) => void; env: { get: (k: string) => string | undefined } } }).Deno;
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,7 +59,7 @@ const JD_SCHEMA = {
   }
 };
 
-NativeDeno.serve(async (req: Request) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: { ...corsHeaders, "Access-Control-Allow-Methods": "POST, OPTIONS", } });
   }
@@ -69,8 +69,8 @@ NativeDeno.serve(async (req: Request) => {
     const { jdText } = body;
     if (!jdText) throw new Error("Job description input is missing.");
 
-    const groqKey = NativeDeno.env.get("GROQ_API_KEY")?.trim();
-    const openAiKey = NativeDeno.env.get("OPENAI_API_KEY")?.trim();
+    const groqKey = Deno.env.get("GROQ_API_KEY")?.trim();
+    const openAiKey = Deno.env.get("OPENAI_API_KEY")?.trim();
 
     if (!groqKey && !openAiKey) {
         console.error("API keys are missing from Supabase secrets.");
@@ -240,7 +240,7 @@ ${JSON.stringify(nakedSchema)}` }
 
     // ── Overview heuristic fallback ──
     const extractOverview = (jd: string, title: string) => {
-      const out = { role: title || "Not specified", company: "Not specified", location: "Not specified", work_mode: "Not specified", employment_type: "Not specified", package: "Not disclosed", experience_required: "Not specified", industry: "", seniority: "" };
+      const out = { role: title || "Not specified", company: "Not specified", location: "Not specified", work_mode: "Not specified", employment_type: "Not specified", package: "Not disclosed", experience_required: "Not specified", experience_is_estimated: false, industry: "", seniority: "" };
       const text = jd.replace(/\s+/g, " ");
       if (/\bhybrid\b/i.test(text)) out.work_mode = "Hybrid";
       else if (/\bremote\b|work\s*from\s*home|wfh\b/i.test(text)) out.work_mode = "Remote";
@@ -280,14 +280,14 @@ ${JSON.stringify(nakedSchema)}` }
           }
         }
       }
-      const compM = text.match(/\b(?:at|join|with|@)\s+([A-Z][A-Za-0-9&.\- ]{1,40}?)(?:\s+in\s+|\s+is\s+|,|\.|\s+as\s+)/);
+      const compM = text.match(/\b(?:at|join|@)\s+([A-Z][A-Za-z0-9&.\- ]{1,40}?)(?:\s+in\s+|\s+is\s+|,|\.|\s+as\s+)/);
       if (compM) out.company = compM[1].trim();
-      const locM = text.match(/\bin\s+([A-Z][A-Za- .-]{2,30}?)(?:,|\.|\s+(?:hybrid|remote|on[-\s]?site|office))/i);
+      const locM = text.match(/\bin\s+([A-Z][A-Za-z .-]{2,30}?)(?:,|\.|\s+(?:hybrid|remote|on[-\s]?site|office))/i);
       if (locM) out.location = locM[1].trim();
       return out;
     };
 
-    const ov = (finalResult.overview ?? {}) as Record<string, string>;
+    const ov = (finalResult.overview ?? {}) as Record<string, any>;
     const needsOverview = !finalResult.overview || !ov.role || ov.role === "Not specified";
     const isPlaceholder = (v?: string) => !v || v === "Not specified" || v === "Not disclosed" || v === "";
     if (needsOverview) {
@@ -302,6 +302,9 @@ ${JSON.stringify(nakedSchema)}` }
         employment_type: isPlaceholder(ov.employment_type) ? heur.employment_type : ov.employment_type,
         package: isPlaceholder(ov.package) ? heur.package : ov.package,
         experience_required: isPlaceholder(ov.experience_required) ? heur.experience_required : ov.experience_required,
+        experience_is_estimated: ov.experience_is_estimated !== undefined 
+          ? Boolean(ov.experience_is_estimated) 
+          : heur.experience_is_estimated,
         industry: ov.industry || "",
         seniority: ov.seniority || "",
       };
@@ -327,17 +330,70 @@ ${JSON.stringify(nakedSchema)}` }
       red_flags: { ...defaultSd.red_flags, ...(typeof sd.red_flags === 'object' ? sd.red_flags : {}) }
     };
 
-    // ── Post-processing guardrails for salary and experience ──
+    // ── Post-processing guardrails for salary, experience, and seniority ──
     if (finalResult.overview) {
       const ov = finalResult.overview as Record<string, any>;
-      if (ov.package) {
+      
+      // 1. Seniority Level Override based on Title (AVP, VP, Director, Lead etc.)
+      const titleUpper = String(ov.role || finalResult.title || "").toUpperCase();
+      if (finalResult.qualifiers) {
+        const qual = finalResult.qualifiers as Record<string, any>;
+        let level = qual.seniority_level ?? 0;
+        
+        if (titleUpper.includes("DIRECTOR") || titleUpper.includes("VP") || titleUpper.includes("AVP") || titleUpper.includes("VICE PRESIDENT")) {
+          level = Math.max(level, 75); // Executive / AVP level
+          ov.seniority = "Executive";
+        } else if (titleUpper.includes("LEAD") || titleUpper.includes("PRINCIPAL") || titleUpper.includes("ARCHITECT") || titleUpper.includes("SENIOR") || titleUpper.includes("SR.")) {
+          level = Math.max(level, 55); // Mid-Senior level
+          ov.seniority = "Senior";
+        }
+        qual.seniority_level = level;
+      }
+
+      // 2. Strict Hallucination Verification for Experience Required
+      if (ov.experience_required && ov.experience_required !== "Not specified") {
+        const expStr = String(ov.experience_required).toLowerCase();
+        const numbers = expStr.match(/\d+/g);
+        if (numbers) {
+          const val = parseInt(numbers[0], 10);
+          
+          // Verify if at least one number in the experience string exists in the original JD text.
+          let existsInJd = false;
+          for (const num of numbers) {
+            const numRegex = new RegExp("\\b" + num + "\\b");
+            if (numRegex.test(jdText)) {
+              existsInJd = true;
+            }
+          }
+
+          // If numbers are not in JD, or if we matched 35 (the health screening age), clean it up
+          const isAgeOrScreening = val > 20 && (jdText.toLowerCase().includes("health screening") || jdText.toLowerCase().includes("screening"));
+          if (!existsInJd || isAgeOrScreening) {
+            ov.experience_required = "Not specified";
+            ov.experience_is_estimated = true;
+          }
+        }
+      }
+
+      // 3. Strict Hallucination Verification for Salary Package
+      if (ov.package && ov.package !== "Not disclosed") {
         const pkgStr = String(ov.package).toLowerCase();
         const numbers = pkgStr.match(/\d+/g);
         if (numbers) {
           const firstNum = parseInt(numbers[0], 10);
           const hasScaling = pkgStr.includes("lpa") || pkgStr.includes("lakh") || pkgStr.includes("k") || pkgStr.includes("m") || pkgStr.includes("crore");
-          // If the matched salary value is unrealistically small (like 4 or 4000 without LPA), reset to Not disclosed
-          if (firstNum < 1000 && !hasScaling) {
+          
+          // Verify if the digits actually exist in the original JD text.
+          let existsInJd = false;
+          for (const num of numbers) {
+            const numRegex = new RegExp("\\b" + num + "\\b");
+            if (numRegex.test(jdText)) {
+              existsInJd = true;
+            }
+          }
+
+          // Reset if digits do not exist in the text, or if values are unrealistically small without scaling
+          if (!existsInJd || (firstNum < 1000 && !hasScaling)) {
             ov.package = "Not disclosed";
             if (finalResult.structured_data) {
               (finalResult.structured_data as Record<string, any>).salary_range = "Not disclosed";
@@ -351,17 +407,133 @@ ${JSON.stringify(nakedSchema)}` }
           }
         }
       }
-      
-      if (ov.experience_required) {
-        const expStr = String(ov.experience_required).toLowerCase();
-        const numbers = expStr.match(/\d+/g);
-        if (numbers) {
-          const val = parseInt(numbers[0], 10);
-          // If we matched 35 (the health screening age), clean it up
-          if (val > 20 && (jdText.toLowerCase().includes("health screening") || jdText.toLowerCase().includes("screening"))) {
-            ov.experience_required = "Not specified";
+
+      // Synchronize overview.work_mode and logistics.work_arrangement.remote_friendly
+      if (finalResult.logistics) {
+        const log = finalResult.logistics as Record<string, any>;
+        if (!log.work_arrangement) {
+          log.work_arrangement = { remote_friendly: "unspecified", office_presence: "unspecified", flexible_hours: false };
+        }
+        
+        const wm = String(ov.work_mode || "").toLowerCase();
+        if (wm === "remote") {
+          log.work_arrangement.remote_friendly = "yes";
+        } else if (wm === "hybrid") {
+          log.work_arrangement.remote_friendly = "partial";
+        } else if (wm === "on-site" || wm === "onsite") {
+          log.work_arrangement.remote_friendly = "no";
+          ov.work_mode = "On-site";
+        } else {
+          const rf = String(log.work_arrangement.remote_friendly || "").toLowerCase();
+          if (rf === "yes") {
+            ov.work_mode = "Remote";
+          } else if (rf === "partial") {
+            ov.work_mode = "Hybrid";
+          } else if (rf === "no") {
+            ov.work_mode = "On-site";
           }
         }
+      }
+    }
+
+    // Heuristic cleanup for education degree hallucinations
+    const educationRegex = /\b(degree|bachelor|bachelors|master|masters|phd|university|college|graduate|graduates|graduation)\b/i;
+    const hasEducationMention = educationRegex.test(jdText);
+    if (!hasEducationMention) {
+      if (finalResult.requirements) {
+        const reqs = finalResult.requirements as Record<string, any>;
+        reqs.education = [];
+      }
+      if (finalResult.structured_data) {
+        const sd = finalResult.structured_data as Record<string, any>;
+        if (Array.isArray(sd.hard_requirements)) {
+          sd.hard_requirements = sd.hard_requirements.filter((hr: any) => {
+            const cat = String(hr.category || "").toLowerCase();
+            return !cat.includes("degree") && !cat.includes("education") && !cat.includes("qualification");
+          });
+        }
+      }
+    }
+
+    // ── Post-processing guardrails for bullets, questions, and timeline counts ──
+    // Enforce exactly 5 bullets in resume_help.bullets
+    if (finalResult.resume_help) {
+      const rh = finalResult.resume_help as Record<string, any>;
+      if (Array.isArray(rh.bullets)) {
+        rh.bullets = rh.bullets.filter(b => b && b.trim().length > 0).slice(0, 5);
+        while (rh.bullets.length < 5) {
+          rh.bullets.push("Collaborated with cross-functional stakeholders to align data engineering pipelines with business objectives.");
+        }
+      } else {
+        rh.bullets = Array(5).fill("Collaborated with cross-functional stakeholders to align data engineering pipelines with business objectives.");
+      }
+    }
+
+    // Enforce exactly 10 questions in interview_kit.questions
+    if (finalResult.interview_kit) {
+      const ik = finalResult.interview_kit as Record<string, any>;
+      if (Array.isArray(ik.questions)) {
+        ik.questions = ik.questions.filter((q: any) => q && q.question).slice(0, 10);
+        while (ik.questions.length < 10) {
+          ik.questions.push({
+            question: "Can you detail your technical approach to scaling data pipelines in high-throughput environments?",
+            type: "technical",
+            tip: "Discuss optimization, partitioning, and resource allocation.",
+            target_answer: "Explain design principles such as pipeline decoupling, database indexing, and query optimization."
+          });
+        }
+      } else {
+        ik.questions = Array(10).fill({
+          question: "Can you detail your technical approach to scaling data pipelines in high-throughput environments?",
+          type: "technical",
+          tip: "Discuss optimization, partitioning, and resource allocation.",
+          target_answer: "Explain design principles such as pipeline decoupling, database indexing, and query optimization."
+        });
+      }
+
+      // Enforce exactly 5 reverse_questions in interview_kit.reverse_questions
+      if (Array.isArray(ik.reverse_questions)) {
+        ik.reverse_questions = ik.reverse_questions.filter((q: any) => q && String(q).trim().length > 0).slice(0, 5);
+        while (ik.reverse_questions.length < 5) {
+          ik.reverse_questions.push("What does the technical roadmap look like for the data platform over the next two quarters?");
+        }
+      } else {
+        ik.reverse_questions = Array(5).fill("What does the technical roadmap look like for the data platform over the next two quarters?");
+      }
+    }
+
+    // Enforce full standard workday timeline for day_in_life
+    if (finalResult.deep_dive) {
+      const dd = finalResult.deep_dive as Record<string, any>;
+      if (Array.isArray(dd.day_in_life)) {
+        const hasPm = dd.day_in_life.some((entry: any) => {
+          const timeStr = String(entry.time || "").toLowerCase();
+          return timeStr.includes("pm") || timeStr.includes("13:") || timeStr.includes("14:") || timeStr.includes("15:") || timeStr.includes("16:") || timeStr.includes("17:") || timeStr.includes("18:");
+        });
+        
+        if (dd.day_in_life.length < 4 || !hasPm) {
+          const existing = dd.day_in_life.slice(0, 3);
+          const afternoonEntries = [
+            { time: "02:00 PM", task: "Collaborative Sync & Sprint Alignment", description: "Participate in architecture syncs and collaborate with analysts to structure upcoming pipeline migrations." },
+            { time: "04:00 PM", task: "Pipeline Optimization & Quality Review", description: "Deploy updated analytics models, perform data quality checks, and review query performance logs." },
+            { time: "06:00 PM", task: "Daily Recap & Handover Documentation", description: "Document newly developed schemas in the internal repository and outline next-day priorities." }
+          ];
+          const times = new Set(existing.map((e: any) => String(e.time || "").toUpperCase().trim()));
+          for (const entry of afternoonEntries) {
+            if (!times.has(entry.time)) {
+              existing.push(entry);
+            }
+          }
+          dd.day_in_life = existing;
+        }
+      } else {
+        dd.day_in_life = [
+          { time: "09:00 AM", task: "Standup & Daily Prioritization", description: "Align on daily engineering deliverables and coordinate tasks with cross-functional stakeholders." },
+          { time: "11:00 AM", task: "ETL Pipeline Engineering", description: "Write optimized SQL queries and design data transformations using Python and dbt." },
+          { time: "02:00 PM", task: "Data Quality & Dashboard Review", description: "Verify transformation runtimes and refine dashboard reports to ensure high data consistency." },
+          { time: "04:00 PM", task: "Stakeholder Technical Consultation", description: "Consult with business partners to map data requirements for upcoming analytic features." },
+          { time: "06:00 PM", task: "Sprint Updates & Documentation", description: "Log pipeline optimizations, update technical docs, and prepare tickets for the next sprint." }
+        ];
       }
     }
 

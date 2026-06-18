@@ -172,17 +172,31 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText, resumeTex
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">Salary Range</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">
+                    {results?.logistics?.salary_range?.estimate ? "Expected Salary" : "Salary Range"}
+                  </span>
                   <p className="text-[12px] font-black text-foreground flex items-center gap-1.5">
                     <DollarSign size={12} className="text-accent-gold shrink-0" />
-                    <span>{overview.package || "Not disclosed"}</span>
+                    <span>
+                      {overview.package || "Not disclosed"}
+                      {results?.logistics?.salary_range?.estimate && overview.package !== "Not disclosed" && (
+                        <span className="text-[9px] font-normal text-muted-foreground ml-1">(Est.)</span>
+                      )}
+                    </span>
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">Experience</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">
+                    {results?.overview?.experience_is_estimated ? "Expected Experience" : "Experience"}
+                  </span>
                   <p className="text-[12px] font-black text-foreground flex items-center gap-1.5">
                     <Target size={12} className="text-primary shrink-0" />
-                    <span>{overview.experience_required || "Not specified"}</span>
+                    <span>
+                      {overview.experience_required || "Not specified"}
+                      {results?.overview?.experience_is_estimated && overview.experience_required !== "Not specified" && (
+                        <span className="text-[9px] font-normal text-muted-foreground ml-1">(Est.)</span>
+                      )}
+                    </span>
                   </p>
                 </div>
               </div>
@@ -377,11 +391,13 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText, resumeTex
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Experience Req.</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+                                        {results?.overview?.experience_is_estimated ? "Expected Exp." : "Experience Req."}
+                                    </span>
                                     <p className="text-[11px] font-bold text-foreground">
                                         {(results?.qualifiers?.experience?.professional ?? 0) <= 1.5 || results?.title?.toLowerCase()?.includes('trainee') || results?.title?.toLowerCase()?.includes('intern')
                                             ? "Early Career / Entry" 
-                                            : `${results?.qualifiers?.experience?.professional ?? 0}yr+ Domain Exp.`}
+                                            : `${results?.qualifiers?.experience?.professional ?? 0}yr+ Domain Exp. ${results?.overview?.experience_is_estimated ? "(Est.)" : ""}`}
                                     </p>
                                 </div>
                                 <div className="space-y-1 text-right">
@@ -548,7 +564,11 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText, resumeTex
 
                     <div className="pt-4 border-t border-white/5">
                         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 block mb-2">Practice Standard</span>
-                        <p className="text-[12px] font-medium text-muted-foreground">This role demands <span className="text-foreground font-bold">{results?.requirements?.experience}</span> as the core practice baseline.</p>
+                        <p className="text-[12px] font-medium text-muted-foreground">
+                          This role {results?.overview?.experience_is_estimated ? "is expected to demand" : "demands"}{" "}
+                          <span className="text-foreground font-bold">{results?.requirements?.experience}</span>{" "}
+                          {results?.overview?.experience_is_estimated ? "(estimated) " : ""}as the core practice baseline.
+                        </p>
                     </div>
                 </div>
             </div>
