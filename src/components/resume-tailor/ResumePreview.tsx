@@ -281,7 +281,7 @@ Your objective is to modify the candidate's active JSON resume structure accordi
 ### INPUTS:
 - Target Job Title: ${jdTitle || "Target Role"}
 - Target Company: ${companyName || "Target Company"}
-- Target Skills: ${(localResume.skills_section || []).join(", ") || "None"}
+- Target JD Skills (from original job scan — use these as ground truth): ${(jdSkills || []).map(s => s.skill).join(", ") || (localResume.skills_section || []).join(", ") || "None"}
 - User's Specific Edit Request: "${promptText}"
 
 ### CURRENT RESUME JSON:

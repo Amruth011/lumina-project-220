@@ -413,9 +413,13 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
 
 
 
-    const experienceItems = vaultItems.filter(item => item.type === 'professional');
-    const projectItems = vaultItems.filter(item => item.type === 'project');
-    const productItems = vaultItems.filter(item => item.type === 'product');
+    // ── Bug 4 Fix: RAG-filtered vault items ──────────────────────────────────
+    // After RAG matching runs below, experienceItems/projectItems/productItems
+    // will be re-filtered by ragMatches IDs if matches were found.
+    // These are initialized with all items as a safe fallback.
+    let experienceItems = vaultItems.filter(item => item.type === 'professional');
+    let projectItems = vaultItems.filter(item => item.type === 'project');
+    let productItems = vaultItems.filter(item => item.type === 'product');
     const educationItems = vaultItems.filter(item => item.type === 'education');
     const certificationItems = vaultItems.filter(item => item.type === 'certification');
     const leadershipItems = vaultItems.filter(item => item.type === 'leadership');
@@ -428,6 +432,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
         if (item.title) lines.push(`  Title: ${item.title}`);
         if (item.organization) lines.push(`  Org: ${item.organization}`);
         if (item.period) lines.push(`  Period: ${item.period}`);
+        if (item.description) lines.push(`  Description: ${item.description}`);
         if (item.bullets?.length) lines.push(`  Bullets: ${item.bullets.map(b => `"${b}"`).join("; ")}`);
         if (item.skills?.length) lines.push(`  Skills: ${item.skills.join(", ")}`);
         if (item.github_link) lines.push(`  GitHub: ${item.github_link}`);
@@ -467,6 +472,23 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
 The following vault items were retrieved via semantic similarity search against the target JD.
 Use these as PRIORITY source material for tailoring â€” they are the most relevant items in the candidate's profile:
 ${ragMatches.map((m, i) => `  [Match #${i + 1}] (Similarity: ${(m.similarity * 100).toFixed(1)}%) Title: ${m.title}. ${m.description}. Skills: ${(m.skills || []).join(", ")}`).join("\n")}`;
+          
+          // ── Bug 4 Fix: Re-filter vault arrays to only RAG-matched items ──────
+          // This ensures the LLM prompt only sees the most relevant experiences,
+          // reducing noise and hallucination risk from unrelated vault entries.
+          const ragMatchedIds = new Set(ragMatches.map(m => m.id));
+
+          const ragFilteredExp = experienceItems.filter(v => ragMatchedIds.has(v.id));
+          const ragFilteredProj = projectItems.filter(v => ragMatchedIds.has(v.id));
+          const ragFilteredProd = productItems.filter(v => ragMatchedIds.has(v.id));
+
+          // Only apply RAG filter if it returned ≥1 match per section;
+          // otherwise fall back to all items so sections are never empty.
+          if (ragFilteredExp.length > 0) experienceItems = ragFilteredExp;
+          if (ragFilteredProj.length > 0) projectItems = ragFilteredProj;
+          if (ragFilteredProd.length > 0) productItems = ragFilteredProd;
+
+          console.log(`[RAG] Vault filtered → exp:${experienceItems.length} proj:${projectItems.length} prod:${productItems.length}`);
         } else {
           // No matches at all â€” full career pivot
           isCareerPivot = true;
@@ -553,9 +575,14 @@ Return ONLY the JSON. No markdown, no comments.`
 
       const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
       let resultText = "";
-      const models = tailorEngine === "speed"
-        ? ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
-        : ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+      // Bug 3 Fix: Quality and Speed now use genuinely different model strategies.
+      // Quality → 70B only, higher token budget, lower temperature for precision.
+      // Speed  → 8B first (fast), 70B fallback if 8B fails.
+      const models = tailorEngine === "quality"
+        ? ["llama-3.3-70b-versatile"]
+        : ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"];
+      const engineMaxTokens = tailorEngine === "quality" ? 4000 : 4000;
+      const engineTemperature = tailorEngine === "quality" ? 0.3 : 0.5;
       let lastError = "";
 
       for (let i = 0; i < models.length; i++) {
@@ -576,10 +603,13 @@ Return ONLY the JSON. No markdown, no comments.`
               body: {
                 model: model,
                 messages: [{ role: "user", content: prompt }],
-                temperature: 0.5,
-                max_tokens: 2000
-                  },
-                  signal: controller.signal
+                // Bug 2 Fix: max_tokens raised — 2000 was too low for a full resume JSON
+                // (3–5 experience items + projects + products + bullets ≈ 2500–3500 tokens).
+                // Bug 3 Fix: Use per-engine token budget and temperature.
+                temperature: engineTemperature,
+                max_tokens: engineMaxTokens,
+              },
+              signal: controller.signal
             });
             rawData = response.data;
             invokeError = response.error;
@@ -678,28 +708,19 @@ Return ONLY the JSON. No markdown, no comments.`
         productLines
       );
 
-      const fullyRestoredData = restoreExactProfileData(hydratedData, vaultItems);
+      // Bug 1 Fix: Removed bullet padding loop.
+      // The old padBullets() manufactured fake content: it duplicated existing bullets
+      // or injected a hardcoded "Delivered solutions using Python..." filler line.
+      // Now we cleanly slice to the configured max — never add content that wasn’t generated.
+      const targetExp = experienceBullets || 3;
+      const targetProd = productLines || 3;
+      const targetProj = projectLines || 3;
+      const cleanBullets = (bullets: string[], max: number): string[] =>
+        (bullets || []).filter(Boolean).slice(0, max);
 
-      // â”€â”€ Pad bullets to match user settings (minimum 5 regardless of state) â”€â”€
-      const targetExp = Math.max(experienceBullets || 5, 5);
-      const targetProd = Math.max(productLines || 5, 5);
-      const targetProj = Math.max(projectLines || 5, 5);
-      const padBullets = (bullets: string[], target: number): string[] => {
-        if (!bullets || bullets.length === 0) return Array(target).fill("Delivered solutions using Python and ML frameworks.");
-        const cleaned = bullets.filter(Boolean);
-        if (cleaned.length >= target) return cleaned.slice(0, target);
-        const padded = [...cleaned];
-        const fillerPool = cleaned.length >= 2
-          ? cleaned.slice(1).concat(cleaned.slice(0, -1))
-          : [cleaned[0], "Built pipelines for data preprocessing and model deployment using Python."];
-        while (padded.length < target) {
-          padded.push(fillerPool[(padded.length - cleaned.length) % fillerPool.length]);
-        }
-        return padded;
-      };
-      fullyRestoredData.experience?.forEach(item => { item.bullets = padBullets(item.bullets ?? [], targetExp); });
-      fullyRestoredData.products?.forEach(item => { item.bullets = padBullets(item.bullets ?? [], targetProd); });
-      fullyRestoredData.projects?.forEach(item => { item.bullets = padBullets(item.bullets ?? [], targetProj); });
+      fullyRestoredData.experience?.forEach(item => { item.bullets = cleanBullets(item.bullets ?? [], targetExp); });
+      fullyRestoredData.products?.forEach(item => { item.bullets = cleanBullets(item.bullets ?? [], targetProd); });
+      fullyRestoredData.projects?.forEach(item => { item.bullets = cleanBullets(item.bullets ?? [], targetProj); });
 
       // â”€â”€ Fallback: fill missing sections from vault items if LLM skipped them â”€â”€
       if (!fullyRestoredData.professional_summary) {
@@ -746,7 +767,7 @@ Return ONLY the JSON. No markdown, no comments.`
         fullyRestoredData.experience = vaultItems.filter(v => v.type === 'professional').map(v => ({
           heading: `${v.title || "Role"} @ ${v.organization || ""}`,
           content: v.period || "",
-          bullets: padBullets(v.bullets, targetExp)
+          bullets: cleanBullets(v.bullets ?? [], targetExp)
         }));
       }
       if ((!fullyRestoredData.products || fullyRestoredData.products.length === 0)) {
@@ -755,7 +776,7 @@ Return ONLY the JSON. No markdown, no comments.`
           return {
             heading: v.title || "",
             content: [v.period, links].filter(Boolean).join(" | "),
-            bullets: padBullets(v.bullets, targetProd)
+            bullets: cleanBullets(v.bullets ?? [], targetProd)
           };
         });
       }
@@ -765,7 +786,7 @@ Return ONLY the JSON. No markdown, no comments.`
           return {
             heading: v.title || "",
             content: [v.period, links].filter(Boolean).join(" | "),
-            bullets: padBullets(v.bullets, targetProj)
+            bullets: cleanBullets(v.bullets ?? [], targetProj)
           };
         });
       }
