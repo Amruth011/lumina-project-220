@@ -575,13 +575,14 @@ Return ONLY the JSON. No markdown, no comments.`
 
       const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
       let resultText = "";
-      // Bug 3 Fix: Quality and Speed now use genuinely different model strategies.
-      // Quality → 70B only, higher token budget, lower temperature for precision.
-      // Speed  → 8B first (fast), 70B fallback if 8B fails.
+      // Engine strategy:
+      // BOTH modes use 70B first — 8B is unreliable for complex multi-section resume JSON
+      // and produces empty sections. Quality = 70B only, temp 0.3, precise.
+      // Speed = 70B first, 8B as last-resort fallback only if 70B fails.
       const models = tailorEngine === "quality"
         ? ["llama-3.3-70b-versatile"]
-        : ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"];
-      const engineMaxTokens = tailorEngine === "quality" ? 4000 : 4000;
+        : ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+      const engineMaxTokens = 4000;
       const engineTemperature = tailorEngine === "quality" ? 0.3 : 0.5;
       let lastError = "";
 
