@@ -20,7 +20,7 @@ serve(async (req) => {
       1. Actively analyze the target Job Description (JD) keywords "${skillList}" against the Original Resume. Identify structural gaps (missing keywords, scale limitations, or context variations).
       2. Proactively bridge these alignment gaps by extracting and framing the candidate's existing achievements, projects, or professional experiences to explicitly showcase the skills, stack, and methodologies demanded by the JD.
       3. If a particular technology or skill is not directly detailed with descriptions in the profile, but the item contains that technology/skill in its title or tags, highlight its utilization, execution, and integration details within the generated bullet points, bridging the gap completely using professional, concrete context.
-      4. Keep 100% truth and fidelity to facts—never fabricate fake numerical metrics (like "increased sales by 85%" out of thin air). Instead, bridge gaps qualitatively by focusing on the scope of their responsibility, the exact tech stack integration, developer tooling, and the technical outcomes.
+      4. Keep 100% truth and fidelity to facts—never fabricate fake numerical metrics (like "increased sales by 85%" out of thin air) or fake years of experience/seniority levels. If the candidate has 3-4 months of internship experience, do NOT call them "seasoned" or claim they have "4 years of experience". Ground the summary and bullet points strictly in the timeline and facts of their actual profile.
       5. STRICT RETENTION OF METADATA: You must strictly use the exact links (GitHub, live links), exact date formats, and organization details from the Candidate facts as provided. Never omit, simplify, or modify links or dates.
 
       Original Resume to Tailor:

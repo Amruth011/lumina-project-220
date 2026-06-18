@@ -174,14 +174,16 @@ Your goal is to deconstruct JDs into hyper-accurate data structures grounded ONL
 
 MANDATORY RULES:
 1. ACCURACY OVERRIDES ALL: Every field MUST be derived from the JD text. NEVER invent companies, locations, salaries, or experience years. If a field is not present, write "Not specified" or the closest faithful summary. Do NOT hallucinate.
-2. OVERVIEW CARD: Populate "overview" and "structured_data" with the EXACT role title, company name, location, work mode (Remote/Hybrid/On-site), employment type, and salary range.
-3. ESTIMATION FOR SCORES ONLY: For numeric scores (grade.*, bonus_pulse.*, radars) provide market-grounded estimates; never 0/null. But salary/experience/company/location/title MUST stay faithful to the JD.
-4. VERDICT: "grade.summary" MUST be unique, insightful, and free of speculative years. "grade.plain_english_summary" MUST have EXACTLY 5 points.
-5. RED FLAGS: EXACTLY 2 entries in "red_flags" grounded in JD phrasing, and populate "structured_data.red_flags" with vague requirements and unrealistic expectations.
-6. INTERVIEW KIT: EXACTLY 10 diverse "questions" + EXACTLY 5 "reverse_questions".
-7. KEYWORDS: "resume_help.keywords" MUST contain EXACTLY 10-12 high-impact ATS keywords pulled VERBATIM from the JD.
-8. SKILLS: Extract every tool, framework, language, methodology mentioned in the JD with correct category and importance weighted by frequency and emphasis.
-9. ICEBERG: "role_reality" must contain non-obvious truths specific to this JD's domain.
+2. NO JOB-ID SALARY HALLUCINATIONS: Do NOT confuse alphanumeric Job IDs (like "Job ID: R0434408") as salary amounts. If no salary/package is explicitly disclosed in the text, you MUST return package: "Not disclosed" and set logistics.salary_range min and max to 0.
+3. NO AGE SCREENING EXPERIENCE CONFUSION: Do NOT confuse health screening or age requirements (e.g. "health screening for 35 yrs. and above") with required years of experience. If no experience tenure is specified, return "Not specified".
+4. OVERVIEW CARD: Populate "overview" and "structured_data" with the EXACT role title, company name, location, work mode (Remote/Hybrid/On-site), employment type, and salary range.
+5. ESTIMATION FOR SCORES ONLY: For numeric scores (grade.*, bonus_pulse.*, radars) provide market-grounded estimates; never 0/null. But salary/experience/company/location/title MUST stay faithful to the JD.
+6. VERDICT: "grade.summary" MUST be unique, insightful, and free of speculative years. "grade.plain_english_summary" MUST have EXACTLY 5 points.
+7. RED FLAGS: EXACTLY 2 entries in "red_flags" grounded in JD phrasing, and populate "structured_data.red_flags" with vague requirements and unrealistic expectations.
+8. INTERVIEW KIT: EXACTLY 10 diverse "questions" + EXACTLY 5 "reverse_questions".
+9. KEYWORDS: "resume_help.keywords" MUST contain EXACTLY 10-12 high-impact ATS keywords pulled VERBATIM from the JD.
+10. SKILLS: Extract every tool, framework, language, methodology mentioned in the JD with correct category and importance weighted by frequency and emphasis.
+11. ICEBERG: "role_reality" must contain non-obvious truths specific to this JD's domain.
 
 RETURN ONLY RAW JSON.` },
                         { role: "user", content: `ACT ON THIS JD:
@@ -247,11 +249,37 @@ ${JSON.stringify(nakedSchema)}` }
       else if (/part[-\s]?time/i.test(text)) out.employment_type = "Part-time";
       else if (/\bcontract\b|contractor/i.test(text)) out.employment_type = "Contract";
       else if (/intern(ship)?/i.test(text)) out.employment_type = "Internship";
-      const expM = text.match(/(\d{1,2}\s*(?:-|to|–)\s*\d{1,2}\+?\s*(?:years|yrs|yoe))|(\d{1,2}\+?\s*(?:years|yrs|yoe))/i);
-      if (expM) out.experience_required = expM[0].trim();
-      const pkgM = text.match(/(?:₹|rs\.?|inr|usd|\$|€|eur|gbp|£)\s*\d[\d,.\s\-–to]*\s*(?:lpa|lakh|lakhs|cr|crore|k|m|mn|million|per\s*annum|p\.?a\.?)?/i)
-        || text.match(/\d{1,3}\s*(?:-|to|–)\s*\d{1,3}\s*(?:lpa|lakh|lakhs|k\s*usd|usd|inr)/i);
-      if (pkgM) out.package = pkgM[0].trim();
+      // Experience extraction heuristic
+      const expMatches = text.matchAll(/(\d{1,2}\s*(?:-|to|–)\s*\d{1,2}\+?\s*(?:years|yrs|yoe|years of experience))|(\d{1,2}\+?\s*(?:years|yrs|yoe|years of experience))/gi);
+      for (const match of expMatches) {
+        const matchedText = match[0];
+        const val = parseInt(matchedText.match(/\d+/)?.[0] || "0", 10);
+        const idx = text.indexOf(matchedText);
+        const context = text.substring(Math.max(0, idx - 40), Math.min(text.length, idx + matchedText.length + 40)).toLowerCase();
+        const isAgeOrScreening = context.includes("screening") || context.includes("age") || context.includes("above") || context.includes("health") || context.includes("years old");
+        if (val > 15 && isAgeOrScreening) continue;
+        if (val > 25) continue;
+        out.experience_required = matchedText;
+        break;
+      }
+
+      // Salary extraction heuristic
+      const pkgM = text.match(/(?:₹|inr|usd|\$|€|eur|gbp|£|\brs\b|\brs\.)\s*\d[\d,.\s\-–to]*\s*(?:lpa|lakh|lakhs|cr|crore|k|m|mn|million|per\s*annum|p\.?a\.?)?/i)
+        || text.match(/\b\d{1,3}\s*(?:-|to|–)\s*\d{1,3}\s*(?:lpa|lakh|lakhs|k\s*usd|usd|inr)\b/i);
+      if (pkgM) {
+        const valStr = pkgM[0].trim();
+        const digits = valStr.match(/\d+/g);
+        if (digits) {
+          const firstVal = parseInt(digits[0], 10);
+          const lowerValStr = valStr.toLowerCase();
+          const hasScaling = lowerValStr.includes("lpa") || lowerValStr.includes("lakh") || lowerValStr.includes("k") || lowerValStr.includes("m") || lowerValStr.includes("million") || lowerValStr.includes("crore") || lowerValStr.includes("cr");
+          if (firstVal < 1000 && !hasScaling) {
+            // skip false positive
+          } else {
+            out.package = valStr;
+          }
+        }
+      }
       const compM = text.match(/\b(?:at|join|with|@)\s+([A-Z][A-Za-0-9&.\- ]{1,40}?)(?:\s+in\s+|\s+is\s+|,|\.|\s+as\s+)/);
       if (compM) out.company = compM[1].trim();
       const locM = text.match(/\bin\s+([A-Z][A-Za- .-]{2,30}?)(?:,|\.|\s+(?:hybrid|remote|on[-\s]?site|office))/i);
@@ -298,6 +326,44 @@ ${JSON.stringify(nakedSchema)}` }
       keywords_for_ats: Array.isArray(sd.keywords_for_ats) ? sd.keywords_for_ats : defaultSd.keywords_for_ats,
       red_flags: { ...defaultSd.red_flags, ...(typeof sd.red_flags === 'object' ? sd.red_flags : {}) }
     };
+
+    // ── Post-processing guardrails for salary and experience ──
+    if (finalResult.overview) {
+      const ov = finalResult.overview as Record<string, any>;
+      if (ov.package) {
+        const pkgStr = String(ov.package).toLowerCase();
+        const numbers = pkgStr.match(/\d+/g);
+        if (numbers) {
+          const firstNum = parseInt(numbers[0], 10);
+          const hasScaling = pkgStr.includes("lpa") || pkgStr.includes("lakh") || pkgStr.includes("k") || pkgStr.includes("m") || pkgStr.includes("crore");
+          // If the matched salary value is unrealistically small (like 4 or 4000 without LPA), reset to Not disclosed
+          if (firstNum < 1000 && !hasScaling) {
+            ov.package = "Not disclosed";
+            if (finalResult.structured_data) {
+              (finalResult.structured_data as Record<string, any>).salary_range = "Not disclosed";
+            }
+            if (finalResult.logistics) {
+              const log = finalResult.logistics as Record<string, any>;
+              if (log.salary_range) {
+                log.salary_range = { min: 0, max: 0, currency: "", estimate: true, note: "Not specified" };
+              }
+            }
+          }
+        }
+      }
+      
+      if (ov.experience_required) {
+        const expStr = String(ov.experience_required).toLowerCase();
+        const numbers = expStr.match(/\d+/g);
+        if (numbers) {
+          const val = parseInt(numbers[0], 10);
+          // If we matched 35 (the health screening age), clean it up
+          if (val > 20 && (jdText.toLowerCase().includes("health screening") || jdText.toLowerCase().includes("screening"))) {
+            ov.experience_required = "Not specified";
+          }
+        }
+      }
+    }
 
     return new Response(JSON.stringify(finalResult), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 

@@ -516,7 +516,7 @@ CRITICAL BULLET COUNTS & LENGTHS:
 STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
 1. PROFESSIONAL SUMMARY RULES — FOLLOW EXACTLY:
    - Write EXACTLY ${summaryLines} sentences. Not more. Not fewer. Count them.
-   - Each sentence must be distinct: [1] Role + years/level, [2] Core technical skills from THIS JD, [3] Impact/achievement framing, [4] Domain expertise (if 4+), [5] Career ambition aligned to company (if 5).
+   - Each sentence must be distinct: [1] Role + years/level (STRICT TRUTH RULE: Ground this strictly in the candidate's actual vault data. Do NOT fabricate years of experience. If they have only internship experience of 3-4 months, describe them as an entry-level or junior professional, never as "seasoned" or claiming "4 years" of experience), [2] Core technical skills from THIS JD, [3] Impact/achievement framing, [4] Domain expertise (if 4+), [5] Career ambition aligned to company (if 5).
    - Every sentence must contain at least one keyword extracted directly from the decoded JD skills: ${(jdSkills || []).slice(0, 15).map(s => s.skill).join(', ')}.
    - DO NOT merge sentences with semicolons or em-dashes to fake multiple lines.
    - DO NOT write a single long paragraph. Each sentence is standalone.
