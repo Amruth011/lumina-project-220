@@ -173,6 +173,7 @@ export interface RoleOverview {
   experience_required: string;
   industry?: string;
   seniority?: string;
+  experience_is_estimated?: boolean;
 }
 
 export interface HardRequirement {

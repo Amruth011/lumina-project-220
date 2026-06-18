@@ -237,7 +237,8 @@ export function heuristicGapAnalysis(
       return {
         skill: s.skill,
         match_percent: has ? 100 : 0,
-        verdict: has ? "strong" : "missing"
+        verdict: has ? "strong" : "missing",
+        note: has ? "Found in resume" : "Missing from resume"
       };
     }),
     actionable_directives: priority_action_plan.map(p => ({
@@ -342,7 +343,7 @@ export async function parseGapAnalysis(
           missing_impact_areas: [],
           suggested_achievements: []
         },
-        priority_action_plan: result.actionable_directives.map((ad, idx) => ({
+        priority_action_plan: (result.actionable_directives || []).map((ad, idx) => ({
           priority: idx + 1,
           action: ad.action,
           impact: "medium",

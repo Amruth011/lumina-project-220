@@ -89,7 +89,7 @@ export const ATSScoreSimulator = ({ result, resumeText, jdText }: ATSScoreSimula
         area: "General Optimization",
         suggestion: ad.description
       }))
-    };
+    } as ATSValidationReport;
   }, [result]);
 
   const handleScan = async (forceRefresh = false) => {

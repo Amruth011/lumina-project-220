@@ -54,7 +54,7 @@ export interface SkillEntry {
   category: string;
   proficiency: "beginner" | "intermediate" | "advanced" | "expert";
   years_experience?: number;
-  evidence: string[];
+  evidence?: string[];
 }
 
 export interface CertificationEntry {

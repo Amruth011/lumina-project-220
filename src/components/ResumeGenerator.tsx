@@ -709,6 +709,8 @@ Return ONLY the JSON. No markdown, no comments.`
         productLines
       );
 
+      const fullyRestoredData = restoreExactProfileData(hydratedData, vaultItems);
+
       // Bug 1 Fix: Removed bullet padding loop.
       // The old padBullets() manufactured fake content: it duplicated existing bullets
       // or injected a hardcoded "Delivered solutions using Python..." filler line.
