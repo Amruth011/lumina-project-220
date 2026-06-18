@@ -184,7 +184,7 @@ MANDATORY RULES:
 9. KEYWORDS: "resume_help.keywords" MUST contain EXACTLY 10-12 high-impact ATS keywords pulled VERBATIM from the JD.
 10. SKILLS: Extract every tool, framework, language, methodology mentioned in the JD with correct category and importance weighted by frequency and emphasis.
 11. ICEBERG: "role_reality" must contain non-obvious truths specific to this JD's domain.
-12. DAY IN LIFE TIMELINES: Do NOT use clock times (e.g. '09:00 AM'). Instead, use task order sequential labels: '1st Task', '2nd Task', '3rd Task', '4th Task', '5th Task' in the 'time' field.
+12. DAY IN LIFE TIMELINES: Return EXACTLY 5 sequential entries in 'day_in_life'. Do NOT use clock times (e.g. '09:00 AM'). Instead, use task order sequential labels: '1st Task', '2nd Task', '3rd Task', '4th Task', '5th Task' in the 'time' field.
 13. RESUME BULLETS: "resume_help.bullets" MUST contain EXACTLY 5 unique high-impact resume bullet points tailored to the JD's requirements and target role, starting with strong action verbs.
 
 RETURN ONLY RAW JSON.` },
@@ -559,28 +559,36 @@ ${JSON.stringify(nakedSchema)}` }
       }
     }
 
-    // Enforce sequential task order for day_in_life (e.g. 1st Task, 2nd Task...)
+    // Enforce sequential task order for day_in_life (e.g. 1st Task, 2nd Task...) and exactly 5 items
     if (finalResult.deep_dive) {
       const dd = finalResult.deep_dive as Record<string, any>;
-      if (Array.isArray(dd.day_in_life) && dd.day_in_life.length > 0) {
-        dd.day_in_life = dd.day_in_life.map((entry: any, index: number) => {
-          const suffix = ["st", "nd", "rd"][index] || "th";
-          const label = `${index + 1}${suffix} Task`;
-          return {
-            time: label,
-            task: entry.task || "Collaborative Work",
-            description: entry.description || "Executing role-specific engineering tasks and collaborating with stakeholders."
-          };
-        });
+      const fallbackDay = [
+        { time: "1st Task", task: "Standup & Daily Prioritization", description: "Align on daily engineering deliverables and coordinate tasks with cross-functional stakeholders." },
+        { time: "2nd Task", task: "Core Execution & Engineering", description: "Write optimized queries, design data transformations, or develop models depending on the daily priority." },
+        { time: "3rd Task", task: "Data Quality & Review", description: "Verify transformation runtimes, run tests, and refine reporting dashboard features." },
+        { time: "4th Task", task: "Stakeholder Consultation", description: "Consult with business partners to clarify data requirements and align on success metrics." },
+        { time: "5th Task", task: "Documentation & Handovers", description: "Document schemas in the repository, update technical docs, and outline next priorities." }
+      ];
+
+      if (Array.isArray(dd.day_in_life)) {
+        dd.day_in_life = dd.day_in_life.filter((entry: any) => entry && entry.task).slice(0, 5);
+        while (dd.day_in_life.length < 5) {
+          const fb = fallbackDay[dd.day_in_life.length % fallbackDay.length];
+          dd.day_in_life.push({ ...fb });
+        }
       } else {
-        dd.day_in_life = [
-          { time: "1st Task", task: "Standup & Daily Prioritization", description: "Align on daily engineering deliverables and coordinate tasks with cross-functional stakeholders." },
-          { time: "2nd Task", task: "Core Execution & Engineering", description: "Write optimized queries, design data transformations, or develop models depending on the daily priority." },
-          { time: "3rd Task", task: "Data Quality & Review", description: "Verify transformation runtimes, run tests, and refine reporting dashboard features." },
-          { time: "4th Task", task: "Stakeholder Consultation", description: "Consult with business partners to clarify data requirements and align on success metrics." },
-          { time: "5th Task", task: "Documentation & Handovers", description: "Document schemas in the repository, update technical docs, and outline next priorities." }
-        ];
+        dd.day_in_life = fallbackDay.map(fb => ({ ...fb }));
       }
+
+      dd.day_in_life = dd.day_in_life.map((entry: any, index: number) => {
+        const suffix = ["st", "nd", "rd"][index] || "th";
+        const label = `${index + 1}${suffix} Task`;
+        return {
+          time: label,
+          task: entry.task || "Collaborative Work",
+          description: entry.description || "Executing role-specific engineering tasks and collaborating with stakeholders."
+        };
+      });
     }
 
     return new Response(JSON.stringify(finalResult), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
