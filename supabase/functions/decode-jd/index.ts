@@ -1,9 +1,8 @@
 /**
- * LUMINA DECODING ENGINE v2.5
- * Native Deno Strategy (Linter-Safe Version)
+ * LUMINA DECODING ENGINE v3.0
+ * Native Deno Strategy with Structured JD Parser
  */
 
-// We use globalThis to avoid "red squiggles" in web-based editors
 const NativeDeno = (globalThis as unknown as { Deno: { serve: (h: (r: Request) => Response | Promise<Response>) => void; env: { get: (k: string) => string | undefined } } }).Deno;
 
 const corsHeaders = {
@@ -42,7 +41,22 @@ const JD_SCHEMA = {
   },
   bonus_pulse: { ghost_job_probability: 0, desperation_meter: 0, competition_estimate: 0, skill_rarity: 0, interview_difficulty: 0, career_growth: { trajectory: [], potential_score: 0 }, tech_stack_popularity: [{ name: "", demand: "Standard" }] },
   interview_kit: { questions: [{ question: "", type: "technical", tip: "", target_answer: "" }], reverse_questions: [] },
-  resume_help: { keywords: [], bullets: [] }
+  resume_help: { keywords: [], bullets: [] },
+  structured_data: {
+    role_title: "",
+    company_name: "",
+    department: "",
+    employment_type: "",
+    location: "",
+    salary_range: "",
+    hard_requirements: [],
+    soft_requirements: [],
+    responsibilities: [],
+    culture_signals: [],
+    company_context: { stage: "", size: "", industry: "", work_style: "", communication_style: "" },
+    keywords_for_ats: [],
+    red_flags: { vague_requirements: [], unrealistic_expectations: [] }
+  }
 };
 
 NativeDeno.serve(async (req: Request) => {
@@ -65,12 +79,12 @@ NativeDeno.serve(async (req: Request) => {
 
     const safeJD = jdText.substring(0, 12000); 
     const fallbackConfigs: Array<{ url: string; key: string; model: string }> = [];
+    
     if (groqKey) {
       fallbackConfigs.push(
-        { url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "llama-3.1-8b-instant" },
         { url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "llama-3.3-70b-versatile" },
-        { url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "qwen/qwen3-32b" },
-        { url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "meta-llama/llama-4-scout-17b-16e-instruct" }
+        { url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "llama-3.1-8b-instant" },
+        { url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "qwen/qwen3-32b" }
       );
     }
     if (openAiKey) {
@@ -85,8 +99,19 @@ NativeDeno.serve(async (req: Request) => {
 
     // ── NAKED SCHEMA (No Defaults) ──
     const nakedSchema = {
-      valid: "boolean", title: "string",
-      overview: { role: "string (exact job title from JD)", company: "string (company/organization name, 'Not specified' if absent)", location: "string (city, state/country; 'Not specified' if absent)", work_mode: "Remote|Hybrid|On-site|Not specified", employment_type: "Full-time|Part-time|Contract|Internship|Not specified", package: "string (salary/CTC range exactly as stated, e.g. '₹12-18 LPA' or 'Not disclosed')", experience_required: "string (years of experience exactly as stated, or 'Not specified')", industry: "string", seniority: "Entry|Mid|Senior|Lead|Principal" },
+      valid: "boolean (true if this is a job description, false if it's a resume or other non-JD text)",
+      title: "string (exact job title from JD)",
+      overview: { 
+        role: "string (exact job title from JD)", 
+        company: "string (company/organization name, 'Not specified' if absent)", 
+        location: "string (city, state/country; 'Not specified' if absent)", 
+        work_mode: "Remote|Hybrid|On-site|Not specified", 
+        employment_type: "Full-time|Part-time|Contract|Internship|Not specified", 
+        package: "string (salary/CTC range exactly as stated, e.g. '₹12-18 LPA' or 'Not disclosed')", 
+        experience_required: "string (years of experience exactly as stated, or 'Not specified')", 
+        industry: "string", 
+        seniority: "Entry|Mid|Senior|Lead|Principal" 
+      },
       skills: [{ category: "string", skill: "string", importance: "number (0-100)" }],
       requirements: { education: ["string"], experience: "string", soft_skills: ["string"], agreements: ["string"] },
       grade: { 
@@ -104,16 +129,31 @@ NativeDeno.serve(async (req: Request) => {
       bonus_pulse: { ghost_job_probability: "0-100", desperation_meter: "0-100", skill_rarity: "0-100", interview_difficulty: "0-100" },
       role_reality: { iceberg_above: ["string"], iceberg_below: ["string"] },
       deep_dive: { 
-        day_in_life: [{ time: "string", task: "string" }],
+        day_in_life: [{ time: "string", task: "string", description: "string" }],
         bias_analysis: { inclusivity_score: "0-100", gender_meter: "masculine/feminine/neutral", age_bias_graph: "0-100", tonal_map: [{ category: "string", tone: "string" }] },
         culture_radar: { innovation: "0-100", work_life_balance: "0-100", collaboration: "0-100", hierarchy: "0-100", results_driven: "0-100", stability: "0-100" },
         health_radar: { market_position: "0-100", tech_innovation: "0-100", transparency: "0-100", client_quality: "0-100", employee_benefits: "0-100" }
       },
       interview_kit: { 
-        questions: [{ question: "string", type: "technical/behavioral", tip: "string", target_answer: "string" }],
+        questions: [{ question: "string", type: "technical/behavioral/situational", tip: "string", target_answer: "string" }],
         reverse_questions: ["string"]
       },
-      resume_help: { keywords: ["string"], bullets: ["string"] }
+      resume_help: { keywords: ["string"], bullets: ["string"] },
+      structured_data: {
+        role_title: "string (job/role title)",
+        company_name: "string (name of the hiring company)",
+        department: "string (department/group or 'Not specified')",
+        employment_type: "Full-time|Part-time|Contract|Internship|Not specified",
+        location: "string (city/state/country or Remote)",
+        salary_range: "string (salary range as stated in JD, or 'Not disclosed')",
+        hard_requirements: [{ category: "string (e.g. Engineering, Education)", priority: "must-have|nice-to-have", minimum_years: "number (years required)", specific_technologies: ["string"] }],
+        soft_requirements: [{ traits: ["string"], context: "string (how/where is this trait needed)", evidence_type: "string (how candidate can prove it)" }],
+        responsibilities: [{ scope: "string (details of task)", impact_area: "string (what it affects)" }],
+        culture_signals: [{ evidence: "string (text fragment signaling culture)", tone: "string (collaborative/intense/etc.)" }],
+        company_context: { stage: "string (e.g. Startup/Enterprise/Series A)", size: "string (e.g. 50-100 or 'Not specified')", industry: "string", work_style: "string (e.g. Async/Collaborative)", communication_style: "string" },
+        keywords_for_ats: [{ spelled_out: "string (full keyword name)", acronym: "string (optional acronym, e.g. AWS)" }],
+        red_flags: { vague_requirements: ["string"], unrealistic_expectations: ["string"] }
+      }
     };
 
     for (const config of fallbackConfigs) {
@@ -133,14 +173,14 @@ NativeDeno.serve(async (req: Request) => {
 Your goal is to deconstruct JDs into hyper-accurate data structures grounded ONLY in the JD text.
 
 MANDATORY RULES:
-1. ACCURACY OVERRIDES ALL: Every field MUST be derived from the JD text. NEVER invent companies, locations, salaries, or experience years. If a field is not present, write "Not specified" (for overview fields) or the closest faithful summary. Do NOT hallucinate.
-2. OVERVIEW CARD: Populate "overview" with the EXACT role title, company name, location, work mode (Remote/Hybrid/On-site), employment type, compensation/package string (verbatim units & range from JD, e.g. "₹12-18 LPA", "$120k-$150k", "Not disclosed"), and experience_required (verbatim, e.g. "3-5 years" or "Not specified"). Detect Indian roles → INR; US → USD; EU → EUR based on textual cues.
+1. ACCURACY OVERRIDES ALL: Every field MUST be derived from the JD text. NEVER invent companies, locations, salaries, or experience years. If a field is not present, write "Not specified" or the closest faithful summary. Do NOT hallucinate.
+2. OVERVIEW CARD: Populate "overview" and "structured_data" with the EXACT role title, company name, location, work mode (Remote/Hybrid/On-site), employment type, and salary range.
 3. ESTIMATION FOR SCORES ONLY: For numeric scores (grade.*, bonus_pulse.*, radars) provide market-grounded estimates; never 0/null. But salary/experience/company/location/title MUST stay faithful to the JD.
 4. VERDICT: "grade.summary" MUST be unique, insightful, and free of speculative years. "grade.plain_english_summary" MUST have EXACTLY 5 points.
-5. RED FLAGS: EXACTLY 2 entries in "red_flags" grounded in JD phrasing.
+5. RED FLAGS: EXACTLY 2 entries in "red_flags" grounded in JD phrasing, and populate "structured_data.red_flags" with vague requirements and unrealistic expectations.
 6. INTERVIEW KIT: EXACTLY 10 diverse "questions" + EXACTLY 5 "reverse_questions".
 7. KEYWORDS: "resume_help.keywords" MUST contain EXACTLY 10-12 high-impact ATS keywords pulled VERBATIM from the JD.
-8. SKILLS: Extract every tool, framework, language, methodology mentioned in the JD with correct category and importance weighted by frequency and emphasis (must-have phrasing = 85-100, nice-to-have = 40-60).
+8. SKILLS: Extract every tool, framework, language, methodology mentioned in the JD with correct category and importance weighted by frequency and emphasis.
 9. ICEBERG: "role_reality" must contain non-obvious truths specific to this JD's domain.
 
 RETURN ONLY RAW JSON.` },
@@ -197,31 +237,24 @@ ${JSON.stringify(nakedSchema)}` }
     const finalResult: Record<string, unknown> = { ...JD_SCHEMA, ...parsed };
 
     // ── Overview heuristic fallback ──
-    // Ensure the Role Overview card always has data even if the model omitted "overview".
     const extractOverview = (jd: string, title: string) => {
       const out = { role: title || "Not specified", company: "Not specified", location: "Not specified", work_mode: "Not specified", employment_type: "Not specified", package: "Not disclosed", experience_required: "Not specified", industry: "", seniority: "" };
       const text = jd.replace(/\s+/g, " ");
-      // Work mode
       if (/\bhybrid\b/i.test(text)) out.work_mode = "Hybrid";
       else if (/\bremote\b|work\s*from\s*home|wfh\b/i.test(text)) out.work_mode = "Remote";
       else if (/on[-\s]?site|in[-\s]?office|onsite/i.test(text)) out.work_mode = "On-site";
-      // Employment type
       if (/full[-\s]?time/i.test(text)) out.employment_type = "Full-time";
       else if (/part[-\s]?time/i.test(text)) out.employment_type = "Part-time";
       else if (/\bcontract\b|contractor/i.test(text)) out.employment_type = "Contract";
       else if (/intern(ship)?/i.test(text)) out.employment_type = "Internship";
-      // Experience
       const expM = text.match(/(\d{1,2}\s*(?:-|to|–)\s*\d{1,2}\+?\s*(?:years|yrs|yoe))|(\d{1,2}\+?\s*(?:years|yrs|yoe))/i);
       if (expM) out.experience_required = expM[0].trim();
-      // Package
       const pkgM = text.match(/(?:₹|rs\.?|inr|usd|\$|€|eur|gbp|£)\s*\d[\d,.\s\-–to]*\s*(?:lpa|lakh|lakhs|cr|crore|k|m|mn|million|per\s*annum|p\.?a\.?)?/i)
         || text.match(/\d{1,3}\s*(?:-|to|–)\s*\d{1,3}\s*(?:lpa|lakh|lakhs|k\s*usd|usd|inr)/i);
       if (pkgM) out.package = pkgM[0].trim();
-      // Company "at <Company>" or "join <Company>"
-      const compM = text.match(/\b(?:at|join|with|@)\s+([A-Z][A-Za-z0-9&.\- ]{1,40}?)(?:\s+in\s+|\s+is\s+|,|\.|\s+as\s+)/);
+      const compM = text.match(/\b(?:at|join|with|@)\s+([A-Z][A-Za-0-9&.\- ]{1,40}?)(?:\s+in\s+|\s+is\s+|,|\.|\s+as\s+)/);
       if (compM) out.company = compM[1].trim();
-      // Location "in <City>"
-      const locM = text.match(/\bin\s+([A-Z][A-Za-z .-]{2,30}?)(?:,|\.|\s+(?:hybrid|remote|on[-\s]?site|office))/i);
+      const locM = text.match(/\bin\s+([A-Z][A-Za- .-]{2,30}?)(?:,|\.|\s+(?:hybrid|remote|on[-\s]?site|office))/i);
       if (locM) out.location = locM[1].trim();
       return out;
     };
@@ -246,7 +279,26 @@ ${JSON.stringify(nakedSchema)}` }
       };
     }
 
+    // Handle structured_data mappings and guarantees
+    const sd = (finalResult.structured_data ?? {}) as Record<string, unknown>;
+    const defaultSd = JD_SCHEMA.structured_data;
     
+    finalResult.structured_data = {
+      role_title: sd.role_title || (finalResult.overview as Record<string, string>)?.role || finalResult.title || "Not specified",
+      company_name: sd.company_name || (finalResult.overview as Record<string, string>)?.company || "Not specified",
+      department: sd.department || "Not specified",
+      employment_type: sd.employment_type || (finalResult.overview as Record<string, string>)?.employment_type || "Not specified",
+      location: sd.location || (finalResult.overview as Record<string, string>)?.location || "Not specified",
+      salary_range: sd.salary_range || (finalResult.overview as Record<string, string>)?.package || "Not disclosed",
+      hard_requirements: Array.isArray(sd.hard_requirements) ? sd.hard_requirements : defaultSd.hard_requirements,
+      soft_requirements: Array.isArray(sd.soft_requirements) ? sd.soft_requirements : defaultSd.soft_requirements,
+      responsibilities: Array.isArray(sd.responsibilities) ? sd.responsibilities : defaultSd.responsibilities,
+      culture_signals: Array.isArray(sd.culture_signals) ? sd.culture_signals : defaultSd.culture_signals,
+      company_context: { ...defaultSd.company_context, ...(typeof sd.company_context === 'object' ? sd.company_context : {}) },
+      keywords_for_ats: Array.isArray(sd.keywords_for_ats) ? sd.keywords_for_ats : defaultSd.keywords_for_ats,
+      red_flags: { ...defaultSd.red_flags, ...(typeof sd.red_flags === 'object' ? sd.red_flags : {}) }
+    };
+
     return new Response(JSON.stringify(finalResult), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (e) {

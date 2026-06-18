@@ -642,7 +642,55 @@ export const decodeJDHeuristic = (jdText: string): DecodeResult => {
             title: "Tactical Interview Prep focus",
             description: `Prep intensely for system design questions. Be prepared to whiteboard clean data flow diagrams emphasizing telemetry monitoring and error boundaries.`
           }
-        ]
+        ],
+    structured_data: {
+      role_title: extractedTitle,
+      company_name: (jdText.match(/\b(?:at|join|with|@)\s+([A-Z][A-Za-z0-9&.\- ]{1,40}?)(?:\s+in\s+|\s+is\s+|,|\.|\s+as\s+)/)?.[1]?.trim()) || "Confidential Organization",
+      department: /product|design/i.test(jdLower) ? "Product" : /data|analyst|science/i.test(jdLower) ? "Data Science" : "Engineering",
+      employment_type: isFresher ? "Internship" : "Full-time",
+      location: officePresence === "none" ? "Remote" : officePresence === "occasional" ? "Hybrid" : "On-site",
+      salary_range: minSalary > 0 ? `${currency} ${minSalary.toLocaleString()} - ${maxSalary.toLocaleString()}` : "Not disclosed",
+      hard_requirements: [
+        {
+          category: "Technical",
+          priority: "must-have",
+          minimum_years: expMatch ? parseInt(expMatch[1]) : (isSenior ? 5 : 2),
+          specific_technologies: finalSkills.slice(0, 3).map(s => s.skill)
+        }
+      ],
+      soft_requirements: [
+        {
+          traits: isFresher || isJunior ? ["Proactive Learning", "Collaboration"] : ["Extreme Ambiguity Ownership", "Crisis Communication"],
+          context: "Working in cross-functional delivery team with rapid releases.",
+          evidence_type: "Portfolio project demonstration or situational interview answers"
+        }
+      ],
+      responsibilities: isFresher || isJunior ? [
+        { scope: "Implement modular features using coding standards.", impact_area: "Product Stability" },
+        { scope: "Write unit tests and debug codebase errors.", impact_area: "Code Quality" }
+      ] : [
+        { scope: "Lead the design and scaling of domain applications.", impact_area: "System Architecture" },
+        { scope: "Mentor junior developers and review pull requests.", impact_area: "Team Velocity" }
+      ],
+      culture_signals: [
+        { evidence: jdLower.includes("fast-paced") ? "fast-paced environment" : "dynamic scaling team", tone: "High Urgency" }
+      ],
+      company_context: {
+        stage: jdLower.includes("startup") ? "Startup" : "Enterprise",
+        size: isFresher || isJunior ? "50-200" : "1000+",
+        industry: /finance|fintech|bank/i.test(jdLower) ? "Fintech" : /health|medical/i.test(jdLower) ? "Healthcare" : "Technology",
+        work_style: "Collaborative",
+        communication_style: "Direct"
+      },
+      keywords_for_ats: finalSkills.slice(0, 5).map(s => ({
+        spelled_out: s.skill,
+        acronym: s.skill.match(/\b[A-Z]{2,4}\b/) ? s.skill : undefined
+      })),
+      red_flags: {
+        vague_requirements: flags.map(f => f.phrase),
+        unrealistic_expectations: flags.map(f => f.note)
+      }
+    }
   };
 
   return result;

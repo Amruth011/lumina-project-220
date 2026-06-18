@@ -22,6 +22,7 @@ import { LucideIcon } from "lucide-react";
 import { generateUnifiedReport } from "@/lib/pdfExporter";
 import { toast } from "sonner";
 import { BonusInsights } from "./BonusInsights";
+import { StructuredJdDetails } from "./StructuredJdDetails";
 
 interface LuminaUltraDashboardProps {
   results: DecodeResult;
@@ -482,6 +483,11 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText }: LuminaU
       {/* ── PHASE 2: GAP ANALYSIS ── */}
       <div className="space-y-8">
         <PhaseLabel number="02" title="Gap Analysis" sub="Deep Extraction & Analysis" />
+        
+        {results?.structured_data && (
+          <StructuredJdDetails data={results.structured_data} />
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             {/* Plain English Summary */}
             <div className="lg:col-span-12 lg:col-span-5 glass-panel bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-10 space-y-8 relative overflow-hidden group border-border/10 rounded-[3rem]">

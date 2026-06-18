@@ -173,6 +173,63 @@ export interface RoleOverview {
   seniority?: string;
 }
 
+export interface HardRequirement {
+  category: string;
+  priority: "must-have" | "nice-to-have";
+  minimum_years?: number;
+  specific_technologies: string[];
+}
+
+export interface SoftRequirement {
+  traits: string[];
+  context: string;
+  evidence_type: string;
+}
+
+export interface JdResponsibility {
+  scope: string;
+  impact_area: string;
+}
+
+export interface CultureSignal {
+  evidence: string;
+  tone: string;
+}
+
+export interface CompanyContext {
+  stage?: string;
+  size?: string;
+  industry?: string;
+  work_style?: string;
+  communication_style?: string;
+}
+
+export interface AtsKeyword {
+  spelled_out: string;
+  acronym?: string;
+}
+
+export interface StructuredRedFlags {
+  vague_requirements: string[];
+  unrealistic_expectations: string[];
+}
+
+export interface StructuredJdData {
+  role_title: string;
+  company_name: string;
+  department?: string;
+  employment_type: string;
+  location: string;
+  salary_range?: string;
+  hard_requirements: HardRequirement[];
+  soft_requirements: SoftRequirement[];
+  responsibilities: JdResponsibility[];
+  culture_signals: CultureSignal[];
+  company_context: CompanyContext;
+  keywords_for_ats: AtsKeyword[];
+  red_flags: StructuredRedFlags;
+}
+
 export interface DecodeResult {
   valid?: boolean;
   title: string;
@@ -200,6 +257,7 @@ export interface DecodeResult {
   jd_rewrite?: {
     highlights: { text: string; color: "skill" | "leverage" | "caution" }[];
   };
+  structured_data?: StructuredJdData;
 }
 
 export interface JdVaultEntry {
