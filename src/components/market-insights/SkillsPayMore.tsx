@@ -34,19 +34,19 @@ export const SkillsPayMore = ({ skills = [] }: SkillsPayMoreProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {displaySkills.map((item, i) => (
           <motion.div
             key={item.skill}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="glass-panel p-4 rounded-2xl border-[#1E2A3A]/5 bg-white/40 hover:bg-white/60 transition-all group"
+            className="glass-panel p-5 rounded-3xl border-[#1E2A3A]/5 bg-white/40 hover:bg-white/60 transition-all group"
           >
-            <div className="flex justify-between items-start mb-2.5">
+            <div className="flex justify-between items-start mb-3">
               <div className="space-y-0.5">
                 <span className="text-[8px] uppercase font-black tracking-widest text-[#1E2A3A]/40">Skill Signature</span>
-                <h4 className="text-base font-display font-bold text-[#1E2A3A] group-hover:text-[#10B981] transition-colors truncate max-w-[130px]">{item.skill}</h4>
+                <h4 className="text-lg font-display font-bold text-[#1E2A3A] group-hover:text-[#10B981] transition-colors truncate max-w-[170px]">{item.skill}</h4>
               </div>
               <div className="p-1.5 rounded-full bg-[#10B981]/10 text-[#10B981]">
                 <DollarSign size={12} />
@@ -61,25 +61,25 @@ export const SkillsPayMore = ({ skills = [] }: SkillsPayMoreProps) => {
                   className="h-full bg-gradient-to-r from-[#10B981] to-[#10B981]/60"
                 />
               </div>
-              <span className="text-[10px] font-black text-[#10B981] shrink-0">+{item.impact}%</span>
+              <span className="text-xs font-black text-[#10B981] shrink-0">+{item.impact}% Premium</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <div className="bg-[#1E2A3A]/5 p-2 rounded-xl">
+              <div className="bg-[#1E2A3A]/5 p-2.5 rounded-xl">
                 <div className="flex items-center gap-1 mb-0.5">
                   <Target size={9} className="text-[#1E2A3A]/40" />
                   <span className="text-[7px] uppercase font-black text-[#1E2A3A]/40">Demand</span>
                 </div>
-                <span className={`text-[9px] font-bold ${item.demand === 'High' ? 'text-orange-500' : 'text-[#1E2A3A]/60'}`}>
-                  {item.demand}
+                <span className={`text-[9.5px] font-bold ${item.demand === 'High' ? 'text-orange-500' : 'text-[#1E2A3A]/60'}`}>
+                  {item.demand} Intensity
                 </span>
               </div>
-              <div className="bg-[#1E2A3A]/5 p-2 rounded-xl">
+              <div className="bg-[#1E2A3A]/5 p-2.5 rounded-xl">
                 <div className="flex items-center gap-1 mb-0.5">
                   <TrendingUp size={9} className="text-[#1E2A3A]/40" />
                   <span className="text-[7px] uppercase font-black text-[#1E2A3A]/40">Trend</span>
                 </div>
-                <span className="text-[9px] font-bold text-[#10B981]">
+                <span className="text-[9.5px] font-bold text-[#10B981]">
                   {item.trend}
                 </span>
               </div>

@@ -605,12 +605,22 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText, resumeTex
         <BonusInsights 
           insights={results?.bonus_pulse} 
           salary={results?.logistics?.salary_range} 
-          skills={results?.skills?.map(s => ({
-            skill: s.skill,
-            impact: s.importance,
-            demand: (s.importance > 80 ? "High" : s.importance > 50 ? "Medium" : "Low") as "High" | "Medium" | "Low",
-            trend: "Rising" as "Rising" | "Stable" | "Falling"
-          })) || []}
+          skills={(() => {
+            const allMapped = results?.skills?.map(s => ({
+              skill: s.skill,
+              impact: s.importance,
+              demand: (s.importance >= 80 ? "High" : s.importance >= 50 ? "Medium" : "Low") as "High" | "Medium" | "Low",
+              trend: "Rising" as "Rising" | "Stable" | "Falling",
+              importance: s.importance
+            })) || [];
+            // Filter only high importance skills (importance >= 80)
+            let important = allMapped.filter(s => s.importance >= 80);
+            // Fallback to top 4 if too few high importance skills are found
+            if (important.length < 3) {
+              important = [...allMapped].sort((a, b) => b.importance - a.importance).slice(0, 4);
+            }
+            return important;
+          })()}
         />
       </div>
 

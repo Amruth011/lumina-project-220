@@ -87,23 +87,7 @@ function persistCache(entries: CacheEntry[]): void {
  * Returns the cached DecodeResult if found, or null if cache miss.
  */
 export async function getCachedDecode(jdText: string): Promise<DecodeResult | null> {
-  const normalized = normalizeJdText(jdText);
-  const hash = await hashText(normalized);
-
-  // 1. Check in-memory cache first (fastest)
-  if (memoryCache.has(hash)) {
-    return memoryCache.get(hash)!;
-  }
-
-  // 2. Check persisted cache
-  const entries = loadPersistedCache();
-  const found = entries.find((e) => e.hash === hash);
-  if (found) {
-    // Promote to memory cache
-    memoryCache.set(hash, found.result);
-    return found.result;
-  }
-
+  // Always return null to force decoding on every request as requested by the user
   return null;
 }
 
