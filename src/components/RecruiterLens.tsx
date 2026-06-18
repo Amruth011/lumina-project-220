@@ -10,7 +10,7 @@ export const RecruiterLens = ({ insights }: RecruiterLensProps) => {
   if (!insights || insights.length === 0) return null;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 w-full">
       <div className="flex items-center gap-4 px-4">
         <div className="p-2.5 rounded-2xl bg-accent-blue/10 border border-accent-blue/20">
           <MessageSquare size={20} className="text-accent-blue" />
@@ -21,16 +21,16 @@ export const RecruiterLens = ({ insights }: RecruiterLensProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-5">
+      <div className="grid grid-cols-1 gap-5 w-full">
         {insights.map((item, idx) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: idx * 0.1, duration: 0.6, ease: "easeOut" }}
-            className="group relative h-full"
+            className="group relative h-full w-full"
           >
-            <div className="glass-panel p-6 lg:p-10 rounded-[2.5rem] border-white/5 h-full flex flex-col justify-between transition-all duration-700 hover:border-accent-blue/20 hover:bg-accent-blue/[0.03] bg-gradient-to-br from-white/[0.02] to-transparent">
+            <div className="glass-panel p-6 lg:p-10 rounded-[2.5rem] border-white/5 h-full w-full flex flex-col justify-between transition-all duration-700 hover:border-accent-blue/20 hover:bg-accent-blue/[0.03] bg-gradient-to-br from-white/[0.02] to-transparent">
               <div className="space-y-5">
                 <div className="flex items-start justify-between gap-6">
                   <div className="space-y-2">

@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Clock } from "lucide-react";
+import { Activity } from "lucide-react";
 
 interface TimelineEntry {
   time: string;
@@ -38,7 +38,7 @@ export const LuminaTimeline = ({ data }: LuminaTimelineProps) => {
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-4">
               <span className="text-[12px] font-black tracking-[0.2em] text-primary flex items-center gap-2 uppercase">
-                <Clock size={12} />
+                <Activity size={12} />
                 {item.time}
               </span>
               <div className="h-[1px] flex-1 bg-foreground/10" />

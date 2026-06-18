@@ -664,7 +664,7 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText, resumeTex
             </div>
             <div className="lg:col-span-4 flex flex-col gap-6 h-full">
                 <IcebergAnalysis reality={results?.role_reality} archetype={results?.logistics?.archetype?.label} />
-                <div className="glass-panel bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-border/10 p-8 rounded-[2.5rem] flex-1 flex flex-col justify-center">
+                <div className="glass-panel bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-border/10 p-8 rounded-[2.5rem] flex-1 flex flex-col justify-center w-full">
                     <RecruiterLens insights={results?.recruiter_lens || []} />
                 </div>
             </div>

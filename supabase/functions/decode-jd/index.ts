@@ -184,6 +184,7 @@ MANDATORY RULES:
 9. KEYWORDS: "resume_help.keywords" MUST contain EXACTLY 10-12 high-impact ATS keywords pulled VERBATIM from the JD.
 10. SKILLS: Extract every tool, framework, language, methodology mentioned in the JD with correct category and importance weighted by frequency and emphasis.
 11. ICEBERG: "role_reality" must contain non-obvious truths specific to this JD's domain.
+12. DAY IN LIFE TIMELINES: Do NOT use clock times (e.g. '09:00 AM'). Instead, use task order sequential labels: '1st Task', '2nd Task', '3rd Task', '4th Task', '5th Task' in the 'time' field.
 
 RETURN ONLY RAW JSON.` },
                         { role: "user", content: `ACT ON THIS JD:
@@ -472,67 +473,68 @@ ${JSON.stringify(nakedSchema)}` }
     // Enforce exactly 10 questions in interview_kit.questions
     if (finalResult.interview_kit) {
       const ik = finalResult.interview_kit as Record<string, any>;
+      const fallbackQuestions = [
+        { question: "Can you detail your technical approach to scaling data pipelines in high-throughput environments?", type: "technical", tip: "Discuss optimization, partitioning, and resource allocation.", target_answer: "Explain design principles such as pipeline decoupling, database indexing, and query optimization." },
+        { question: "How do you approach stakeholder management when there are conflicting data requirements?", type: "behavioral", tip: "Focus on discovery, alignment, and communicating trade-offs.", target_answer: "Describe gathering structured requirements and leading the group to a consensus based on business impact." },
+        { question: "Describe a time you had to optimize a slow SQL query or dbt model. What was your process?", type: "technical", tip: "Mention indexing, partitioning, explaining plans, or CTE refactoring.", target_answer: "Explain using profiling tools and rewriting queries to minimize scans and joins." },
+        { question: "How do you decide between a simple pragmatic solution and a complex, highly scalable system?", type: "situational", tip: "Explain prioritizing business value, risk, and speed.", target_answer: "Emphasize iterating with simple solutions first and scaling up when justified by usage and metrics." },
+        { question: "What is your experience with modern data platforms like Snowflake or BigQuery?", type: "technical", tip: "Focus on pricing/compute models, clustering, and performance.", target_answer: "Share hands-on configurations, storage-compute separation, and cost-control strategies." },
+        { question: "How do you ensure data quality and govern lineage across dbt models?", type: "technical", tip: "Talk about dbt tests, source freshness checks, and documentation.", target_answer: "Outline automated validation rules and schema tests integrated into the CI/CD pipeline." },
+        { question: "How do you translate ambiguous business questions into concrete hypotheses?", type: "situational", tip: "Detail your Discovery process and active listening.", target_answer: "Explain asking clarifying questions about the business decision being supported and defining simple metrics." },
+        { question: "Describe your experience setting up BI dashboards (e.g. Qlik, Power BI) for self-service analytics.", type: "technical", tip: "Highlight user adoption, semantic layers, and visual hierarchy.", target_answer: "Discuss building reusable semantic models and designing reports around user questions." },
+        { question: "How do you keep up with emerging trends in analytics engineering and data science?", type: "behavioral", tip: "Mention communities, blogs, or personal projects.", target_answer: "Detail specific newsletters, open source projects, or professional networks you follow." },
+        { question: "What is your approach to automated pipeline monitoring and alerting?", type: "technical", tip: "Talk about Slack alerts, health-checks, and logs.", target_answer: "Describe alerting on schema changes, volume anomalies, or run failures to fix issues proactively." }
+      ];
+
       if (Array.isArray(ik.questions)) {
         ik.questions = ik.questions.filter((q: any) => q && q.question).slice(0, 10);
         while (ik.questions.length < 10) {
-          ik.questions.push({
-            question: "Can you detail your technical approach to scaling data pipelines in high-throughput environments?",
-            type: "technical",
-            tip: "Discuss optimization, partitioning, and resource allocation.",
-            target_answer: "Explain design principles such as pipeline decoupling, database indexing, and query optimization."
-          });
+          const fb = fallbackQuestions[ik.questions.length % fallbackQuestions.length];
+          ik.questions.push({ ...fb });
         }
       } else {
-        ik.questions = Array(10).fill({
-          question: "Can you detail your technical approach to scaling data pipelines in high-throughput environments?",
-          type: "technical",
-          tip: "Discuss optimization, partitioning, and resource allocation.",
-          target_answer: "Explain design principles such as pipeline decoupling, database indexing, and query optimization."
-        });
+        ik.questions = fallbackQuestions.map(fb => ({ ...fb }));
       }
 
       // Enforce exactly 5 reverse_questions in interview_kit.reverse_questions
+      const fallbackReverse = [
+        "What does the technical roadmap look like for the data platform over the next two quarters?",
+        "How does the team balance long-term technical debt with immediate business delivery?",
+        "What are the biggest data quality/governance challenges the team faces right now?",
+        "Can you describe the working dynamic between the data engineers and business stakeholders?",
+        "What opportunities for training, certification, and career growth are supported for this role?"
+      ];
+
       if (Array.isArray(ik.reverse_questions)) {
         ik.reverse_questions = ik.reverse_questions.filter((q: any) => q && String(q).trim().length > 0).slice(0, 5);
         while (ik.reverse_questions.length < 5) {
-          ik.reverse_questions.push("What does the technical roadmap look like for the data platform over the next two quarters?");
+          ik.reverse_questions.push(fallbackReverse[ik.reverse_questions.length % fallbackReverse.length]);
         }
       } else {
-        ik.reverse_questions = Array(5).fill("What does the technical roadmap look like for the data platform over the next two quarters?");
+        ik.reverse_questions = [...fallbackReverse];
       }
     }
 
-    // Enforce full standard workday timeline for day_in_life
+    // Enforce sequential task order for day_in_life (e.g. 1st Task, 2nd Task...)
     if (finalResult.deep_dive) {
       const dd = finalResult.deep_dive as Record<string, any>;
-      if (Array.isArray(dd.day_in_life)) {
-        const hasPm = dd.day_in_life.some((entry: any) => {
-          const timeStr = String(entry.time || "").toLowerCase();
-          return timeStr.includes("pm") || timeStr.includes("13:") || timeStr.includes("14:") || timeStr.includes("15:") || timeStr.includes("16:") || timeStr.includes("17:") || timeStr.includes("18:");
+      if (Array.isArray(dd.day_in_life) && dd.day_in_life.length > 0) {
+        dd.day_in_life = dd.day_in_life.map((entry: any, index: number) => {
+          const suffix = ["st", "nd", "rd"][index] || "th";
+          const label = `${index + 1}${suffix} Task`;
+          return {
+            time: label,
+            task: entry.task || "Collaborative Work",
+            description: entry.description || "Executing role-specific engineering tasks and collaborating with stakeholders."
+          };
         });
-        
-        if (dd.day_in_life.length < 4 || !hasPm) {
-          const existing = dd.day_in_life.slice(0, 3);
-          const afternoonEntries = [
-            { time: "02:00 PM", task: "Collaborative Sync & Sprint Alignment", description: "Participate in architecture syncs and collaborate with analysts to structure upcoming pipeline migrations." },
-            { time: "04:00 PM", task: "Pipeline Optimization & Quality Review", description: "Deploy updated analytics models, perform data quality checks, and review query performance logs." },
-            { time: "06:00 PM", task: "Daily Recap & Handover Documentation", description: "Document newly developed schemas in the internal repository and outline next-day priorities." }
-          ];
-          const times = new Set(existing.map((e: any) => String(e.time || "").toUpperCase().trim()));
-          for (const entry of afternoonEntries) {
-            if (!times.has(entry.time)) {
-              existing.push(entry);
-            }
-          }
-          dd.day_in_life = existing;
-        }
       } else {
         dd.day_in_life = [
-          { time: "09:00 AM", task: "Standup & Daily Prioritization", description: "Align on daily engineering deliverables and coordinate tasks with cross-functional stakeholders." },
-          { time: "11:00 AM", task: "ETL Pipeline Engineering", description: "Write optimized SQL queries and design data transformations using Python and dbt." },
-          { time: "02:00 PM", task: "Data Quality & Dashboard Review", description: "Verify transformation runtimes and refine dashboard reports to ensure high data consistency." },
-          { time: "04:00 PM", task: "Stakeholder Technical Consultation", description: "Consult with business partners to map data requirements for upcoming analytic features." },
-          { time: "06:00 PM", task: "Sprint Updates & Documentation", description: "Log pipeline optimizations, update technical docs, and prepare tickets for the next sprint." }
+          { time: "1st Task", task: "Standup & Daily Prioritization", description: "Align on daily engineering deliverables and coordinate tasks with cross-functional stakeholders." },
+          { time: "2nd Task", task: "Core Execution & Engineering", description: "Write optimized queries, design data transformations, or develop models depending on the daily priority." },
+          { time: "3rd Task", task: "Data Quality & Review", description: "Verify transformation runtimes, run tests, and refine reporting dashboard features." },
+          { time: "4th Task", task: "Stakeholder Consultation", description: "Consult with business partners to clarify data requirements and align on success metrics." },
+          { time: "5th Task", task: "Documentation & Handovers", description: "Document schemas in the repository, update technical docs, and outline next priorities." }
         ];
       }
     }
