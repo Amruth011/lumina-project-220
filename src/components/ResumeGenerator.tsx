@@ -1674,22 +1674,43 @@ Return ONLY the JSON. No markdown, no comments.`
         }).join("")}
       ` : "";
 
-      const skillsHtml = (editableResume.skills_section && editableResume.skills_section.length > 0) ? `
-        <div class="section-title-container">
-          <h2 class="section-title">Skills</h2>
-        </div>
-        ${editableResume.skills_section.map(skillLine => {
-          const colonIdx = (skillLine || "").indexOf(':');
-          const category = colonIdx !== -1 ? (skillLine.slice(0, colonIdx) || "").trim() : "";
-          const skills = colonIdx !== -1 ? (skillLine.slice(colonIdx + 1) || "").trim() : (skillLine || "").trim();
-          const showCategory = category && category.toLowerCase() !== 'skills';
+      const skillsHtml = (editableResume.skills_section && editableResume.skills_section.length > 0) ? (() => {
+          // Collect all individual skills across all lines
+          const allSkills: string[] = [];
+          editableResume.skills_section.forEach(skillLine => {
+            const colonIdx = (skillLine || "").indexOf(':');
+            const skillsRaw = colonIdx !== -1 ? (skillLine.slice(colonIdx + 1) || "").trim() : (skillLine || "").trim();
+            skillsRaw.split(",").map(s => s.trim()).filter(Boolean).forEach(s => allSkills.push(s));
+          });
+
+          // Split into 3 columns
+          const COLS = 3;
+          const rows: string[][] = [];
+          for (let i = 0; i < allSkills.length; i += COLS) {
+            rows.push(allSkills.slice(i, i + COLS));
+          }
+
+          const rowsHtml = rows.map(row => {
+            const cells = row.map(skill => `
+              <td style="width:33%; padding: 1pt 4pt 1pt 0; vertical-align: top;">
+                <span style="font-family: ${getHtmlFont(fontFamily)}; font-size: ${bodyFontSize}pt; color: #1E2A3A;">&#8226;&nbsp;${skill}</span>
+              </td>
+            `).join("");
+            // Pad row to 3 cells if needed
+            const emptyCell = `<td style="width:33%;"></td>`;
+            const paddedCells = cells + emptyCell.repeat(COLS - row.length);
+            return `<tr>${paddedCells}</tr>`;
+          }).join("");
+
           return `
-            <p class="skills-category">
-              ${showCategory ? `<span class="skills-label">${category}:</span> ` : ''}${skills}
-            </p>
+            <div class="section-title-container">
+              <h2 class="section-title">Skills</h2>
+            </div>
+            <table class="skills-table">
+              ${rowsHtml}
+            </table>
           `;
-        }).join("")}
-      ` : "";
+        })() : "";
 
       const certificationsHtml = (editableResume.certifications && editableResume.certifications.length > 0) ? `
         <div class="section-title-container">
@@ -1829,16 +1850,21 @@ Return ONLY the JSON. No markdown, no comments.`
               mso-pagination: widow-orphan;
               mso-list: l0 level1 lfo1;
             }
-            p.skills-category {
+            table.skills-table {
+              width: 100%;
+              border: none;
+              border-collapse: collapse;
+              margin: 2px 0 4px 0;
+              mso-cellspacing: 0;
+            }
+            table.skills-table td {
+              padding: 1pt 4pt 1pt 0;
+              vertical-align: top;
+              border: none;
+              width: 33%;
               font-size: ${bodyFontSize}pt;
               color: #1E2A3A;
-              margin: 0 0 2px 0;
-              padding: 0;
-              text-align: left;
-              mso-margin-top-alt: 0pt;
-            }
-            .skills-label {
-              font-weight: bold;
+              font-family: ${getHtmlFont(fontFamily)};
             }
           </style>
         </head>
