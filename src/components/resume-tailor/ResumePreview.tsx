@@ -1675,9 +1675,9 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                       <h1 className="font-bold tracking-tight uppercase !font-inherit" style={{ fontSize: `${nameFontSize}px`, color: '#1E2A3A', fontFamily: 'inherit' }}>
                         {localHeader.fullName || "Your Name"}
                       </h1>
-                      <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-[#1E2A3A] font-medium !font-inherit" style={{ fontSize: fontSizes.meta }}>
+                      <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-[#1E2A3A] font-medium !font-inherit" style={{ fontSize: fontSizes.meta }}>
                         {(() => {
-                          const items = [];
+                          const items: React.ReactNode[] = [];
                           const loc = (localHeader.location || "").trim();
                           const ph = (localHeader.phone || "").trim();
                           const em = (localHeader.email || "").trim();
@@ -1687,56 +1687,66 @@ Return ONLY the complete updated JSON object matching the input structure.`;
 
                           if (loc) {
                             items.push(
-                              <span key="loc">{loc}</span>
+                              <span key="loc" className="flex items-center gap-1">
+                                <MapPin size={Math.max(8, (fontSizes.meta as number) - 1)} className="text-[#1E2A3A] shrink-0" />
+                                {loc}
+                              </span>
                             );
                           }
                           if (ph) {
                             items.push(
-                              <span key="phone">{ph}</span>
+                              <span key="phone" className="flex items-center gap-1">
+                                <Phone size={Math.max(8, (fontSizes.meta as number) - 1)} className="text-[#1E2A3A] shrink-0" />
+                                {ph}
+                              </span>
                             );
                           }
                           if (em) {
                             items.push(
-                              <a key="email" href={`mailto:${em.toLowerCase()}`} className="hover:underline text-[#1E2A3A]">
+                              <a key="email" href={`mailto:${em.toLowerCase()}`} className="flex items-center gap-1 hover:underline text-[#1E2A3A]">
+                                <Mail size={Math.max(8, (fontSizes.meta as number) - 1)} className="text-[#1E2A3A] shrink-0" />
                                 {em.toLowerCase()}
                               </a>
                             );
                           }
                           if (li) {
                             items.push(
-                              <a 
+                              <a
                                 key="linkedin"
-                                href={li.startsWith('http') ? li : `https://${li}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                                href={li.startsWith('http') ? li : `https://${li}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-[#0A66C2] hover:underline transition-colors"
                               >
+                                <Linkedin size={Math.max(8, (fontSizes.meta as number) - 1)} className="shrink-0" />
                                 LinkedIn
                               </a>
                             );
                           }
                           if (gh) {
                             items.push(
-                              <a 
+                              <a
                                 key="github"
-                                href={gh.startsWith('http') ? gh : `https://${gh}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                                href={gh.startsWith('http') ? gh : `https://${gh}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-[#1E2A3A] hover:underline transition-colors"
                               >
+                                <Github size={Math.max(8, (fontSizes.meta as number) - 1)} className="shrink-0" />
                                 GitHub
                               </a>
                             );
                           }
                           if (pf) {
                             items.push(
-                              <a 
+                              <a
                                 key="portfolio"
-                                href={pf.startsWith('http') ? pf : `https://${pf}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                                href={pf.startsWith('http') ? pf : `https://${pf}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-[#1E2A3A] hover:underline transition-colors"
                               >
+                                <Globe size={Math.max(8, (fontSizes.meta as number) - 1)} className="shrink-0" />
                                 Portfolio
                               </a>
                             );
@@ -1745,7 +1755,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                           return items.reduce<React.ReactNode[]>((acc, item, idx) => {
                             if (idx > 0) {
                               acc.push(
-                                <span key={`sep-${idx}`} className="opacity-40 select-none mx-1">•</span>
+                                <span key={`sep-${idx}`} className="opacity-20 select-none" style={{ fontSize: fontSizes.meta }}>|</span>
                               );
                             }
                             acc.push(item);
