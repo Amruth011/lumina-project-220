@@ -12,6 +12,9 @@ interface StructuredJdDetailsProps {
 }
 
 export const StructuredJdDetails = ({ data }: StructuredJdDetailsProps) => {
+  // Handle active tab state safely — must be before any early returns (rules of hooks)
+  const [activeSection, setActiveSection] = useState<"mandates" | "culture" | "responsibilities" | "context" | null>(null);
+
   if (!data) {
     return (
       <div className="glass-panel p-6 rounded-[2rem] text-center bg-white/50 border border-slate-100">
@@ -50,8 +53,6 @@ export const StructuredJdDetails = ({ data }: StructuredJdDetailsProps) => {
     return null;
   }
 
-  // Handle active tab state safely
-  const [activeSection, setActiveSection] = useState<"mandates" | "culture" | "responsibilities" | "context" | null>(null);
   const currentTab = activeSection && availableTabs.some(t => t.id === activeSection)
     ? activeSection
     : (availableTabs[0]?.id || null);

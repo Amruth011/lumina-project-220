@@ -121,7 +121,7 @@ describe("Resume Schema Extractor Module", () => {
           ]
         },
         error: null
-      } as any);
+      } as unknown);
 
       const text = "Amruth Kumar M at iStudio. Optimized preprocessing pipeline by 40%. amruth@gmail.com +91 9148159827. Experience: Feb 2026 to May 2026.";
       const result = await extractResumeSchema(text);

@@ -726,7 +726,7 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
                         return (
                           <button
                             key={tab.key}
-                            onClick={() => setActiveDashboardTab(tab.key as any)}
+                            onClick={() => setActiveDashboardTab(tab.key as "gaps" | "keywords" | "culture" | "action_plan" | "positioning")}
                             className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-wider transition-colors border-b-2 -mb-[10px] whitespace-nowrap ${
                               activeDashboardTab === tab.key 
                                 ? "border-lumina-teal text-lumina-teal font-black" 
@@ -762,7 +762,7 @@ export const ResumeGapAnalyzer = ({ skills, jobTitle, jdText, onResumeTextChange
                               ].map(f => (
                                 <button
                                   key={f.key}
-                                  onClick={() => setGapFilter(f.key as any)}
+                                  onClick={() => setGapFilter(f.key as "all" | "dealbreaker" | "missing" | "partial")}
                                   className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border ${
                                     gapFilter === f.key 
                                       ? "bg-lumina-teal text-white border-lumina-teal" 

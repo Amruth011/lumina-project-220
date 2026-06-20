@@ -151,7 +151,7 @@ describe("ATS Validator Module", () => {
     it("should gracefully fall back to heuristics on Edge Function error", async () => {
       vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
         data: null,
-        error: new Error("Server Error") as any
+        error: new Error("Server Error") as unknown
       });
 
       const report = await validateResumeForATS(cleanResume, mockJdText, mockSkills);

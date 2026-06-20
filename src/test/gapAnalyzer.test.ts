@@ -117,7 +117,7 @@ describe("Gap Analyzer Module", () => {
     it("should fall back to heuristics when edge function fails", async () => {
       vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
         data: null,
-        error: new Error("Network Error") as any
+        error: new Error("Network Error") as unknown
       });
 
       const result = await parseGapAnalysis(mockResumeText, mockJdText, mockSkills, "Data Scientist");

@@ -295,8 +295,8 @@ export async function parseJobDescription(jdText: string, options?: { forceRefre
     clearResumeAnalysisCache();
 
     return parsedResult;
-  } catch (err: any) {
-    console.warn(`[StructuredJdParser] Primary LLM parser failed, falling back to offline heuristics. Error: ${err.message || err}`);
+  } catch (err: unknown) {
+    console.warn(`[StructuredJdParser] Primary LLM parser failed, falling back to offline heuristics. Error: ${(err as Error).message || err}`);
     
     // 3. Fallback to heuristic parser
     try {
@@ -304,9 +304,9 @@ export async function parseJobDescription(jdText: string, options?: { forceRefre
       await setCachedDecode(cleanedText, fallbackResult);
       clearResumeAnalysisCache();
       return fallbackResult;
-    } catch (fallbackErr: any) {
+    } catch (fallbackErr: unknown) {
       console.error("[StructuredJdParser] Heuristic fallback also failed:", fallbackErr);
-      throw new Error(`JD parsing failed completely: ${err.message || err}`);
+      throw new Error(`JD parsing failed completely: ${(err as Error).message || err}`);
     }
   }
 }

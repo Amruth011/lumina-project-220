@@ -122,14 +122,14 @@ describe("Multi-Pass Bullet Generator Module", () => {
         .mockResolvedValueOnce({
           data: { choices: [{ message: { content: JSON.stringify(mockMappingResponse) } }] },
           error: null
-        } as any)
+        } as unknown)
         .mockResolvedValueOnce({
           data: { choices: [{ message: { content: JSON.stringify(mockGenResponse) } }] },
           error: null
-        } as any);
+        } as unknown);
 
-      const progressLogs: any[] = [];
-      const onProgress = (p: any) => progressLogs.push(p);
+      const progressLogs: unknown[] = [];
+      const onProgress = (p: unknown) => progressLogs.push(p);
 
       const result = await generateMultiPassBullets(mockResume, mockJd, onProgress);
 

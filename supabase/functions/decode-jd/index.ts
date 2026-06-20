@@ -289,7 +289,7 @@ ${JSON.stringify(nakedSchema)}` }
       return out;
     };
 
-    const ov = (finalResult.overview ?? {}) as Record<string, any>;
+    const ov = (finalResult.overview ?? {}) as Record<string, unknown>;
     const needsOverview = !finalResult.overview || !ov.role || ov.role === "Not specified";
     const isPlaceholder = (v?: string) => !v || v === "Not specified" || v === "Not disclosed" || v === "";
     if (needsOverview) {
@@ -330,15 +330,15 @@ ${JSON.stringify(nakedSchema)}` }
       company_context: { ...defaultSd.company_context, ...(typeof sd.company_context === 'object' ? sd.company_context : {}) },
       keywords_for_ats: Array.isArray(sd.keywords_for_ats) && sd.keywords_for_ats.length > 0
         ? sd.keywords_for_ats
-        : (Array.isArray((finalResult.resume_help as Record<string, any>)?.keywords) && ((finalResult.resume_help as Record<string, any>).keywords as string[]).length > 0
-            ? ((finalResult.resume_help as Record<string, any>).keywords as string[]).map((kw: string) => {
+        : (Array.isArray((finalResult.resume_help as Record<string, unknown>)?.keywords) && ((finalResult.resume_help as Record<string, unknown>).keywords as string[]).length > 0
+            ? ((finalResult.resume_help as Record<string, unknown>).keywords as string[]).map((kw: string) => {
                 const parts = kw.split(/\s+\(|\)/);
                 const spelled = parts[0].trim();
                 const acr = parts[1] ? parts[1].trim() : undefined;
                 return { spelled_out: spelled, acronym: acr };
               })
             : (Array.isArray(finalResult.skills) && finalResult.skills.length > 0
-                ? (finalResult.skills as any[]).map((s: any) => {
+                ? (finalResult.skills as Array<{ skill: string }>).map((s) => {
                     const parts = s.skill.split(/\s+\(|\)/);
                     const spelled = parts[0].trim();
                     const acr = parts[1] ? parts[1].trim() : undefined;
@@ -350,12 +350,12 @@ ${JSON.stringify(nakedSchema)}` }
 
     // ── Post-processing guardrails for salary, experience, and seniority ──
     if (finalResult.overview) {
-      const ov = finalResult.overview as Record<string, any>;
+      const ov = finalResult.overview as Record<string, unknown>;
       
       // 1. Seniority Level Override based on Title (AVP, VP, Director, Lead etc.)
       const titleUpper = String(ov.role || finalResult.title || "").toUpperCase();
       if (finalResult.qualifiers) {
-        const qual = finalResult.qualifiers as Record<string, any>;
+        const qual = finalResult.qualifiers as Record<string, unknown>;
         let level = qual.seniority_level ?? 0;
         
         if (titleUpper.includes("DIRECTOR") || titleUpper.includes("VP") || titleUpper.includes("AVP") || titleUpper.includes("VICE PRESIDENT")) {
@@ -414,10 +414,10 @@ ${JSON.stringify(nakedSchema)}` }
           if (!existsInJd || (firstNum < 1000 && !hasScaling)) {
             ov.package = "Not disclosed";
             if (finalResult.structured_data) {
-              (finalResult.structured_data as Record<string, any>).salary_range = "Not disclosed";
+              (finalResult.structured_data as Record<string, unknown>).salary_range = "Not disclosed";
             }
             if (finalResult.logistics) {
-              const log = finalResult.logistics as Record<string, any>;
+              const log = finalResult.logistics as Record<string, unknown>;
               if (log.salary_range) {
                 log.salary_range = { min: 0, max: 0, currency: "", estimate: true, note: "Not specified" };
               }
@@ -428,7 +428,7 @@ ${JSON.stringify(nakedSchema)}` }
 
       // Synchronize overview.work_mode and logistics.work_arrangement.remote_friendly
       if (finalResult.logistics) {
-        const log = finalResult.logistics as Record<string, any>;
+        const log = finalResult.logistics as Record<string, unknown>;
         if (!log.work_arrangement) {
           log.work_arrangement = { remote_friendly: "unspecified", office_presence: "unspecified", flexible_hours: false };
         }
@@ -459,13 +459,13 @@ ${JSON.stringify(nakedSchema)}` }
     const hasEducationMention = educationRegex.test(jdText);
     if (!hasEducationMention) {
       if (finalResult.requirements) {
-        const reqs = finalResult.requirements as Record<string, any>;
+        const reqs = finalResult.requirements as Record<string, unknown>;
         reqs.education = [];
       }
       if (finalResult.structured_data) {
-        const sd = finalResult.structured_data as Record<string, any>;
+        const sd = finalResult.structured_data as Record<string, unknown>;
         if (Array.isArray(sd.hard_requirements)) {
-          sd.hard_requirements = sd.hard_requirements.filter((hr: any) => {
+          sd.hard_requirements = (sd.hard_requirements as Array<{ category?: string }>).filter((hr) => {
             const cat = String(hr.category || "").toLowerCase();
             return !cat.includes("degree") && !cat.includes("education") && !cat.includes("qualification");
           });
@@ -477,12 +477,12 @@ ${JSON.stringify(nakedSchema)}` }
     // Enforce exactly 5 bullets in resume_help.bullets
     // Enforce exactly 5 bullets and keywords fallback in resume_help
     if (finalResult.resume_help) {
-      const rh = finalResult.resume_help as Record<string, any>;
+      const rh = finalResult.resume_help as Record<string, unknown>;
       
       // Fallback for keywords if empty
       if (!Array.isArray(rh.keywords) || rh.keywords.length === 0) {
         if (Array.isArray(finalResult.skills) && finalResult.skills.length > 0) {
-          rh.keywords = (finalResult.skills as any[]).map((s: any) => s.skill).slice(0, 12);
+          rh.keywords = (finalResult.skills as Array<{ skill: string }>).map((s) => s.skill).slice(0, 12);
         } else {
           rh.keywords = ["SQL", "Python", "Pandas", "Snowflake", "BigQuery", "dbt", "Qlik", "Data Engineering", "Data Science", "Analytics"];
         }
@@ -490,7 +490,7 @@ ${JSON.stringify(nakedSchema)}` }
 
       const roleTitle = finalResult.title || "Target Position";
       const topSkills = Array.isArray(finalResult.skills) 
-        ? finalResult.skills.map((s: any) => s.skill).filter(Boolean).slice(0, 5)
+        ? (finalResult.skills as Array<{ skill: string }>).map((s) => s.skill).filter(Boolean).slice(0, 5)
         : [];
       while (topSkills.length < 5) {
         topSkills.push(["Python", "SQL", "Git", "Cloud Infrastructure", "System Design"][topSkills.length] || "Problem Solving");
@@ -516,7 +516,7 @@ ${JSON.stringify(nakedSchema)}` }
 
     // Enforce exactly 10 questions in interview_kit.questions
     if (finalResult.interview_kit) {
-      const ik = finalResult.interview_kit as Record<string, any>;
+      const ik = finalResult.interview_kit as Record<string, unknown>;
       const fallbackQuestions = [
         { question: "Can you detail your technical approach to scaling data pipelines in high-throughput environments?", type: "technical", tip: "Discuss optimization, partitioning, and resource allocation.", target_answer: "Explain design principles such as pipeline decoupling, database indexing, and query optimization." },
         { question: "How do you approach stakeholder management when there are conflicting data requirements?", type: "behavioral", tip: "Focus on discovery, alignment, and communicating trade-offs.", target_answer: "Describe gathering structured requirements and leading the group to a consensus based on business impact." },
@@ -531,7 +531,7 @@ ${JSON.stringify(nakedSchema)}` }
       ];
 
       if (Array.isArray(ik.questions)) {
-        ik.questions = ik.questions.filter((q: any) => q && q.question).slice(0, 10);
+        ik.questions = (ik.questions as Array<{ question?: string }>).filter((q) => q && q.question).slice(0, 10);
         while (ik.questions.length < 10) {
           const fb = fallbackQuestions[ik.questions.length % fallbackQuestions.length];
           ik.questions.push({ ...fb });
@@ -550,7 +550,7 @@ ${JSON.stringify(nakedSchema)}` }
       ];
 
       if (Array.isArray(ik.reverse_questions)) {
-        ik.reverse_questions = ik.reverse_questions.filter((q: any) => q && String(q).trim().length > 0).slice(0, 5);
+        ik.reverse_questions = (ik.reverse_questions as unknown[]).filter((q) => q && String(q).trim().length > 0).slice(0, 5);
         while (ik.reverse_questions.length < 5) {
           ik.reverse_questions.push(fallbackReverse[ik.reverse_questions.length % fallbackReverse.length]);
         }
@@ -561,7 +561,7 @@ ${JSON.stringify(nakedSchema)}` }
 
     // Enforce sequential task order for day_in_life (e.g. 1st Task, 2nd Task...) and exactly 5 items
     if (finalResult.deep_dive) {
-      const dd = finalResult.deep_dive as Record<string, any>;
+      const dd = finalResult.deep_dive as Record<string, unknown>;
       const fallbackDay = [
         { time: "1st Task", task: "Standup & Daily Prioritization", description: "Align on daily engineering deliverables and coordinate tasks with cross-functional stakeholders." },
         { time: "2nd Task", task: "Core Execution & Engineering", description: "Write optimized queries, design data transformations, or develop models depending on the daily priority." },
@@ -571,7 +571,7 @@ ${JSON.stringify(nakedSchema)}` }
       ];
 
       if (Array.isArray(dd.day_in_life)) {
-        dd.day_in_life = dd.day_in_life.filter((entry: any) => entry && entry.task).slice(0, 5);
+        dd.day_in_life = (dd.day_in_life as Array<{ task?: string; description?: string }>).filter((entry) => entry && entry.task).slice(0, 5);
         while (dd.day_in_life.length < 5) {
           const fb = fallbackDay[dd.day_in_life.length % fallbackDay.length];
           dd.day_in_life.push({ ...fb });
@@ -580,7 +580,7 @@ ${JSON.stringify(nakedSchema)}` }
         dd.day_in_life = fallbackDay.map(fb => ({ ...fb }));
       }
 
-      dd.day_in_life = dd.day_in_life.map((entry: any, index: number) => {
+      dd.day_in_life = (dd.day_in_life as Array<{ task?: string; description?: string }>).map((entry, index: number) => {
         const suffix = ["st", "nd", "rd"][index] || "th";
         const label = `${index + 1}${suffix} Task`;
         return {

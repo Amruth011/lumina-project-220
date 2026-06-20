@@ -8,7 +8,7 @@ import type { GuardrailResult, ValidationFinding, SeverityLevel } from "@/types/
 export function extractNumbersFromText(text: string): string[] {
   if (!text) return [];
   // Match percentages, money values, and decimal/integer numbers
-  const regex = /(?:[\$₹]\s*)?\b\d+(?:\.\d+)?(?:%|\s*percent|\s*[kMBL]|\b)/gi;
+  const regex = /(?:[$₹]\s*)?\b\d+(?:\.\d+)?(?:%|\s*percent|\s*[kMBL]|\b)/gi;
   const matches = text.match(regex) || [];
   return matches.map(m => m.trim().toLowerCase());
 }
@@ -21,7 +21,7 @@ export function extractSkillsFromText(text: string, knownSkills: string[]): stri
   const found: string[] = [];
   knownSkills.forEach(skill => {
     // Escapes special characters for regex
-    const escapedSkill = skill.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const escapedSkill = skill.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
     const regex = new RegExp(`\\b${escapedSkill}\\b`, "i");
     if (regex.test(text)) {
       found.push(skill);
@@ -37,7 +37,7 @@ export function extractCompaniesFromText(text: string, knownCompanies: string[])
   if (!text) return [];
   const found: string[] = [];
   knownCompanies.forEach(company => {
-    const escapedCompany = company.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const escapedCompany = company.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
     const regex = new RegExp(`\\b${escapedCompany}\\b`, "i");
     if (regex.test(text)) {
       found.push(company);
@@ -182,7 +182,7 @@ export function validateGeneratedContent(
   const commonTechList = ["react", "vue", "angular", "node", "express", "django", "flask", "fastapi", "spring", "rails", "postgres", "mongodb", "mysql", "sqlite", "redis", "elasticsearch", "docker", "kubernetes", "aws", "azure", "gcp", "git", "github", "gitlab", "jira", "typescript", "javascript", "python", "java", "c++", "c#", "ruby", "php", "go", "rust", "scala", "kotlin", "swift", "dbt", "snowflake", "bigquery", "power bi", "tableau", "qlik", "looker", "airflow", "prefect"];
   
   commonTechList.forEach(tech => {
-    const escapedTech = tech.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const escapedTech = tech.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
     const regex = new RegExp(`\\b${escapedTech}\\b`, "i");
     if (regex.test(generatedText)) {
       const isKnown = resume.skills.some(s => s.name.toLowerCase() === tech.toLowerCase()) || 

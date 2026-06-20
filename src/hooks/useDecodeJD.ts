@@ -70,9 +70,9 @@ export const useDecodeJD = () => {
       setResults(result);
       setWasCached(false);
       toast.success(`Forensic Intelligence Active: ${result.title}`, { duration: 4000 });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Lumina decodeJD hook error:", err);
-      toast.error("Lumina Forensic Crash: " + (err.message || "Failed to decode JD"));
+      toast.error("Lumina Forensic Crash: " + ((err as Error).message || "Failed to decode JD"));
     } finally {
       setIsScanning(false);
     }

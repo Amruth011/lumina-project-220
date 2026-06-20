@@ -154,7 +154,7 @@ export function heuristicATSValidate(
 
   jdSkills.forEach(s => {
     const skillName = s.skill.toLowerCase();
-    const regex = new RegExp(`\\b${skillName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+    const regex = new RegExp(`\\b${skillName.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
     const matches = normalizedResume.match(regex);
 
     if (matches) {
@@ -347,8 +347,8 @@ export async function validateResumeForATS(
     sessionStorage.setItem(cacheKey, JSON.stringify(parsedReport));
     return parsedReport;
 
-  } catch (err: any) {
-    console.warn(`[ATSValidator] Groq ATS Scan failed. Falling back to offline heuristics. Error: ${err.message || err}`);
+  } catch (err: unknown) {
+    console.warn(`[ATSValidator] Groq ATS Scan failed. Falling back to offline heuristics. Error: ${(err as Error).message || err}`);
     const heuristicReport = heuristicATSValidate(cleanedResume, cleanedJd, jdSkills);
     sessionStorage.setItem(cacheKey, JSON.stringify(heuristicReport));
     return heuristicReport;

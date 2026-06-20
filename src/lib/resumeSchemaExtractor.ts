@@ -343,8 +343,8 @@ Please return exactly this JSON structure:
     sessionStorage.setItem(cacheKey, JSON.stringify(repaired));
     return repaired;
 
-  } catch (err: any) {
-    console.warn(`[ResumeSchemaExtractor] LLM extraction failed. Falling back to heuristics. Error: ${err.message || err}`);
+  } catch (err: unknown) {
+    console.warn(`[ResumeSchemaExtractor] LLM extraction failed. Falling back to heuristics. Error: ${(err as Error).message || err}`);
     const heuristicResult = decodeResumeHeuristic(cleanedText);
     sessionStorage.setItem(cacheKey, JSON.stringify(heuristicResult));
     return heuristicResult;

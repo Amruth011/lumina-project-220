@@ -100,7 +100,7 @@ describe("Structured JD Parser Module", () => {
         error: null
       };
 
-      vi.mocked(supabase.functions.invoke).mockResolvedValue(mockEdgeResult as any);
+      vi.mocked(supabase.functions.invoke).mockResolvedValue(mockEdgeResult as unknown);
 
       const jdText = "This is a longer job description that meets the length threshold of twenty characters.";
       const result = await parseJobDescription(jdText);

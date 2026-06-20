@@ -38,7 +38,7 @@ export function heuristicGapAnalysis(
 
   jdSkills.forEach(s => {
     const skillName = s.skill.toLowerCase();
-    const regex = new RegExp(`\\b${skillName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+    const regex = new RegExp(`\\b${skillName.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
     const hasIt = regex.test(normalizedResume);
 
     let status: "has_it" | "missing" | "partial" = "missing";
@@ -361,8 +361,8 @@ export async function parseGapAnalysis(
     sessionStorage.setItem(cacheKey, JSON.stringify(result));
     return result;
 
-  } catch (err: any) {
-    console.warn(`[GapAnalyzer] AI comparison failed. Falling back to offline heuristics. Error: ${err.message || err}`);
+  } catch (err: unknown) {
+    console.warn(`[GapAnalyzer] AI comparison failed. Falling back to offline heuristics. Error: ${(err as Error).message || err}`);
     const heuristicResult = heuristicGapAnalysis(cleanedResume, cleanedJd, jdSkills, jobTitle);
     sessionStorage.setItem(cacheKey, JSON.stringify(heuristicResult));
     return heuristicResult;

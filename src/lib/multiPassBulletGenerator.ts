@@ -237,15 +237,17 @@ Return ONLY a valid JSON list matching this structure:
         
         // Match items
         const rawBullets = parsedGen.bullets || [];
-        rawBullets.forEach((rb: any) => {
-          if (rb.jd_requirement && rb.matching_experience && rb.variants) {
+        rawBullets.forEach((rb: unknown) => {
+          const bullet = rb as { jd_requirement?: string; matching_experience?: string; variants?: unknown; confidence_score?: number };
+          if (bullet.jd_requirement && bullet.matching_experience && bullet.variants) {
+            const bVariants = bullet.variants as { metric_heavy?: string; impact_heavy?: string; technical_heavy?: string };
             generatedItems.push({
-              jd_requirement: rb.jd_requirement,
-              matching_experience: rb.matching_experience,
+              jd_requirement: bullet.jd_requirement,
+              matching_experience: bullet.matching_experience,
               variants: {
-                metric_heavy: cleanText(rb.variants.metric_heavy),
-                impact_heavy: cleanText(rb.variants.impact_heavy),
-                technical_heavy: cleanText(rb.variants.technical_heavy)
+                metric_heavy: cleanText(bVariants.metric_heavy || ""),
+                impact_heavy: cleanText(bVariants.impact_heavy || ""),
+                technical_heavy: cleanText(bVariants.technical_heavy || "")
               },
               confidence_score: 100,
               validation_results: {
@@ -329,7 +331,7 @@ Return ONLY a valid JSON list matching this structure:
       overall_quality_score
     };
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[MultiPassBulletGenerator] Fatal error:", err);
     updateProgress("complete", 100, "Error calibrating bullets.");
     throw err;
