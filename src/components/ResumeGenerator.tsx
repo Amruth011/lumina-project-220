@@ -1680,38 +1680,34 @@ Return ONLY the JSON. No markdown, no comments.`
       ` : "";
 
       const skillsHtml = (editableResume.skills_section && editableResume.skills_section.length > 0) ? (() => {
-          // Collect all individual skills across all lines
+          // Flatten all comma-separated skills from all category lines
           const allSkills: string[] = [];
           editableResume.skills_section.forEach(skillLine => {
             const colonIdx = (skillLine || "").indexOf(':');
-            const skillsRaw = colonIdx !== -1 ? (skillLine.slice(colonIdx + 1) || "").trim() : (skillLine || "").trim();
+            const skillsRaw = colonIdx !== -1 ? skillLine.slice(colonIdx + 1).trim() : (skillLine || "").trim();
             skillsRaw.split(",").map(s => s.trim()).filter(Boolean).forEach(s => allSkills.push(s));
           });
 
-          // Split into 3 columns
+          // Build Word-safe 3-column table with 100% inline styles (no CSS class reliance)
           const COLS = 3;
-          const rows: string[][] = [];
-          for (let i = 0; i < allSkills.length; i += COLS) {
-            rows.push(allSkills.slice(i, i + COLS));
-          }
+          const tdStyle = `width:33.3%; padding:2pt 8pt 3pt 0pt; vertical-align:top; border:none; mso-border-alt:none;`;
+          const spanStyle = `font-family:${getHtmlFont(fontFamily)}; font-size:${bodyFontSize}pt; color:#1E2A3A; line-height:1.5;`;
 
-          const rowsHtml = rows.map(row => {
-            const cells = row.map(skill => `
-              <td style="width:33%; padding: 1pt 4pt 1pt 0; vertical-align: top;">
-                <span style="font-family: ${getHtmlFont(fontFamily)}; font-size: ${bodyFontSize}pt; color: #1E2A3A;">&#8226;&nbsp;${skill}</span>
-              </td>
-            `).join("");
-            // Pad row to 3 cells if needed
-            const emptyCell = `<td style="width:33%;"></td>`;
-            const paddedCells = cells + emptyCell.repeat(COLS - row.length);
-            return `<tr>${paddedCells}</tr>`;
-          }).join("");
+          let rowsHtml = '';
+          for (let i = 0; i < allSkills.length; i += COLS) {
+            const chunk = allSkills.slice(i, i + COLS);
+            const cells = chunk
+              .map(skill => `<td style="${tdStyle}"><span style="${spanStyle}">&#8226;&#160;${skill}</span></td>`)
+              .join('');
+            const padding = Array(COLS - chunk.length).fill(`<td style="${tdStyle}"></td>`).join('');
+            rowsHtml += `<tr>${cells}${padding}</tr>`;
+          }
 
           return `
             <div class="section-title-container">
               <h2 class="section-title">Skills</h2>
             </div>
-            <table class="skills-table">
+            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="width:100%;border:none;border-collapse:collapse;margin:3pt 0 4pt 0;mso-cellspacing:0;">
               ${rowsHtml}
             </table>
           `;
