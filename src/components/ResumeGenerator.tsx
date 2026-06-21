@@ -1688,27 +1688,31 @@ Return ONLY the JSON. No markdown, no comments.`
             skillsRaw.split(",").map(s => s.trim()).filter(Boolean).forEach(s => allSkills.push(s));
           });
 
-          // Build Word-safe 3-column table with 100% inline styles (no CSS class reliance)
-          const COLS = 3;
-          const tdStyle = `width:33.3%; padding:2pt 8pt 3pt 0pt; vertical-align:top; border:none; mso-border-alt:none;`;
-          const spanStyle = `font-family:${getHtmlFont(fontFamily)}; font-size:${bodyFontSize}pt; color:#1E2A3A; line-height:1.5;`;
+          // Split into 3 vertical columns (col1 = first 1/3, col2 = second 1/3, col3 = last 1/3)
+          // This matches the CSS grid-cols-3 layout in the preview exactly
+          const total = allSkills.length;
+          const col1Count = Math.ceil(total / 3);
+          const col2Count = Math.ceil((total - col1Count) / 2);
+          const col1 = allSkills.slice(0, col1Count);
+          const col2 = allSkills.slice(col1Count, col1Count + col2Count);
+          const col3 = allSkills.slice(col1Count + col2Count);
 
-          let rowsHtml = '';
-          for (let i = 0; i < allSkills.length; i += COLS) {
-            const chunk = allSkills.slice(i, i + COLS);
-            const cells = chunk
-              .map(skill => `<td style="${tdStyle}"><span style="${spanStyle}">&#8226;&#160;${skill}</span></td>`)
-              .join('');
-            const padding = Array(COLS - chunk.length).fill(`<td style="${tdStyle}"></td>`).join('');
-            rowsHtml += `<tr>${cells}${padding}</tr>`;
-          }
+          const liStyle = `font-family:${getHtmlFont(fontFamily)}; font-size:${bodyFontSize}pt; color:#1E2A3A; line-height:1.5; margin:0 0 2pt 0; padding:0;`;
+          const ulStyle = `margin:0; padding-left:14pt; list-style-type:disc;`;
+
+          const buildList = (skills: string[]) =>
+            `<ul style="${ulStyle}">${skills.map(s => `<li style="${liStyle}">${s}</li>`).join('')}</ul>`;
 
           return `
             <div class="section-title-container">
               <h2 class="section-title">Skills</h2>
             </div>
-            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="width:100%;border:none;border-collapse:collapse;margin:3pt 0 4pt 0;mso-cellspacing:0;">
-              ${rowsHtml}
+            <table border="0" cellspacing="0" cellpadding="0" width="100%">
+              <tr>
+                <td width="33%" valign="top" style="vertical-align:top; padding-right:8pt; border:none;">${buildList(col1)}</td>
+                <td width="33%" valign="top" style="vertical-align:top; padding-right:8pt; border:none;">${buildList(col2)}</td>
+                <td width="34%" valign="top" style="vertical-align:top; border:none;">${buildList(col3)}</td>
+              </tr>
             </table>
           `;
         })() : "";
