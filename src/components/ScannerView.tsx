@@ -334,45 +334,13 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                         className="w-full mx-auto space-y-8"
                       >
-                        {/* Branded Control Bar */}
-                        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 rounded-[2rem] border border-slate-200/80 bg-white shadow-lg">
-                          {/* Engine Indicator */}
-                          <div className="flex items-center gap-3 pl-3">
-                            <div className="w-8 h-8 rounded-xl bg-lumina-teal/10 border border-lumina-teal/20 flex items-center justify-center">
-                              <Shield size={16} className="text-lumina-teal" />
-                            </div>
-                            <div className="text-left">
-                              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500/80 block">Forensic Engine Active</span>
-                              <span className="text-[11px] font-extrabold text-slate-900">
-                                Total Server Cloud
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-                            <button
-                              onClick={() => {
-                                generateUnifiedReport(results, gapResult);
-                                toast.success("Intelligence Report Exported");
-                              }}
-                              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:text-slate-900 transition-all shadow-sm"
-                            >
-                              <Download size={10} />
-                              <span>Export Report</span>
-                            </button>
-
-                            <button
-                              onClick={handleReset}
-                              className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-lumina-teal hover:bg-lumina-teal/90 text-white text-[10px] font-black uppercase tracking-widest transition-all shadow-md"
-                            >
-                              <span>Scan New JD</span>
-                              <ArrowRight size={10} className="stroke-[3px]" />
-                            </button>
-                          </div>
-                        </div>
-
-                        <LuminaUltraDashboard results={results} resumeResults={gapResult} jdText={jdText} resumeText={userResumeText} />
+                        <LuminaUltraDashboard
+                          results={results}
+                          resumeResults={gapResult}
+                          jdText={jdText}
+                          resumeText={userResumeText}
+                          onReset={handleReset}
+                        />
                         
                         <JdActionCta 
                           onCheckResume={() => handleTabSwitch("analysis")} 

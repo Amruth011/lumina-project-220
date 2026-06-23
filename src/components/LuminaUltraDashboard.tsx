@@ -29,9 +29,10 @@ interface LuminaUltraDashboardProps {
   resumeResults?: ResumeGapResult | null;
   jdText?: string;
   resumeText?: string;
+  onReset?: () => void;
 }
 
-export const LuminaUltraDashboard = ({ results, resumeResults, jdText, resumeText }: LuminaUltraDashboardProps) => {
+export const LuminaUltraDashboard = ({ results, resumeResults, jdText, resumeText, onReset }: LuminaUltraDashboardProps) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [synParams, setSynParams] = useState({
     intensity: 'Elite',
@@ -124,22 +125,43 @@ export const LuminaUltraDashboard = ({ results, resumeResults, jdText, resumeTex
               <Briefcase size={180} className="text-primary" />
             </div>
             
-            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[10px] font-black uppercase text-accent-emerald tracking-[0.3em] bg-accent-emerald/10 px-3 py-1 rounded-full border border-accent-emerald/20">
-                    Target Briefing
-                  </span>
-                  {overview.employment_type && overview.employment_type !== 'Not specified' && (
-                    <span className="text-[10px] font-black uppercase text-accent-blue tracking-widest bg-accent-blue/10 px-3 py-1 rounded-full border border-accent-blue/20">
-                      {overview.employment_type}
+            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 w-full">
+              <div className="space-y-2 flex-1 w-full">
+                <div className="flex items-center justify-between gap-4 w-full">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-black uppercase text-accent-emerald tracking-[0.3em] bg-accent-emerald/10 px-3 py-1 rounded-full border border-accent-emerald/20">
+                      Target Briefing
                     </span>
-                  )}
-                  {overview.seniority && overview.seniority !== 'Not specified' && (
-                    <span className="text-[10px] font-black uppercase text-primary tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-                      {overview.seniority}
-                    </span>
-                  )}
+                    {overview.employment_type && overview.employment_type !== 'Not specified' && (
+                      <span className="text-[10px] font-black uppercase text-accent-blue tracking-widest bg-accent-blue/10 px-3 py-1 rounded-full border border-accent-blue/20">
+                        {overview.employment_type}
+                      </span>
+                    )}
+                    {overview.seniority && overview.seniority !== 'Not specified' && (
+                      <span className="text-[10px] font-black uppercase text-primary tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+                        {overview.seniority}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={handleExport}
+                      title="Export Intelligence Report"
+                      className="p-1.5 rounded-lg border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-all shadow-sm flex items-center justify-center"
+                    >
+                      <Download size={13} />
+                    </button>
+                    {onReset && (
+                      <button
+                        onClick={onReset}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-lumina-teal hover:bg-lumina-teal/90 text-white text-[9px] font-black uppercase tracking-widest transition-all shadow-sm"
+                      >
+                        <span>Scan New</span>
+                        <ArrowRight size={10} className="stroke-[3px]" />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <h1 className="text-3xl md:text-4xl font-serif italic text-foreground tracking-tight">
                   {overview.role || "Target Position"}
