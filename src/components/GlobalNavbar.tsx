@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  LogOut, User, Search, ShieldCheck, Zap, Mail, Compass, Bot, 
+  LogOut, LogIn, User, Search, ShieldCheck, Zap, Mail, Compass, Bot, 
   LayoutDashboard, ChevronDown, Menu, X, Settings, Sparkles, Briefcase, Target
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
