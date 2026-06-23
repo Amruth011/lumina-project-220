@@ -32,6 +32,7 @@ import { ATSScoreWidget } from "./dashboard/ATSScoreWidget";
 import { LoadingSequence } from "./jd-decoder/LoadingSequence";
 import { SkeletonLoader } from "./jd-decoder/SkeletonLoader";
 import { StructuredOutput } from "./jd-decoder/StructuredOutput";
+import { OverviewDashboard } from "./dashboard/OverviewDashboard";
 import type { DecodeResult, ResumeGapResult } from "@/types/jd";
 import type { Tab } from "@/types/tabs";
 
@@ -254,11 +255,21 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
   }, [handleTabSwitch]);
 
   return (
-    <div className={`w-full ${(activeTab === 'generator' || activeTab === 'cover-letter') ? 'max-w-[98%] xl:px-12' : 'max-w-7xl'} mx-auto px-4 md:px-8 pb-24`}>
+    <div className={`w-full ${(activeTab === 'generator' || activeTab === 'cover-letter' || activeTab === 'outreach') ? 'max-w-[98%] xl:px-12' : 'max-w-7xl'} mx-auto px-4 md:px-8 pb-24`}>
       <ErrorBoundary>
-        <Suspense fallback={<TabLoader activeTab={activeTab} message={`Calibrating ${activeTab === 'decode' ? 'Decoder Workspace' : activeTab === 'analysis' ? 'Analysis Panel' : activeTab === 'generator' ? 'Resume Generator' : activeTab === 'cover-letter' ? 'Cover Letter Builder' : activeTab === 'roadmap' ? 'Adaptive Roadmap' : 'Tactical Profile'}...`} />}>
+        <Suspense fallback={<TabLoader activeTab={activeTab} message={`Calibrating ${activeTab === 'dashboard' ? 'Dashboard Overview' : activeTab === 'decode' ? 'Decoder Workspace' : activeTab === 'analysis' ? 'Analysis Panel' : activeTab === 'generator' ? 'Resume Generator' : activeTab === 'cover-letter' ? 'Cover Letter Builder' : activeTab === 'roadmap' ? 'Adaptive Roadmap' : 'Tactical Profile'}...`} />}>
           <AnimatePresence mode="wait">
-            {activeTab === "decode" ? (
+            {activeTab === "dashboard" ? (
+              <motion.div
+                key="dashboard"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.3 }}
+              >
+                <OverviewDashboard />
+              </motion.div>
+            ) : activeTab === "decode" ? (
               <motion.div
                 key="decode"
                 initial={{ opacity: 0, y: 12 }}
@@ -477,6 +488,32 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                     icon="generator"
                     title="Signal Lost"
                     description="The Cover Letter Generator requires a Job Description signal to structure its outputs."
+                    actionLabel="Return to Decoder"
+                    onAction={() => handleTabSwitch("decode")}
+                  />
+                )}
+              </motion.div>
+            ) : activeTab === "outreach" ? (
+              <motion.div
+                key="outreach"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                className="space-y-16"
+              >
+                {results ? (
+                  <div className="space-y-12">
+                    <ResumeGenerator
+                      jdTitle={results.title}
+                      jdSkills={results.skills}
+                      forceTab="outreach"
+                    />
+                  </div>
+                ) : (
+                  <EmptyState 
+                    icon="generator"
+                    title="Outreach Signal Required"
+                    description="The Cold Outreach Generator requires a Job Description signal to structure its outputs."
                     actionLabel="Return to Decoder"
                     onAction={() => handleTabSwitch("decode")}
                   />

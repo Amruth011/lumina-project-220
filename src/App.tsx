@@ -28,6 +28,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 import { Loader2, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { DashboardLayout } from "@/components/DashboardLayout";
 
 const queryClient = new QueryClient();
 
@@ -101,11 +102,16 @@ const App = () => {
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
-                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                  <Route path="/dashboard/arsenal" element={<ProtectedRoute><Arsenal /></ProtectedRoute>} />
-                  <Route path="/dashboard/pipeline" element={<ProtectedRoute><Pipeline /></ProtectedRoute>} />
-                  <Route path="/dashboard/scoring" element={<ProtectedRoute><Scoring /></ProtectedRoute>} />
-                  <Route path="/dashboard/interview" element={<ProtectedRoute><Interview /></ProtectedRoute>} />
+                  
+                  {/* Dashboard routes wrapped in DashboardLayout */}
+                  <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/dashboard/arsenal" element={<Arsenal />} />
+                    <Route path="/dashboard/pipeline" element={<Pipeline />} />
+                    <Route path="/dashboard/scoring" element={<Scoring />} />
+                    <Route path="/dashboard/interview" element={<Interview />} />
+                  </Route>
+
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

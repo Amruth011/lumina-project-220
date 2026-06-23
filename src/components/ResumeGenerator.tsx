@@ -20,7 +20,7 @@ interface ResumeGeneratorProps {
   jdTitle: string;
   jdSkills: Skill[];
   companyName?: string;
-  forceTab?: 'resume' | 'cover-letter';
+  forceTab?: 'resume' | 'cover-letter' | 'outreach';
 }
 
 interface ResumeHeader {
@@ -64,15 +64,16 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
   const [resume, setResume] = useState<GeneratedResume | null>(null);
   const [coverLetter, setCoverLetter] = useState<string | null>(null);
   const [isGeneratingCL, setIsGeneratingCL] = useState(false);
-  const [isOpen, setIsOpen] = useState(!!forceTab);
+  const [isOpen, setIsOpen] = useState(forceTab ? forceTab !== 'outreach' : false);
   const [profile, setProfile] = useState<UserProfileWithVault | null>(null);
   const [resumeSettingsActive, setResumeSettingsActive] = useState(false);
   const [clSettingsActive, setClSettingsActive] = useState(false);
-  const [clActiveTab, setClActiveTab] = useState<'resume' | 'cover-letter'>(forceTab || 'resume');
+  const [clActiveTab, setClActiveTab] = useState<'resume' | 'cover-letter'>(forceTab === 'cover-letter' ? 'cover-letter' : 'resume');
   const [outreachMessage, setOutreachMessage] = useState<string | null>(null);
   const [isGeneratingMsg, setIsGeneratingMsg] = useState(false);
   const [msgChannel, setMsgChannel] = useState<'LinkedIn' | 'Email' | 'Referral'>('LinkedIn');
   const previewRef = useRef<HTMLDivElement>(null);
+  const outreachRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     console.log("ResumeGenerator: Mounted");
@@ -2127,6 +2128,18 @@ Write the message body only.`;
     }
   };
 
+  useEffect(() => {
+    if (forceTab === 'outreach') {
+      setIsOpen(false);
+      setTimeout(() => {
+        outreachRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 800);
+      if (!outreachMessage && !isGeneratingMsg) {
+        generateOutreachMessage();
+      }
+    }
+  }, [forceTab]);
+
 
 
   const handleDownloadCL = (format: 'pdf' | 'doc') => {
@@ -2726,6 +2739,7 @@ Write the message body only.`;
 
           {/* 3. Outreach Message Synthesis */}
           <motion.div
+            ref={outreachRef}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             className="glass-panel p-10 rounded-[4rem] border-foreground/5 bg-white shadow-2xl shadow-slate-200/50 flex flex-col space-y-8 relative overflow-hidden group"
