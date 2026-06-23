@@ -71,12 +71,23 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
   const [clActiveTab, setClActiveTab] = useState<'resume' | 'cover-letter'>(forceTab === 'cover-letter' ? 'cover-letter' : 'resume');
   const [outreachMessage, setOutreachMessage] = useState<string | null>(null);
   const [isGeneratingMsg, setIsGeneratingMsg] = useState(false);
-  const [msgChannel, setMsgChannel] = useState<'LinkedIn' | 'Email' | 'Referral'>('LinkedIn');
+  const [msgChannel, setMsgChannel] = useState<'LinkedIn' | 'Email' | 'Referral'>(() => {
+    const saved = localStorage.getItem("lumina_outreach_channel");
+    return (saved === 'Email' || saved === 'LinkedIn' || saved === 'Referral') ? saved : 'LinkedIn';
+  });
   const previewRef = useRef<HTMLDivElement>(null);
   const outreachRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     console.log("ResumeGenerator: Mounted");
+    const handleChannelChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail === 'Email' || customEvent.detail === 'LinkedIn' || customEvent.detail === 'Referral') {
+        setMsgChannel(customEvent.detail);
+      }
+    };
+    window.addEventListener("outreach-channel-change", handleChannelChange);
+    return () => window.removeEventListener("outreach-channel-change", handleChannelChange);
   }, []);
   const [summaryLines, setSummaryLines] = useState(3);
   const [projectLines, setProjectLines] = useState(3);
@@ -2134,11 +2145,11 @@ Write the message body only.`;
       setTimeout(() => {
         outreachRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 800);
-      if (!outreachMessage && !isGeneratingMsg) {
+      if (!isGeneratingMsg) {
         generateOutreachMessage();
       }
     }
-  }, [forceTab]);
+  }, [forceTab, msgChannel]);
 
 
 

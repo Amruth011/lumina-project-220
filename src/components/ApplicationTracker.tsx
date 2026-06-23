@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Briefcase, Trash2, Pencil, Check, X, Loader2, Plus, TrendingUp, ArrowRight, Calendar } from "lucide-react";
+import { Briefcase, Trash2, Pencil, Check, X, Loader2, Plus, TrendingUp, ArrowRight, Calendar, Compass } from "lucide-react";
 import { toast } from "sonner";
 import { useApplications, type TrackedApplication } from "@/hooks/useApplications";
 import { TrackerSkeleton } from "./dashboard/TrackerSkeleton";
@@ -84,6 +84,19 @@ export const ApplicationTracker = () => {
     } catch {
       toast.error("Failed to save. Please sign in first.");
     }
+  };
+
+  const handleGenerateRoadmap = (app: TrackedApplication) => {
+    const syntheticResult = {
+      title: `${app.role} @ ${app.company}`,
+      skills: [],
+      requirements: {
+        experience: ""
+      }
+    };
+    localStorage.setItem("current_scanned_jd", JSON.stringify(syntheticResult));
+    window.dispatchEvent(new CustomEvent("switch-tab", { detail: "roadmap" }));
+    toast.success(`Preparing custom roadmap for ${app.role} @ ${app.company}`);
   };
 
   const totalApps = apps.length;
@@ -312,6 +325,15 @@ export const ApplicationTracker = () => {
                                 <>
                                   <h5 className="font-display font-bold text-lg text-foreground tracking-tight truncate mb-1">{app.company}</h5>
                                   <p className="text-[13px] text-muted-foreground/80 font-medium truncate">{app.role}</p>
+                                  {["Applied", "Interview", "Assessment", "Offer"].includes(app.status) && (
+                                    <button
+                                      onClick={() => handleGenerateRoadmap(app)}
+                                      className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl bg-lumina-teal/10 hover:bg-lumina-teal text-lumina-teal hover:text-white border border-lumina-teal/20 transition-all duration-300 shadow-sm"
+                                    >
+                                      <Compass className="w-3.5 h-3.5" />
+                                      Generate Prep Roadmap
+                                    </button>
+                                  )}
                                 </>
                               )}
                             </div>

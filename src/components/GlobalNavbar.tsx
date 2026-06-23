@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   LogOut, LogIn, User, Search, ShieldCheck, Zap, Mail, Compass, Bot, 
-  LayoutDashboard, ChevronDown, Menu, X, Settings, Briefcase, Target
+  LayoutDashboard, ChevronDown, Menu, X, Settings, Briefcase, Target,
+  Sparkles, BookOpen
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,7 +23,7 @@ export const GlobalNavbar = ({ activeTab: propActiveTab, onTabChange }: GlobalNa
   // Local state for active tab to handle real-time events
   const [localActiveTab, setLocalActiveTab] = useState<Tab>("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<"analytics" | "documents" | "profile" | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<"analytics" | "builder" | "outreach" | "trackPrep" | "profile" | null>(null);
 
   // Sync tab with route path
   const pathTab = location.pathname.replace("/dashboard/", "") as Tab;
@@ -49,11 +50,16 @@ export const GlobalNavbar = ({ activeTab: propActiveTab, onTabChange }: GlobalNa
     return () => window.removeEventListener("switch-tab", handleSwitch);
   }, [onTabChange]);
 
-  const handleTabClick = (tabKey: Tab) => {
+  const handleTabClick = (tabKey: Tab, channel?: "Email" | "LinkedIn") => {
     if (!user) {
       toast.info("Please sign in to access Lumina services.");
       navigate("/auth");
       return;
+    }
+
+    if (channel) {
+      localStorage.setItem("lumina_outreach_channel", channel);
+      window.dispatchEvent(new CustomEvent("outreach-channel-change", { detail: channel }));
     }
 
     if (["arsenal", "pipeline", "scoring", "interview"].includes(tabKey)) {
@@ -74,19 +80,30 @@ export const GlobalNavbar = ({ activeTab: propActiveTab, onTabChange }: GlobalNa
   // Dropdown options mapping
   const analyticsOptions = [
     { key: "decode" as Tab, label: "JD Decoder", icon: Search, desc: "Extract job intelligence" },
-    { key: "analysis" as Tab, label: "Resume Analysis", icon: ShieldCheck, desc: "Find skills and keywords gap" },
-    { key: "roadmap" as Tab, label: "Adaptive Roadmap", icon: Compass, desc: "Step-by-step career path" },
+    { key: "analysis" as Tab, label: "Resume Analyzer", icon: ShieldCheck, desc: "Find skills and keywords gap" },
   ];
 
-  const documentsOptions = [
-    { key: "generator" as Tab, label: "Resume Tailor", icon: Zap, desc: "Structure your resume" },
-    { key: "cover-letter" as Tab, label: "Cover Letters", icon: Mail, desc: "AI cover letter builder" },
-    { key: "outreach" as Tab, label: "Cold Mail & Outreach", icon: Bot, desc: "LinkedIn & email messages" },
-    { key: "arsenal" as Tab, label: "Resume Arsenal", icon: Briefcase, desc: "Manage upload slots" },
+  const builderOptions = [
+    { key: "generator" as Tab, label: "AI Resume Builder", icon: Zap, desc: "Structure your resume" },
+    { key: "cover-letter" as Tab, label: "Cover Letter Generator", icon: Mail, desc: "AI cover letter builder" },
   ];
 
-  const isAnalyticsActive = ["decode", "analysis", "roadmap"].includes(effectiveActiveTab);
-  const isDocumentsActive = ["generator", "cover-letter", "outreach", "arsenal"].includes(effectiveActiveTab);
+  const outreachOptions = [
+    { key: "outreach" as Tab, label: "Cold Email Gen", icon: Bot, desc: "Draft high-converting cold emails", channel: "Email" },
+    { key: "outreach" as Tab, label: "LinkedIn Outreach", icon: Sparkles, desc: "Conversational LinkedIn notes", channel: "LinkedIn" },
+  ];
+
+  const trackPrepOptions = [
+    { key: "pipeline" as Tab, label: "Job Tracker", icon: Briefcase, desc: "Track and organize job applications" },
+    { key: "roadmap" as Tab, label: "Preparation Roadmaps", icon: Compass, desc: "Personalized timelines for applied jobs" },
+    { key: "interview" as Tab, label: "Interview Prep", icon: Target, desc: "STAR method interview tips & prep" },
+    { key: "guide" as Tab, label: "Resources", icon: BookOpen, desc: "Curated guides and references" },
+  ];
+
+  const isAnalyticsActive = ["decode", "analysis"].includes(effectiveActiveTab);
+  const isBuilderActive = ["generator", "cover-letter"].includes(effectiveActiveTab);
+  const isOutreachActive = ["outreach"].includes(effectiveActiveTab);
+  const isTrackPrepActive = ["pipeline", "roadmap", "interview", "guide"].includes(effectiveActiveTab);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[100] h-16 border-b border-slate-200/50 dark:border-slate-800/50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md transition-all">
@@ -139,7 +156,7 @@ export const GlobalNavbar = ({ activeTab: propActiveTab, onTabChange }: GlobalNa
                     >
                       {analyticsOptions.map((opt) => (
                         <button
-                          key={opt.key}
+                          key={opt.label}
                           onClick={() => handleTabClick(opt.key)}
                           className={`w-full flex items-start gap-3 p-2.5 rounded-xl text-left transition-all ${
                             effectiveActiveTab === opt.key 
@@ -159,32 +176,122 @@ export const GlobalNavbar = ({ activeTab: propActiveTab, onTabChange }: GlobalNa
                 </AnimatePresence>
               </div>
 
-              {/* Documents Dropdown */}
+              {/* Document Builder Dropdown */}
               <div 
                 className="relative"
-                onMouseEnter={() => setActiveDropdown("documents")}
+                onMouseEnter={() => setActiveDropdown("builder")}
                 onMouseLeave={() => setActiveDropdown(null)}
               >
                 <button
                   className={`px-4 py-2 rounded-xl flex items-center gap-1 transition-all ${
-                    isDocumentsActive
+                    isBuilderActive
                       ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
                       : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
                   }`}
                 >
-                  Documents <ChevronDown size={14} className={`transition-transform duration-200 ${activeDropdown === "documents" ? "rotate-180" : ""}`} />
+                  Document Builder <ChevronDown size={14} className={`transition-transform duration-200 ${activeDropdown === "builder" ? "rotate-180" : ""}`} />
                 </button>
                 <AnimatePresence>
-                  {activeDropdown === "documents" && (
+                  {activeDropdown === "builder" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute left-0 mt-1 w-64 rounded-2xl border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 shadow-xl"
+                    >
+                      {builderOptions.map((opt) => (
+                        <button
+                          key={opt.label}
+                          onClick={() => handleTabClick(opt.key)}
+                          className={`w-full flex items-start gap-3 p-2.5 rounded-xl text-left transition-all ${
+                            effectiveActiveTab === opt.key 
+                              ? "bg-lumina-teal/10 text-lumina-teal" 
+                              : "hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300"
+                          }`}
+                        >
+                          <opt.icon size={16} className="mt-0.5 flex-shrink-0 text-lumina-teal" />
+                          <div>
+                            <p className="font-bold text-[12px]">{opt.label}</p>
+                            <p className="text-[10px] text-slate-400 font-normal leading-normal">{opt.desc}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Outreach Tools Dropdown */}
+              <div 
+                className="relative"
+                onMouseEnter={() => setActiveDropdown("outreach")}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
+                <button
+                  className={`px-4 py-2 rounded-xl flex items-center gap-1 transition-all ${
+                    isOutreachActive
+                      ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
+                      : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  }`}
+                >
+                  Outreach Tools <ChevronDown size={14} className={`transition-transform duration-200 ${activeDropdown === "outreach" ? "rotate-180" : ""}`} />
+                </button>
+                <AnimatePresence>
+                  {activeDropdown === "outreach" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute left-0 mt-1 w-64 rounded-2xl border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 shadow-xl"
+                    >
+                      {outreachOptions.map((opt) => (
+                        <button
+                          key={opt.label}
+                          onClick={() => handleTabClick(opt.key, opt.channel as "Email" | "LinkedIn")}
+                          className={`w-full flex items-start gap-3 p-2.5 rounded-xl text-left transition-all ${
+                            effectiveActiveTab === opt.key && localStorage.getItem("lumina_outreach_channel") === opt.channel
+                              ? "bg-lumina-teal/10 text-lumina-teal" 
+                              : "hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300"
+                          }`}
+                        >
+                          <opt.icon size={16} className="mt-0.5 flex-shrink-0 text-lumina-teal" />
+                          <div>
+                            <p className="font-bold text-[12px]">{opt.label}</p>
+                            <p className="text-[10px] text-slate-400 font-normal leading-normal">{opt.desc}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Track & Prep Dropdown */}
+              <div 
+                className="relative"
+                onMouseEnter={() => setActiveDropdown("trackPrep")}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
+                <button
+                  className={`px-4 py-2 rounded-xl flex items-center gap-1 transition-all ${
+                    isTrackPrepActive
+                      ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
+                      : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  }`}
+                >
+                  Track & Prep <ChevronDown size={14} className={`transition-transform duration-200 ${activeDropdown === "trackPrep" ? "rotate-180" : ""}`} />
+                </button>
+                <AnimatePresence>
+                  {activeDropdown === "trackPrep" && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
                       className="absolute left-0 mt-1 w-72 rounded-2xl border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 shadow-xl"
                     >
-                      {documentsOptions.map((opt) => (
+                      {trackPrepOptions.map((opt) => (
                         <button
-                          key={opt.key}
+                          key={opt.label}
                           onClick={() => handleTabClick(opt.key)}
                           className={`w-full flex items-start gap-3 p-2.5 rounded-xl text-left transition-all ${
                             effectiveActiveTab === opt.key 
@@ -203,43 +310,6 @@ export const GlobalNavbar = ({ activeTab: propActiveTab, onTabChange }: GlobalNa
                   )}
                 </AnimatePresence>
               </div>
-
-              {/* Job Tracker */}
-              <button
-                onClick={() => handleTabClick("pipeline")}
-                className={`px-4 py-2 rounded-xl transition-all ${
-                  effectiveActiveTab === "pipeline"
-                    ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
-                    : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                }`}
-              >
-                Job Tracker
-              </button>
-
-              {/* Job Agent */}
-              <button
-                onClick={() => handleTabClick("agent")}
-                className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${
-                  effectiveActiveTab === "agent"
-                    ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
-                    : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                }`}
-              >
-                Job Agent
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              </button>
-
-              {/* AI Interview */}
-              <button
-                onClick={() => handleTabClick("interview")}
-                className={`px-4 py-2 rounded-xl transition-all ${
-                  effectiveActiveTab === "interview"
-                    ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
-                    : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                }`}
-              >
-                AI Interview
-              </button>
 
             </nav>
           )}
@@ -334,48 +404,53 @@ export const GlobalNavbar = ({ activeTab: propActiveTab, onTabChange }: GlobalNa
                 Dashboard
               </button>
               
+              {/* Analytics */}
               <div className="py-1">
                 <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block mb-1">Analytics</span>
                 <div className="pl-3 flex flex-col gap-2 border-l border-slate-100 dark:border-slate-800">
                   {analyticsOptions.map((opt) => (
-                    <button key={opt.key} onClick={() => handleTabClick(opt.key)} className="py-1.5 text-left text-[11px]">
+                    <button key={opt.label} onClick={() => handleTabClick(opt.key)} className="py-1.5 text-left text-[11px]">
                       {opt.label}
                     </button>
                   ))}
                 </div>
               </div>
 
+              {/* Document Builder */}
               <div className="py-1">
-                <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block mb-1">Documents</span>
+                <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block mb-1">Document Builder</span>
                 <div className="pl-3 flex flex-col gap-2 border-l border-slate-100 dark:border-slate-800">
-                  {documentsOptions.map((opt) => (
-                    <button key={opt.key} onClick={() => handleTabClick(opt.key)} className="py-1.5 text-left text-[11px]">
+                  {builderOptions.map((opt) => (
+                    <button key={opt.label} onClick={() => handleTabClick(opt.key)} className="py-1.5 text-left text-[11px]">
                       {opt.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <button
-                onClick={() => handleTabClick("pipeline")}
-                className="w-full py-2.5 text-left border-b border-slate-50 dark:border-slate-900"
-              >
-                Job Tracker
-              </button>
+              {/* Outreach Tools */}
+              <div className="py-1">
+                <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block mb-1">Outreach Tools</span>
+                <div className="pl-3 flex flex-col gap-2 border-l border-slate-100 dark:border-slate-800">
+                  {outreachOptions.map((opt) => (
+                    <button key={opt.label} onClick={() => handleTabClick(opt.key, opt.channel as "Email" | "LinkedIn")} className="py-1.5 text-left text-[11px]">
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-              <button
-                onClick={() => handleTabClick("agent")}
-                className="w-full py-2.5 text-left border-b border-slate-50 dark:border-slate-900"
-              >
-                Job Agent
-              </button>
-
-              <button
-                onClick={() => handleTabClick("interview")}
-                className="w-full py-2.5 text-left border-b border-slate-50 dark:border-slate-900"
-              >
-                AI Interview
-              </button>
+              {/* Track & Prep */}
+              <div className="py-1">
+                <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block mb-1">Track & Prep</span>
+                <div className="pl-3 flex flex-col gap-2 border-l border-slate-100 dark:border-slate-800">
+                  {trackPrepOptions.map((opt) => (
+                    <button key={opt.label} onClick={() => handleTabClick(opt.key)} className="py-1.5 text-left text-[11px]">
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <button
                 onClick={() => handleTabClick("profile")}
