@@ -35,24 +35,46 @@ export function OverviewDashboard() {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        // Fetch profile name and metadata
+        // 1. Check local storage draft profile first
+        const draftedProfileStr = localStorage.getItem(`draft_profile_${user.id}`);
+        let localFullName = "";
+        if (draftedProfileStr) {
+          try {
+            const draftedProfile = JSON.parse(draftedProfileStr);
+            if (draftedProfile?.full_name) {
+              localFullName = draftedProfile.full_name;
+            }
+          } catch (e) {}
+        }
+
+        // 2. Fetch profile name and metadata from DB
         const { data: profileData } = await supabase
           .from("profiles")
           .select("display_name, full_name")
           .eq("id", user.id)
           .single();
 
-        const resolvedName = 
+        let resolvedName = 
+          localFullName ||
           profileData?.full_name || 
           user.user_metadata?.full_name || 
           user.user_metadata?.name || 
           profileData?.display_name;
 
-        if (resolvedName) {
-          setDisplayName(resolvedName);
-        } else {
-          setDisplayName(user.email?.split("@")[0] || "Strategist");
+        if (!resolvedName) {
+          // 3. Fallback to /user_profile.json fetch
+          try {
+            const res = await fetch('/user_profile.json');
+            if (res.ok) {
+              const data = await res.json();
+              if (data?.personal_info?.fullName) {
+                resolvedName = data.personal_info.fullName;
+              }
+            }
+          } catch (e) {}
         }
+
+        setDisplayName(resolvedName || user.email?.split("@")[0] || "Strategist");
         // 1. Fetch counts
         const [resumesRes, appsRes, jdsRes, roadmapsRes] = await Promise.all([
           supabase.from("generated_resumes").select("id", { count: "exact", head: true }).eq("user_id", user.id),
