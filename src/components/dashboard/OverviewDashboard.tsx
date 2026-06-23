@@ -32,8 +32,8 @@ export function OverviewDashboard() {
   useEffect(() => {
     if (!user) return;
 
-    const fetchDashboardData = async () => {
-      setLoading(true);
+    const fetchDashboardData = async (showLoading = true) => {
+      if (showLoading) setLoading(true);
       try {
         // 1. Check local storage draft profile first
         const draftedProfileStr = localStorage.getItem(`draft_profile_${user.id}`);
@@ -126,7 +126,67 @@ export function OverviewDashboard() {
       }
     };
 
-    fetchDashboardData();
+    // Initial fetch showing full skeleton loading
+    fetchDashboardData(true);
+
+    // Event listeners to refresh data dynamically in background
+    const handleSwitchTab = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail === "dashboard") {
+        fetchDashboardData(false);
+      }
+    };
+
+    const handleFocus = () => {
+      fetchDashboardData(false);
+    };
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key?.startsWith("draft_profile_") || e.key?.startsWith("draft_vault_item_")) {
+        fetchDashboardData(false);
+      }
+    };
+
+    // Realtime Supabase Database Subscription
+    const channel = supabase
+      .channel("dashboard-realtime-sync")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "generated_resumes", filter: `user_id=eq.${user.id}` },
+        () => fetchDashboardData(false)
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_applications", filter: `user_id=eq.${user.id}` },
+        () => fetchDashboardData(false)
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "jd_vault", filter: `user_id=eq.${user.id}` },
+        () => fetchDashboardData(false)
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "roadmaps", filter: `user_id=eq.${user.id}` },
+        () => fetchDashboardData(false)
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+        () => fetchDashboardData(false)
+      )
+      .subscribe();
+
+    window.addEventListener("switch-tab", handleSwitchTab);
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("switch-tab", handleSwitchTab);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("storage", handleStorage);
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const handleTabSwitch = (tab: string) => {
