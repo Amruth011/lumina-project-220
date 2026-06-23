@@ -96,13 +96,8 @@ export const GlobalNavbar = ({ activeTab: propActiveTab, onTabChange }: GlobalNa
         
         {/* Left Side: Logo & Main Navigation */}
         <div className="flex items-center gap-8">
-          <Link to="/" className="flex items-center gap-2.5" title="Lumina Home">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-lumina-teal to-emerald-400 flex items-center justify-center shadow-md border border-slate-200/10 overflow-hidden">
-              <img src="/favicon.png" alt="Lumina Logo" className="w-5 h-5 object-contain" />
-            </div>
-            <span className="font-display font-black text-lg text-slate-800 dark:text-white tracking-tight">
-              Lumina<span className="text-lumina-teal">.</span>
-            </span>
+          <Link to="/" className="flex items-center hover:opacity-90 transition-opacity" title="Lumina Home">
+            <img src="/logo.png" alt="Lumina" className="h-6 w-auto object-contain" />
           </Link>
 
           {/* Desktop Navigation Links */}
