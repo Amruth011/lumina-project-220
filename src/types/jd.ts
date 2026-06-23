@@ -179,7 +179,7 @@ export interface RoleOverview {
 export interface HardRequirement {
   category: string;
   priority: "must-have" | "nice-to-have";
-  minimum_years?: number;
+  minimum_years?: number | string;
   specific_technologies: string[];
 }
 

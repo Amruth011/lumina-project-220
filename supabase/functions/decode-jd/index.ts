@@ -146,7 +146,7 @@ serve(async (req: Request) => {
         employment_type: "Full-time|Part-time|Contract|Internship|Not specified",
         location: "string (city/state/country or Remote)",
         salary_range: "string (salary range as stated in JD, or 'Not disclosed')",
-        hard_requirements: [{ category: "string (e.g. Engineering, Education)", priority: "must-have|nice-to-have", minimum_years: "number (years required)", specific_technologies: ["string"] }],
+        hard_requirements: [{ category: "string (e.g. Engineering, Education)", priority: "must-have|nice-to-have", minimum_years: "number | string (years required, e.g. 5, or if no numeric year is specified but descriptive term is used, write that exact term like 'few years' or 'academic experience'. If not specified at all, write null or omit)", specific_technologies: ["string"] }],
         soft_requirements: [{ traits: ["string"], context: "string (how/where is this trait needed)", evidence_type: "string (how candidate can prove it)" }],
         responsibilities: [{ scope: "string (details of task)", impact_area: "string (what it affects)" }],
         culture_signals: [{ evidence: "string (text fragment signaling culture)", tone: "string (collaborative/intense/etc.)" }],
@@ -186,6 +186,7 @@ MANDATORY RULES:
 11. ICEBERG: "role_reality" must contain non-obvious truths specific to this JD's domain.
 12. DAY IN LIFE TIMELINES: Return EXACTLY 5 sequential entries in 'day_in_life'. Do NOT use clock times (e.g. '09:00 AM'). Instead, use task order sequential labels: '1st Task', '2nd Task', '3rd Task', '4th Task', '5th Task' in the 'time' field.
 13. RESUME BULLETS: "resume_help.bullets" MUST contain EXACTLY 5 unique high-impact resume bullet points tailored to the JD's requirements and target role, starting with strong action verbs.
+14. FAITHFUL EXPERIENCE IN HARD REQUIREMENTS: For hard_requirements, do NOT default minimum_years to a number (like 2) if it is not explicitly mentioned in the JD. If the JD specifies a phrase like "few years of hands-on experience" or "academic experience", use that exact string in minimum_years. If not specified, set it to null or omit.
 
 RETURN ONLY RAW JSON.` },
                         { role: "user", content: `ACT ON THIS JD:

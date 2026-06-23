@@ -120,10 +120,14 @@ export const StructuredJdDetails = ({ data }: StructuredJdDetailsProps) => {
                             {hr.priority}
                           </span>
                         </div>
-                        {hr.minimum_years !== undefined && (
+                        {hr.minimum_years !== undefined && hr.minimum_years !== null && String(hr.minimum_years).trim() !== "" && (
                           <div className="flex items-center gap-1 text-[11px] font-black text-slate-800 bg-slate-50 px-2.5 py-1 rounded-lg w-fit">
                             <Clock size={10} className="text-slate-500" />
-                            <span>Min {hr.minimum_years} years</span>
+                            <span>
+                              {typeof hr.minimum_years === "number" || !isNaN(Number(hr.minimum_years))
+                                ? `Min ${hr.minimum_years} years`
+                                : hr.minimum_years}
+                            </span>
                           </div>
                         )}
                         <div className="flex flex-wrap gap-1.5 pt-1">

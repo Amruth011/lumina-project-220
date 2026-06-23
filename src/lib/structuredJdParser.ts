@@ -188,7 +188,7 @@ export function validateAndRepairJdResult(raw: Partial<DecodeResult>, jdText: st
     hard_requirements: Array.isArray(raw.structured_data?.hard_requirements) ? raw.structured_data.hard_requirements.map(hr => ({
       category: hr?.category || "General",
       priority: hr?.priority === "nice-to-have" ? "nice-to-have" : "must-have",
-      minimum_years: typeof hr?.minimum_years === "number" ? hr.minimum_years : undefined,
+      minimum_years: typeof hr?.minimum_years === "number" || typeof hr?.minimum_years === "string" ? hr.minimum_years : undefined,
       specific_technologies: Array.isArray(hr?.specific_technologies) ? hr.specific_technologies : []
     })) : [],
     soft_requirements: Array.isArray(raw.structured_data?.soft_requirements) ? raw.structured_data.soft_requirements.map(sr => ({
