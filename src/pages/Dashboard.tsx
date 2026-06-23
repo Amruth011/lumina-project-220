@@ -9,13 +9,21 @@ import type { Tab } from "@/types/tabs";
 
 const Dashboard = () => {
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<Tab>((location.state?.activeTab as Tab) || "dashboard");
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const saved = localStorage.getItem("lumina_active_tab");
+    if (saved) return saved as Tab;
+    return (location.state?.activeTab as Tab) || "dashboard";
+  });
 
   useEffect(() => {
     if (location.state?.activeTab) {
       setActiveTab(location.state.activeTab as Tab);
     }
   }, [location.state]);
+
+  useEffect(() => {
+    localStorage.setItem("lumina_active_tab", activeTab);
+  }, [activeTab]);
 
   // Sync with cross-component switch-tab events
   useEffect(() => {

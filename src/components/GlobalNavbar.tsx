@@ -21,7 +21,9 @@ export const GlobalNavbar = ({ activeTab: propActiveTab, onTabChange }: GlobalNa
   const location = useLocation();
   
   // Local state for active tab to handle real-time events
-  const [localActiveTab, setLocalActiveTab] = useState<Tab>("dashboard");
+  const [localActiveTab, setLocalActiveTab] = useState<Tab>(() => {
+    return (localStorage.getItem("lumina_active_tab") as Tab) || "dashboard";
+  });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<"analytics" | "builder" | "outreach" | "trackPrep" | "profile" | null>(null);
 
@@ -34,6 +36,7 @@ export const GlobalNavbar = ({ activeTab: propActiveTab, onTabChange }: GlobalNa
   useEffect(() => {
     if (propActiveTab) {
       setLocalActiveTab(propActiveTab);
+      localStorage.setItem("lumina_active_tab", propActiveTab);
     }
   }, [propActiveTab]);
 
@@ -42,8 +45,10 @@ export const GlobalNavbar = ({ activeTab: propActiveTab, onTabChange }: GlobalNa
     const handleSwitch = (e: Event) => {
       const customEvent = e as CustomEvent;
       if (customEvent.detail) {
-        setLocalActiveTab(customEvent.detail as Tab);
-        if (onTabChange) onTabChange(customEvent.detail as Tab);
+        const targetTab = customEvent.detail as Tab;
+        setLocalActiveTab(targetTab);
+        localStorage.setItem("lumina_active_tab", targetTab);
+        if (onTabChange) onTabChange(targetTab);
       }
     };
     window.addEventListener("switch-tab", handleSwitch);
@@ -69,6 +74,7 @@ export const GlobalNavbar = ({ activeTab: propActiveTab, onTabChange }: GlobalNa
         navigate("/dashboard", { state: { activeTab: tabKey } });
       } else {
         setLocalActiveTab(tabKey);
+        localStorage.setItem("lumina_active_tab", tabKey);
         if (onTabChange) onTabChange(tabKey);
         window.dispatchEvent(new CustomEvent("switch-tab", { detail: tabKey }));
       }
