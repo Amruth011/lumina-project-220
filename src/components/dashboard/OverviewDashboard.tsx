@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   FileText, Briefcase, Search, Compass, Sparkles, Plus, 
-  ArrowRight, CheckCircle2, TrendingUp, Clock, AlertCircle, Bot
+  ArrowRight, CheckCircle2, TrendingUp, Clock, AlertCircle, Bot,
+  Target, ChevronDown
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
