@@ -35,15 +35,21 @@ export function OverviewDashboard() {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        // Fetch profile display name
+        // Fetch profile name and metadata
         const { data: profileData } = await supabase
           .from("profiles")
-          .select("display_name")
+          .select("display_name, full_name")
           .eq("id", user.id)
           .single();
 
-        if (profileData?.display_name) {
-          setDisplayName(profileData.display_name);
+        const resolvedName = 
+          profileData?.full_name || 
+          user.user_metadata?.full_name || 
+          user.user_metadata?.name || 
+          profileData?.display_name;
+
+        if (resolvedName) {
+          setDisplayName(resolvedName);
         } else {
           setDisplayName(user.email?.split("@")[0] || "Strategist");
         }
