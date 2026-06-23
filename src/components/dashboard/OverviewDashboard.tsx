@@ -18,6 +18,7 @@ interface DashboardStats {
 
 export function OverviewDashboard() {
   const { user } = useAuth();
+  const [displayName, setDisplayName] = useState<string>("");
   const [stats, setStats] = useState<DashboardStats>({
     resumesGenerated: 0,
     jobsApplied: 0,
@@ -34,6 +35,18 @@ export function OverviewDashboard() {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
+        // Fetch profile display name
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", user.id)
+          .single();
+
+        if (profileData?.display_name) {
+          setDisplayName(profileData.display_name);
+        } else {
+          setDisplayName(user.email?.split("@")[0] || "Strategist");
+        }
         // 1. Fetch counts
         const [resumesRes, appsRes, jdsRes, roadmapsRes] = await Promise.all([
           supabase.from("generated_resumes").select("id", { count: "exact", head: true }).eq("user_id", user.id),
@@ -123,7 +136,7 @@ export function OverviewDashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-serif italic text-slate-900 dark:text-white leading-tight">
-            Welcome Back, <span className="font-sans font-black text-slate-800 dark:text-slate-100 not-italic uppercase tracking-tight">{user?.email?.split("@")[0]}</span>
+            Welcome Back, <span className="font-sans font-black text-slate-800 dark:text-slate-100 not-italic uppercase tracking-tight">{displayName}</span>
           </h1>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">
             Lumina intelligence signal is stable and active.
