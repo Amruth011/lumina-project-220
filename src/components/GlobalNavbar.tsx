@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   LogOut, LogIn, User, Search, ShieldCheck, Zap, Mail, Compass, Bot, 
-  LayoutDashboard, ChevronDown, Menu, X, Settings, Sparkles, Briefcase, Target
+  LayoutDashboard, ChevronDown, Menu, X, Settings, Briefcase, Target
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -70,8 +70,6 @@ export const GlobalNavbar = ({ activeTab: propActiveTab, onTabChange }: GlobalNa
     setMobileMenuOpen(false);
     setActiveDropdown(null);
   };
-
-  const isPro = localStorage.getItem("lumina_pro") === "true";
 
   // Dropdown options mapping
   const analyticsOptions = [
@@ -251,26 +249,6 @@ export const GlobalNavbar = ({ activeTab: propActiveTab, onTabChange }: GlobalNa
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              {/* Upgrade Button */}
-              {!isPro && (
-                <button
-                  onClick={() => {
-                    localStorage.setItem("lumina_pro", "true");
-                    toast.success("Upgraded to Pro (Dev Mode)!");
-                    window.location.reload();
-                  }}
-                  className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-black uppercase tracking-wider shadow-md hover:opacity-90 transition-all"
-                >
-                  <Sparkles size={12} /> Upgrade
-                </button>
-              )}
-
-              {isPro && (
-                <span className="hidden md:inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[9px] font-black uppercase tracking-widest">
-                  <Sparkles size={10} className="fill-amber-500" /> Pro
-                </span>
-              )}
-
               {/* Profile Dropdown */}
               <div 
                 className="relative"
