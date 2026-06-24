@@ -576,7 +576,7 @@ CRITICAL: Only reframe and emphasize existing profile data through the lens of t
       const fallbackSkillsStr = localStorage.getItem(`fallback_skills_${user?.id}`);
       let parsedFallback: Record<string, string[]> | null = null;
       if (fallbackSkillsStr) {
-        try { parsedFallback = JSON.parse(fallbackSkillsStr); } catch (e) { }
+        try { parsedFallback = JSON.parse(fallbackSkillsStr); } catch (e) { /* ignore */ }
       }
       const activeSkills = profileSkills || parsedFallback || { "Core Competencies": [], "Languages": [], "AI & ML": [], "Cloud & MLOps": [] };
       const categoryNames = Object.keys(activeSkills).length > 0 ? Object.keys(activeSkills) : ["Core Competencies", "Languages", "AI & ML", "Cloud & MLOps"];

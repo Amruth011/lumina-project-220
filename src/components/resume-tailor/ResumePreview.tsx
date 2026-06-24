@@ -1165,7 +1165,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                 isOpen={openSection === "skills"} 
                 onToggle={() => setOpenSection(openSection === "skills" ? null : "skills")}
               >
-                {true ? (
+                {true ? ( /* eslint-disable-line no-constant-condition */
                 <div className="space-y-4 pt-2">
                   {(localResume.skills_section || []).map((skillLine, i) => {
                     const colonIndex = skillLine.indexOf(':');
@@ -1935,7 +1935,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                       const colonIdx = (skillLine || "").indexOf(":");
                                       const category = colonIdx !== -1 ? skillLine.slice(0, colonIdx).trim() : "";
                                       const skillsRaw = colonIdx !== -1 ? skillLine.slice(colonIdx + 1).trim() : (skillLine || "").trim();
-                                      const showCategory = true && category && category.toLowerCase() !== 'skills';
+                                      const showCategory = /* eslint-disable-line no-constant-binary-expression */ true && category && category.toLowerCase() !== 'skills';
                                       
                                       const skillsArray = skillsRaw.split(",").map(s => s.trim()).filter(Boolean);
                                       
