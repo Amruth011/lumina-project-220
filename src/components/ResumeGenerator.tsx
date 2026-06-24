@@ -531,7 +531,7 @@ CRITICAL: Only reframe and emphasize existing profile data through the lens of t
       const prompt = `You are an ATS resume expert. Generate a resume JSON for a ${targetJdTitle} role. Return EXACTLY this structure:
 
 {
-  "professional_summary": "NARRATIVE PARAGRAPH. EXACTLY ${summaryLines} SENTENCES.",
+  "professional_summary": "NARRATIVE PARAGRAPH. EXACTLY ${summaryLines * 15} WORDS.",
   "education": ["Degree @ School — Location | Dates"],
   "experience": [{"heading": "Role @ Organization", "content": "dates", "bullets": ["verb + tech + JD keyword"]}],
   "products": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
@@ -1505,7 +1505,7 @@ Return ONLY the JSON. No markdown, no comments.`
         <div class="section-title-container">
           <h2 class="section-title">Professional Summary</h2>
         </div>
-        <p class="summary-text">${limitSummarySentences(editableResume.professional_summary, summaryLines)}</p>
+        <p class="summary-text">${editableResume.professional_summary}</p>
       ` : "";
 
       const educationHtml = (editableResume.education && editableResume.education.length > 0) ? `

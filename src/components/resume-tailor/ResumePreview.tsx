@@ -1772,7 +1772,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                   <h4 className="font-bold uppercase tracking-widest !font-inherit" style={{ fontSize: `${headlineFontSize}px`, fontFamily: 'inherit', margin: 0, paddingBottom: '3px', borderBottom: '1px solid #1E2A3A', display: 'block', width: '100%', lineHeight: '1.4' }}>Professional Summary</h4>
                                 </div>
                                 <p className="text-[#1E2A3A]/90 leading-relaxed !font-inherit text-justify" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', textAlign: 'justify', textAlignLast: 'left', margin: 0, padding: 0 }}>
-                                  {limitSummarySentences(localResume.professional_summary, summaryLines)}
+                                  {localResume.professional_summary}
                                 </p>
                               </section>
                             ) : null;
