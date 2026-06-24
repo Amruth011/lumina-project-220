@@ -44,7 +44,9 @@ export function OverviewDashboard() {
             if (draftedProfile?.full_name) {
               localFullName = draftedProfile.full_name;
             }
-          } catch (e) {}
+          } catch (e) {
+            console.error(e);
+          }
         }
 
         // 2. Fetch profile name and metadata from DB
@@ -71,7 +73,9 @@ export function OverviewDashboard() {
                 resolvedName = data.personal_info.fullName;
               }
             }
-          } catch (e) {}
+          } catch (e) {
+            console.error(e);
+          }
         }
 
         setDisplayName(resolvedName || user.email?.split("@")[0] || "Strategist");

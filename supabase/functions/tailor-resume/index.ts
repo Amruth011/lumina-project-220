@@ -97,7 +97,7 @@ serve(async (req) => {
 Role: You are an elite ATS Resume Architect. Your goal is to map the user's Master Vault Data to the JD requirements using a 'Subtle-Alignment' approach without altering the core facts, timelines, or technical truth of their experience.
 
 1. Strict Mapping Constraints:
-- Summary: Exactly ${user_setting} sentences long. Do not output less.
+- Summary: Generate EXACTLY ${user_setting * 15} words. This word count ensures it renders as exactly ${user_setting} visual lines. DO NOT output fewer or more words.
 - Content Verification: Keep 80% of the original content verbatim. Use the remaining 20% to strategically insert JD-relevant keywords (Healthcare, RAG, Agents, On-premise deployment) where they naturally fit.
 - Prohibition: Do not replace user project names with generic descriptors. Do not change existing metrics (e.g., 98.7% accuracy).
 - Character Constraints: Every bullet point in the experience section must be between 100 and 260 characters (including spaces). Adjust wording and detail to hit this target range. Do not output single-line bullets (less than 100 characters).
@@ -124,7 +124,7 @@ ${jdString}
 OUTPUT SCHEMA (STRICT JSON ONLY):
 Return ONLY a valid JSON object matching this schema. No markdown formatting, no explanation.
 {
-  "summary": "string (exactly ${user_setting} sentences)",
+  "summary": "string (exactly ${user_setting * 15} words)",
   "experience": [
     { "role": "string", "bullets": ["string (100-260 chars)", "..."] }
   ],
@@ -185,92 +185,25 @@ Return ONLY a valid JSON object matching this schema. No markdown formatting, no
 
     if (!resultData) throw new Error(`All engines exhausted: ${lastError}`);
 
-    let resultText = resultData.choices?.[0]?.message?.content;
+    const resultText = resultData.choices?.[0]?.message?.content;
     if (!resultText) throw new Error("AI returned empty content");
 
-    let firstBrace = resultText.indexOf('{');
-    let lastBrace = resultText.lastIndexOf('}');
+    // We rely on the LLM to provide approximately the correct word count. No strict sentence-split correction needed.;
+
+    const firstBrace = resultText.indexOf('{');
+    const lastBrace = resultText.lastIndexOf('}');
     let resultJson = JSON.parse(resultText.substring(firstBrace, lastBrace + 1));
-
-    // Hard-Stop Enforcement Validation Check
-    const getSplitLength = (summaryStr: string) => {
-      return (summaryStr || "").split('.').length;
-    };
-
-    if (getSplitLength(resultJson.summary) !== user_setting) {
-      console.log(`Self-Correction triggered! Split length (${getSplitLength(resultJson.summary)}) does not equal user_setting (${user_setting}).`);
-
-      const selfCorrectionPrompt = `
-Your previous response failed the summary sentence count validation.
-The generated summary was: "${resultJson.summary}"
-Its split('.').length is ${getSplitLength(resultJson.summary)}, but we require it to be EXACTLY ${user_setting}.
-
-Please re-generate the entire JSON object. Ensure that response.summary.split('.').length is EXACTLY ${user_setting}.
-Remember:
-- Do not add trailing period on the last sentence if that makes the split length exceed ${user_setting}.
-- If user_setting is 3, provide exactly 3 sentences.
-- Ensure all other constraints (Fact Preservation, 70% verbatim, Experience bullets 100-260 chars, 3 skill categories) are strictly followed.
-`;
-
-      try {
-        const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${groqKey}` },
-          body: JSON.stringify({
-            model: chosenModel,
-            messages: [
-              { role: "system", content: "You are an expert resume writer. Return ONLY raw JSON. No markdown." },
-              { role: "user", content: prompt },
-              { role: "assistant", content: resultText },
-              { role: "user", content: selfCorrectionPrompt }
-            ],
-            response_format: { type: "json_object" },
-            temperature: 0,
-          }),
-        });
-
-        if (groqResponse.ok) {
-          const correctionData = await groqResponse.json();
-          const correctionText = correctionData.choices?.[0]?.message?.content;
-          if (correctionText) {
-            const firstBraceCorr = correctionText.indexOf('{');
-            const lastBraceCorr = correctionText.lastIndexOf('}');
-            resultJson = JSON.parse(correctionText.substring(firstBraceCorr, lastBraceCorr + 1));
-          }
-        }
-      } catch (err) {
-        console.error("Self-correction error:", err);
-      }
-    }
 
     // Programmatic Sanitization (Ensures 100% compliance with strict specifications)
     // 1. Ensure summary has exactly user_setting sentences
-    let summaryText = resultJson.summary || "";
-    let summarySentences = summaryText.split('.').map((s: string) => s.trim()).filter(Boolean);
-    if (summarySentences.length !== user_setting) {
-      if (summarySentences.length > user_setting) {
-        summarySentences = summarySentences.slice(0, user_setting);
-      } else {
-        while (summarySentences.length < user_setting) {
-          summarySentences.push("Demonstrates elite technical competence and operational leadership across development cycles");
-        }
-      }
-      resultJson.summary = summarySentences.join(". ");
-      // Ensure the split length matches exactly (no trailing period if split length is strict)
-      if (resultJson.summary.split('.').length > user_setting) {
-        resultJson.summary = resultJson.summary.replace(/\.+$/, "");
-      }
-      while (resultJson.summary.split('.').length < user_setting) {
-        resultJson.summary += ". Additional engineering skill details";
-      }
-    }
+    const summaryText = resultJson.summary || "";
+    // 1. We removed sentence truncation to allow the LLM to generate exactly the length needed for visual lines.
 
-    // Clean fluff in summary
     resultJson.summary = removeFluff(resultJson.summary);
 
     // 2. Remove fluff & check character limits for experience
     if (Array.isArray(resultJson.experience)) {
-      resultJson.experience = resultJson.experience.map((exp: any) => {
+      resultJson.experience = resultJson.experience.map((exp: Record<string, unknown>) => {
         if (exp && typeof exp === "object") {
           const role = removeFluff(exp.role || exp.title || "");
           let bullets = Array.isArray(exp.bullets) ? exp.bullets : [];
@@ -289,7 +222,7 @@ Remember:
     if (!resultJson.skills || typeof resultJson.skills !== "object") {
       resultJson.skills = { core_technical: [], infrastructure: [], operational: [] };
     } else {
-      const skillsArray = (val: any) => ensureArray(val);
+      const skillsArray = (val: unknown) => ensureArray(val);
       resultJson.skills = {
         core_technical: skillsArray(resultJson.skills.core_technical),
         infrastructure: skillsArray(resultJson.skills.infrastructure),
