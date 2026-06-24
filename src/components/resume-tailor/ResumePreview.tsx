@@ -175,48 +175,12 @@ export const ResumePreview = ({
   };
   
   // Mock Data for UI Proof
-  const mockResume = {
-    professional_summary: "Results-driven Software Engineer with 5+ years of experience in architecting scalable backend systems and high-performance React frontends. Proven track record of reducing system latency by 40% and accelerating CI/CD deployment pipelines using modern cloud infrastructure.",
-    experience: [
-      {
-        heading: "Senior Software Engineer — TechCorp Inc.",
-        content: "Jan 2021 - Present | New York, NY",
-        bullets: [
-          "Architected and deployed a highly scalable React frontend and Node.js backend infrastructure on AWS, integrating advanced machine learning models to reduce processing latency by 40% and increase overall user retention.",
-          "Spearheaded the migration of legacy monolithic systems into decoupled microservices using Docker and Kubernetes, streamlining the CI/CD deployment pipeline and accelerating deployment velocity for the engineering org."
-        ]
-      }
-    ],
-    projects: [
-      {
-        heading: "AI Document Analyzer — Personal Project",
-        content: "2023 | github.com/user/ai-doc",
-        bullets: [
-          "Engineered a full-stack document processing pipeline leveraging LangChain and OpenAI APIs, enabling users to automatically extract entities and summarize 100-page PDFs in under 30 seconds with 98% accuracy.",
-          "Implemented a distributed task queue using Redis and Celery to handle concurrent document uploads, scaling the infrastructure to effortlessly process over 10,000 documents per day without degraded performance."
-        ]
-      }
-    ],
-    skills_section: [
-      "Core Competencies: React, Node.js, AI/ML Integration, Prompt Engineering",
-      "Infrastructure & Cloud: AWS, Docker, Kubernetes, CI/CD Pipelines",
-      "Languages & Tools: TypeScript, Python, Git, Supabase"
-    ],
-    education: [
-      "B.S. in Computer Science — University of Technology (2020)"
-    ],
-    products: [],
-    certifications: [],
-    leadership: [],
-    awards: []
-  };
-
-  const [localResume, setLocalResume] = useState<GeneratedResume>(mockResume);
+  
+  const [localResume, setLocalResume] = useState<GeneratedResume>(resume);
   const [openSection, setOpenSection] = useState<string | null>("experience");
   const [showVaultPicker, setShowVaultPicker] = useState<{ section: 'experience' | 'projects' | 'products' | 'education' | 'certifications' | 'leadership', index?: number } | null>(null);
   const [activeTab, setActiveTab] = useState<'resume' | 'cover-letter'>(initialTab || 'resume');
-  const [skillsViewMode, setSkillsViewMode] = useState<'category' | 'flat'>('category');
-
+  
   // Sync active tab when parent overrides it (e.g., after cover letter generation)
   useEffect(() => {
     if (activeTabOverride) {
@@ -1201,7 +1165,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                 isOpen={openSection === "skills"} 
                 onToggle={() => setOpenSection(openSection === "skills" ? null : "skills")}
               >
-                {skillsViewMode === "category" ? (
+                {true ? (
                 <div className="space-y-4 pt-2">
                   {(localResume.skills_section || []).map((skillLine, i) => {
                     const colonIndex = skillLine.indexOf(':');
@@ -1267,32 +1231,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                   <p className="text-[9px] text-slate-400 font-medium">One category per line: Category Name: skill1, skill2, skill3</p>
                 </div>
                 )}
-                <div className="flex justify-end pt-2">
-                  <button
-                    onClick={() => {
-                      if (skillsViewMode === "category") {
-                        // Merge all categories into ONE flat "Skills:" line so the rendered resume actually changes.
-                        const allSkills: string[] = [];
-                        (localResume.skills_section || []).forEach(line => {
-                          const idx = line.indexOf(":");
-                          const tail = idx === -1 ? line : line.slice(idx + 1);
-                          tail.split(",").map(s => s.trim()).filter(Boolean).forEach(s => {
-                            if (!allSkills.includes(s)) allSkills.push(s);
-                          });
-                        });
-                        if (allSkills.length > 0) {
-                          updateResumeState({ ...localResume, skills_section: [`Skills: ${allSkills.join(", ")}`] });
-                        }
-                        setSkillsViewMode("flat");
-                      } else {
-                        setSkillsViewMode("category");
-                      }
-                    }}
-                    className="text-[9px] font-bold text-lumina-teal uppercase tracking-widest hover:text-slate-800 transition-colors"
-                  >
-                    {skillsViewMode === "category" ? "Switch to Flat View" : "Switch to Category View"}
-                  </button>
-                </div>
+                
               </CollapsibleSection>
 
               <CollapsibleSection 
@@ -1996,7 +1935,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                       const colonIdx = (skillLine || "").indexOf(":");
                                       const category = colonIdx !== -1 ? skillLine.slice(0, colonIdx).trim() : "";
                                       const skillsRaw = colonIdx !== -1 ? skillLine.slice(colonIdx + 1).trim() : (skillLine || "").trim();
-                                      const showCategory = skillsViewMode === 'category' && category && category.toLowerCase() !== 'skills';
+                                      const showCategory = true && category && category.toLowerCase() !== 'skills';
                                       
                                       const skillsArray = skillsRaw.split(",").map(s => s.trim()).filter(Boolean);
                                       
