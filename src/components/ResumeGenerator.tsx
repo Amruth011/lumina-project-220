@@ -545,7 +545,19 @@ CRITICAL: Only reframe and emphasize existing profile data through the lens of t
 CRITICAL BULLET COUNTS & LENGTHS:
 - Experience: EXACTLY ${experienceBullets} bullets per item
 - Products: EXACTLY ${productLines} bullets per item
-- Projects: EXACTLY ${projectLines} bullets per item
+- Experience: generate EXACTLY ${experienceBullets} bullets per role.
+- Projects: generate EXACTLY ${projectBullets} bullets per project.
+- Products: generate EXACTLY ${productBullets} bullets per product.
+- DO NOT output more or fewer bullets than requested per section.
+
+GUIDELINES:
+1. FORMAT (JSON ONLY):
+   - Return ONLY valid JSON matching the structure.
+   - NO Markdown formatting (```json). NO conversational text.
+   - Dates MUST perfectly match the vault. NEVER hallucinate dates.
+   - Titles: "[Role Name] | [Team/Project]"
+   - Metrics: Bold them like "reduced latency by **40%**" or "grew MAU to **150K**".
+   - Descriptions: Must be concise technical explanations.
 
 STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
 1. PROFESSIONAL SUMMARY RULES — FOLLOW EXACTLY:
@@ -562,10 +574,10 @@ STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
    - DO NOT hallucinate, invent, or force-add domains (like Healthcare or Finance), job titles (like Senior), experiences, or skills that are NOT present in the candidate's Master Vault. 
    - Dynamically adapt to the user's ACTUAL seniority level. If they have 10+ years of experience, frame them with appropriate seniority. If they are a fresher or have only internship experience, frame them strictly as entry-level. Do NOT inflate or deflate their true experience level.
    - Ground everything STRICTLY in the candidate's actual vault data. If the JD requires a skill the user lacks, DO NOT invent it.
-3. BULLET POINTS: Every single bullet point MUST fully utilize the line space.
-   - A single full line should be EXACTLY 110 to 130 characters (including spaces).
-   - Two full lines should be EXACTLY 220 to 260 characters (including spaces).
-   - MINIMUM LENGTH (CRITICAL): Every single bullet point MUST be a strict minimum of 100 characters (at least 15 to 20 words per point). Do NOT generate short 60-70% lines. Write detailed, technically rich sentences to fill the space.
+   - For the skills section, ONLY include skills that are both present in the Vault AND highly relevant to the JD. Do NOT dump all Vault skills if they are irrelevant to the job.
+3. BULLET POINTS: Every single bullet point MUST fill EXACTLY 2 visual lines. 
+   - LENGTH CONSTRAINT (CRITICAL): Every single bullet point MUST be strictly between 200 and 240 characters (including spaces) so it wraps perfectly across exactly 2 full lines. 
+   - Do NOT generate bullets that are 1.5 lines or less (e.g. 150 characters). Do NOT generate short bullets. Write detailed, technically rich sentences to reach the 200-240 character target.
 
 If the vault provides fewer source bullets, derive additional bullets from the item's skills/tech stack and JD keywords. Never fabricate metrics.
 
