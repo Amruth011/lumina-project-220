@@ -560,7 +560,7 @@ STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
    "Sentence one about role and level. Sentence two about specific tech skills. Sentence three about impact." - Mirror the seniority language from the JD. If the JD says "lead", use "lead". If it says "drive", use "drive". Pull exact verb choices from the JD description.
 2. STRICT NO HALLUCINATION (CRITICAL):
    - DO NOT hallucinate, invent, or force-add domains (like Healthcare or Finance), job titles (like Senior), experiences, or skills that are NOT present in the candidate's Master Vault. 
-   - If the user is a fresher or intern (e.g., 3-6 months), NEVER call them a "Senior" engineer.
+   - Dynamically adapt to the user's ACTUAL seniority level. If they have 10+ years of experience, frame them with appropriate seniority. If they are a fresher or have only internship experience, frame them strictly as entry-level. Do NOT inflate or deflate their true experience level.
    - Ground everything STRICTLY in the candidate's actual vault data. If the JD requires a skill the user lacks, DO NOT invent it.
 3. BULLET POINTS: Every single bullet point MUST fully utilize the line space.
    - A single full line should be EXACTLY 110 to 130 characters (including spaces).
