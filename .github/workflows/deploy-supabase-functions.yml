@@ -25,7 +25,7 @@ jobs:
           set -e
           for fn in analyze compare-resume cover-letter decode-jd generate-bullet generate-resume parse-resume-file tailor-resume generate-roadmap embed; do
             echo "Deploying $fn..."
-            supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF" --use-api
+            supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF"
           done
           echo "Deploying diagnose (no JWT)..."
-          supabase functions deploy diagnose --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt --use-api
+          supabase functions deploy diagnose --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
