@@ -537,7 +537,7 @@ CRITICAL: Only reframe and emphasize existing profile data through the lens of t
   "products": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
   "projects": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
   "certifications": ["Name (Issuer) - Year"],
-  "skills_section": ["Core Competencies: [ALL relevant skills from vault]", "Languages: [ALL vault languages]", "AI & ML: [ALL vault AI skills]", "Cloud & MLOps: [ALL vault cloud skills]"],
+  "skills_section": ["Core Competencies: [ONLY Vault skills highly relevant to JD]", "Languages: [ONLY Vault languages highly relevant to JD]", "AI & ML: [ONLY Vault AI skills highly relevant to JD]", "Cloud & MLOps: [ONLY Vault cloud skills highly relevant to JD]"],
   "awards": [],
   "leadership": []
 }
