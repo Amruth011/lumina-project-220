@@ -1675,7 +1675,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                       <h1 className="font-bold tracking-tight uppercase !font-inherit" style={{ fontSize: `${nameFontSize}px`, color: '#1E2A3A', fontFamily: 'inherit' }}>
                         {localHeader.fullName || "Your Name"}
                       </h1>
-                      <div className="flex justify-center items-center gap-x-3 text-[#1E2A3A] font-medium !font-inherit whitespace-nowrap" style={{ fontSize: fontSizes.meta }}>
+                      <div className="flex justify-center items-center text-[#1E2A3A] font-medium !font-inherit whitespace-nowrap" style={{ fontSize: fontSizes.meta }}>
                         {(() => {
                           const items: React.ReactNode[] = [];
                           const loc = (localHeader.location || "").trim();
@@ -1749,7 +1749,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                           return items.reduce<React.ReactNode[]>((acc, item, idx) => {
                             if (idx > 0) {
                               acc.push(
-                                <span key={`sep-${idx}`} className="opacity-20 select-none" style={{ fontSize: fontSizes.meta }}>|</span>
+                                <span key={`sep-${idx}`} className="opacity-40 select-none" style={{ fontSize: fontSizes.meta }}> &nbsp;|&nbsp; </span>
                               );
                             }
                             acc.push(item);

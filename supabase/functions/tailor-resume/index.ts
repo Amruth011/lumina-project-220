@@ -97,8 +97,9 @@ serve(async (req) => {
 Role: You are an elite ATS Resume Architect. Your goal is to map the user's Master Vault Data to the JD requirements using a 'Subtle-Alignment' approach without altering the core facts, timelines, or technical truth of their experience.
 
 1. Strict Mapping Constraints:
-- Summary: Generate EXACTLY ${user_setting * 19} words. This word count ensures it renders as exactly ${user_setting} visual lines. DO NOT output fewer or more words.
-- Content Verification: Keep 80% of the original content verbatim. Use the remaining 20% to strategically insert JD-relevant keywords (Healthcare, RAG, Agents, On-premise deployment) where they naturally fit.
+- Summary: Generate EXACTLY ${user_setting * 17} words. This word count ensures it renders as exactly ${user_setting} visual lines. DO NOT output fewer or more words.
+- Content Verification: Keep 80% of the original content verbatim. Use the remaining 20% ONLY to rephrase or naturally insert JD-relevant keywords that the candidate actually possesses.
+- STRICT NO HALLUCINATION: DO NOT hallucinate, invent, or add domains (like Healthcare or Finance), job titles (like Senior), experiences, or skills that are NOT present in the Master Vault Data. If the user is a fresher, do not call them senior. If the JD requires a skill the user lacks, DO NOT invent it.
 - Prohibition: Do not replace user project names with generic descriptors. Do not change existing metrics (e.g., 98.7% accuracy).
 - Character Constraints: Every bullet point in the experience section must be between 100 and 260 characters (including spaces). Adjust wording and detail to hit this target range. Do not output single-line bullets (less than 100 characters).
 
@@ -124,7 +125,7 @@ ${jdString}
 OUTPUT SCHEMA (STRICT JSON ONLY):
 Return ONLY a valid JSON object matching this schema. No markdown formatting, no explanation.
 {
-  "summary": "string (exactly ${user_setting * 22} words)",
+  "summary": "string (exactly ${user_setting * 17} words)",
   "experience": [
     { "role": "string", "bullets": ["string (100-260 chars)", "..."] }
   ],

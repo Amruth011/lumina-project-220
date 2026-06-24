@@ -531,7 +531,7 @@ CRITICAL: Only reframe and emphasize existing profile data through the lens of t
       const prompt = `You are an ATS resume expert. Generate a resume JSON for a ${targetJdTitle} role. Return EXACTLY this structure:
 
 {
-  "professional_summary": "NARRATIVE PARAGRAPH. EXACTLY ${summaryLines * 22} WORDS.",
+  "professional_summary": "NARRATIVE PARAGRAPH. EXACTLY ${summaryLines * 17} WORDS.",
   "education": ["Degree @ School — Location | Dates"],
   "experience": [{"heading": "Role @ Organization", "content": "dates", "bullets": ["verb + tech + JD keyword"]}],
   "products": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
@@ -558,7 +558,11 @@ STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
 
    EXAMPLE (3 sentences):
    "Sentence one about role and level. Sentence two about specific tech skills. Sentence three about impact." - Mirror the seniority language from the JD. If the JD says "lead", use "lead". If it says "drive", use "drive". Pull exact verb choices from the JD description.
-2. BULLET POINTS: Every single bullet point MUST fully utilize the line space.
+2. STRICT NO HALLUCINATION (CRITICAL):
+   - DO NOT hallucinate, invent, or force-add domains (like Healthcare or Finance), job titles (like Senior), experiences, or skills that are NOT present in the candidate's Master Vault. 
+   - If the user is a fresher or intern (e.g., 3-6 months), NEVER call them a "Senior" engineer.
+   - Ground everything STRICTLY in the candidate's actual vault data. If the JD requires a skill the user lacks, DO NOT invent it.
+3. BULLET POINTS: Every single bullet point MUST fully utilize the line space.
    - A single full line should be EXACTLY 110 to 130 characters (including spaces).
    - Two full lines should be EXACTLY 220 to 260 characters (including spaces).
    - MINIMUM LENGTH (CRITICAL): Every single bullet point MUST be a strict minimum of 100 characters (at least 15 to 20 words per point). Do NOT generate short 60-70% lines. Write detailed, technically rich sentences to fill the space.
