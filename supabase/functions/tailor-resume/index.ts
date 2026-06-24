@@ -94,32 +94,25 @@ serve(async (req) => {
     const contextBalance = "Ensure 70% of content is verbatim from Master Vault; only 30% can be derived/inferred from JD.";
 
     const prompt = `
-Role: You are an elite ATS Resume Architect. Your goal is to optimize the user's Master Vault Data for a target Job Description (JD) without altering the core facts, timelines, or technical truth of their experience.
+Role: You are an elite ATS Resume Architect. Your goal is to map the user's Master Vault Data to the JD requirements using a 'Subtle-Alignment' approach without altering the core facts, timelines, or technical truth of their experience.
 
-CORE RULES (Violating these results in failure):
-- Fact Preservation: You are forbidden from hallucinating, changing, or overwriting specific metrics, project names, or company names from the provided Master Vault. You may only rephrase for tone and keyword alignment.
-- Space Efficiency: You must respect the user's specific setting of ${user_setting}. You must provide exactly ${user_setting} sentences for the summary. Do not use ${user_setting - 1}, do not use ${user_setting + 1}.
-- Character Constraints: Every bullet point in the experience section must be between 100 and 260 characters (including spaces). Adjust wording and detail to hit this target range. Do not output single-line bullets (less than 100 characters) or long paragraphs.
-- Context Injection Limit: Use the JD context only to bridge gaps. Do not exceed a 30% deviation from the original Master Vault text.
-- Context Gate Balance: ${contextBalance}
+1. Strict Mapping Constraints:
+- Summary: Exactly ${user_setting} sentences long. Do not output less.
+- Content Verification: Keep 80% of the original content verbatim. Use the remaining 20% to strategically insert JD-relevant keywords (Healthcare, RAG, Agents, On-premise deployment) where they naturally fit.
+- Prohibition: Do not replace user project names with generic descriptors. Do not change existing metrics (e.g., 98.7% accuracy).
+- Character Constraints: Every bullet point in the experience section must be between 100 and 260 characters (including spaces). Adjust wording and detail to hit this target range. Do not output single-line bullets (less than 100 characters).
 
-SECTION-SPECIFIC INSTRUCTIONS:
-- Professional Summary: Follow this strict formula:
-  Sentence 1: Current Title & Seniority.
-  Sentence 2: Technical Core & Years of Experience.
-  Sentence 3: Specific impact/value prop (must include a quantified metric from the Vault).
-  (Generate exactly ${user_setting} sentences for the summary.)
-  
-- Experience/Projects:
-  Rewrite each bullet point to include: one Action Verb + Core Tech + Quantified Result.
-  Prohibit generic fluff: Do NOT use words like "delve", "leverage", "robust", "collaborated", "utilised", "utilized". Use specific action verbs (e.g., "Architected", "Reduced", "Automated").
+2. Skills Categorization:
+Group skills into exactly three columns (categories):
+- "core_technical": Core AI/Healthcare (Must-haves from JD)
+- "infrastructure": Applied AI Infrastructure (Cloud/Backend/On-premise)
+- "operational": Operational Excellence (Communication/Agility)
+Discard any skill from the Master Vault that does not appear in the JD or directly support the applied AI domain.
 
-- Skills Categorization:
-  Group skills into exactly three categories: "core_technical" (Must-haves from JD), "infrastructure" (Infrastructure & Systems), and "operational" (Operational Excellence).
-  Filter out vague, low-level skills. Only include what is explicitly relevant to the JD or shows high-level engineering competence.
-
-- Certifications:
-  Sequence these based on the JD's "Preferred Requirements." If the JD prioritizes Cloud, put Cloud certs first. If it prioritizes AI, put AI certs first.
+3. Certifications Sequence:
+Sequence: Sort by JD alignment.
+Priority 1: AI/LLM/RAG certifications.
+Place these before other certifications.
 
 INPUT DATA:
 Master Vault Data:

@@ -1,5 +1,5 @@
 import { useState, useEffect, Suspense } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ScannerView } from "@/components/ScannerView";
 import { WelcomeScreen } from "@/components/onboarding/WelcomeScreen";
 import { TooltipTour } from "@/components/onboarding/TooltipTour";
@@ -9,6 +9,7 @@ import type { Tab } from "@/types/tabs";
 
 const Dashboard = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const saved = localStorage.getItem("lumina_active_tab");
     if (saved) return saved as Tab;
@@ -18,8 +19,9 @@ const Dashboard = () => {
   useEffect(() => {
     if (location.state?.activeTab) {
       setActiveTab(location.state.activeTab as Tab);
+      navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state]);
+  }, [location.state, location.pathname, navigate]);
 
   useEffect(() => {
     localStorage.setItem("lumina_active_tab", activeTab);
