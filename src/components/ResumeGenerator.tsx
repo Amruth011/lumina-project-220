@@ -106,7 +106,7 @@ export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: Re
   
   const { user } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [resume, setResume] = useState<GeneratedResume | null>(mockResume);
+  const [resume, setResume] = useState<GeneratedResume | null>(null);
   const [coverLetter, setCoverLetter] = useState<string | null>(null);
   const [isGeneratingCL, setIsGeneratingCL] = useState(false);
   const [isOpen, setIsOpen] = useState(forceTab ? forceTab !== 'outreach' : false);
