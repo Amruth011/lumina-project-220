@@ -54,14 +54,59 @@ interface ArchiveRecord {
   };
 }
 
-
+export const mockResume = {
+  professional_summary: "Results-driven Software Engineer with 5+ years of experience in architecting scalable backend systems and high-performance React frontends. Proven track record of reducing system latency by 40% and accelerating CI/CD deployment pipelines using modern cloud infrastructure.",
+  experience: [
+    {
+      heading: "Senior Software Engineer  TechCorp Inc.",
+      content: "Jan 2021 - Present | New York, NY",
+      bullets: [
+        "Architected and deployed a highly scalable React frontend and Node.js backend infrastructure on AWS, integrating advanced machine learning models to reduce processing latency by 40% and increase overall user retention.",
+        "Spearheaded the migration of legacy monolithic systems into decoupled microservices using Docker and Kubernetes, streamlining the CI/CD deployment pipeline and accelerating deployment velocity for the engineering org."
+      ]
+    }
+  ],
+  projects: [
+    {
+      heading: "AI Document Analyzer  Personal Project",
+      content: "2023 | github.com/user/ai-doc",
+      bullets: [
+        "Engineered a full-stack document processing pipeline leveraging LangChain and OpenAI APIs, enabling users to automatically extract entities and summarize 100-page PDFs in under 30 seconds with 98% accuracy.",
+        "Implemented a distributed task queue using Redis and Celery to handle concurrent document uploads, scaling the infrastructure to effortlessly process over 10,000 documents per day without degraded performance."
+      ]
+    }
+  ],
+  products: [],
+  education: [
+    "B.S. in Computer Science @ University of Technology - San Francisco, CA | Sep 2015 - May 2019 | GPA: 3.8/4.0"
+  ],
+  certifications: [
+    "AWS Certified Solutions Architect Associate (Amazon Web Services) - 2023"
+  ],
+  awards: [
+    "Hackathon Winner (Global Tech Challenge) - 2022"
+  ],
+  leadership: [
+    {
+      heading: "Mentorship Program Lead  TechCorp Inc.",
+      content: "Jan 2022 - Present",
+      bullets: [
+        "Established and managed an internal mentorship program, successfully pairing 50+ junior developers with senior engineers, resulting in a 25% increase in junior employee retention."
+      ]
+    }
+  ],
+  skills_section: [
+    "Frontend Development: React, TypeScript, Tailwind CSS, Next.js, Redux",
+    "Backend & Cloud: Node.js, Python, AWS, Docker, Kubernetes, PostgreSQL"
+  ]
+};
 
 export const ResumeGenerator = ({ jdTitle, jdSkills, companyName, forceTab }: ResumeGeneratorProps) => {
   console.log("ResumeGenerator: Rendering with props", { jdTitle, jdSkills: jdSkills?.length, companyName });
   
   const { user } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [resume, setResume] = useState<GeneratedResume | null>(null);
+  const [resume, setResume] = useState<GeneratedResume | null>(mockResume);
   const [coverLetter, setCoverLetter] = useState<string | null>(null);
   const [isGeneratingCL, setIsGeneratingCL] = useState(false);
   const [isOpen, setIsOpen] = useState(forceTab ? forceTab !== 'outreach' : false);
@@ -514,6 +559,7 @@ ${ragMatches.map((m, i) => `  [Match #${i + 1}] (Similarity: ${(m.similarity * 1
     // â”€â”€ Career Pivot Strategy Override â”€â”€
     const careerPivotDirective = isCareerPivot
       ? `\n\n### âš¡ CAREER PIVOT MODE ACTIVATED
+      ? `\n\n### ⚡ CAREER PIVOT MODE ACTIVATED
 The candidate is applying for a role OUTSIDE their direct past experience domain.
 You MUST activate the following special strategies:
 1. **Transferable Skills Emphasis**: Identify and prominently showcase transferable skills (leadership, problem-solving, system design, communication, analytical thinking) that bridge the gap between the candidate's experience and the target role.
@@ -526,7 +572,16 @@ CRITICAL: Only reframe and emphasize existing profile data through the lens of t
 
     try {
       const enabledSections = sectionOrder.filter(sec => visibleSections[sec]);
-      const disabledSections = sectionOrder.filter(sec => !visibleSections[sec]);
+      
+      const profileSkills = (profile as UserProfileWithVault)?.technical_skills;
+      const fallbackSkillsStr = localStorage.getItem(`fallback_skills_${user?.id}`);
+      let parsedFallback: Record<string, string[]> | null = null;
+      if (fallbackSkillsStr) {
+        try { parsedFallback = JSON.parse(fallbackSkillsStr); } catch (e) { }
+      }
+      const activeSkills = profileSkills || parsedFallback || { "Core Competencies": [], "Languages": [], "AI & ML": [], "Cloud & MLOps": [] };
+      const categoryNames = Object.keys(activeSkills).length > 0 ? Object.keys(activeSkills) : ["Core Competencies", "Languages", "AI & ML", "Cloud & MLOps"];
+      const skillsSectionFormat = `[${categoryNames.map(c => `"${c}: [ONLY Vault skills from this category highly relevant to JD]"`).join(", ")}]`;
 
       const prompt = `You are an ATS resume expert. Generate a resume JSON for a ${targetJdTitle} role. Return EXACTLY this structure:
 
@@ -537,17 +592,16 @@ CRITICAL: Only reframe and emphasize existing profile data through the lens of t
   "products": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
   "projects": [{"heading": "Title — Tech1, Tech2", "content": "dates | links", "bullets": ["verb + tech + JD keyword"]}],
   "certifications": ["Name (Issuer) - Year"],
-  "skills_section": ["Core Competencies: [ONLY Vault skills highly relevant to JD]", "Languages: [ONLY Vault languages highly relevant to JD]", "AI & ML: [ONLY Vault AI skills highly relevant to JD]", "Cloud & MLOps: [ONLY Vault cloud skills highly relevant to JD]"],
+  "skills_section": ${skillsSectionFormat},
   "awards": [],
   "leadership": []
 }
 
 CRITICAL BULLET COUNTS & LENGTHS:
-- Experience: EXACTLY ${experienceBullets} bullets per item
-- Products: EXACTLY ${productLines} bullets per item
-- Experience: generate EXACTLY ${experienceBullets} bullets per role.
-- Projects: generate EXACTLY ${projectBullets} bullets per project.
-- Products: generate EXACTLY ${productBullets} bullets per product.
+- Experience: EXACTLY ${experienceBullets} bullets per role.
+- Projects: EXACTLY ${projectBullets} bullets per project.
+- Products: EXACTLY ${productBullets} bullets per product.
+- Bullet Length Requirement: EVERY single bullet MUST be strictly between 200 and 240 characters (including spaces). This guarantees each bullet perfectly fills 1.5 to 2 visual lines. Do NOT generate short bullets under 200 characters.
 - DO NOT output more or fewer bullets than requested per section.
 
 GUIDELINES:

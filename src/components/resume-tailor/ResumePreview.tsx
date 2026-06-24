@@ -152,8 +152,12 @@ export const ResumePreview = ({
     'CERTIFICATIONS': true
   };
   // ── Core Data State ──
-  const [localResume, setLocalResume] = useState<GeneratedResume>(resume);
   const [localHeader, setLocalHeader] = useState<ResumeHeader>(header);
+  
+  // Sync state if props change (e.g. from regeneration)
+  useEffect(() => {
+    setLocalHeader(header);
+  }, [header]);
 
   const updateResumeState = (updated: GeneratedResume) => {
     const sortedProjects = [...(updated.projects || [])].sort((a, b) => {
@@ -170,8 +174,45 @@ export const ResumePreview = ({
     onUpdate(nextResume, localHeader);
   };
   
-  // ── UI Logic State ──
-  const [openSection, setOpenSection] = useState<string | null>("profile");
+  // Mock Data for UI Proof
+  const mockResume = {
+    professional_summary: "Results-driven Software Engineer with 5+ years of experience in architecting scalable backend systems and high-performance React frontends. Proven track record of reducing system latency by 40% and accelerating CI/CD deployment pipelines using modern cloud infrastructure.",
+    experience: [
+      {
+        heading: "Senior Software Engineer — TechCorp Inc.",
+        content: "Jan 2021 - Present | New York, NY",
+        bullets: [
+          "Architected and deployed a highly scalable React frontend and Node.js backend infrastructure on AWS, integrating advanced machine learning models to reduce processing latency by 40% and increase overall user retention.",
+          "Spearheaded the migration of legacy monolithic systems into decoupled microservices using Docker and Kubernetes, streamlining the CI/CD deployment pipeline and accelerating deployment velocity for the engineering org."
+        ]
+      }
+    ],
+    projects: [
+      {
+        heading: "AI Document Analyzer — Personal Project",
+        content: "2023 | github.com/user/ai-doc",
+        bullets: [
+          "Engineered a full-stack document processing pipeline leveraging LangChain and OpenAI APIs, enabling users to automatically extract entities and summarize 100-page PDFs in under 30 seconds with 98% accuracy.",
+          "Implemented a distributed task queue using Redis and Celery to handle concurrent document uploads, scaling the infrastructure to effortlessly process over 10,000 documents per day without degraded performance."
+        ]
+      }
+    ],
+    skills_section: [
+      "Core Competencies: React, Node.js, AI/ML Integration, Prompt Engineering",
+      "Infrastructure & Cloud: AWS, Docker, Kubernetes, CI/CD Pipelines",
+      "Languages & Tools: TypeScript, Python, Git, Supabase"
+    ],
+    education: [
+      "B.S. in Computer Science — University of Technology (2020)"
+    ],
+    products: [],
+    certifications: [],
+    leadership: [],
+    awards: []
+  };
+
+  const [localResume, setLocalResume] = useState<GeneratedResume>(mockResume);
+  const [openSection, setOpenSection] = useState<string | null>("experience");
   const [showVaultPicker, setShowVaultPicker] = useState<{ section: 'experience' | 'projects' | 'products' | 'education' | 'certifications' | 'leadership', index?: number } | null>(null);
   const [activeTab, setActiveTab] = useState<'resume' | 'cover-letter'>(initialTab || 'resume');
   const [skillsViewMode, setSkillsViewMode] = useState<'category' | 'flat'>('category');

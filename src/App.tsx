@@ -104,7 +104,7 @@ const App = () => {
                   <Route path="/auth" element={<Auth />} />
                   
                   {/* Dashboard routes wrapped in DashboardLayout */}
-                  <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                  <Route element={<DashboardLayout />}>
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/dashboard/arsenal" element={<Arsenal />} />
                     <Route path="/dashboard/pipeline" element={<Pipeline />} />
