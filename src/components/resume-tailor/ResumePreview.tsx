@@ -1675,7 +1675,7 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                       <h1 className="font-bold tracking-tight uppercase !font-inherit" style={{ fontSize: `${nameFontSize}px`, color: '#1E2A3A', fontFamily: 'inherit' }}>
                         {localHeader.fullName || "Your Name"}
                       </h1>
-                      <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-[#1E2A3A] font-medium !font-inherit" style={{ fontSize: fontSizes.meta }}>
+                      <div className="flex justify-center items-center gap-x-3 text-[#1E2A3A] font-medium !font-inherit whitespace-nowrap" style={{ fontSize: fontSizes.meta }}>
                         {(() => {
                           const items: React.ReactNode[] = [];
                           const loc = (localHeader.location || "").trim();

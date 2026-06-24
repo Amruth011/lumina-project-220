@@ -9,7 +9,7 @@ async function clickByText(page, text) {
 }
 
 (async () => {
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({ executablePath: "C:\\Users\\shara\\.cache\\puppeteer\\chrome\\win64-149.0.7827.22\\chrome-win64\\chrome.exe" });
   const page = await browser.newPage();
   await page.setViewport({ width: 1280, height: 1024 });
 
