@@ -553,7 +553,7 @@ CRITICAL BULLET COUNTS & LENGTHS:
 GUIDELINES:
 1. FORMAT (JSON ONLY):
    - Return ONLY valid JSON matching the structure.
-   - NO Markdown formatting (```json). NO conversational text.
+   - NO Markdown formatting (\`\`\`json). NO conversational text.
    - Dates MUST perfectly match the vault. NEVER hallucinate dates.
    - Titles: "[Role Name] | [Team/Project]"
    - Metrics: Bold them like "reduced latency by **40%**" or "grew MAU to **150K**".
