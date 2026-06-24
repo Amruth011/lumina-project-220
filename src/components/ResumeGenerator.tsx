@@ -1481,24 +1481,23 @@ Return ONLY the JSON. No markdown, no comments.`
         if (!t) return '';
         return /^https?:\/\//i.test(t) ? t : `https://${t.replace(/^\/+/, '')}`;
       };
-      // Unicode icons that Word renders cleanly
-      const iconSpan = (icon: string) =>
-        `<span style="font-family: 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif; font-size: ${bodyFontSize}pt;">${icon}</span>`;
+      // Unicode icons that Word renders cleanly (disabled per user request)
+      const iconSpan = (icon: string) => ``;
       const linkAnchor = (url: string, label: string, icon: string) =>
-        url ? `<a href="${ensureHref(url)}" style="color:#1E2A3A; text-decoration: none;">${iconSpan(icon)}&nbsp;${label}</a>` : '';
+        url ? `<a href="${ensureHref(url)}" style="color:#1E2A3A; text-decoration: none;">${label}</a>` : '';
       const emailLink = (email: string) => {
         const trimmed = (email || '').trim();
-        return trimmed ? `<a href="mailto:${trimmed.toLowerCase()}" style="color:#1E2A3A; text-decoration: none;">${iconSpan('✉')}&nbsp;${trimmed.toLowerCase()}</a>` : '';
+        return trimmed ? `<a href="mailto:${trimmed.toLowerCase()}" style="color:#1E2A3A; text-decoration: none;">${trimmed.toLowerCase()}</a>` : '';
       };
       const loc = (editableHeader.location || '').trim();
       const ph  = (editableHeader.phone   || '').trim();
       const headerMeta = [
-        loc ? `${iconSpan('&#128205;')}&nbsp;${loc}` : '',
-        ph  ? `${iconSpan('&#128222;')}&nbsp;${ph}`  : '',
+        loc ? loc : '',
+        ph  ? ph  : '',
         emailLink(editableHeader.email),
-        linkAnchor((editableHeader.linkedin  || '').trim(), 'LinkedIn',  '&#xF08C;'),
-        linkAnchor((editableHeader.github    || '').trim(), 'GitHub',    '&#128025;'),
-        linkAnchor((editableHeader.portfolio || '').trim(), 'Portfolio', '&#127760;')
+        linkAnchor((editableHeader.linkedin  || '').trim(), 'LinkedIn',  ''),
+        linkAnchor((editableHeader.github    || '').trim(), 'GitHub',    ''),
+        linkAnchor((editableHeader.portfolio || '').trim(), 'Portfolio', '')
       ].filter(Boolean).join(`&nbsp; <span style="opacity:0.3; font-size:${bodyFontSize}pt;">|</span> &nbsp;`);
 
       // Section templates mirroring ResumePreview structure perfectly

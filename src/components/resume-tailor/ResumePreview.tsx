@@ -1688,7 +1688,6 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                           if (loc) {
                             items.push(
                               <span key="loc" className="flex items-center gap-1">
-                                <MapPin size={Math.max(8, (fontSizes.meta as number) - 1)} className="text-[#1E2A3A] shrink-0" />
                                 {loc}
                               </span>
                             );
@@ -1696,7 +1695,6 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                           if (ph) {
                             items.push(
                               <span key="phone" className="flex items-center gap-1">
-                                <Phone size={Math.max(8, (fontSizes.meta as number) - 1)} className="text-[#1E2A3A] shrink-0" />
                                 {ph}
                               </span>
                             );
@@ -1704,7 +1702,6 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                           if (em) {
                             items.push(
                               <a key="email" href={`mailto:${em.toLowerCase()}`} className="flex items-center gap-1 hover:underline text-[#1E2A3A]">
-                                <Mail size={Math.max(8, (fontSizes.meta as number) - 1)} className="text-[#1E2A3A] shrink-0" />
                                 {em.toLowerCase()}
                               </a>
                             );
@@ -1718,7 +1715,6 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1 text-[#0A66C2] hover:underline transition-colors"
                               >
-                                <Linkedin size={Math.max(8, (fontSizes.meta as number) - 1)} className="shrink-0" />
                                 LinkedIn
                               </a>
                             );
@@ -1732,7 +1728,6 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1 text-[#1E2A3A] hover:underline transition-colors"
                               >
-                                <Github size={Math.max(8, (fontSizes.meta as number) - 1)} className="shrink-0" />
                                 GitHub
                               </a>
                             );
@@ -1746,7 +1741,6 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1 text-[#1E2A3A] hover:underline transition-colors"
                               >
-                                <Globe size={Math.max(8, (fontSizes.meta as number) - 1)} className="shrink-0" />
                                 Portfolio
                               </a>
                             );
