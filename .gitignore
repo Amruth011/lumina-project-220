@@ -1,4 +1,4 @@
-﻿# ---- Antigravity temporary data ----
+# ---- Antigravity temporary data ----
 .gemini/
 
 # ---- Node / build artefacts ----
@@ -24,6 +24,8 @@ Thumbs.db
 # ---- Environment files ----
 .env
 .env.*
+supabase/.env
+supabase/functions/**/.env
 .vercel
 
 .vercel
