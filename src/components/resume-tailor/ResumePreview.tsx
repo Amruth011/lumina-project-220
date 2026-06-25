@@ -1940,18 +1940,9 @@ Return ONLY the complete updated JSON object matching the input structure.`;
                                       const skillsArray = skillsRaw.split(",").map(s => s.trim()).filter(Boolean);
                                       
                                       return (
-                                        <div key={i} className="mb-1">
-                                          {showCategory && <div className="font-bold !font-inherit mb-1" style={{ fontSize: fontSizes.body, fontFamily: 'inherit', color: '#1E2A3A' }}>{category}</div>}
-                                          <div className="grid grid-cols-3 gap-x-4 gap-y-1 !font-inherit" style={{ fontSize: fontSizes.body, fontFamily: 'inherit' }}>
-                                            {skillsArray.map((skill, idx) => (
-                                              <div key={idx} className="flex items-start text-[#1E2A3A]/90 !font-inherit" style={{ margin: 0, padding: 0 }}>
-                                                <span className="mr-2" style={{ color: '#1E2A3A', fontSize: fontSizes.body }}>•</span>
-                                                <span className={isHighlight(skill) ? "font-bold" : ""} style={{ fontWeight: isHighlight(skill) ? 700 : 'normal' }}>
-                                                  {skill}
-                                                </span>
-                                              </div>
-                                            ))}
-                                          </div>
+                                        <div key={i} className="mb-1 text-[#1E2A3A]/90 !font-inherit" style={{ fontSize: fontSizes.body, fontFamily: 'inherit' }}>
+                                          {showCategory && <span className="font-bold !font-inherit" style={{ fontWeight: 700, fontFamily: 'inherit', color: '#1E2A3A' }}>{category}: </span>}
+                                          <span>{skillsRaw}</span>
                                         </div>
                                       );
                                     });

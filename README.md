@@ -1,14 +1,17 @@
 <div align="center">
 
-# <img src="public/logo.png" height="56" alt="Lumina Logo" />
-### Silicon Valley Standard • Ultra-Low Latency • 100% Reliable
+<img src="public/logo.png" height="80" alt="Lumina Logo" />
+
+# Lumina ✦ Career Optimization Platform
+### Silicon Valley Standard • Ultra-Low Latency • Secure AI Architecture
 
 [![Status](https://img.shields.io/badge/Status-Production_Stable-success?style=for-the-badge&logo=vercel)](https://lumina.app/)
 [![AI](https://img.shields.io/badge/Engine-Llama_3_70B_(Groq)-orange?style=for-the-badge&logo=meta)](https://groq.com)
-[![Arch](https://img.shields.io/badge/Arch-Client_Side_Inference-blue?style=for-the-badge&logo=react)](https://react.dev/)
+[![Edge](https://img.shields.io/badge/Compute-Supabase_Edge-1E3A8A?style=for-the-badge&logo=supabase)](https://supabase.com)
+[![Arch](https://img.shields.io/badge/Frontend-React_18_Vite-blue?style=for-the-badge&logo=react)](https://react.dev/)
 [![License](https://img.shields.io/badge/License-MIT-gray?style=for-the-badge)](LICENSE)
 
-**Lumina** is a high-performance career optimization platform designed to move job seekers into the top 1% of applicants. Built with a pristine **Luxury Liquid Glass** aesthetic and powered by ultra-low-latency Groq inference, it deconstructs complex Job Descriptions and perfectly structures your resume data to uncover your competitive advantage.
+**Lumina** is a high-performance career optimization platform designed to move job seekers into the top 1% of applicants. Built with a pristine **Luxury Liquid Glass** aesthetic and powered by ultra-low-latency Groq inference and secure Supabase Edge Functions, it deconstructs complex Job Descriptions and perfectly structures your resume data to uncover your competitive advantage.
 
 [**Launch Terminal →**](https://lumina.app/)
 
@@ -16,82 +19,87 @@
 
 ---
 
-## 🛡️ Engineered for Speed & Stability: The Groq Migration
-Lumina recently underwent a complete architectural overhaul...
+## ⚡ Architecture: Secure Edge AI
 
-- **Groq LPU Processing**: Powered by `llama-3.3-70b-versatile` on Groq's hardware, delivering near-instantaneous token generation.
-- **Client-Side AI Inference**: Bypasses slow serverless edge functions entirely. The browser talks directly to the AI, ensuring zero timeout errors and bypassing Vercel execution limits.
-- **Strict JSON Output Enforcement**: Llama 3 combined with Groq's `json_object` enforcement mathematically guarantees 100% consistent data structure every single time, without relying on unstable text scrapers.
-- **Native Browser PDF Parsing**: Utilizes Vite URL bundling and `pdfjs-dist` to securely parse and extract resume text entirely within the user's browser, eliminating external server memory crashes.
+Lumina's architecture solves the traditional AI bottleneck—slow serverless endpoints and exposed keys—by orchestrating a seamless connection between the browser, Supabase Edge Functions, and Groq's LPUs.
+
+- **Secure Edge API Strategy**: All LLM interactions (Groq, Gemini, OpenAI) run securely inside **Supabase Edge Functions**. Your API keys are injected natively as environment secrets—never exposed to the client, never hardcoded.
+- **Ultra-Low Latency Groq LPUs**: Leveraging `llama-3.3-70b-versatile` directly via Edge Functions for near-instantaneous token generation and strict `json_object` enforcement.
+- **Intelligent Fallback Cascade**: Our Edge layer automatically cascades between models (Llama 3.3 70B → Gemma 2 27B → Llama 3.1 8B) if rate limits are hit, ensuring 100% uptime and 0 failure rates.
+- **Native Browser PDF Parsing**: Utilizes Vite URL bundling and `pdfjs-dist` to securely parse and extract resume text entirely within the user's browser, bypassing file upload vulnerabilities and external server crashes.
 
 ---
 
-## ✨ The Lumina Experience
+## 💎 The Lumina Experience
 
 ### 🎨 Design Philosophy: Liquid Obsidian
-- **Glassmorphism 2.0:** Deep zinc backdrops, backdrop-blur saturation, and sub-pixel edge highlights.
-- **Editorial Typography:** A curated hierarchy of *Instrument Serif* for headings and *Inter* for surgical-grade body text.
-- **Compact UI/UX:** Responsive, dense, matrix-style data dashboards tuned for professional analytics.
-- **Premium Floating Interface:** High-contrast brand green-teal (#10B981) cards and text elements, a transparent floating navbar with white outline balloon/capsule button, and seamless background gradient transitions down the page.
+- **Glassmorphism 2.0:** Deep zinc backdrops, backdrop-blur saturation, and sub-pixel edge highlights for a modern, tactile feel.
+- **Editorial Typography:** A curated hierarchy of *Instrument Serif* for impact headings and *Inter* for surgical-grade body text readability.
+- **Premium Interface:** High-contrast brand green-teal (`#10B981`) accents, transparent floating navbars, capsule buttons, and seamless gradient transitions.
 
 ### 🛠️ Strategic Modules
 
 | Capability | Technical Implementation | Core Value |
 | :--- | :--- | :--- |
-| **🔍 Master Vault Sync** | Full Page Context Extraction | Pulls Name, Timeline, Edu, and Projects instantly |
-| **🎯 Resume Gap Analyzer** | Multi-vector Semantic Comparison | Identify the exact 0.1% delta and missing skills |
-| **🏗️ Tailored Gen Engine** | 70B Parameter Llama Generation | AI-written bullets that land interviews perfectly matched |
-| **🛡️ Dynamic Data Vault** | Local-First + Supabase Sync | Never lose your progress with dynamic entry forms |
-| **📑 ATS PDF Exporter** | Single-Column Semantic Renderer | Guaranteed to pass any ATS reader with zero formatting loss |
+| **🔍 Master Vault Sync** | Context Extraction via Edge AI | Pulls Name, Timeline, Edu, and Projects instantly from raw text. |
+| **🎯 Resume Gap Analyzer** | Semantic Matrix Comparison | Identifies the exact 0.1% delta and missing skills from the JD. |
+| **🏗️ Tailored Gen Engine** | 70B Parameter Llama Inference | AI-written bullets that land interviews perfectly matched to the JD. |
+| **🛡️ Dynamic Data Vault** | Local-First + Supabase Postgres | Never lose progress. Synchronizes state seamlessly. |
+| **📑 ATS PDF Exporter** | Single-Column Semantic Renderer | Guaranteed to pass any ATS reader with zero formatting loss. |
 
 ---
 
-## 🏗️ Architecture & Stack
+## 🏗️ Deep Tech Stack
 
 ```mermaid
 graph TD
     User([User JD/Resume]) --> UI[React 18 / Framer]
     UI --> PDF[Browser PDF.js Worker]
-    PDF --> Groq[[Groq LPU: Llama 3 70B]]
-    Groq --> Json[Strict JSON Enforcer]
-    Json --> UI
+    PDF --> Edge[Supabase Edge Functions]
+    Edge -- API Secrets --> Groq[[Groq LPU: Llama 3 70B]]
+    Groq --> Edge
+    Edge --> UI
     UI --> DB[(Supabase Cloud Sync)]
-    UI --> Export[ATS-Clean PDF Exporter]
+    UI --> Export[ATS-Clean HTML-to-PDF]
 ```
 
-### The Tech Stack
-- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS (Glassmorphism)
-- **AI Intelligence:** Meta Llama 3 70B via Groq API (Instantaneous Generation)
+- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS
+- **AI Intelligence:** Meta Llama 3 70B & Multi-Model Cascade
+- **Backend / Edge:** Supabase Edge Functions (Deno runtime)
 - **Data Layer:** Supabase (Auth, Postgres, Realtime Sync)
-- **Document Processing:** PDF.js (Client-side worker thread parsing via Vite Assets)
-- **Deployment:** Vercel Global Edge Network
+- **Document Processing:** PDF.js (Client-side worker thread)
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Deployment & Setup
 
-1. **Deployment URL:** [lumina.app](https://lumina.app/)
-2. **Local Setup:**
+1. **Clone the Repository:**
    ```bash
-    git clone https://github.com/Amruth011/lumina-jd-scanner.git
-    npm install
-    npm run dev
-    ```
+   git clone https://github.com/Amruth011/lumina-project-220.git
+   ```
+2. **Install Dependencies:**
+   ```bash
+   npm install
+   ```
+3. **Configure Edge Functions:**
+   Set up your Supabase project and push your Edge Functions along with secrets (e.g., `GROQ_API_KEY`, `GEMINI_API_KEY`).
+4. **Run Locally:**
+   ```bash
+   npm run dev
+   ```
 
 ---
 
 ## 🤝 The Vision
 
 Created by **Amruth Kumar M**
-Lumina is designed to bridge the gap between technical brilliance and the modern ATS-driven hiring machine.
+*Lumina is designed to bridge the gap between technical brilliance and the modern ATS-driven hiring machine.*
 
-* **GitHub:** [@Amruth011](https://github.com/Amruth011)
-* **Instagram:** [@assuredtechfuture](https://www.instagram.com/assuredtechfuture)
-* **LinkedIn:** [Amruth Kumar M](https://www.linkedin.com/in/amruthkumarm/)
+[![GitHub](https://img.shields.io/badge/GitHub-@Amruth011-181717?style=flat-square&logo=github)](https://github.com/Amruth011)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Amruth_Kumar_M-0A66C2?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/amruthkumarm/)
+[![Instagram](https://img.shields.io/badge/Instagram-@assuredtechfuture-E4405F?style=flat-square&logo=instagram)](https://www.instagram.com/assuredtechfuture)
 
----
 <div align="center">
+<br/>
 <i>"Lumina: Where engineering excellence meets career strategy."</i>
 </div>
-
-

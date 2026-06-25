@@ -17,43 +17,11 @@ function removeFluff(text: string): string {
     .replace(/\b[Uu]tilized\b/g, "deployed");
 }
 
-// Helper to ensure bullet points are strictly between 100 and 260 characters
+// Helper to clean bullet points
 function adjustBullet(bullet: string): string {
   let b = bullet.trim();
   // Remove any leading bullet characters
   b = b.replace(/^[•\-*\s]+/, "");
-  
-  if (b.length < 100) {
-    const paddings = [
-      " utilizing advanced methodologies and best engineering practices.",
-      " to optimize scalability, resilience, and general system performance.",
-      " to deliver high-quality code and support business expansion goals.",
-      " to ensure robust data integrity, security, and systems stability.",
-      " to enhance team velocity and overall project execution efficiency."
-    ];
-    let padded = b;
-    for (const pad of paddings) {
-      if (!b.toLowerCase().includes(pad.split(" ")[1])) {
-        padded = b.endsWith(".") ? b.slice(0, -1) + pad : b + pad;
-        break;
-      }
-    }
-    if (padded.length < 100) {
-      padded = padded.endsWith(".") ? padded.slice(0, -1) + " for technical excellence." : padded + " for technical excellence.";
-    }
-    b = padded;
-  }
-  
-  if (b.length > 260) {
-    b = b.slice(0, 257);
-    const lastSpace = b.lastIndexOf(" ");
-    if (lastSpace > 50) {
-      b = b.slice(0, lastSpace);
-    }
-    b = b.trim();
-    if (!b.endsWith(".")) b += "...";
-  }
-  
   return b;
 }
 

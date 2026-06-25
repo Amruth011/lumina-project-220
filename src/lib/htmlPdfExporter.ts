@@ -123,6 +123,12 @@ const buildSkillsHtml = (skills: string[]): string => {
   return skills
     .map(s => {
       const clean = s.replace(/^[:\s]+/, "").trim();
+      const colonIdx = clean.indexOf(":");
+      if (colonIdx !== -1) {
+        const category = clean.slice(0, colonIdx);
+        const rest = clean.slice(colonIdx + 1).trim();
+        return `<div class="skills-line"><strong>${escapeHtml(category)}:</strong> ${escapeHtml(rest)}</div>`;
+      }
       return `<div class="skills-line">${escapeHtml(clean)}</div>`;
     })
     .join("\n");
