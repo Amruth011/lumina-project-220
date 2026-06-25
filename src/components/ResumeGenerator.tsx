@@ -54,6 +54,7 @@ interface ArchiveRecord {
   };
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const mockResume = {
   professional_summary: "Results-driven Software Engineer with 5+ years of experience in architecting scalable backend systems and high-performance React frontends. Proven track record of reducing system latency by 40% and accelerating CI/CD deployment pipelines using modern cloud infrastructure.",
   experience: [
@@ -2228,6 +2229,7 @@ Write the message body only.`;
         generateOutreachMessage();
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceTab, msgChannel]);
 
 

@@ -112,6 +112,7 @@ export const ATSScoreSimulator = ({ result, resumeText, jdText }: ATSScoreSimula
 
   useEffect(() => {
     handleScan(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resumeText, jdText, result.skill_matches]);
 
   const activeReport = report || legacyReport;
