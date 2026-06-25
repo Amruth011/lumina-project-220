@@ -1,20 +1,28 @@
 <div align="center">
 
-<img src="public/logo.png" height="80" alt="Lumina Logo" />
+<img src="public/logo.png" height="150" alt="Lumina Logo" />
 
 # Lumina ✦ AI-Powered Career Optimization Engine
 ### LLM Pipelines • Multi-Model Fallback Architecture • Sub-Second Inference
 
-[![Status](https://img.shields.io/badge/Status-Production_Stable-success?style=for-the-badge&logo=vercel)](https://lumina.app/)
+[![Status](https://img.shields.io/badge/Status-Production_Stable-success?style=for-the-badge&logo=vercel)](https://lumina-jd-scanner-hd6jxne7n-amruth011s-projects.vercel.app/)
 [![AI](https://img.shields.io/badge/Engine-Llama_3_70B_(Groq)-orange?style=for-the-badge&logo=meta)](https://groq.com)
 [![Compute](https://img.shields.io/badge/Compute-Supabase_Edge-1E3A8A?style=for-the-badge&logo=supabase)](https://supabase.com)
 [![License](https://img.shields.io/badge/License-MIT-gray?style=for-the-badge)](LICENSE)
 
 **Lumina** is an advanced AI engineering project demonstrating production-ready LLM pipelines. It leverages agentic workflows to deconstruct unstructured Job Descriptions and intelligently map them against a user's resume data using zero-shot semantic matching and strict JSON enforcement.
 
-[**Launch Application →**](https://lumina.app/)
+[**🚀 Launch Live Application**](https://lumina-jd-scanner-hd6jxne7n-amruth011s-projects.vercel.app/) • [**💼 View My Portfolio**](https://amruthportfolio.me/)
 
 </div>
+
+---
+
+## 🎯 The Problem We Are Solving
+
+In the modern hiring landscape, Applicant Tracking Systems (ATS) and strict keyword filters immediately discard highly qualified engineers simply because their resumes do not semantically match the target Job Description (JD). Hand-tailoring a resume for every single application is an extremely time-consuming, repetitive, and error-prone process.
+
+**Lumina solves this** by acting as an autonomous AI agent for your career. It instantly analyzes complex JDs, maps them against your master career history, and generates a perfectly tailored, ATS-compliant resume that bridges the semantic gap. It mathematically constrains the AI outputs to fit beautifully on a professional 1-page PDF, turning a 2-hour manual editing process into a 2-second LLM pipeline execution.
 
 ---
 
