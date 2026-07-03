@@ -114,7 +114,7 @@
   "technical_skills": {
     "Languages": ["Python", "SQL", "TypeScript", "JavaScript"],
     "AI & Machine Learning": ["Generative AI", "LLMs", "RAG", "NLP", "Agentic AI", "XGBoost", "PyTorch", "HuggingFace", "Scikit-Learn"],
-    "Frameworks & Tools": ["LangChain", "LangGraph", "LangGraph", "Streamlit", "Docker", "Git"],
+    "Frameworks & Tools": ["LangChain", "LangGraph", "Streamlit", "Docker", "Git"],
     "Data Engineering": ["PySpark", "Pandas", "Delta Lake", "Power BI", "ChromaDB"],
     "APIs & Platforms": ["REST APIs", "Groq", "Gemini", "Supabase", "Vercel", "Playwright"]
   }

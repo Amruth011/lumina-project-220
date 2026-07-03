@@ -589,13 +589,13 @@ CRITICAL: Only reframe and emphasize existing profile data through the lens of t
     "professional_summary": "NARRATIVE PARAGRAPH. EXACTLY ${summaryLines * 17} WORDS. NO MORE, NO LESS.",
     "education": ["Degree @ School - Location | Dates"],
     "experience": [{"heading": "Role @ Organization", "content": "dates", "bullets": [
-      "(MUST BE 220-260 CHARACTERS) Architected and deployed scalable machine learning models using Python, TensorFlow, and AWS, resulting in a 40% reduction in data processing latency and significantly improving overall predictive accuracy across all major healthcare workflows."
+      "Architected and deployed scalable machine learning models using Python, TensorFlow, and AWS, resulting in a 40% reduction in data processing latency and significantly improving overall predictive accuracy across healthcare workflows."
     ]}],
     "products": [{"heading": "Title - Tech1, Tech2", "content": "dates | links", "bullets": [
-      "(MUST BE 220-260 CHARACTERS) Engineered a high-performance backend infrastructure utilizing Node.js and PostgreSQL to support a real-time analytics dashboard, accommodating over 100,000 concurrent users with 99.99% uptime during peak holiday traffic."
+      "Engineered a high-performance backend infrastructure utilizing Node.js and PostgreSQL to support a real-time analytics dashboard, accommodating over 100,000 concurrent users with 99.99% uptime during peak holiday traffic."
     ]}],
     "projects": [{"heading": "Title - Tech1, Tech2", "content": "dates | links", "bullets": [
-      "(MUST BE 220-260 CHARACTERS) Designed and implemented an automated CI/CD pipeline leveraging Docker, Kubernetes, and GitHub Actions, which accelerated the deployment cycle by 60% and minimized critical production deployment failures across the entire software suite."
+      "Designed and implemented an automated CI/CD pipeline leveraging Docker, Kubernetes, and GitHub Actions, which accelerated the deployment cycle by 60% and minimized critical production deployment failures across the software suite."
     ]}],
     "certifications": ["Name (Issuer) - Year"],
     "skills_section": ${skillsSectionFormat},
@@ -603,19 +603,19 @@ CRITICAL: Only reframe and emphasize existing profile data through the lens of t
     "leadership": []
   }
   
-  CRITICAL BULLET COUNTS & LENGTHS:
+  CRITICAL BULLET COUNTS:
   - Experience: EXACTLY ${experienceBullets} bullets per role.
   - Projects: EXACTLY ${projectBullets} bullets per project.
   - Products: EXACTLY ${productBullets} bullets per product.
-  - Bullet Length Requirement: EVERY single bullet MUST be strictly between 220 and 260 characters (including spaces). This is an absolute requirement so the text wraps to exactly 1.5 to 2 visual lines. Do NOT write short 100-character bullets.
+  - Bullet Requirements: Every single bullet must be a concise, impactful statement focusing on facts, technologies used, and technical details. Do not pad them with fluff.
   - DO NOT output more or fewer bullets than requested per section.
-
+  
   CRITICAL SKILLS SECTION RULE:
     - You MUST output the skills_section strings exactly as "Category Name: Skill 1, Skill 2".
     - NEVER use the generic word "Skills" as a category name. You must group them logically using categories like "Languages", "AI & Machine Learning", "Frameworks & Tools".
     - If you omit the "Category Name: " prefix with the colon, the UI will crash.
     - ONLY use skills present in the Vault. Do NOT hallucinate.
-
+  
   1. FORMAT (JSON ONLY):
    - Return ONLY valid JSON matching the structure.
    - NO Markdown formatting (\`\`\`json). NO conversational text.
@@ -623,16 +623,16 @@ CRITICAL: Only reframe and emphasize existing profile data through the lens of t
    - Titles: "[Role Name] | [Team/Project]"
    - Metrics: Bold them like "reduced latency by **40%**" or "grew MAU to **150K**".
    - Descriptions: Must be concise technical explanations.
-
+ 
 STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
 1. PROFESSIONAL SUMMARY RULES — FOLLOW EXACTLY:
    - Write EXACTLY ${summaryLines} sentences. Not more. Not fewer. Count them.
-   - Each sentence must be distinct: [1] Role + years/level (STRICT TRUTH RULE: Ground this strictly in the candidate's actual vault data. Do NOT fabricate years of experience. If they have only internship experience of 3-4 months, describe them as an entry-level or junior professional, never as "seasoned" or claiming "4 years" of experience), [2] Core technical skills from THIS JD, [3] Impact/achievement framing, [4] Domain expertise (if 4+), [5] Career ambition aligned to company (if 5).
+   - Each sentence must be distinct: [1] Role + years/level (STRICT TRUTH RULE: Ground this strictly in the candidate's actual vault data. Do NOT fabricate years of experience. If they only have a few months of internship experience, describe them as an entry-level or junior professional, never as "seasoned" or claiming years of experience), [2] Core technical skills from THIS JD, [3] Impact/achievement framing, [4] Domain expertise (if 4+), [5] Career ambition aligned to company (if 5).
    - Every sentence must contain at least one keyword extracted directly from the decoded JD skills: ${(jdSkills || []).slice(0, 15).map(s => s.skill).join(', ')}.
    - DO NOT merge sentences with semicolons or em-dashes to fake multiple lines.
    - DO NOT write a single long paragraph. Each sentence is standalone.
    - Output ONLY the summary sentences. No label, no bullets, no preamble.
-
+ 
    EXAMPLE (3 sentences):
    "Sentence one about role and level. Sentence two about specific tech skills. Sentence three about impact." - Mirror the seniority language from the JD. If the JD says "lead", use "lead". If it says "drive", use "drive". Pull exact verb choices from the JD description.
 2. STRICT NO HALLUCINATION (CRITICAL):
@@ -640,10 +640,9 @@ STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
    - Dynamically adapt to the user's ACTUAL seniority level. If they have 10+ years of experience, frame them with appropriate seniority. If they are a fresher or have only internship experience, frame them strictly as entry-level. Do NOT inflate or deflate their true experience level.
    - Ground everything STRICTLY in the candidate's actual vault data. If the JD requires a skill the user lacks, DO NOT invent it.
    - For the skills section, ONLY include skills that are both present in the Vault AND highly relevant to the JD. Do NOT dump all Vault skills if they are irrelevant to the job.
-3. BULLET POINTS: Every single bullet point MUST fill EXACTLY 2 visual lines. 
-   - LENGTH CONSTRAINT (CRITICAL): Every single bullet point MUST be strictly between 220 and 260 characters (including spaces) so it wraps perfectly across exactly 2 full lines. 
-   - Do NOT generate bullets that are 1.5 lines or less (e.g. 150 characters). Do NOT generate short bullets. Write detailed, technically rich sentences to reach the 200-240 character target.
-
+3. BULLET POINTS:
+   - Make all bullets concise, impactful, and technically rich. Focus on exact achievements and tools, avoiding filler or generic phrases.
+ 
 If the vault provides fewer source bullets, derive additional bullets from the item's skills/tech stack and JD keywords. Never fabricate metrics.
 
 CAREER-OPS RULES:
