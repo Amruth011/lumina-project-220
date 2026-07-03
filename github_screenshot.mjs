@@ -12,12 +12,13 @@ import { dirname, join } from 'path';
   console.log('Navigating to GitHub...');
   await page.goto('https://github.com/Amruth011/lumina-project-220', { waitUntil: 'networkidle2' });
   
-  // Save to the artifacts directory
-  const outputPath = 'C:\\Users\\shara\\.gemini\\antigravity\\brain\\d643c353-e4ff-4936-9cc2-18a0b8578123\\github_contributors.png';
-  
-  console.log('Taking screenshot...');
-  await page.screenshot({ path: outputPath });
-  
-  await browser.close();
-  console.log('Screenshot saved to', outputPath);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const outputPath = join(__dirname, 'github_contributors.png');
+
+console.log('Taking screenshot...');
+await page.screenshot({ path: outputPath });
+
+await browser.close();
+console.log('Screenshot saved to', outputPath);
 })();
