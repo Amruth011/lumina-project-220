@@ -88,6 +88,15 @@ Sequence: Sort by JD alignment.
 Priority 1: AI/LLM/RAG certifications.
 Place these before other certifications.
 
+4. Anti-Placeholder & Evidence Mapping Rules:
+- NEVER output placeholder text such as "...", "TBD", "N/A", "null-like filler", empty strings used as content, or empty objects used as stand-ins.
+- Every generated field must be supported by explicit evidence from the Master Vault Data or the provided job description context.
+- If a field cannot be supported with concrete evidence, omit that field or leave it structurally absent according to the schema rules; do not invent content.
+- Do not use generic filler, broad claims, or resume clichés when specific evidence exists.
+- Every bullet, summary line, skill grouping, certification ordering choice, and claim of impact must map back to source evidence in the input.
+- Prefer precise facts, technologies, outcomes, and role-specific language already present in the evidence.
+- Before finalizing, internally verify that each generated statement is traceable to the provided input data and that no unsupported claim remains.
+
 INPUT DATA:
 Master Vault Data:
 ${vaultString}
