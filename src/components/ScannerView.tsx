@@ -26,7 +26,7 @@ import { RoadmapSkeleton } from "./roadmap/RoadmapSkeleton";
 import { VaultSkeleton } from "./dashboard/VaultSkeleton";
 import { scavengeSkills } from "@/lib/skillScavenger";
 import { generateUnifiedReport } from "@/lib/pdfExporter";
-import { HowItWorksSection } from "@/components/HowItWorksSection";
+import { ResourcesCenter } from "@/components/ResourcesCenter";
 import { EmptyState } from "./dashboard/EmptyState";
 import { ATSScoreWidget } from "./dashboard/ATSScoreWidget";
 import { LoadingSequence } from "./jd-decoder/LoadingSequence";
@@ -522,9 +522,7 @@ export const ScannerView = ({ activeTab = "decode", onTabChange }: ScannerViewPr
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
               >
-                <div className="glass-panel p-6 lg:p-10 rounded-[4rem] border-foreground/10 bg-white/[0.02]">
-                  <HowItWorksSection />
-                </div>
+                <ResourcesCenter />
               </motion.div>
             ) : activeTab === "agent" ? (
               <motion.div
