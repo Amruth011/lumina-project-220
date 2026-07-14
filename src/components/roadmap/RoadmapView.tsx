@@ -235,18 +235,13 @@ const VerificationTaskCard = ({ task, isTaskDone, onToggle }: VerificationTaskCa
         className="flex items-start gap-4 p-4 text-left w-full cursor-pointer"
       >
         {/* Toggle Box */}
-        <div className={`w-5 h-5 mt-0.5 rounded-md border flex items-center justify-center shrink-0 transition-all duration-300 no-print ${
+        <div className={`w-5 h-5 mt-0.5 rounded-md border flex items-center justify-center shrink-0 transition-all duration-300 ${
           isTaskDone
             ? "bg-lumina-teal border-lumina-teal text-white shadow-lg shadow-emerald-500/10"
             : "border-slate-200 hover:border-lumina-teal/40 bg-white"
         }`}>
           {isTaskDone && <Check size={11} className="stroke-[3.5px]" />}
         </div>
-
-        {/* Print checkbox */}
-        <span className="hidden print:inline-block border border-slate-400 w-3 h-3 text-[8px] leading-none text-center mr-2 shrink-0 mt-0.5">
-          {isTaskDone ? "X" : " "}
-        </span>
 
         <div className="flex-1 min-w-0 space-y-1.5">
           <p className={`text-[13px] font-bold leading-normal transition-all duration-500 print-text ${
@@ -913,7 +908,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
             font-family: system-ui, -apple-system, sans-serif !important;
           }
           /* Hide non-essential layout details */
-          nav, footer, header, button, .no-print, [role="button"], .toaster {
+          nav, footer, header, button, .no-print, .toaster {
             display: none !important;
           }
           .print-container {
