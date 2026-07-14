@@ -893,6 +893,20 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
       {/* Stylesheet specifically injected for printing optimization */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
+          /* Reset parent layout to prevent Chrome flexbox pagination pagination break bug */
+          html, body, #root, main, section, .min-h-screen, [class*="flex"] {
+            display: block !important;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            position: static !important;
+          }
+
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
           body {
             background: white !important;
             color: #1e293b !important;
