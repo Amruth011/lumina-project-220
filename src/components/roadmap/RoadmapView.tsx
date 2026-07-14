@@ -282,6 +282,14 @@ const VerificationTaskCard = ({ task, isTaskDone, onToggle }: VerificationTaskCa
         </div>
       </div>
 
+      {/* Print-only verification prompt */}
+      {task.verification_prompt && (
+        <div className="hidden print:block mx-4 mb-4 p-3.5 rounded-xl border border-violet-200/60 bg-gradient-to-br from-violet-50/50 to-slate-50/30 text-[11px] font-mono leading-relaxed text-slate-600 whitespace-pre-wrap">
+          <span className="font-bold text-violet-700 block mb-1 text-[9px] uppercase tracking-wider">AI Verification Prompt:</span>
+          {task.verification_prompt}
+        </div>
+      )}
+
       {/* ── Collapsible AI Verification Panel ── */}
       <AnimatePresence>
         {verifyOpen && task.verification_prompt && (
