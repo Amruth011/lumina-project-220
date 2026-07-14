@@ -471,7 +471,7 @@ Return ONLY a valid JSON object matching this exact schema:
             <button
               key={tab.id}
               onClick={() => {
-                setActiveTab(tab.id as any);
+                setActiveTab(tab.id as "bank" | "coach" | "resources");
                 if (tab.id !== "coach") {
                   setInterviewActive(false);
                   setChatHistory([]);

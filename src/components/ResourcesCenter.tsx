@@ -19,7 +19,8 @@ import {
   CheckCircle2,
   ListChecks,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  LucideIcon
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -28,7 +29,7 @@ interface ResourceTopic {
   title: string;
   category: "technical" | "behavioral" | "strategy";
   description: string;
-  icon: any;
+  icon: LucideIcon;
   color: string;
   content: {
     overview: string;
