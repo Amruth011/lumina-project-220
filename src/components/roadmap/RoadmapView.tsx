@@ -1053,7 +1053,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: phaseIdx * 0.1 }}
-              className="relative group/phase print-card"
+              className="relative group/phase"
             >
               {/* Stepper Dot */}
               <div className={`absolute top-0 -left-[35px] md:-left-[51px] w-8 h-8 rounded-full border-2 bg-white flex items-center justify-center transition-all duration-500 z-10 ${
@@ -1069,7 +1069,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
               </div>
 
               {/* Glass Phase Card */}
-              <div className="bg-white border border-slate-100 p-6 lg:p-8 rounded-[2rem] shadow-[0_8px_30px_rgba(16,185,129,0.02)] hover:border-lumina-teal/25 transition-all duration-300 relative group/card">
+              <div className="bg-white border border-slate-100 p-6 lg:p-8 rounded-[2rem] shadow-[0_8px_30px_rgba(16,185,129,0.02)] hover:border-lumina-teal/25 transition-all duration-300 relative group/card print-card">
                 
                 {/* Phase header info */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-5">
