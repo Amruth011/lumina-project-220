@@ -1122,7 +1122,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                               href={healResourceUrl(res.url, res.title)}
                               target="_blank"
                               rel="noreferrer"
-                              className="flex items-center gap-2.5 p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-lumina-teal/5 hover:border-lumina-teal/20 transition-all text-left no-print"
+                              className="flex items-center gap-2.5 p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-lumina-teal/5 hover:border-lumina-teal/20 transition-all text-left"
                             >
                               <div className="w-6 h-6 rounded-lg bg-white border border-slate-100 flex items-center justify-center shrink-0">
                                 {getResourceIcon(res.source_type)}
@@ -1130,6 +1130,9 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                               <div className="space-y-0.5 truncate flex-1">
                                 <p className="text-[13px] font-bold text-slate-700 truncate group-hover/phase:text-lumina-teal">{res.title}</p>
                                 <p className="text-[10px] font-semibold text-slate-400 capitalize tracking-tight leading-none">{res.source_type}</p>
+                                <p className="hidden print:block text-[9px] text-lumina-teal underline truncate mt-1">
+                                  {healResourceUrl(res.url, res.title)}
+                                </p>
                               </div>
                               {res.estimated_time && (
                                 <div className="flex items-center gap-1.5 shrink-0 text-slate-400 bg-slate-100/80 px-2 py-1 rounded-md">
@@ -1139,15 +1142,6 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                               )}
                             </a>
                           ))}
-                          
-                          {/* Print-visible resources */}
-                          <ul className="hidden print:block list-disc pl-4 space-y-1">
-                            {phase.deep_dive_resources.map((res, rIdx) => (
-                              <li key={rIdx} className="text-[12px] text-slate-500">
-                                <strong className="print-text">{res.title}</strong> ({res.source_type}): <span className="print-resource-link">{healResourceUrl(res.url, res.title)}</span>
-                              </li>
-                            ))}
-                          </ul>
                         </div>
                       </div>
                     )}
