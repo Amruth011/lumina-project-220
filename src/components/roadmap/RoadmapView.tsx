@@ -999,23 +999,33 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
 
         {/* Global Progress Radial / Bar */}
         <div className="flex flex-col justify-center min-w-[200px] space-y-2">
-          <div className="flex justify-between items-baseline">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Overall Mastery Progress</span>
-            <span className="text-lg font-black tracking-tight text-lumina-teal">{getGlobalPercentage()}%</span>
-          </div>
-          
-          <div className="w-full h-2.5 bg-slate-100 rounded-full border border-slate-200 overflow-hidden relative">
-            <motion.div 
-              className="h-full bg-lumina-teal rounded-full shadow-[0_0_10px_rgba(16,185,129,0.2)]"
-              initial={{ width: "0%" }}
-              animate={{ width: `${getGlobalPercentage()}%` }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-            />
+          {/* Web View Progress Bar (Hidden in Print) */}
+          <div className="print:hidden space-y-2 w-full">
+            <div className="flex justify-between items-baseline">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Overall Mastery Progress</span>
+              <span className="text-lg font-black tracking-tight text-lumina-teal">{getGlobalPercentage()}%</span>
+            </div>
+            
+            <div className="w-full h-2.5 bg-slate-100 rounded-full border border-slate-200 overflow-hidden relative">
+              <motion.div 
+                className="h-full bg-lumina-teal rounded-full shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+                initial={{ width: "0%" }}
+                animate={{ width: `${getGlobalPercentage()}%` }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              />
+            </div>
+
+            <div className="flex justify-between text-[9px] font-semibold text-slate-400 tracking-tight pt-1">
+              <span>{getCompletedTasksCount()} Tasks Done</span>
+              <span>{getTotalTasks()} Total Syllabus Requirements</span>
+            </div>
           </div>
 
-          <div className="flex justify-between text-[9px] font-semibold text-slate-400 tracking-tight pt-1">
-            <span>{getCompletedTasksCount()} Tasks Done</span>
-            <span>{getTotalTasks()} Total Syllabus Requirements</span>
+          {/* Print View Syllabus Header Metadata (Only visible in Print) */}
+          <div className="hidden print:block text-right">
+            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">Syllabus Scope</span>
+            <span className="text-sm font-black text-slate-700 block">{getTotalTasks()} Core Actionable Objectives</span>
+            <span className="text-[9px] font-bold text-lumina-teal block mt-1 uppercase tracking-wider">Unabridged Offline Curriculum</span>
           </div>
         </div>
       </div>
@@ -1083,7 +1093,7 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                   </div>
 
                   {/* Phase completion meter */}
-                  <div className="flex items-center gap-3 shrink-0 print-badge">
+                  <div className="flex items-center gap-3 shrink-0 print-badge print:hidden">
                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Progress</span>
                     <div className="w-20 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50 no-print">
                       <div 
@@ -1094,6 +1104,11 @@ export const RoadmapView = ({ results, jdText }: RoadmapViewProps) => {
                     <span className={`text-[11px] font-black tracking-tight ${isPhaseDone ? "text-lumina-teal" : "text-slate-500"}`}>
                       {getPhaseProgress(phase)}%
                     </span>
+                  </div>
+
+                  {/* Print-only Phase Metadata (Only visible in Print) */}
+                  <div className="hidden print:flex items-center gap-1.5 shrink-0 border border-slate-200/60 rounded-lg px-2.5 py-1 bg-slate-50 text-[9px] font-bold text-slate-600 uppercase tracking-wider">
+                    <span>{phase.actionable_tasks.length} Core Tasks</span>
                   </div>
                 </div>
 
