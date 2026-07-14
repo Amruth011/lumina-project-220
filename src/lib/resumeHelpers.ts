@@ -122,7 +122,8 @@ export const groundBulletMetrics = (genBullet: string, vaultItem: VaultItem): st
   if (!genBullet || !vaultItem) return genBullet;
 
   // Extract all number-like terms (including percentages, dollar values, e.g. 40%, 10k, $500, 20+)
-  const metricRegex = /\b\d+(?:[.,]\d+)?\s*(?:%|\+|-|k|m|b|x)?\b/gi;
+  // We use lookahead (?=\b|\s|[.,!?;]|$) instead of trailing \b to capture suffixes like % properly
+  const metricRegex = /\b\d+(?:[.,]\d+)?\s*(?:%|\+|-|k|m|b|x)?(?=\b|\s|[.,!?;]|$)/gi;
   const matches = genBullet.match(metricRegex);
   if (!matches) return genBullet;
 
@@ -133,6 +134,11 @@ export const groundBulletMetrics = (genBullet: string, vaultItem: VaultItem): st
     vaultItem.description || "",
     ...(vaultItem.bullets || [])
   ].join(" ").toLowerCase();
+
+  // Extract all individual numbers/digits from the vault text to avoid cross-matching substrings
+  const vaultNumbers = new Set(
+    (vaultText.match(/\d+(?:[.,]\d+)?/g) || []).map(num => num.replace(/[^0-9]/g, ""))
+  );
 
   let groundedBullet = genBullet;
 
@@ -145,8 +151,8 @@ export const groundBulletMetrics = (genBullet: string, vaultItem: VaultItem): st
       continue;
     }
 
-    // Check if the digits exist in the vault text
-    if (!vaultText.includes(cleanNumber)) {
+    // Check if the digits exist in the vault numbers set
+    if (!vaultNumbers.has(cleanNumber)) {
       // Metric is hallucinated! Let's remove or replace the metric
       console.warn(`[Grounding] Hallucinated metric detected: "${match}" in bullet: "${genBullet}"`);
       
