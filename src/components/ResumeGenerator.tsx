@@ -642,6 +642,7 @@ STRICT LENGTH MANDATES & SUMMARY FORMULA (CRITICAL):
    - For the skills section, ONLY include skills that are both present in the Vault AND highly relevant to the JD. Do NOT dump all Vault skills if they are irrelevant to the job.
 3. BULLET POINTS:
    - Make all bullets concise, impactful, and technically rich. Focus on exact achievements and tools, avoiding filler or generic phrases.
+   - NO REPETITIVE PHRASES (CRITICAL): Do NOT append the same repetitive suffix or tech keywords (like "with RAG and Redis" or "leveraging LLMs for enhanced performance") to the end of multiple bullets. Ensure variety, natural integration of keywords, and distinct sentence structures for each bullet.
  
 If the vault provides fewer source bullets, derive additional bullets from the item's skills/tech stack and JD keywords. Never fabricate metrics.
 
