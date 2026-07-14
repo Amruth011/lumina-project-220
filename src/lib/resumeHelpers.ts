@@ -118,6 +118,52 @@ export const limitBullets = (bullets: string[], maxBullets: number): string[] =>
   return bullets.slice(0, maxBullets);
 };
 
+export const groundBulletMetrics = (genBullet: string, vaultItem: VaultItem): string => {
+  if (!genBullet || !vaultItem) return genBullet;
+
+  // Extract all number-like terms (including percentages, dollar values, e.g. 40%, 10k, $500, 20+)
+  const metricRegex = /\b\d+(?:[.,]\d+)?\s*(?:%|\+|-|k|m|b|x)?\b/gi;
+  const matches = genBullet.match(metricRegex);
+  if (!matches) return genBullet;
+
+  // Compile a search database from the original vault item
+  const vaultText = [
+    vaultItem.title || "",
+    vaultItem.organization || "",
+    vaultItem.description || "",
+    ...(vaultItem.bullets || [])
+  ].join(" ").toLowerCase();
+
+  let groundedBullet = genBullet;
+
+  for (const match of matches) {
+    const cleanNumber = match.replace(/[^0-9]/g, ""); // Extract just the digits
+    if (!cleanNumber) continue;
+
+    // Skip years (4-digit numbers starting with 19 or 20)
+    if (/^(19|20)\d{2}$/.test(match.trim())) {
+      continue;
+    }
+
+    // Check if the digits exist in the vault text
+    if (!vaultText.includes(cleanNumber)) {
+      // Metric is hallucinated! Let's remove or replace the metric
+      console.warn(`[Grounding] Hallucinated metric detected: "${match}" in bullet: "${genBullet}"`);
+      
+      // If it has a percentage, replace with "substantial"
+      if (match.includes("%")) {
+        groundedBullet = groundedBullet.replace(match, "substantial");
+      } else {
+        // Just remove the number
+        groundedBullet = groundedBullet.replace(match, "");
+      }
+    }
+  }
+
+  // Clean up any double spaces or dangling punctuation left after stripping
+  return groundedBullet.replace(/\s+/g, " ").replace(/\s+([.,!?;])/g, "$1").trim();
+};
+
 export const restoreExactProfileData = (generated: GeneratedResume, vaultItems: VaultItem[]): GeneratedResume => {
   if (!generated || !vaultItems || vaultItems.length === 0) return generated;
   const restored = { ...generated };
@@ -133,7 +179,13 @@ export const restoreExactProfileData = (generated: GeneratedResume, vaultItems: 
         return heading.includes(org);
       });
       if (match) {
-        return { ...genItem, content: match.period || genItem.content, heading: genItem.heading || `${match.title || ""} @ ${match.organization}` };
+        const groundedBullets = (genItem.bullets || []).map(b => groundBulletMetrics(b, match));
+        return { 
+          ...genItem, 
+          content: match.period || genItem.content, 
+          heading: genItem.heading || `${match.title || ""} @ ${match.organization}`,
+          bullets: groundedBullets
+        };
       }
       return genItem;
     });
@@ -152,7 +204,8 @@ export const restoreExactProfileData = (generated: GeneratedResume, vaultItems: 
         const headingParts = (genItem.heading || "").split(/\s+[-–—]\s+/);
         const techStack = headingParts.slice(1).join(" - ");
         const newHeading = techStack ? `${match.title} - ${techStack}` : match.title || genItem.heading;
-        return { ...genItem, heading: newHeading, content: newContent || genItem.content };
+        const groundedBullets = (genItem.bullets || []).map(b => groundBulletMetrics(b, match));
+        return { ...genItem, heading: newHeading, content: newContent || genItem.content, bullets: groundedBullets };
       }
       return genItem;
     });
@@ -171,7 +224,8 @@ export const restoreExactProfileData = (generated: GeneratedResume, vaultItems: 
         const headingParts = (genItem.heading || "").split(/\s+[-–—]\s+/);
         const techStack = headingParts.slice(1).join(" - ");
         const newHeading = techStack ? `${match.title} - ${techStack}` : match.title || genItem.heading;
-        return { ...genItem, heading: newHeading, content: newContent || genItem.content };
+        const groundedBullets = (genItem.bullets || []).map(b => groundBulletMetrics(b, match));
+        return { ...genItem, heading: newHeading, content: newContent || genItem.content, bullets: groundedBullets };
       }
       return genItem;
     });
@@ -186,7 +240,10 @@ export const restoreExactProfileData = (generated: GeneratedResume, vaultItems: 
         if (org && title) return heading.includes(org) && heading.includes(title);
         return (org && heading.includes(org)) || (title && heading.includes(title));
       });
-      if (match) return { ...genItem, content: match.period || genItem.content };
+      if (match) {
+        const groundedBullets = (genItem.bullets || []).map(b => groundBulletMetrics(b, match));
+        return { ...genItem, content: match.period || genItem.content, bullets: groundedBullets };
+      }
       return genItem;
     });
   }

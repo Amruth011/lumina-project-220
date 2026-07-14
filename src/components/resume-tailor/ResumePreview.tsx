@@ -253,12 +253,7 @@ Your objective is to modify the candidate's active JSON resume structure accordi
 1. STRICT FACTUAL ALIGNMENT: Do not invent any new job roles, companies, projects, dates, or contact links. Only edit and rephrase the existing content in the candidate's resume to better match the user's request.
 2. ZERO HALLUCINATION: Never add fake metrics or fabricate numbers out of thin air. Focus on technical depth, tooling, execution scope, and high-impact rephrasing of the facts already present in the resume.
 3. OUTPUT FORMAT: You must return ONLY a JSON object that matches the exact structure of the input resume. Do not output any chat prose or explanations before or after the JSON.
-4. ANDREW VU RECRUITER STYLE: Apply modern, elite developer phrasing: active voice, strong verbs, modern tech terminology, and standard professional context.
-5. STRICT CHARACTER LINE LIMITS: If re-writing bullets, ensure each bullet point falls strictly within standard visual character character length ranges (including spaces) so they beautifully and fully fill visual lines on a standard A4 PDF page without creating awkward visual orphans/hanging words:
-   - 1 line: EXACTLY 110 to 125 characters.
-   - 2 lines: EXACTLY 220 to 250 characters.
-   - 3 lines: EXACTLY 330 to 375 characters.
-   Do not generate bullet lengths between 126 and 219 characters, or less than 110. Adjust wording, technical detail, or scope description dynamically to hit these exact target ranges perfectly.
+5. BULLET REQUIREMENTS: Make all bullets concise, impactful, and technically rich. Focus on exact achievements, tools used, and technical details. Do not pad them with fluff or invent metrics.
 
 ### INPUTS:
 - Target Job Title: ${jdTitle || "Target Role"}
